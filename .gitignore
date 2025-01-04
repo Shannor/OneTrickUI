@@ -6,3 +6,19 @@
 /build/
 
 .idea
+*.log
+
+# IntelliJ/WebStorm specific
+/.idea/
+*.iml
+*.iws
+*.swp
+# React related
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+/coverage/
+/public/.cache/
+# Miscellaneous
+*.lock

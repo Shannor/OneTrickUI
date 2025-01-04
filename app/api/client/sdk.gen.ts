@@ -8,9 +8,12 @@ import {
 import type {
   GetPingError,
   GetPingResponse,
-  GetWeaponsForActivityData,
-  GetWeaponsForActivityError,
-  GetWeaponsForActivityResponse,
+  GetActivitiesData,
+  GetActivitiesError,
+  GetActivitiesResponse,
+  GetActivityData,
+  GetActivityError,
+  GetActivityResponse,
 } from './types.gen';
 
 export const client = createClient(createConfig());
@@ -28,15 +31,28 @@ export const getPing = <ThrowOnError extends boolean = false>(
   });
 };
 
-export const getWeaponsForActivity = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<GetWeaponsForActivityData, ThrowOnError>,
+export const getActivities = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetActivitiesData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    GetWeaponsForActivityResponse,
-    GetWeaponsForActivityError,
+    GetActivitiesResponse,
+    GetActivitiesError,
     ThrowOnError
   >({
     ...options,
-    url: '/activities/{activityId}/weapons',
+    url: '/activities',
+  });
+};
+
+export const getActivity = <ThrowOnError extends boolean = false>(
+  options: OptionsLegacyParser<GetActivityData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetActivityResponse,
+    GetActivityError,
+    ThrowOnError
+  >({
+    ...options,
+    url: '/activities/{activityId}',
   });
 };
