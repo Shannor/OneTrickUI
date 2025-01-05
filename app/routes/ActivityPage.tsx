@@ -17,10 +17,15 @@ export default function ActivityPage() {
   const data = useLoaderData<typeof loader>();
   return (
     <div>
+      <div>Activity</div>
       <div>{data.activity.instanceId}</div>
-      {data.stats.map((it) => (
-        <div key={it.referenceId}>{it.details?.baseInfo?.name}</div>
-      ))}
+      <div>{data.activity.mode}</div>
+      <div>Stats</div>
+      <div>
+        {data.stats.map((it) => (
+          <div key={it.referenceId}>{it.details?.baseInfo?.name}</div>
+        ))}
+      </div>
     </div>
   );
 }

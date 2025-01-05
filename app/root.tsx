@@ -9,7 +9,6 @@ import {
   useNavigation,
 } from 'react-router';
 
-import PrelineInit from '~/components/PrelineInit';
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
 
@@ -40,7 +39,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-        {PrelineInit && <PrelineInit />}
       </body>
     </html>
   );
