@@ -10,7 +10,7 @@ export default [
     index('routes/home.tsx'),
     route('/activities', 'routes/activities.tsx'),
     route(`/activities/:instanceId`, 'routes/activity.tsx'),
-    route('/sessions', 'routes/sessions.tsx'),
+    route('/snapshots', 'routes/snapshots.tsx'),
     route('/sessions/:sessionId', 'routes/session.tsx'),
   ]),
 ] satisfies RouteConfig;

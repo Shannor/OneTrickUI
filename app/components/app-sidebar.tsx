@@ -76,6 +76,11 @@ const data = {
       url: '/sessions',
       icon: Frame,
     },
+    {
+      name: 'Snapshots',
+      url: '/snapshots',
+      icon: Frame,
+    },
   ],
 };
 
