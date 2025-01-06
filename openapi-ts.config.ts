@@ -5,7 +5,7 @@ export default defineConfig({
   input: 'http://localhost:8080/openapi',
   output: {
     format: 'prettier',
-    path: './app/api/client',
+    path: './app/api',
   },
   plugins: [
     ...defaultPlugins,

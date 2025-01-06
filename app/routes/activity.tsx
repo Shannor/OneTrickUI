@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Route } from './+types/activity';
-import { apiClient, getActivity } from '~/api';
+import { getActivity } from '~/api';
 import { data, useLoaderData } from 'react-router';
 import {
   Card,
@@ -15,7 +15,6 @@ import { AlertCircle, Terminal } from 'lucide-react';
 export async function loader({ params }: Route.LoaderArgs) {
   const res = await getActivity({
     path: { activityId: params.instanceId },
-    client: apiClient,
   });
   if (!res.data) {
     throw data('Record Not Found', { status: 404 });

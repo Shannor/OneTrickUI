@@ -27,6 +27,17 @@ export type BaseItemInfo = {
   bucketHash: number;
 };
 
+export type CharacterSnapshot = {
+  /**
+   * Timestamp that the items were equipped turning
+   */
+  timestamp: Date;
+  /**
+   * All items that we currently care about, Kinetic, Energy, Heavy and Class for now
+   */
+  items: Array<ItemSnapshot>;
+};
+
 export type GunStat = {
   /**
    * The hash ID of the stat.
@@ -63,6 +74,26 @@ export type ItemDetails = {
    * Information about the sockets of the item: which are currently active, what potential sockets you could have and the stats/abilities/perks you can gain from them. COMPONENT TYPE: ItemSockets
    */
   sockets?: Array<Socket>;
+};
+
+export type ItemSnapshot = {
+  /**
+   * Time the data was grabbed
+   */
+  timestamp: Date;
+  /**
+   * Specific instance id for the item
+   */
+  instanceId: string;
+  /**
+   * Name of the particular item
+   */
+  name: string;
+  /**
+   * Id used to find the definition of the item
+   */
+  itemHash: number;
+  details: ItemDetails;
 };
 
 export type Perk = {
@@ -148,6 +179,21 @@ export type GetPingResponse = Pong;
 
 export type GetPingError = unknown;
 
+export type CreateSnapshotResponse = CharacterSnapshot;
+
+export type CreateSnapshotError = unknown;
+
+export type GetSnapshotsData = {
+  query: {
+    count: number;
+    page: number;
+  };
+};
+
+export type GetSnapshotsResponse = Array<CharacterSnapshot>;
+
+export type GetSnapshotsError = unknown;
+
 export type GetActivitiesData = {
   query: {
     count: number;
@@ -174,3 +220,50 @@ export type GetActivityResponse = {
 };
 
 export type GetActivityError = unknown;
+
+export type CreateSnapshotResponseTransformer = (
+  data: any,
+) => Promise<CreateSnapshotResponse>;
+
+export type CharacterSnapshotModelResponseTransformer = (
+  data: any,
+) => CharacterSnapshot;
+
+export type ItemSnapshotModelResponseTransformer = (data: any) => ItemSnapshot;
+
+export const ItemSnapshotModelResponseTransformer: ItemSnapshotModelResponseTransformer =
+  (data) => {
+    if (data?.timestamp) {
+      data.timestamp = new Date(data.timestamp);
+    }
+    return data;
+  };
+
+export const CharacterSnapshotModelResponseTransformer: CharacterSnapshotModelResponseTransformer =
+  (data) => {
+    if (data?.timestamp) {
+      data.timestamp = new Date(data.timestamp);
+    }
+    if (Array.isArray(data?.items)) {
+      data.items.forEach(ItemSnapshotModelResponseTransformer);
+    }
+    return data;
+  };
+
+export const CreateSnapshotResponseTransformer: CreateSnapshotResponseTransformer =
+  async (data) => {
+    CharacterSnapshotModelResponseTransformer(data);
+    return data;
+  };
+
+export type GetSnapshotsResponseTransformer = (
+  data: any,
+) => Promise<GetSnapshotsResponse>;
+
+export const GetSnapshotsResponseTransformer: GetSnapshotsResponseTransformer =
+  async (data) => {
+    if (Array.isArray(data)) {
+      data.forEach(CharacterSnapshotModelResponseTransformer);
+    }
+    return data;
+  };

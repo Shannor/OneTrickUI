@@ -1,6 +1,4 @@
-import { getActivities } from '~/api/client/sdk.gen';
 import type { Route } from './+types/activities';
-import { apiClient } from '~/api/client';
 import { data, useLoaderData, useNavigate } from 'react-router';
 import {
   Card,
@@ -9,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
+import { getActivities } from '~/api';
 export function meta({ location }: Route.MetaArgs) {
   const queryParams = new URLSearchParams(location.search);
   const page = queryParams.get('page') || '';
@@ -29,7 +28,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       count: 10,
       page: Number(page),
     },
-    client: apiClient,
   });
 
   if (!res.data) {
