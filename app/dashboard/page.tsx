@@ -13,9 +13,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '~/components/ui/sidebar';
-import { Outlet } from 'react-router';
+import { Outlet, useNavigation } from 'react-router';
+import { Skeleton } from '~/components/ui/skeleton';
 
 export default function Page() {
+  const navigation = useNavigation();
+  const isNavigating = Boolean(navigation.location);
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -26,7 +30,17 @@ export default function Page() {
           </div>
         </header>
         <div className="flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-0">
-          <Outlet />
+          {isNavigating ? (
+            <div className="flex flex-col gap-4">
+              <Skeleton className="h-[60px] w-full rounded-full" />
+              <Skeleton className="h-[60px] w-full rounded-full" />
+              <Skeleton className="h-[60px] w-full rounded-full" />
+              <Skeleton className="h-[60px] w-full rounded-full" />
+              <Skeleton className="h-[60px] w-full rounded-full" />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </div>
       </SidebarInset>
     </SidebarProvider>

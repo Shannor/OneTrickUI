@@ -57,34 +57,24 @@ const data = {
       items: [
         {
           title: 'All PvP',
-          url: '/tracker',
+          url: '/activities',
         },
         {
           title: 'Competitive',
-          url: '/tracker',
+          url: '/activities',
         },
         {
           title: 'Quick Play',
-          url: '/tracker',
+          url: '/activities',
         },
       ],
     },
   ],
   projects: [
     {
-      name: 'Design Engineering',
-      url: '#',
+      name: 'Sessions',
+      url: '/sessions',
       icon: Frame,
-    },
-    {
-      name: 'Sales & Marketing',
-      url: '#',
-      icon: PieChart,
-    },
-    {
-      name: 'Travel',
-      url: '#',
-      icon: Map,
     },
   ],
 };

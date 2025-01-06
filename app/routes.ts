@@ -8,7 +8,9 @@ import {
 export default [
   layout('dashboard/page.tsx', [
     index('routes/home.tsx'),
-    route('/tracker', 'routes/TrackerPage.tsx'),
-    route(`/tracker/:instanceId`, 'routes/ActivityPage.tsx'),
+    route('/activities', 'routes/activities.tsx'),
+    route(`/activities/:instanceId`, 'routes/activity.tsx'),
+    route('/sessions', 'routes/sessions.tsx'),
+    route('/sessions/:sessionId', 'routes/session.tsx'),
   ]),
 ] satisfies RouteConfig;
