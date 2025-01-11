@@ -2,10 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
 
-}
 @layer base {
   :root {
     --radius: 0.5rem;
@@ -42,7 +39,8 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
-  .dark {
+  .dark,
+  :root[class~="dark"] {
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -76,6 +74,7 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
 }
 @layer base {
   * {

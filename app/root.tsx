@@ -1,10 +1,12 @@
 import {
   isRouteErrorResponse,
   Links,
+  type LoaderFunction,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
   useLocation,
   useNavigation,
 } from 'react-router';
@@ -12,6 +14,13 @@ import {
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
 import { client } from '~/api';
+import { themeSessionResolver } from '~/routes/sessions.server';
+import {
+  PreventFlashOnWrongTheme,
+  ThemeProvider,
+  useTheme,
+} from 'remix-themes';
+import { clsx } from 'clsx';
 
 client.setConfig({
   baseUrl: 'http://localhost:8080',
@@ -31,32 +40,74 @@ export const links: Route.LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+// export function Layout({ children }: { children: React.ReactNode }) {
+//   const data = useLoaderData<typeof loader>();
+//
+//   return (
+//     <html lang="en">
+//       <head>
+//         <meta charSet="utf-8" />
+//         <meta name="viewport" content="width=device-width, initial-scale=1" />
+//         <Meta />
+//         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
+//         <Links />
+//       </head>
+//       <body>
+//         {children}
+//         <ScrollRestoration />
+//         <Scripts />
+//       </body>
+//     </html>
+//   );
+// }
+
+export function HydrateFallback() {
   return (
-    <html lang="en">
+    <div id="loading-splash">
+      <div id="loading-splash-spinner" />
+      <p>Loading, please wait...</p>
+    </div>
+  );
+}
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const { getTheme } = await themeSessionResolver(request);
+  return {
+    theme: getTheme(),
+  };
+};
+
+// Wrap your app with ThemeProvider.
+// `specifiedTheme` is the stored theme in the session storage.
+// `themeAction` is the action name that's used to change the theme in the session storage.
+export default function AppWithProviders() {
+  const data = useLoaderData<typeof loader>();
+  return (
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+      <App />
+    </ThemeProvider>
+  );
+}
+
+export function App() {
+  const data = useLoaderData<typeof loader>();
+  const [theme] = useTheme();
+  console.log('theme obj', theme);
+  console.log(data.theme);
+  return (
+    <html lang="en" className={clsx(theme)}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
       <body>
-        {children}
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
       </body>
     </html>
-  );
-}
-
-export default function App() {
-  const navigation = useNavigation();
-  const isNavigating = Boolean(navigation.location);
-  return (
-    <>
-      {isNavigating && <div className="loading" />}
-      <Outlet />
-    </>
   );
 }
 
