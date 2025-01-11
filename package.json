@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "cross-env NODE_ENV=production react-router build",
+    "build": "NODE_ENV=production react-router build",
     "dev": "react-router dev",
-    "start": "cross-env NODE_ENV=production react-router-serve ./build/server/index.js",
+    "start": "NODE_ENV=production react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "gen-api": "openapi-ts"
   },
@@ -39,7 +39,6 @@
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
     "autoprefixer": "^10.4.20",
-    "cross-env": "^7.0.3",
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.9",
