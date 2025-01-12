@@ -22,8 +22,14 @@ import {
 } from 'remix-themes';
 import { clsx } from 'clsx';
 
+const isDevEnvironment = import.meta.env.MODE === 'development';
+const isProdEnvironment = import.meta.env.MODE === 'production';
+
+console.log('Environment:', isDevEnvironment ? 'Development' : 'Production');
 client.setConfig({
-  baseUrl: 'http://localhost:8080',
+  baseUrl: isDevEnvironment
+    ? 'http://localhost:8080'
+    : 'https://onetrick-63827765203.us-central1.run.app',
 });
 
 export const links: Route.LinksFunction = () => [

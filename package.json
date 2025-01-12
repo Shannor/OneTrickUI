@@ -10,6 +10,7 @@
     "gen-api": "openapi-ts"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
     "@hey-api/client-fetch": "^0.5.7",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-collapsible": "^1.1.2",
