@@ -13,10 +13,19 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '~/components/ui/sidebar';
-import { Outlet, useNavigation } from 'react-router';
+import { Outlet, redirect, useNavigation } from 'react-router';
 import { Skeleton } from '~/components/ui/skeleton';
 import { ModeToggle } from '~/components/mode-toggle';
+import { getAuth } from '~/routes/auth.server';
+import type { Route } from '../../.react-router/types/app/+types/root';
 
+export async function loader({ request }: Route.LoaderArgs) {
+  const auth = await getAuth(request);
+  if (!auth) {
+    return redirect('/login');
+  }
+  return null;
+}
 export default function Page() {
   const navigation = useNavigation();
   const isNavigating = Boolean(navigation.location);

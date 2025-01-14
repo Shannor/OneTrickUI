@@ -8,6 +8,12 @@ import {
 import {
   type GetPingError,
   type GetPingResponse,
+  type LoginData,
+  type LoginError,
+  type LoginResponse,
+  type RefreshTokenData,
+  type RefreshTokenError,
+  type RefreshTokenResponse,
   type CreateSnapshotError,
   type CreateSnapshotResponse,
   type GetSnapshotsData,
@@ -35,6 +41,32 @@ export const getPing = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: '/ping',
+  });
+};
+
+export const login = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<LoginData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    LoginResponse,
+    LoginError,
+    ThrowOnError
+  >({
+    ...options,
+    url: '/login',
+  });
+};
+
+export const refreshToken = <ThrowOnError extends boolean = false>(
+  options?: OptionsLegacyParser<RefreshTokenData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    RefreshTokenResponse,
+    RefreshTokenError,
+    ThrowOnError
+  >({
+    ...options,
+    url: '/refresh',
   });
 };
 

@@ -20,11 +20,39 @@ export type ActivityHistory = {
   mode?: string;
 };
 
+export type AuthResponse = {
+  /**
+   * Access token value.
+   */
+  accessToken: string;
+  /**
+   * Type of the access token.
+   */
+  tokenType: string;
+  /**
+   * The time duration in which the access token will be expired.
+   */
+  expiresIn: number;
+  /**
+   * Refresh token for acquiring new access token after it is expired.
+   */
+  refreshToken: string;
+  /**
+   * The time duration in which the refresh token will be expired.
+   */
+  refreshExpiresIn: number;
+  /**
+   * Membership identification value.
+   */
+  membershipId: string;
+};
+
 export type BaseItemInfo = {
   name: string;
   itemHash: number;
   instanceId: string;
   bucketHash: number;
+  damage?: DamageInfo;
 };
 
 export type CharacterSnapshot = {
@@ -36,6 +64,20 @@ export type CharacterSnapshot = {
    * All items that we currently care about, Kinetic, Energy, Heavy and Class for now
    */
   items: Array<ItemSnapshot>;
+};
+
+export type Color = {
+  red: number;
+  green: number;
+  blue: number;
+  alpha: number;
+};
+
+export type DamageInfo = {
+  damageType: string;
+  damageIcon: string;
+  transparentIcon: string;
+  color: Color;
 };
 
 export type GunStat = {
@@ -178,6 +220,26 @@ export type WeaponStats = {
 export type GetPingResponse = Pong;
 
 export type GetPingError = unknown;
+
+export type LoginData = {
+  body?: {
+    code: string;
+  };
+};
+
+export type LoginResponse = AuthResponse;
+
+export type LoginError = unknown;
+
+export type RefreshTokenData = {
+  body?: {
+    code: string;
+  };
+};
+
+export type RefreshTokenResponse = AuthResponse;
+
+export type RefreshTokenError = unknown;
 
 export type CreateSnapshotResponse = CharacterSnapshot;
 

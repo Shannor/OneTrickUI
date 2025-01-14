@@ -22,7 +22,7 @@ import {
 } from 'remix-themes';
 import { clsx } from 'clsx';
 
-const isDevEnvironment = import.meta.env.MODE === 'development';
+export const isDevEnvironment = import.meta.env.MODE === 'development';
 const isProdEnvironment = import.meta.env.MODE === 'production';
 
 console.log('Environment:', isDevEnvironment ? 'Development' : 'Production');
@@ -45,27 +45,6 @@ export const links: Route.LinksFunction = () => [
   },
   { rel: 'stylesheet', href: stylesheet },
 ];
-
-// export function Layout({ children }: { children: React.ReactNode }) {
-//   const data = useLoaderData<typeof loader>();
-//
-//   return (
-//     <html lang="en">
-//       <head>
-//         <meta charSet="utf-8" />
-//         <meta name="viewport" content="width=device-width, initial-scale=1" />
-//         <Meta />
-//         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
-//         <Links />
-//       </head>
-//       <body>
-//         {children}
-//         <ScrollRestoration />
-//         <Scripts />
-//       </body>
-//     </html>
-//   );
-// }
 
 export function HydrateFallback() {
   return (
@@ -97,8 +76,7 @@ export default function AppWithProviders() {
 export function App() {
   const data = useLoaderData<typeof loader>();
   const [theme] = useTheme();
-  console.log('theme obj', theme);
-  console.log(data.theme);
+
   return (
     <html lang="en" className={clsx(theme)}>
       <head>
