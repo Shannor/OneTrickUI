@@ -1,7 +1,6 @@
 import type { Route } from './+types/oauth';
 import { login } from '~/api';
-import { redirect, useLoaderData, useSubmit } from 'react-router';
-import { useEffect } from 'react';
+import { redirect } from 'react-router';
 import { commitSession, getSession } from '~/routes/auth.server';
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -37,10 +36,5 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export default function OAuth() {
-  // let submit = useSubmit();
-  //
-  // useEffect(() => {
-  //   submit(null, { method: 'post', encType: 'application/json' });
-  // }, []);
   return <div>OAuth</div>;
 }

@@ -1,10 +1,11 @@
 import { Button } from '~/components/ui/button';
 import { redirect, useNavigate } from 'react-router';
-import { getAuth, getSession } from './auth.server';
+import { getSession } from './auth.server';
 import type { Route } from '../../.react-router/types/app/routes/+types/login';
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const auth = await getAuth(request);
+  const session = await getSession(request.headers.get('Cookie'));
+  const auth = session.get('jwt');
   if (auth) {
     // TODO: Check if auth expired and then redo if need be
     return redirect('/');

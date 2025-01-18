@@ -1,14 +1,5 @@
 import { AppSidebar } from '~/components/app-sidebar';
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '~/components/ui/breadcrumb';
-import { Separator } from '~/components/ui/separator';
-import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
@@ -16,15 +7,23 @@ import {
 import { Outlet, redirect, useNavigation } from 'react-router';
 import { Skeleton } from '~/components/ui/skeleton';
 import { ModeToggle } from '~/components/mode-toggle';
-import { getAuth } from '~/routes/auth.server';
+import { getSession } from '~/routes/auth.server';
 import type { Route } from '../../.react-router/types/app/+types/root';
+import { profile } from '~/api';
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const auth = await getAuth(request);
+  const session = await getSession(request.headers.get('Cookie'));
+  const auth = session.get('jwt');
   if (!auth) {
     return redirect('/login');
   }
-  return null;
+  const { data } = await profile({
+    headers: {
+      Authorization: `Bearer ${auth.accessToken}`,
+      'X-Membership-ID': auth.membershipId,
+    },
+  });
+  return data;
 }
 export default function Page() {
   const navigation = useNavigation();

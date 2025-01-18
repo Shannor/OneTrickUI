@@ -3,40 +3,39 @@
 import {
   createClient,
   createConfig,
-  type OptionsLegacyParser,
+  type Options,
 } from '@hey-api/client-fetch';
-import {
-  type GetPingError,
-  type GetPingResponse,
-  type LoginData,
-  type LoginError,
-  type LoginResponse,
-  type RefreshTokenData,
-  type RefreshTokenError,
-  type RefreshTokenResponse,
-  type CreateSnapshotError,
-  type CreateSnapshotResponse,
-  type GetSnapshotsData,
-  type GetSnapshotsError,
-  type GetSnapshotsResponse,
-  type GetActivitiesData,
-  type GetActivitiesError,
-  type GetActivitiesResponse,
-  type GetActivityData,
-  type GetActivityError,
-  type GetActivityResponse,
-  CreateSnapshotResponseTransformer,
-  GetSnapshotsResponseTransformer,
+import type {
+  GetPingData,
+  GetPingResponse,
+  ProfileData,
+  ProfileResponse,
+  LoginData,
+  LoginResponse,
+  RefreshTokenData,
+  RefreshTokenResponse,
+  GetSnapshotsData,
+  GetSnapshotsResponse,
+  CreateSnapshotData,
+  CreateSnapshotResponse,
+  GetActivitiesData,
+  GetActivitiesResponse,
+  GetActivityData,
+  GetActivityResponse,
 } from './types.gen';
+import {
+  getSnapshotsResponseTransformer,
+  createSnapshotResponseTransformer,
+} from './transformers.gen';
 
 export const client = createClient(createConfig());
 
 export const getPing = <ThrowOnError extends boolean = false>(
-  options?: OptionsLegacyParser<unknown, ThrowOnError>,
+  options?: Options<GetPingData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
     GetPingResponse,
-    GetPingError,
+    unknown,
     ThrowOnError
   >({
     ...options,
@@ -44,46 +43,48 @@ export const getPing = <ThrowOnError extends boolean = false>(
   });
 };
 
-export const login = <ThrowOnError extends boolean = false>(
-  options?: OptionsLegacyParser<LoginData, ThrowOnError>,
+export const profile = <ThrowOnError extends boolean = false>(
+  options: Options<ProfileData, ThrowOnError>,
 ) => {
-  return (options?.client ?? client).post<
-    LoginResponse,
-    LoginError,
+  return (options?.client ?? client).get<
+    ProfileResponse,
+    unknown,
     ThrowOnError
   >({
     ...options,
-    url: '/login',
+    url: '/profile',
   });
+};
+
+export const login = <ThrowOnError extends boolean = false>(
+  options?: Options<LoginData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<LoginResponse, unknown, ThrowOnError>(
+    {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      url: '/login',
+    },
+  );
 };
 
 export const refreshToken = <ThrowOnError extends boolean = false>(
-  options?: OptionsLegacyParser<RefreshTokenData, ThrowOnError>,
+  options?: Options<RefreshTokenData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
     RefreshTokenResponse,
-    RefreshTokenError,
+    unknown,
     ThrowOnError
   >({
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
     url: '/refresh',
-  });
-};
-
-/**
- * Creates a new snapshot in the system and returns a list of
- */
-export const createSnapshot = <ThrowOnError extends boolean = false>(
-  options?: OptionsLegacyParser<unknown, ThrowOnError>,
-) => {
-  return (options?.client ?? client).post<
-    CreateSnapshotResponse,
-    CreateSnapshotError,
-    ThrowOnError
-  >({
-    ...options,
-    url: '/snapshots',
-    responseTransformer: CreateSnapshotResponseTransformer,
   });
 };
 
@@ -91,25 +92,42 @@ export const createSnapshot = <ThrowOnError extends boolean = false>(
  * Returns a list of snapshots in the system
  */
 export const getSnapshots = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<GetSnapshotsData, ThrowOnError>,
+  options: Options<GetSnapshotsData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
     GetSnapshotsResponse,
-    GetSnapshotsError,
+    unknown,
     ThrowOnError
   >({
     ...options,
+    responseTransformer: getSnapshotsResponseTransformer,
     url: '/snapshots',
-    responseTransformer: GetSnapshotsResponseTransformer,
+  });
+};
+
+/**
+ * Creates a new snapshot in the system and returns a list of
+ */
+export const createSnapshot = <ThrowOnError extends boolean = false>(
+  options?: Options<CreateSnapshotData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    CreateSnapshotResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: createSnapshotResponseTransformer,
+    url: '/snapshots',
   });
 };
 
 export const getActivities = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<GetActivitiesData, ThrowOnError>,
+  options: Options<GetActivitiesData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
     GetActivitiesResponse,
-    GetActivitiesError,
+    unknown,
     ThrowOnError
   >({
     ...options,
@@ -118,11 +136,11 @@ export const getActivities = <ThrowOnError extends boolean = false>(
 };
 
 export const getActivity = <ThrowOnError extends boolean = false>(
-  options: OptionsLegacyParser<GetActivityData, ThrowOnError>,
+  options: Options<GetActivityData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
     GetActivityResponse,
-    GetActivityError,
+    unknown,
     ThrowOnError
   >({
     ...options,
