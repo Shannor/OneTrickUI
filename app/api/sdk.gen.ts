@@ -24,6 +24,8 @@ import type {
   GetActivityResponse,
 } from './types.gen';
 import {
+  loginResponseTransformer,
+  refreshTokenResponseTransformer,
   getSnapshotsResponseTransformer,
   createSnapshotResponseTransformer,
 } from './transformers.gen';
@@ -66,6 +68,7 @@ export const login = <ThrowOnError extends boolean = false>(
         'Content-Type': 'application/json',
         ...options?.headers,
       },
+      responseTransformer: loginResponseTransformer,
       url: '/login',
     },
   );
@@ -84,6 +87,7 @@ export const refreshToken = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options?.headers,
     },
+    responseTransformer: refreshTokenResponseTransformer,
     url: '/refresh',
   });
 };

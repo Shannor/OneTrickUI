@@ -97,6 +97,7 @@ export type AuthResponse = {
    * Membership that is mainly used
    */
   primaryMembershipId: string;
+  timestamp: Date;
 };
 
 export type WeaponStats = {

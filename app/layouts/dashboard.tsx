@@ -9,39 +9,64 @@ import {
   Outlet,
   redirect,
   useLoaderData,
+  useLocation,
   useNavigation,
   useSubmit,
 } from 'react-router';
 import { Skeleton } from '~/components/ui/skeleton';
 import { ModeToggle } from '~/components/mode-toggle';
-import { getSession } from '~/routes/auth.server';
+import { commitSession, getSession } from '~/routes/auth.server';
 import type { Route } from '../../.react-router/types/app/+types/root';
-import { profile } from '~/api';
+import { profile, refreshToken } from '~/api';
 import { getPreferences } from '~/.server/preferences';
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get('Cookie'));
-  const auth = session.get('jwt');
+  let auth = session.get('jwt');
+
   if (!auth) {
     return redirect('/login');
   }
 
+  const expiresMillisecond = auth.expiresIn * 1000;
+  const givenTime = new Date(auth.timestamp).getTime();
+  if (Date.now() >= givenTime + expiresMillisecond) {
+    const { data: jwt } = await refreshToken({
+      body: {
+        code: auth.refreshToken.toString(),
+      },
+    });
+    // TODO: If we fail to refresh then we need to clear the cookie and send it to login
+    if (jwt) {
+      session.set('jwt', jwt);
+      auth = jwt;
+    }
+  }
   const preferences = await getPreferences(request.headers.get('Cookie'));
-  const { data } = await profile({
+  const { data: profileData } = await profile({
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
       'X-Membership-ID': auth.membershipId,
       'X-User-ID': auth.id,
     },
   });
-  if (!data) {
+  if (!profileData) {
     throw new Error('No data');
   }
-  return { profile: data, characterId: preferences.get('characterId') };
+
+  return data(
+    { profile: profileData, characterId: preferences.get('characterId') },
+    {
+      headers: {
+        'Set-Cookie': await commitSession(session),
+      },
+    },
+  );
 }
 
 export default function Dashboard() {
   const navigation = useNavigation();
+  const location = useLocation();
   const isNavigating = Boolean(navigation.location);
   const { profile, characterId } = useLoaderData<typeof loader>();
 
@@ -53,6 +78,7 @@ export default function Dashboard() {
         onChangeCharacter={(characterId) => {
           const data = new FormData();
           data.set('characterId', characterId);
+          data.set('redirect', location.pathname);
           submit(data, {
             method: 'post',
             action: '/action/set-preference',
