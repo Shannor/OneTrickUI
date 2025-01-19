@@ -89,7 +89,7 @@ export const refreshToken = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Returns a list of snapshots in the system
+ * Returns a list of snapshots in the system for a character
  */
 export const getSnapshots = <ThrowOnError extends boolean = false>(
   options: Options<GetSnapshotsData, ThrowOnError>,
@@ -109,7 +109,7 @@ export const getSnapshots = <ThrowOnError extends boolean = false>(
  * Creates a new snapshot in the system and returns a list of
  */
 export const createSnapshot = <ThrowOnError extends boolean = false>(
-  options?: Options<CreateSnapshotData, ThrowOnError>,
+  options: Options<CreateSnapshotData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).post<
     CreateSnapshotResponse,
@@ -117,6 +117,10 @@ export const createSnapshot = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
     responseTransformer: createSnapshotResponseTransformer,
     url: '/snapshots',
   });

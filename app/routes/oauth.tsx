@@ -23,10 +23,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     return redirect('/', {
       headers: {
         'Set-Cookie': await commitSession(session, {
-          // httpOnly: true,
           secure: true,
           sameSite: 'lax',
-          maxAge: data.expiresIn, // 7 days
         }),
       },
     });

@@ -2,11 +2,17 @@
 
 export type Profile = {
   id: string;
+  memberId?: string;
   displayName: string;
   uniqueName: string;
+  characters: Array<Character>;
 };
 
 export type CharacterSnapshot = {
+  /**
+   * Id of the character being recorded
+   */
+  characterId: string;
   /**
    * Timestamp that the items were equipped turning
    */
@@ -62,6 +68,7 @@ export type Pong = {
 };
 
 export type AuthResponse = {
+  id: string;
   /**
    * Access token value.
    */
@@ -86,6 +93,10 @@ export type AuthResponse = {
    * Membership identification value.
    */
   membershipId: string;
+  /**
+   * Membership that is mainly used
+   */
+  primaryMembershipId: string;
 };
 
 export type WeaponStats = {
@@ -200,6 +211,16 @@ export type Color = {
   alpha: number;
 };
 
+export type Character = {
+  id: string;
+  light: number;
+  emblemPath: string;
+  emblemBackgroundPath: string;
+  titleId: number;
+  raceId: number;
+  classId: number;
+};
+
 /**
  * The response object for retrieving an individual instanced item. None of these components are relevant for an item that doesn't have an "itemInstanceId": for those, get your information from the DestinyInventoryDefinition.
  */
@@ -223,6 +244,10 @@ export type ItemDetails = {
   sockets?: Array<Socket>;
 };
 
+export type XUserId = string;
+
+export type XMembershipId = string;
+
 export type GetPingData = {
   body?: never;
   path?: never;
@@ -242,6 +267,7 @@ export type GetPingResponse = GetPingResponses[keyof GetPingResponses];
 export type ProfileData = {
   body?: never;
   headers: {
+    'X-User-ID': string;
     'X-Membership-ID': string;
   };
   path?: never;
@@ -297,10 +323,14 @@ export type RefreshTokenResponse =
 
 export type GetSnapshotsData = {
   body?: never;
+  headers: {
+    'X-User-ID': string;
+  };
   path?: never;
   query: {
     count: number;
     page: number;
+    characterId: string;
   };
   url: '/snapshots';
 };
@@ -313,7 +343,16 @@ export type GetSnapshotsResponse =
   GetSnapshotsResponses[keyof GetSnapshotsResponses];
 
 export type CreateSnapshotData = {
-  body?: never;
+  /**
+   * Provide the character to take the snapshot of
+   */
+  body: {
+    characterId: string;
+  };
+  headers: {
+    'X-User-ID': string;
+    'X-Membership-ID': string;
+  };
   path?: never;
   query?: never;
   url: '/snapshots';

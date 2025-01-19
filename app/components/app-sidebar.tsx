@@ -23,6 +23,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '~/components/ui/sidebar';
+import type { Profile } from '~/api';
 
 // This is sample data.
 const data = {
@@ -83,11 +84,25 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  profile: Profile;
+  onChangeCharacter: (characterId: string) => void;
+  currentCharacterId?: string;
+}
+export function AppSidebar({
+  profile,
+  onChangeCharacter,
+  currentCharacterId,
+  ...props
+}: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher
+          characters={profile.characters}
+          currentCharacterId={currentCharacterId}
+          onChangeCharacter={onChangeCharacter}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

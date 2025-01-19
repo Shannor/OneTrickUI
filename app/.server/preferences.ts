@@ -2,7 +2,7 @@ import { createCookieSessionStorage } from 'react-router';
 import type { AuthResponse } from '~/api';
 
 type SessionData = {
-  jwt: AuthResponse;
+  characterId: string;
 };
 
 type SessionFlashData = {
@@ -13,7 +13,7 @@ const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<SessionData, SessionFlashData>({
     // a Cookie from `createCookie` or the CookieOptions to create one
     cookie: {
-      name: '__auth_session',
+      name: '__preferences_session',
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
@@ -22,4 +22,8 @@ const { getSession, commitSession, destroySession } =
     },
   });
 
-export { getSession, commitSession, destroySession };
+export {
+  getSession as getPreferences,
+  commitSession as commitPreferences,
+  destroySession,
+};
