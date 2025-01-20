@@ -15,7 +15,7 @@ import {
 import { NavMain } from '~/components/nav-main';
 import { NavProjects } from '~/components/nav-projects';
 import { NavUser } from '~/components/nav-user';
-import { TeamSwitcher } from '~/components/team-switcher';
+import { CharacterSwitcher } from '~/components/character-switcher';
 import {
   Sidebar,
   SidebarContent,
@@ -95,11 +95,17 @@ export function AppSidebar({
   currentCharacterId,
   ...props
 }: AppSidebarProps) {
+  const c = [...profile.characters].sort((a, b) => {
+    if (b.light !== a.light) {
+      return b.light - a.light;
+    }
+    return a.class.localeCompare(b.class);
+  });
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher
-          characters={profile.characters}
+        <CharacterSwitcher
+          characters={c}
           currentCharacterId={currentCharacterId}
           onChangeCharacter={onChangeCharacter}
         />

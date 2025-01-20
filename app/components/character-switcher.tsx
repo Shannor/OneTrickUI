@@ -17,8 +17,9 @@ import {
   useSidebar,
 } from '~/components/ui/sidebar';
 import type { Profile } from '~/api';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 
-export function TeamSwitcher({
+export function CharacterSwitcher({
   characters,
   currentCharacterId,
   onChangeCharacter,
@@ -28,7 +29,7 @@ export function TeamSwitcher({
   onChangeCharacter: (characterId: string) => void;
 }) {
   const { isMobile } = useSidebar();
-  const activeTeam = characters.find((c) => c.id === currentCharacterId);
+  const currentCharacter = characters.find((c) => c.id === currentCharacterId);
 
   return (
     <SidebarMenu>
@@ -40,13 +41,26 @@ export function TeamSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {/*<activeTeam.logo className="size-4" />*/}
+                <Avatar>
+                  <AvatarImage
+                    src={currentCharacter?.emblemURL}
+                    alt="@shadcn"
+                  />
+                  <AvatarFallback>
+                    {currentCharacter?.class?.at(0)?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{activeTeam?.id}</span>
-                <span className="truncate text-xs">
-                  {activeTeam?.emblemPath}
+                <span className="truncate font-semibold">
+                  {currentCharacter?.class}
                 </span>
+                <span className="truncate text-xs">
+                  {currentCharacter?.currentTitle}
+                </span>
+              </div>
+              <div>
+                <div className="text-yellow-500">{currentCharacter?.light}</div>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -58,21 +72,28 @@ export function TeamSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Character
+              Guardian
             </DropdownMenuLabel>
             {characters.map((team, index) => (
               <DropdownMenuItem
                 key={team.id}
                 onClick={() => {
-                  // setActiveTeam(team);
                   onChangeCharacter(team.id);
                 }}
-                className="gap-2 p-2"
+                className="gap-6 p-4"
               >
                 <div className="flex size-6 items-center justify-center rounded-sm border">
-                  {/*<team.logo className="size-4 shrink-0" />*/}
+                  <Avatar>
+                    <AvatarImage src={team.emblemURL} alt="@shadcn" />
+                    <AvatarFallback>
+                      {team.class.at(0)?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-                {team.emblemPath}
+                <div className="flex flex-col gap-1">
+                  <div className="text-lg font-semibold"> {team.class}</div>
+                  <p className="text-sm text-yellow-500">{team.light}</p>
+                </div>
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}

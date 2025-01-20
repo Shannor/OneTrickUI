@@ -215,11 +215,11 @@ export type Color = {
 export type Character = {
   id: string;
   light: number;
-  emblemPath: string;
-  emblemBackgroundPath: string;
-  titleId: number;
-  raceId: number;
-  classId: number;
+  emblemURL: string;
+  emblemBackgroundURL: string;
+  currentTitle: string;
+  race: string;
+  class: string;
 };
 
 /**
