@@ -11,10 +11,29 @@ import {
 } from '~/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { AlertCircle, Terminal } from 'lucide-react';
+import { getSession } from '~/routes/auth.server';
+import { getPreferences } from '~/.server/preferences';
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, request }: Route.LoaderArgs) {
+  const session = await getSession(request.headers.get('Cookie'));
+  const auth = session.get('jwt');
+  if (!auth) {
+    throw new Error('Not authenticated');
+  }
+  const preferences = await getPreferences(request.headers.get('Cookie'));
+  const characterId = preferences.get('characterId');
+  if (!characterId) {
+    throw data('No character id', { status: 404 });
+  }
   const res = await getActivity({
     path: { activityId: params.instanceId },
+    query: {
+      characterId,
+    },
+    headers: {
+      'X-Membership-ID': auth.primaryMembershipId,
+      'X-User-ID': auth.id,
+    },
   });
   if (!res.data) {
     throw data('Record Not Found', { status: 404 });

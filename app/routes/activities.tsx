@@ -41,7 +41,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     query: {
       count: 10,
       page: Number(page),
-      characterId: characterId,
+      characterId,
       mode: activityType || undefined,
     },
     headers: {

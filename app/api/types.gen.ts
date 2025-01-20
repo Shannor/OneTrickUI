@@ -2,7 +2,7 @@
 
 export type Profile = {
   id: string;
-  memberId?: string;
+  membershipId: string;
   displayName: string;
   uniqueName: string;
   characters: Array<Character>;
@@ -399,13 +399,19 @@ export type GetActivitiesResponse =
 
 export type GetActivityData = {
   body?: never;
+  headers: {
+    'X-User-ID': string;
+    'X-Membership-ID': string;
+  };
   path: {
     /**
      * The unique identifier for the activity.
      */
     activityId: string;
   };
-  query?: never;
+  query: {
+    characterId: string;
+  };
   url: '/activities/{activityId}';
 };
 
