@@ -7,7 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { getActivities } from '~/api';
+import { type ActivityMode, getActivities } from '~/api';
+import { getPreferences } from '~/.server/preferences';
+import { getSession } from '~/routes/auth.server';
 export function meta({ location }: Route.MetaArgs) {
   const queryParams = new URLSearchParams(location.search);
   const page = queryParams.get('page') || '';
@@ -23,10 +25,28 @@ export function meta({ location }: Route.MetaArgs) {
 export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
   const page = url.searchParams.get('page') || '0';
+  const activityType = url.searchParams.get('type') as ActivityMode | null;
+
+  const session = await getSession(request.headers.get('Cookie'));
+  const auth = session.get('jwt');
+  if (!auth) {
+    throw new Error('Not authenticated');
+  }
+  const preferences = await getPreferences(request.headers.get('Cookie'));
+  const characterId = preferences.get('characterId');
+  if (!characterId) {
+    throw data('No character id', { status: 404 });
+  }
   const res = await getActivities({
     query: {
       count: 10,
       page: Number(page),
+      characterId: characterId,
+      mode: activityType || undefined,
+    },
+    headers: {
+      'X-Membership-ID': auth.primaryMembershipId,
+      'X-User-ID': auth.id,
     },
   });
 

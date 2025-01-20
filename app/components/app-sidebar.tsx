@@ -61,11 +61,11 @@ const data = {
         },
         {
           title: 'Competitive',
-          url: '/activities',
+          url: '/activities?type=competitive',
         },
         {
           title: 'Quick Play',
-          url: '/activities',
+          url: '/activities?type=quickplay',
         },
       ],
     },

@@ -131,6 +131,8 @@ export type UniqueStatValue = {
   activityId?: number | null;
 };
 
+export type ActivityMode = 'competitive' | 'quickplay' | 'allPvP';
+
 export type StatsValuePair = {
   /**
    * Raw value of the statistic
@@ -371,10 +373,16 @@ export type CreateSnapshotResponse =
 
 export type GetActivitiesData = {
   body?: never;
+  headers: {
+    'X-User-ID': string;
+    'X-Membership-ID': string;
+  };
   path?: never;
   query: {
     count: number;
     page: number;
+    characterId: string;
+    mode?: ActivityMode;
   };
   url: '/activities';
 };

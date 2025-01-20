@@ -11,7 +11,6 @@ export async function action({ request }: Route.ClientActionArgs) {
   const redirectLocation = formData.get('redirect');
   const session = await getPreferences(request.headers.get('Cookie'));
   session.set('characterId', characterId.toString());
-  console.log(characterId.toString());
   return redirect(redirectLocation?.toString() || '/', {
     headers: { 'Set-Cookie': await commitPreferences(session) },
   });
