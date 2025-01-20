@@ -131,7 +131,11 @@ export type UniqueStatValue = {
   activityId?: number | null;
 };
 
-export type ActivityMode = 'competitive' | 'quickplay' | 'allPvP';
+export type ActivityMode =
+  | 'competitive'
+  | 'quickplay'
+  | 'allPvP'
+  | 'ironBanner';
 
 export type StatsValuePair = {
   /**

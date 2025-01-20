@@ -25,6 +25,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const page = url.searchParams.get('page') || 0;
   const session = await getSession(request.headers.get('Cookie'));
   const auth = session.get('jwt');
+  console.log('Got Auth successfully', auth);
   if (!auth) {
     throw new Error('Not authenticated');
   }

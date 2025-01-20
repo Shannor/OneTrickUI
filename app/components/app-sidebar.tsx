@@ -30,10 +30,6 @@ import type { Profile } from '~/api';
 
 // This is sample data.
 const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-  },
   navMain: [
     {
       title: 'Activity',
@@ -52,6 +48,10 @@ const data = {
         {
           title: 'Quick Play',
           url: '/activities?type=quickplay',
+        },
+        {
+          title: 'Iron Banner',
+          url: '/activities?type=ironBanner',
         },
       ],
     },
