@@ -8,8 +8,11 @@ import {
   GalleryVerticalEnd,
   Map,
   PieChart,
+  Save,
   Settings2,
   SquareTerminal,
+  Swords,
+  Timer,
 } from 'lucide-react';
 
 import { NavMain } from '~/components/nav-main';
@@ -31,28 +34,11 @@ const data = {
     name: 'shadcn',
     email: 'm@example.com',
   },
-  teams: [
-    {
-      name: 'Acme Inc',
-      logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
-    },
-    {
-      name: 'Evil Corp.',
-      logo: Command,
-      plan: 'Free',
-    },
-  ],
   navMain: [
     {
       title: 'Activity',
       url: '#',
-      icon: SquareTerminal,
+      icon: Swords,
       isActive: true,
       items: [
         {
@@ -74,12 +60,12 @@ const data = {
     {
       name: 'Sessions',
       url: '/sessions',
-      icon: Frame,
+      icon: Timer,
     },
     {
       name: 'Snapshots',
       url: '/snapshots',
-      icon: Frame,
+      icon: Save,
     },
   ],
 };
@@ -115,7 +101,7 @@ export function AppSidebar({
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={profile} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
