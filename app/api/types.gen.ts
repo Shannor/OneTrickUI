@@ -89,7 +89,7 @@ export type AuthResponse = {
    * The time duration in which the refresh token will be expired.
    */
   refreshExpiresIn: number;
-  /**
+  /**/ /**
    * Membership identification value.
    */
   membershipId: string;

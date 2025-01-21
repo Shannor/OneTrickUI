@@ -1,13 +1,12 @@
-import type { Route } from './+types/snapshots';
-import { createSnapshot, getSnapshots, profile } from '~/api';
 import {
   data,
-  Form,
-  redirect,
+  isRouteErrorResponse,
   useLoaderData,
-  useOutletContext,
   useSubmit,
 } from 'react-router';
+import { getAuth } from '~/.server/auth';
+import { getPreferences } from '~/.server/preferences';
+import { createSnapshot, getSnapshots, profile } from '~/api';
 import { Button } from '~/components/ui/button';
 import {
   Card,
@@ -15,21 +14,43 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { getSession } from '~/routes/auth.server';
-import { getPreferences } from '~/.server/preferences';
+
+import type { Route } from './+types/snapshots';
 
 export function meta({ location }: Route.MetaArgs) {}
 
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (isRouteErrorResponse(error)) {
+    return (
+      <>
+        <h1>
+          {error.status} {error.statusText}
+        </h1>
+        <p>{error.data}</p>
+      </>
+    );
+  } else if (error instanceof Error) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <p>{error.message}</p>
+        <p>The stack trace is:</p>
+        <pre>{error.stack}</pre>
+      </div>
+    );
+  } else {
+    return <h1>Unknown Error</h1>;
+  }
+}
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
   const page = url.searchParams.get('page') || 0;
-  const session = await getSession(request.headers.get('Cookie'));
-  const auth = session.get('jwt');
-  console.log('Got Auth successfully', auth);
-  if (!auth) {
-    throw new Error('Not authenticated');
+  const auth = await getAuth(request);
+
+  const { characterId } = await getPreferences(request);
+  if (!characterId) {
+    throw data('No character id');
   }
-  const preferences = await getPreferences(request.headers.get('Cookie'));
   const { data: profileData } = await profile({
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
@@ -37,10 +58,6 @@ export async function loader({ request }: Route.LoaderArgs) {
       'X-User-ID': auth.id,
     },
   });
-  const characterId = preferences.get('characterId');
-  if (!characterId) {
-    throw data('No character id', { status: 404 });
-  }
   const res = await getSnapshots({
     query: {
       count: 10,
@@ -65,11 +82,7 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (!characterId) {
     return { message: 'No character id' };
   }
-  const session = await getSession(request.headers.get('Cookie'));
-  const auth = session.get('jwt');
-  if (!auth) {
-    throw new Error('Not authenticated');
-  }
+  const auth = await getAuth(request);
   const { data, error } = await createSnapshot({
     body: {
       characterId: characterId.toString(),

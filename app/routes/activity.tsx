@@ -1,7 +1,10 @@
+import { AlertCircle } from 'lucide-react';
 import React from 'react';
-import type { Route } from './+types/activity';
-import { getActivity } from '~/api';
 import { data, useLoaderData } from 'react-router';
+import { getAuth } from '~/.server/auth';
+import { getPreferences } from '~/.server/preferences';
+import { getActivity } from '~/api';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import {
   Card,
   CardContent,
@@ -9,22 +12,15 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
-import { AlertCircle, Terminal } from 'lucide-react';
-import { getSession } from '~/routes/auth.server';
-import { getPreferences } from '~/.server/preferences';
+
+import type { Route } from './+types/activity';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const session = await getSession(request.headers.get('Cookie'));
-  const auth = session.get('jwt');
+  const auth = await getAuth(request);
   if (!auth) {
     throw new Error('Not authenticated');
   }
-  const preferences = await getPreferences(request.headers.get('Cookie'));
-  const characterId = preferences.get('characterId');
-  if (!characterId) {
-    throw data('No character id', { status: 404 });
-  }
+  const { characterId } = await getPreferences(request);
   const res = await getActivity({
     path: { activityId: params.instanceId },
     query: {

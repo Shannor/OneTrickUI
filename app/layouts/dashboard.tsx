@@ -1,48 +1,32 @@
-import { AppSidebar } from '~/components/app-sidebar';
 import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '~/components/ui/sidebar';
-import {
-  data,
   Outlet,
+  data,
   redirect,
   useLoaderData,
   useLocation,
   useNavigation,
   useSubmit,
 } from 'react-router';
-import { Skeleton } from '~/components/ui/skeleton';
-import { ModeToggle } from '~/components/mode-toggle';
-import { commitSession, getSession } from '~/routes/auth.server';
-import type { Route } from '../../.react-router/types/app/+types/root';
-import { profile, refreshToken } from '~/api';
+import { getAuth, refreshHeaders } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
+import { profile } from '~/api';
+import { AppSidebar } from '~/components/app-sidebar';
+import { ModeToggle } from '~/components/mode-toggle';
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '~/components/ui/sidebar';
+import { Skeleton } from '~/components/ui/skeleton';
+
+import type { Route } from '../../.react-router/types/app/+types/root';
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSession(request.headers.get('Cookie'));
-  let auth = session.get('jwt');
-
+  const auth = await getAuth(request);
   if (!auth) {
     return redirect('/login');
   }
-
-  const expiresMillisecond = auth.expiresIn * 1000;
-  const givenTime = new Date(auth.timestamp).getTime();
-  if (Date.now() >= givenTime + expiresMillisecond) {
-    const { data: jwt } = await refreshToken({
-      body: {
-        code: auth.refreshToken.toString(),
-      },
-    });
-    // TODO: If we fail to refresh then we need to clear the cookie and send it to login
-    if (jwt) {
-      session.set('jwt', jwt);
-      auth = jwt;
-    }
-  }
-  const preferences = await getPreferences(request.headers.get('Cookie'));
+  const { characterId } = await getPreferences(request);
   const { data: profileData } = await profile({
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
@@ -51,15 +35,14 @@ export async function loader({ request }: Route.LoaderArgs) {
     },
   });
   if (!profileData) {
-    throw new Error('No data');
+    throw data('No profile data', { status: 500 });
   }
 
+  const headers = await refreshHeaders(request, auth);
   return data(
-    { profile: profileData, characterId: preferences.get('characterId') },
+    { profile: profileData, characterId },
     {
-      headers: {
-        'Set-Cookie': await commitSession(session),
-      },
+      ...headers,
     },
   );
 }
@@ -103,7 +86,7 @@ export default function Dashboard() {
               <Skeleton className="h-[60px] w-full rounded-full" />
             </div>
           ) : (
-            <Outlet />
+            <Outlet context={{ profile, characterId }} />
           )}
         </div>
       </SidebarInset>

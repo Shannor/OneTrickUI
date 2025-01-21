@@ -1,24 +1,10 @@
+import { Home, Save, Swords, Timer } from 'lucide-react';
 import * as React from 'react';
-import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Save,
-  Settings2,
-  SquareTerminal,
-  Swords,
-  Timer,
-} from 'lucide-react';
-
+import type { Profile } from '~/api';
+import { CharacterSwitcher } from '~/components/character-switcher';
 import { NavMain } from '~/components/nav-main';
 import { NavProjects } from '~/components/nav-projects';
 import { NavUser } from '~/components/nav-user';
-import { CharacterSwitcher } from '~/components/character-switcher';
 import {
   Sidebar,
   SidebarContent,
@@ -26,10 +12,16 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '~/components/ui/sidebar';
-import type { Profile } from '~/api';
 
 // This is sample data.
 const data = {
+  base: [
+    {
+      name: 'Home',
+      url: '/',
+      icon: Home,
+    },
+  ],
   navMain: [
     {
       title: 'Activity',
@@ -81,24 +73,19 @@ export function AppSidebar({
   currentCharacterId,
   ...props
 }: AppSidebarProps) {
-  const c = [...profile.characters].sort((a, b) => {
-    if (b.light !== a.light) {
-      return b.light - a.light;
-    }
-    return a.class.localeCompare(b.class);
-  });
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <CharacterSwitcher
-          characters={c}
+          characters={profile.characters}
           currentCharacterId={currentCharacterId}
           onChangeCharacter={onChangeCharacter}
         />
       </SidebarHeader>
       <SidebarContent>
+        <NavProjects projects={data.base} />
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavProjects projects={data.projects} label="Tracking" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={profile} />

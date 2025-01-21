@@ -1,13 +1,13 @@
+import { ArrowUp10 } from 'lucide-react';
+import { redirect } from 'react-router';
+import { getAuth } from '~/.server/auth';
 import { Button } from '~/components/ui/button';
-import { Link, redirect, useNavigate } from 'react-router';
-import { getSession } from './auth.server';
-import type { Route } from '../../.react-router/types/app/routes/+types/login';
-import { ArrowUp10, GalleryVerticalEnd } from 'lucide-react';
 import { cn } from '~/lib/utils';
 
+import type { Route } from '../../.react-router/types/app/routes/+types/login';
+
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSession(request.headers.get('Cookie'));
-  const auth = session.get('jwt');
+  const auth = await getAuth(request);
   if (auth) {
     // TODO: Check if auth expired and then redo if need be
     return redirect('/');

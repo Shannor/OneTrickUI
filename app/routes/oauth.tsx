@@ -1,7 +1,7 @@
-import type { Route } from './+types/oauth';
+import { setAuth } from '~/.server/auth';
 import { login } from '~/api';
-import { redirect } from 'react-router';
-import { commitSession, getSession } from '~/routes/auth.server';
+
+import type { Route } from './+types/oauth';
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
@@ -11,23 +11,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     return { message: 'No code' };
   }
   try {
-    const { data, error } = await login({ body: { code } });
+    const { data } = await login({ body: { code } });
     if (!data) {
       return { message: 'No data' };
     }
-    if (error) {
-      throw error;
-    }
-    const session = await getSession(request.headers.get('Cookie'));
-    session.set('jwt', data);
-    return redirect('/', {
-      headers: {
-        'Set-Cookie': await commitSession(session, {
-          secure: true,
-          sameSite: 'lax',
-        }),
-      },
-    });
+    return setAuth(request, data);
   } catch (e) {
     console.error(e);
   }

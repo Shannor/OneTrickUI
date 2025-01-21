@@ -1,15 +1,16 @@
-import type { Route } from './+types/activities';
 import { data, useLoaderData, useNavigate } from 'react-router';
+import { getAuth } from '~/.server/auth';
+import { getPreferences } from '~/.server/preferences';
+import { type ActivityMode, getActivities } from '~/api';
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { type ActivityMode, getActivities } from '~/api';
-import { getPreferences } from '~/.server/preferences';
-import { getSession } from '~/routes/auth.server';
+
+import type { Route } from './+types/activities';
+
 export function meta({ location }: Route.MetaArgs) {
   const queryParams = new URLSearchParams(location.search);
   const page = queryParams.get('page') || '';
@@ -27,16 +28,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const page = url.searchParams.get('page') || '0';
   const activityType = url.searchParams.get('type') as ActivityMode | null;
 
-  const session = await getSession(request.headers.get('Cookie'));
-  const auth = session.get('jwt');
+  const auth = await getAuth(request);
   if (!auth) {
     throw new Error('Not authenticated');
   }
-  const preferences = await getPreferences(request.headers.get('Cookie'));
-  const characterId = preferences.get('characterId');
-  if (!characterId) {
-    throw data('No character id', { status: 404 });
-  }
+  const { characterId } = await getPreferences(request);
   const res = await getActivities({
     query: {
       count: 10,

@@ -1,8 +1,7 @@
 import { createCookieSessionStorage } from 'react-router';
-import type { AuthResponse } from '~/api';
 
 type SessionData = {
-  characterId: string;
+  characterId?: string;
 };
 
 type SessionFlashData = {
@@ -22,8 +21,18 @@ const { getSession, commitSession, destroySession } =
     },
   });
 
-export {
-  getSession as getPreferences,
-  commitSession as commitPreferences,
-  destroySession,
-};
+async function getPreferences(request: Request): Promise<SessionData> {
+  const preferences = await getSession(request.headers.get('Cookie'));
+  const characterId = preferences.get('characterId');
+  return {
+    characterId,
+  };
+}
+async function setPreferences(request: Request, preferences: SessionData) {
+  const session = await getSession(request.headers.get('Cookie'));
+  session.set('characterId', preferences.characterId);
+  return {
+    headers: { 'Set-Cookie': await commitSession(session) },
+  };
+}
+export { commitSession, destroySession, getPreferences, setPreferences };
