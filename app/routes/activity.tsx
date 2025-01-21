@@ -21,6 +21,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Error('Not authenticated');
   }
   const { characterId } = await getPreferences(request);
+  if (characterId === undefined) {
+    throw data('No character id', { status: 404 });
+  }
   const res = await getActivity({
     path: { activityId: params.instanceId },
     query: {
@@ -36,6 +39,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
   return res.data;
 }
+
 export function meta({ data }: Route.MetaArgs) {
   return [
     { title: `One Trick - ${data.activity.mode}` },

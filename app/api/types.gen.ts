@@ -10,6 +10,10 @@ export type Profile = {
 
 export type CharacterSnapshot = {
   /**
+   * Id of the snapshot
+   */
+  id: string;
+  /**
    * Id of the character being recorded
    */
   characterId: string;
@@ -89,7 +93,7 @@ export type AuthResponse = {
    * The time duration in which the refresh token will be expired.
    */
   refreshExpiresIn: number;
-  /**/ /**
+  /**
    * Membership identification value.
    */
   membershipId: string;
@@ -343,6 +347,9 @@ export type GetSnapshotsData = {
 };
 
 export type GetSnapshotsResponses = {
+  /**
+   * Returns an array of all snapshots for a character
+   */
   200: Array<CharacterSnapshot>;
 };
 
@@ -374,6 +381,33 @@ export type CreateSnapshotResponses = {
 
 export type CreateSnapshotResponse =
   CreateSnapshotResponses[keyof CreateSnapshotResponses];
+
+export type GetSnapshotData = {
+  body?: never;
+  headers: {
+    'X-User-ID': string;
+  };
+  path: {
+    /**
+     * The unique identifier for the snapshot.
+     */
+    snapshotId: string;
+  };
+  query: {
+    characterId: string;
+  };
+  url: '/snapshots/{snapshotId}';
+};
+
+export type GetSnapshotResponses = {
+  /**
+   * Specific character snapshot
+   */
+  200: CharacterSnapshot;
+};
+
+export type GetSnapshotResponse =
+  GetSnapshotResponses[keyof GetSnapshotResponses];
 
 export type GetActivitiesData = {
   body?: never;

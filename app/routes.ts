@@ -1,8 +1,8 @@
 import {
   type RouteConfig,
   index,
-  route,
   layout,
+  route,
 } from '@react-router/dev/routes';
 
 export default [
@@ -13,6 +13,7 @@ export default [
     route('/activities', 'routes/activities.tsx'),
     route(`/activities/:instanceId`, 'routes/activity.tsx'),
     route('/snapshots', 'routes/snapshots.tsx'),
+    route('/snapshots/:snapshotId', 'routes/snapshot.tsx'),
     route('/sessions', 'routes/sessions.tsx'),
     route('/sessions/:sessionId', 'routes/session.tsx'),
     route('/action/set-theme', 'routes/action.set-theme.tsx'),

@@ -1,7 +1,10 @@
+import { format } from 'date-fns';
+import { PlusIcon } from 'lucide-react';
 import {
   data,
   isRouteErrorResponse,
   useLoaderData,
+  useNavigate,
   useSubmit,
 } from 'react-router';
 import { getAuth } from '~/.server/auth';
@@ -105,33 +108,49 @@ export async function action({ request }: Route.ClientActionArgs) {
 export default function Snapshots({ actionData }: Route.ComponentProps) {
   const submit = useSubmit();
   const { snapshots, characterId } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
 
   const formData = new FormData();
   formData.set('characterId', characterId);
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-4">
-        <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-          Snapshots
-        </h2>
+      <div className="flex flex-row gap-4 justify-between">
+        <div className="flex flex-col">
+          <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+            Snapshots
+          </h2>
+          <p>
+            Snapshots are equipped loadouts that your character was wearing at
+            the time.
+          </p>
+        </div>
         <Button onClick={() => submit(formData, { method: 'post' })}>
+          <PlusIcon className="h-4 w-4" />
           Create New Snapshot
         </Button>
       </div>
-      {snapshots?.map((snapshot) => (
-        <Card key={snapshot.timestamp.toString()}>
-          <CardHeader>
-            <CardTitle>{snapshot.timestamp.toString()}</CardTitle>
-            <CardDescription>
-              {snapshot.items.map((it) => (
-                <div key={it.details.baseInfo.itemHash}>
-                  {it.details.baseInfo.name}
-                </div>
-              ))}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {snapshots?.map((snapshot) => (
+          <Card
+            key={snapshot.timestamp.toString()}
+            className="cursor-pointer"
+            onClick={() => navigate(`/snapshots/${snapshot.id}`)}
+          >
+            <CardHeader>
+              <CardTitle>
+                {format(new Date(snapshot.timestamp), 'MM/dd/yyyy - p')}
+              </CardTitle>
+              <CardDescription>
+                {snapshot.items.map((it) => (
+                  <div key={it.details.baseInfo.itemHash}>
+                    {it.details.baseInfo.name}
+                  </div>
+                ))}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
