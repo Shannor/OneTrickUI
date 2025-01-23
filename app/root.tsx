@@ -24,7 +24,7 @@ export const isDevEnvironment = import.meta.env.MODE === 'development';
 client.setConfig({
   baseUrl: isDevEnvironment
     ? 'http://localhost:8080'
-    : 'https://onetrick-63827765203.us-central1.run.app',
+    : 'https://d2onetrick.com/api',
 });
 
 export const links: Route.LinksFunction = () => [

@@ -36,10 +36,7 @@ async function getAuth(request: Request): Promise<AuthResponse | undefined> {
       },
     });
     // TODO: If we fail to refresh then we need to clear the cookie and send it to login
-    if (jwt) {
-      return jwt;
-    }
-    return undefined;
+    return jwt;
   }
   return auth;
 }
