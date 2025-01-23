@@ -1,31 +1,26 @@
+import { clsx } from 'clsx';
 import {
-  isRouteErrorResponse,
   Links,
-  type LoaderFunction,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  isRouteErrorResponse,
   useLoaderData,
-  useLocation,
-  useNavigation,
 } from 'react-router';
-
-import type { Route } from './+types/root';
-import stylesheet from './app.css?url';
-import { client } from '~/api';
-import { themeSessionResolver } from '~/routes/sessions.server';
 import {
   PreventFlashOnWrongTheme,
   ThemeProvider,
   useTheme,
 } from 'remix-themes';
-import { clsx } from 'clsx';
+import { client } from '~/api';
+import { themeSessionResolver } from '~/routes/sessions.server';
+
+import type { Route } from './+types/root';
+import stylesheet from './app.css?url';
 
 export const isDevEnvironment = import.meta.env.MODE === 'development';
-const isProdEnvironment = import.meta.env.MODE === 'production';
 
-console.log('Environment:', isDevEnvironment ? 'Development' : 'Production');
 client.setConfig({
   baseUrl: isDevEnvironment
     ? 'http://localhost:8080'

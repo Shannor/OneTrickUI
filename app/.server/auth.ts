@@ -21,11 +21,11 @@ const { getSession, commitSession, destroySession } =
       secure: true,
     },
   });
-async function getAuth(request: Request): Promise<AuthResponse> {
+async function getAuth(request: Request): Promise<AuthResponse | undefined> {
   const session = await getSession(request.headers.get('Cookie'));
   const auth = session.get('jwt');
   if (!auth) {
-    throw new Error('Missing cookie or token');
+    return undefined;
   }
   const expiresMillisecond = auth.expiresIn * 1000;
   const givenTime = new Date(auth.timestamp).getTime();
@@ -39,7 +39,7 @@ async function getAuth(request: Request): Promise<AuthResponse> {
     if (jwt) {
       return jwt;
     }
-    throw new Error('Failed to refresh token');
+    return undefined;
   }
   return auth;
 }
