@@ -4,7 +4,7 @@ import { getAuth } from '~/.server/auth';
 import { Button } from '~/components/ui/button';
 import { cn } from '~/lib/utils';
 
-import type { Route } from '../../.react-router/types/app/routes/+types/login';
+import type { Route } from './+types/login';
 
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);

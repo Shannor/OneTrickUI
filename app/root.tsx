@@ -23,12 +23,14 @@ export const isDevEnvironment = import.meta.env.MODE === 'development';
 
 console.log(
   'Base URL',
-  isDevEnvironment ? 'http://localhost:8080' : 'https://d2onetrick.com/api',
+  isDevEnvironment
+    ? 'http://localhost:8080/api/v1'
+    : 'https://d2onetrick.com/api/v1',
 );
 client.setConfig({
   baseUrl: isDevEnvironment
-    ? 'http://localhost:8080'
-    : 'https://d2onetrick.com/api',
+    ? 'http://localhost:8080/api/v1'
+    : 'https://d2onetrick.com/api/v1',
 });
 
 export const links: Route.LinksFunction = () => [
