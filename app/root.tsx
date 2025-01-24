@@ -24,6 +24,24 @@ client.setConfig({
   baseUrl: isDev() ? 'http://localhost:8080' : 'https://api.d2onetrick.com',
 });
 
+export const meta = () => [
+  {
+    title: 'D2 One Trick',
+  },
+  {
+    description:
+      'A PvP tracker for Destiny 2 centered around activities and loadouts.',
+  },
+  {
+    keywords:
+      'destiny, destiny 2, one trick, tracker, destiny pvp, pvp, loadouts',
+  },
+  {
+    tagName: 'link',
+    rel: 'canonical',
+    href: 'https://d2onetrick.com/',
+  },
+];
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
