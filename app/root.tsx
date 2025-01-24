@@ -21,9 +21,7 @@ import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
 
 client.setConfig({
-  baseUrl: isDev()
-    ? 'http://localhost:8080/api/v1'
-    : 'https://d2onetrick.com/api/v1',
+  baseUrl: isDev() ? 'http://localhost:8080' : 'https://api.d2onetrick.com',
 });
 
 export const links: Route.LinksFunction = () => [
