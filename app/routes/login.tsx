@@ -2,10 +2,11 @@ import { ArrowUp10 } from 'lucide-react';
 import { redirect } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { Button } from '~/components/ui/button';
-import { cn } from '~/lib/utils';
+import { cn, isDev } from '~/lib/utils';
 
 import type { Route } from './+types/login';
 
+const CLIENT_ID = isDev() ? 48883 : 48722;
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
   if (auth) {
@@ -15,7 +16,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return null;
 }
 export default function Login() {
-  const href = `https://www.bungie.net/en/OAuth/Authorize?client_id=${48722}&response_type=code&state=1234`;
+  const href = `https://www.bungie.net/en/OAuth/Authorize?client_id=${CLIENT_ID}&response_type=code&state=1234`;
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">

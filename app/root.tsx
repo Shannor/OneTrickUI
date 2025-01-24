@@ -14,21 +14,14 @@ import {
   useTheme,
 } from 'remix-themes';
 import { client } from '~/api';
+import { isDev } from '~/lib/utils';
 import { themeSessionResolver } from '~/routes/sessions.server';
 
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
 
-export const isDevEnvironment = import.meta.env.MODE === 'development';
-
-console.log(
-  'Base URL',
-  isDevEnvironment
-    ? 'http://localhost:8080/api/v1'
-    : 'https://d2onetrick.com/api/v1',
-);
 client.setConfig({
-  baseUrl: isDevEnvironment
+  baseUrl: isDev()
     ? 'http://localhost:8080/api/v1'
     : 'https://d2onetrick.com/api/v1',
 });
