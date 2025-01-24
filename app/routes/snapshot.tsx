@@ -35,6 +35,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const { snapshotId } = params;
   const auth = await getAuth(request);
   const { characterId } = await getPreferences(request);
+  if (!auth) {
+    throw new Error('Not authenticated');
+  }
 
   if (!characterId) {
     throw data('No character id', { status: 400 });

@@ -21,6 +21,10 @@ import stylesheet from './app.css?url';
 
 export const isDevEnvironment = import.meta.env.MODE === 'development';
 
+console.log(
+  'Base URL',
+  isDevEnvironment ? 'http://localhost:8080' : 'https://d2onetrick.com/api',
+);
 client.setConfig({
   baseUrl: isDevEnvironment
     ? 'http://localhost:8080'
