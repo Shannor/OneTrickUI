@@ -10,7 +10,6 @@ const CLIENT_ID = isDev() ? 48883 : 48722;
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
   if (auth) {
-    // TODO: Check if auth expired and then redo if need be
     return redirect('/');
   }
   return null;
@@ -38,7 +37,7 @@ export default function Login() {
                 </p>
               </div>
               <div className="grid gap-6">
-                <Button variant="outline" className="w-full" asChild>
+                <Button className="w-full" asChild>
                   <a href={href}>Login with Bungie</a>
                 </Button>
               </div>

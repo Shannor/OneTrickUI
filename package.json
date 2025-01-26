@@ -26,6 +26,7 @@
     "date-fns": "^4.1.0",
     "isbot": "^5.1.17",
     "lucide-react": "^0.469.0",
+    "pino": "^9.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.1.1",
