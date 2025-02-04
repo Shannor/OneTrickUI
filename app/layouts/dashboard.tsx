@@ -8,6 +8,7 @@ import {
   useSubmit,
 } from 'react-router';
 import { getAuth, refreshHeaders } from '~/.server/auth';
+import { Logger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
 import { profile } from '~/api';
 import { AppSidebar } from '~/components/app-sidebar';
@@ -27,13 +28,20 @@ export async function loader({ request }: Route.LoaderArgs) {
     return redirect('/login');
   }
   const { characterId } = await getPreferences(request);
-  const { data: profileData } = await profile({
+  const { data: profileData, error } = await profile({
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
       'X-Membership-ID': auth.membershipId,
       'X-User-ID': auth.id,
     },
   });
+  if (error) {
+    if (error.status === 'DestinyServerDown') {
+      throw data(error.message, { status: 503 });
+    }
+    Logger.error(error.message, { error });
+    throw data(error.message, { status: 500 });
+  }
   if (!profileData) {
     throw data('No profile data', { status: 500 });
   }

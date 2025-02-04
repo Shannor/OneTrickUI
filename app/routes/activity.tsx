@@ -49,6 +49,9 @@ export function meta({ data }: Route.MetaArgs) {
     },
   ];
 }
+
+const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
+const crucibleReportUrl = 'https://crucible.report/pgcr/';
 export default function Activity() {
   const data = useLoaderData<typeof loader>();
   return (
@@ -57,6 +60,22 @@ export default function Activity() {
         <CardHeader>
           <CardTitle>{data.activity.mode}</CardTitle>
           <CardDescription>{data.activity.location}</CardDescription>
+          <div className="flex flex-row gap-4">
+            <a
+              href={`${destinyTrackerUrl}/${data.activity.instanceId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Destiny Tracker Link
+            </a>
+            <a
+              href={`${crucibleReportUrl}/${data.activity.instanceId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Crucible Report Link
+            </a>
+          </div>
         </CardHeader>
       </Card>
       <div className="flex flex-col gap-4">

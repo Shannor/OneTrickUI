@@ -7,6 +7,7 @@ import {
 
 import {
   createSnapshotResponseTransformer,
+  getActivityResponseTransformer,
   getSnapshotResponseTransformer,
   getSnapshotsResponseTransformer,
   loginResponseTransformer,
@@ -28,6 +29,7 @@ import type {
   LoginData,
   LoginResponse,
   ProfileData,
+  ProfileError,
   ProfileResponse,
   RefreshTokenData,
   RefreshTokenResponse,
@@ -53,7 +55,7 @@ export const profile = <ThrowOnError extends boolean = false>(
 ) => {
   return (options?.client ?? client).get<
     ProfileResponse,
-    unknown,
+    ProfileError,
     ThrowOnError
   >({
     ...options,
@@ -172,6 +174,7 @@ export const getActivity = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     ...options,
+    responseTransformer: getActivityResponseTransformer,
     url: '/activities/{activityId}',
   });
 };

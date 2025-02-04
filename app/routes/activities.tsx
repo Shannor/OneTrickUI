@@ -64,7 +64,6 @@ export default function Activities() {
   const navigate = useNavigate();
   const { data, page, activityType } = useLoaderData<typeof loader>();
 
-  console.log(page, typeof page, page === 0);
   const noActivities = data?.length === 0;
   return (
     <div className="flex flex-col gap-4 pb-6">
