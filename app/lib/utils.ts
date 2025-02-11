@@ -8,3 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function isDev() {
   return import.meta.env.MODE === 'development';
 }
+
+export function isEmptyObject(obj: object): boolean {
+  return Object.keys(obj).length === 0 && obj.constructor === Object;
+}

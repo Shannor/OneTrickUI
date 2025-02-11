@@ -3,13 +3,8 @@ import { Link, data, useLoaderData, useNavigate } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
 import { type ActivityMode, getActivities } from '~/api';
+import { ActivityCard } from '~/components/activity-card';
 import { Button } from '~/components/ui/button';
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
 
 import type { Route } from './+types/activities';
 
@@ -17,7 +12,7 @@ export function meta({ location }: Route.MetaArgs) {
   const queryParams = new URLSearchParams(location.search);
   const page = queryParams.get('page') || '';
   return [
-    { title: `One Trick - Activities - Page ${page}` },
+    { title: `Activities: Page ${page} - One Trick -` },
     {
       name: 'description',
       content: `Details about activities, page ${page}`,
@@ -57,32 +52,40 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw data('No records found', { status: 404 });
   }
 
-  return { data: res.data, page, activityType };
+  return { data: res.data, page, activityType, characterId };
 }
 
 export default function Activities() {
   const navigate = useNavigate();
-  const { data, page, activityType } = useLoaderData<typeof loader>();
+  const { data, page, activityType, characterId } =
+    useLoaderData<typeof loader>();
 
   const noActivities = data?.length === 0;
+  if (!characterId) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+          No Character Selected. Pleaase choose a character from the profile
+          page.
+        </h2>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-4 pb-6">
       <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
         {getTitle(activityType)}
       </h2>
-      {data?.map((activity) => (
-        <Card
-          key={activity.instanceId}
-          onClick={() => navigate(`/activities/${activity.instanceId}`)}
-        >
-          <CardHeader>
-            <CardTitle>{activity.location}</CardTitle>
-            <CardDescription>
-              {activity.activity} - {activity.mode}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ))}
+      <div className="flex flex-col gap-8 w-full">
+        {data?.map(({ activity, aggregate }) => (
+          <ActivityCard
+            activity={activity}
+            key={activity.instanceId}
+            onClick={() => navigate(`/activities/${activity.instanceId}`)}
+            characterMapping={aggregate?.mapping[characterId]}
+          />
+        ))}
+      </div>
       <div>{noActivities && <p>No activities found</p>}</div>
       <div className="flex flex-row gap-4 justify-between self-end">
         <Button disabled={page === 0} variant="outline">

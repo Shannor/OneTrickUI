@@ -13,6 +13,11 @@ export type Profile = {
   characters: Array<Character>;
 };
 
+export type DetailActivity = {
+  activity: ActivityHistory;
+  aggregate?: Aggregate;
+};
+
 export type CharacterSnapshot = {
   /**
    * Id of the snapshot
@@ -61,15 +66,18 @@ export type ActivityHistory = {
    * Hash id of the type of activity: Strike, Competitive, QuickPlay, etc.
    */
   activityHash: number;
+  activityIcon: string;
   /**
    * Id to get more details about the particular game
    */
   instanceId: string;
   isPrivate?: boolean;
+  imageUrl: string;
   /**
    * Name of the Destiny Activity Mode
    */
   mode?: string;
+  personalValues?: ActivityValues;
 };
 
 export type Pong = {
@@ -78,7 +86,12 @@ export type Pong = {
 
 export type ConfidenceSource = 'system' | 'user';
 
-export type ConfidenceLevel = 'notFound' | 'low' | 'medium' | 'high';
+export type ConfidenceLevel =
+  | 'notFound'
+  | 'noMatch'
+  | 'low'
+  | 'medium'
+  | 'high';
 
 export type SnapshotSnippet = {
   primaryWeapon: string;
@@ -267,6 +280,13 @@ export type Character = {
   class: string;
 };
 
+export type Team = {
+  id: string;
+  standing: string;
+  score: string;
+  teamName?: string;
+};
+
 /**
  * The response object for retrieving an individual instanced item. None of these components are relevant for an item that doesn't have an "itemInstanceId": for those, get your information from the DestinyInventoryDefinition.
  */
@@ -288,6 +308,18 @@ export type ItemDetails = {
    * Information about the sockets of the item: which are currently active, what potential sockets you could have and the stats/abilities/perks you can gain from them. COMPONENT TYPE: ItemSockets
    */
   sockets?: Array<Socket>;
+};
+
+export type ActivityValues = {
+  kills?: StatsValuePair;
+  assists?: StatsValuePair;
+  deaths?: StatsValuePair;
+  kd?: StatsValuePair;
+  kda?: StatsValuePair;
+  standing?: StatsValuePair;
+  team?: StatsValuePair;
+  fireTeamId?: StatsValuePair;
+  timePlayed?: StatsValuePair;
 };
 
 export type XUserId = string;
@@ -479,7 +511,7 @@ export type GetActivitiesResponses = {
   /**
    * List of Activities that have past
    */
-  200: Array<ActivityHistory>;
+  200: Array<DetailActivity>;
 };
 
 export type GetActivitiesResponse =
@@ -509,7 +541,8 @@ export type GetActivityResponses = {
    */
   200: {
     activity: ActivityHistory;
-    stats: Array<WeaponStats>;
+    teams: Array<Team>;
+    characterStats?: Array<WeaponStats>;
     aggregate: Aggregate;
   };
 };

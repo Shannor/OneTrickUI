@@ -1,12 +1,10 @@
 import { reactRouter } from '@react-router/dev/vite';
 import autoprefixer from 'autoprefixer';
+import { exec } from 'node:child_process';
+import { reactRouterDevTools } from 'react-router-devtools';
 import tailwindcss from 'tailwindcss';
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import { reactRouterDevTools } from 'react-router-devtools';
-
-import { exec } from 'node:child_process';
-import { cwd } from 'node:process';
 
 const editor = {
   name: 'WebStorm',
@@ -20,6 +18,9 @@ const editor = {
   },
 };
 export default defineConfig({
+  server: {
+    allowedHosts: ['ce44-136-55-63-220.ngrok-free.app'],
+  },
   css: {
     postcss: {
       plugins: [tailwindcss, autoprefixer],

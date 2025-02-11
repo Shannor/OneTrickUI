@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
 import { data, useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
+import { isEmptyObject } from '~/lib/utils';
 
 import type { Route } from './+types/activity';
 
@@ -34,7 +35,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       'X-User-ID': auth.id,
     },
   });
-  if (!res.data) {
+  if (!res.data || isEmptyObject(res.data)) {
     throw data('Record Not Found', { status: 404 });
   }
   return res.data;
@@ -49,9 +50,13 @@ export function meta({ data }: Route.MetaArgs) {
     },
   ];
 }
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return <div>Oops, something went wrong!</div>;
+}
 
 const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
 const crucibleReportUrl = 'https://crucible.report/pgcr/';
+
 export default function Activity() {
   const data = useLoaderData<typeof loader>();
   return (
@@ -61,20 +66,28 @@ export default function Activity() {
           <CardTitle>{data.activity.mode}</CardTitle>
           <CardDescription>{data.activity.location}</CardDescription>
           <div className="flex flex-row gap-4">
-            <a
-              href={`${destinyTrackerUrl}/${data.activity.instanceId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Destiny Tracker Link
-            </a>
-            <a
-              href={`${crucibleReportUrl}/${data.activity.instanceId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Crucible Report Link
-            </a>
+            <div className="flex flex-row gap-2 align-middle items-center">
+              <a
+                className="text-blue-500 hover:underline"
+                href={`${destinyTrackerUrl}/${data.activity.instanceId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Destiny Tracker
+              </a>
+              <SquareArrowOutUpRight className="h-4 w-4" />
+            </div>
+            <div className="flex flex-row gap-2 items-center">
+              <a
+                className="text-blue-500 hover:underline"
+                href={`${crucibleReportUrl}/${data.activity.instanceId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Crucible Report
+              </a>
+              <SquareArrowOutUpRight className="h-4 w-4" />
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -83,7 +96,7 @@ export default function Activity() {
           Weapons
         </h3>
         <div className="flex flex-row gap-6">
-          {data.stats.length === 0 && (
+          {(data.characterStats?.length ?? 0) === 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Heads up!</AlertTitle>
@@ -100,7 +113,7 @@ export default function Activity() {
               </AlertDescription>
             </Alert>
           )}
-          {data.stats.map((it) => (
+          {data.characterStats?.map((it) => (
             <Card key={it.referenceId}>
               <CardHeader>
                 <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">

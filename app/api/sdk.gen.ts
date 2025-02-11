@@ -7,6 +7,7 @@ import {
 
 import {
   createSnapshotResponseTransformer,
+  getActivitiesResponseTransformer,
   getActivityResponseTransformer,
   getSnapshotResponseTransformer,
   getSnapshotsResponseTransformer,
@@ -161,6 +162,7 @@ export const getActivities = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     ...options,
+    responseTransformer: getActivitiesResponseTransformer,
     url: '/activities',
   });
 };
