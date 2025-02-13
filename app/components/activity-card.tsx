@@ -50,8 +50,10 @@ export function ActivityCard({
   );
 }
 
+const ironBanner = 'iron banner';
+
 function Description({ activity, mode }: { activity: string; mode?: string }) {
-  if (activity.toLowerCase().includes('iron banner')) {
+  if (activity.toLowerCase().includes(ironBanner)) {
     return (
       <div className="text-sm uppercase tracking-wide text-muted-foreground">
         {activity}

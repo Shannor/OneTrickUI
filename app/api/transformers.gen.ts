@@ -28,16 +28,8 @@ export const refreshTokenResponseTransformer = async (
   return data;
 };
 
-const itemSnapshotSchemaResponseTransformer = (data: any) => {
-  data.timestamp = new Date(data.timestamp);
-  return data;
-};
-
 const characterSnapshotSchemaResponseTransformer = (data: any) => {
   data.timestamp = new Date(data.timestamp);
-  data.items = data.items.map((item: any) => {
-    return itemSnapshotSchemaResponseTransformer(item);
-  });
   return data;
 };
 

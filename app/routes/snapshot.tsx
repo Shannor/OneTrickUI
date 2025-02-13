@@ -61,12 +61,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export default function Snapshot({}: Route.ComponentProps) {
   const snapshot = useLoaderData<typeof loader>();
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-row gap-4 justify-between">
+      <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             Snapshot - {format(new Date(snapshot.timestamp), 'MM/dd/yyyy - p')}
+            {snapshot.id}
           </h2>
           <p>
             Snapshots are equipped loadouts that your character was wearing at

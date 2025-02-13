@@ -49,6 +49,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
   const page = url.searchParams.get('page') || 0;
   const auth = await getAuth(request);
+  if (!auth) {
+    throw new Error('Not logged in');
+  }
 
   const { characterId } = await getPreferences(request);
   if (!characterId) {
@@ -86,6 +89,9 @@ export async function action({ request }: Route.ClientActionArgs) {
     return { message: 'No character id' };
   }
   const auth = await getAuth(request);
+  if (!auth) {
+    return { message: 'No auth token' };
+  }
   const { data, error } = await createSnapshot({
     body: {
       characterId: characterId.toString(),
@@ -114,7 +120,7 @@ export default function Snapshots({ actionData }: Route.ComponentProps) {
   formData.set('characterId', characterId);
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-row gap-4 justify-between">
+      <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             Snapshots
@@ -129,7 +135,7 @@ export default function Snapshots({ actionData }: Route.ComponentProps) {
           Create New Snapshot
         </Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {snapshots?.map((snapshot) => (
           <Card
             key={snapshot.timestamp.toString()}
@@ -141,7 +147,7 @@ export default function Snapshots({ actionData }: Route.ComponentProps) {
                 {format(new Date(snapshot.timestamp), 'MM/dd/yyyy - p')}
               </CardTitle>
               <CardDescription>
-                {snapshot.items.map((it) => (
+                {Object.values(snapshot.loadout).map((it) => (
                   <div key={it.details.baseInfo.itemHash}>
                     {it.details.baseInfo.name}
                   </div>

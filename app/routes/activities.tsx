@@ -76,7 +76,7 @@ export default function Activities() {
       <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
         {getTitle(activityType)}
       </h2>
-      <div className="flex flex-col gap-8 w-full">
+      <div className="flex w-full flex-col gap-8">
         {data?.map(({ activity, aggregate }) => (
           <ActivityCard
             activity={activity}
@@ -87,7 +87,7 @@ export default function Activities() {
         ))}
       </div>
       <div>{noActivities && <p>No activities found</p>}</div>
-      <div className="flex flex-row gap-4 justify-between self-end">
+      <div className="flex flex-row justify-between gap-4 self-end">
         <Button disabled={page === 0} variant="outline">
           <ChevronLeft />
           <Link to={`/activities?page=${page - 1}`}> Previous Page</Link>

@@ -24,24 +24,37 @@ export type CharacterSnapshot = {
    */
   id: string;
   /**
+   * Id of the user it belongs to
+   */
+  userId: string;
+  /**
+   * Hash of all the items to give us a unique key
+   */
+  hash: string;
+  /**
+   * Optional ID that will link to the first ever snapshot
+   * that has the same hash. If the parent ID is provided
+   * then the snapshot data will be empty. Search by the hash
+   * to find the original data.
+   *
+   */
+  parentId?: string;
+  /**
+   * Will be default false for almost all Snapshots. Will only be set for the first snapshot entry with the selected items.
+   */
+  isOriginal: boolean;
+  /**
    * Id of the character being recorded
    */
   characterId: string;
   /**
-   * Timestamp that the items were equipped turning
+   * Timestamp for when the snapshot was taken
    */
   timestamp: Date;
-  /**
-   * All items that we currently care about, Kinetic, Energy, Heavy and Class for now
-   */
-  items: Array<ItemSnapshot>;
+  loadout: Loadout;
 };
 
 export type ItemSnapshot = {
-  /**
-   * Time the data was grabbed
-   */
-  timestamp: Date;
   /**
    * Specific instance id for the item
    */
@@ -54,7 +67,18 @@ export type ItemSnapshot = {
    * Id used to find the definition of the item
    */
   itemHash: number;
+  /**
+   * Hash of which bucket this item can be equipped in
+   */
+  bucketHash?: number;
   details: ItemDetails;
+};
+
+/**
+ * All buckets that we currently care about, Kinetic, Energy, Heavy and Class for now. Each will be a key in the items.
+ */
+export type Loadout = {
+  [key: string]: ItemSnapshot;
 };
 
 export type ActivityHistory = {
@@ -66,12 +90,18 @@ export type ActivityHistory = {
    * Hash id of the type of activity: Strike, Competitive, QuickPlay, etc.
    */
   activityHash: number;
+  /**
+   * URL to the icon for the type of activity, IB, Crucible, etc.
+   */
   activityIcon: string;
   /**
    * Id to get more details about the particular game
    */
   instanceId: string;
   isPrivate?: boolean;
+  /**
+   * URL for the image of the destination activity
+   */
   imageUrl: string;
   /**
    * Name of the Destiny Activity Mode

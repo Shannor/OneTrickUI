@@ -55,8 +55,8 @@ const data = {
       icon: Timer,
     },
     {
-      name: 'Snapshots',
-      url: '/snapshots',
+      name: 'Loadouts',
+      url: '/loadouts',
       icon: Save,
     },
   ],
