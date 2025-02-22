@@ -1,4 +1,4 @@
-import { Home, Save, Swords, Timer } from 'lucide-react';
+import { Home, Hourglass, SquareLibrary, Swords } from 'lucide-react';
 import * as React from 'react';
 import type { Profile } from '~/api';
 import { CharacterSwitcher } from '~/components/character-switcher';
@@ -52,12 +52,12 @@ const data = {
     {
       name: 'Sessions',
       url: '/sessions',
-      icon: Timer,
+      icon: Hourglass,
     },
     {
       name: 'Loadouts',
       url: '/loadouts',
-      icon: Save,
+      icon: SquareLibrary,
     },
   ],
 };

@@ -3,6 +3,7 @@ import { PlusIcon } from 'lucide-react';
 import {
   data,
   isRouteErrorResponse,
+  useFetcher,
   useLoaderData,
   useNavigate,
   useSubmit,
@@ -113,9 +114,11 @@ export async function action({ request }: Route.ClientActionArgs) {
 
 export default function Snapshots({ actionData }: Route.ComponentProps) {
   const submit = useSubmit();
+  const fetcher = useFetcher();
   const { snapshots, characterId } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
+  const isSubmitting = fetcher.state === 'submitting';
   const formData = new FormData();
   formData.set('characterId', characterId);
   return (
@@ -130,21 +133,36 @@ export default function Snapshots({ actionData }: Route.ComponentProps) {
             the time.
           </p>
         </div>
-        <Button onClick={() => submit(formData, { method: 'post' })}>
-          <PlusIcon className="h-4 w-4" />
-          Create New Snapshot
-        </Button>
+        <fetcher.Form method="post">
+          <input type="hidden" name="characterId" value={characterId} />
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={!characterId || isSubmitting}
+            className={`${isSubmitting ? 'opacity-50' : ''}`}
+          >
+            {isSubmitting ? (
+              <></>
+            ) : (
+              <>
+                <PlusIcon className="h-4 w-4" />
+                Create New Snapshot
+              </>
+            )}
+          </Button>
+        </fetcher.Form>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {snapshots?.map((snapshot) => (
           <Card
-            key={snapshot.timestamp.toString()}
+            key={snapshot.id}
             className="cursor-pointer"
-            onClick={() => navigate(`/snapshots/${snapshot.id}`)}
+            onClick={() => navigate(`/loadouts/${snapshot.id}`)}
           >
             <CardHeader>
               <CardTitle>
-                {format(new Date(snapshot.timestamp), 'MM/dd/yyyy - p')}
+                {snapshot.name} -{' '}
+                {format(new Date(snapshot.createdAt), 'MM/dd/yyyy - p')}
               </CardTitle>
               <CardDescription>
                 {Object.values(snapshot.loadout).map((it) => (

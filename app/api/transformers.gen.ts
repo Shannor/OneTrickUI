@@ -3,10 +3,15 @@ import type {
   CreateSnapshotResponse,
   GetActivitiesResponse,
   GetActivityResponse,
+  GetSessionAggregatesResponse,
+  GetSessionResponse,
+  GetSessionsResponse,
   GetSnapshotResponse,
   GetSnapshotsResponse,
   LoginResponse,
   RefreshTokenResponse,
+  StartSessionResponse,
+  UpdateSessionResponse,
 } from './types.gen';
 
 const authResponseSchemaResponseTransformer = (data: any) => {
@@ -29,7 +34,8 @@ export const refreshTokenResponseTransformer = async (
 };
 
 const characterSnapshotSchemaResponseTransformer = (data: any) => {
-  data.timestamp = new Date(data.timestamp);
+  data.createdAt = new Date(data.createdAt);
+  data.updatedAt = new Date(data.updatedAt);
   return data;
 };
 
@@ -56,12 +62,21 @@ export const getSnapshotResponseTransformer = async (
   return data;
 };
 
+const activityHistorySchemaResponseTransformer = (data: any) => {
+  data.period = new Date(data.period);
+  return data;
+};
+
 const aggregateSchemaResponseTransformer = (data: any) => {
+  data.activityDetails = activityHistorySchemaResponseTransformer(
+    data.activityDetails,
+  );
   data.createdAt = new Date(data.createdAt);
   return data;
 };
 
 const detailActivitySchemaResponseTransformer = (data: any) => {
+  data.activity = activityHistorySchemaResponseTransformer(data.activity);
   if (data.aggregate) {
     data.aggregate = aggregateSchemaResponseTransformer(data.aggregate);
   }
@@ -80,6 +95,59 @@ export const getActivitiesResponseTransformer = async (
 export const getActivityResponseTransformer = async (
   data: any,
 ): Promise<GetActivityResponse> => {
-  data.aggregate = aggregateSchemaResponseTransformer(data.aggregate);
+  data.activity = activityHistorySchemaResponseTransformer(data.activity);
+  if (data.aggregate) {
+    data.aggregate = aggregateSchemaResponseTransformer(data.aggregate);
+  }
+  return data;
+};
+
+const sessionSchemaResponseTransformer = (data: any) => {
+  data.startedAt = new Date(data.startedAt);
+  if (data.completedAt) {
+    data.completedAt = new Date(data.completedAt);
+  }
+  if (data.lastSeenTimestamp) {
+    data.lastSeenTimestamp = new Date(data.lastSeenTimestamp);
+  }
+  return data;
+};
+
+export const getSessionsResponseTransformer = async (
+  data: any,
+): Promise<GetSessionsResponse> => {
+  data = data.map((item: any) => {
+    return sessionSchemaResponseTransformer(item);
+  });
+  return data;
+};
+
+export const startSessionResponseTransformer = async (
+  data: any,
+): Promise<StartSessionResponse> => {
+  data = sessionSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getSessionResponseTransformer = async (
+  data: any,
+): Promise<GetSessionResponse> => {
+  data = sessionSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateSessionResponseTransformer = async (
+  data: any,
+): Promise<UpdateSessionResponse> => {
+  data = sessionSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getSessionAggregatesResponseTransformer = async (
+  data: any,
+): Promise<GetSessionAggregatesResponse> => {
+  data = data.map((item: any) => {
+    return aggregateSchemaResponseTransformer(item);
+  });
   return data;
 };
