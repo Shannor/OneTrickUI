@@ -19,7 +19,7 @@ const editor = {
 };
 export default defineConfig({
   server: {
-    allowedHosts: ['ce44-136-55-63-220.ngrok-free.app'],
+    allowedHosts: ['local.d2onetrick.ngrok.app'],
   },
   css: {
     postcss: {

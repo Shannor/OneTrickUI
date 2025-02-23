@@ -38,15 +38,18 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (!res.data || isEmptyObject(res.data)) {
     throw data('Record Not Found', { status: 404 });
   }
-  return res.data;
+  return { data: res.data, characterId };
 }
 
 export function meta({ data }: Route.MetaArgs) {
+  const {
+    data: { activity },
+  } = data;
   return [
-    { title: `One Trick - ${data.activity.mode}` },
+    { title: `One Trick - ${activity.mode}` },
     {
       name: 'description',
-      content: `Details about ${data.activity.location} - ${data.activity.mode}`,
+      content: `Details about ${activity.location} - ${activity.mode}`,
     },
   ];
 }
@@ -58,7 +61,8 @@ const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
 const crucibleReportUrl = 'https://crucible.report/pgcr/';
 
 export default function Activity() {
-  const data = useLoaderData<typeof loader>();
+  const { data, characterId } = useLoaderData<typeof loader>();
+  const characterData = data.aggregate?.performance[characterId];
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -66,7 +70,7 @@ export default function Activity() {
           <CardTitle>{data.activity.mode}</CardTitle>
           <CardDescription>{data.activity.location}</CardDescription>
           <div className="flex flex-row gap-4">
-            <div className="flex flex-row gap-2 align-middle items-center">
+            <div className="flex flex-row items-center gap-2 align-middle">
               <a
                 className="text-blue-500 hover:underline"
                 href={`${destinyTrackerUrl}/${data.activity.instanceId}`}
@@ -77,7 +81,7 @@ export default function Activity() {
               </a>
               <SquareArrowOutUpRight className="h-4 w-4" />
             </div>
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex flex-row items-center gap-2">
               <a
                 className="text-blue-500 hover:underline"
                 href={`${crucibleReportUrl}/${data.activity.instanceId}`}
@@ -96,7 +100,7 @@ export default function Activity() {
           Weapons
         </h3>
         <div className="flex flex-row gap-6">
-          {(data.characterStats?.length ?? 0) === 0 && (
+          {Object.values(characterData?.weapons ?? {}).length === 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Heads up!</AlertTitle>
@@ -113,17 +117,17 @@ export default function Activity() {
               </AlertDescription>
             </Alert>
           )}
-          {data.characterStats?.map((it) => (
+          {Object.values(characterData?.weapons ?? {}).map((it) => (
             <Card key={it.referenceId}>
               <CardHeader>
                 <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                  {it.details?.baseInfo?.name}
+                  {it.properties?.baseInfo?.name}
                 </h3>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col">
                   <div className="pb-2 font-bold">Perks</div>
-                  {it.details?.perks?.map((it) => (
+                  {it.properties?.perks?.map((it) => (
                     <div key={it.hash}>
                       <div>{it.name}</div>
                     </div>
@@ -131,7 +135,7 @@ export default function Activity() {
                 </div>
                 <div className="flex flex-col">
                   <div className="pb-2 font-bold">Sockets</div>
-                  {it.details?.sockets?.map((it) => (
+                  {it.properties?.sockets?.map((it) => (
                     <div key={it.plugHash}>
                       <div>{it.name}</div>
                     </div>
@@ -139,8 +143,8 @@ export default function Activity() {
                 </div>
                 <div>
                   <div className="pb-2 font-bold">Stats</div>
-                  {it.details?.stats &&
-                    Object.values(it.details?.stats).map((it) => (
+                  {it.properties?.stats &&
+                    Object.values(it.properties?.stats).map((it) => (
                       <div key={it.hash} className="grid grid-cols-2 gap-2">
                         <div>{it.name}</div>
                         <div>{it.value}</div>
@@ -149,7 +153,7 @@ export default function Activity() {
                 </div>
                 <div>
                   <div className="pb-2 font-bold">Kills</div>
-                  {it.stats?.map((value) => (
+                  {Object.values(it.stats ?? {})?.map((value) => (
                     <div key={value.name} className="grid grid-cols-2 gap-2">
                       <div>{value.name}</div>
                       <div>{value.basic?.displayValue}</div>

@@ -9,10 +9,15 @@ import {
   createSnapshotResponseTransformer,
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
+  getSessionAggregatesResponseTransformer,
+  getSessionResponseTransformer,
+  getSessionsResponseTransformer,
   getSnapshotResponseTransformer,
   getSnapshotsResponseTransformer,
   loginResponseTransformer,
   refreshTokenResponseTransformer,
+  startSessionResponseTransformer,
+  updateSessionResponseTransformer,
 } from './transformers.gen';
 import type {
   CreateSnapshotData,
@@ -23,6 +28,12 @@ import type {
   GetActivityResponse,
   GetPingData,
   GetPingResponse,
+  GetSessionAggregatesData,
+  GetSessionAggregatesResponse,
+  GetSessionData,
+  GetSessionResponse,
+  GetSessionsData,
+  GetSessionsResponse,
   GetSnapshotData,
   GetSnapshotResponse,
   GetSnapshotsData,
@@ -34,6 +45,13 @@ import type {
   ProfileResponse,
   RefreshTokenData,
   RefreshTokenResponse,
+  SessionCheckInData,
+  SessionCheckInResponse,
+  StartSessionData,
+  StartSessionError,
+  StartSessionResponse,
+  UpdateSessionData,
+  UpdateSessionResponse,
 } from './types.gen';
 
 export const client = createClient(createConfig());
@@ -178,5 +196,112 @@ export const getActivity = <ThrowOnError extends boolean = false>(
     ...options,
     responseTransformer: getActivityResponseTransformer,
     url: '/activities/{activityId}',
+  });
+};
+
+export const getSessions = <ThrowOnError extends boolean = false>(
+  options: Options<GetSessionsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetSessionsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getSessionsResponseTransformer,
+    url: '/sessions',
+  });
+};
+
+/**
+ * Create a new session
+ */
+export const startSession = <ThrowOnError extends boolean = false>(
+  options: Options<StartSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    StartSessionResponse,
+    StartSessionError,
+    ThrowOnError
+  >({
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    responseTransformer: startSessionResponseTransformer,
+    url: '/sessions',
+  });
+};
+
+/**
+ * Get a specific session
+ */
+export const getSession = <ThrowOnError extends boolean = false>(
+  options: Options<GetSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetSessionResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getSessionResponseTransformer,
+    url: '/sessions/{sessionId}',
+  });
+};
+
+/**
+ * Complete a session
+ */
+export const updateSession = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).put<
+    UpdateSessionResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    responseTransformer: updateSessionResponseTransformer,
+    url: '/sessions/{sessionId}',
+  });
+};
+
+export const getSessionAggregates = <ThrowOnError extends boolean = false>(
+  options: Options<GetSessionAggregatesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetSessionAggregatesResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getSessionAggregatesResponseTransformer,
+    url: '/sessions/{sessionId}/aggregates',
+  });
+};
+
+/**
+ * Perform session update logic
+ */
+export const sessionCheckIn = <ThrowOnError extends boolean = false>(
+  options: Options<SessionCheckInData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    SessionCheckInResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    url: '/actions/session-checkin',
   });
 };
