@@ -7,6 +7,7 @@ interface EmptyProps {
   description?: string;
   children?: React.ReactNode;
   className?: string;
+  icon?: React.ReactNode;
 }
 
 export const Empty: React.FC<EmptyProps> = ({
@@ -14,6 +15,7 @@ export const Empty: React.FC<EmptyProps> = ({
   description = 'No content available yet.',
   children,
   className,
+  icon,
 }) => {
   return (
     <div
@@ -23,7 +25,9 @@ export const Empty: React.FC<EmptyProps> = ({
       )}
     >
       <div className="flex flex-col gap-4 text-center">
-        <CircleAlert className="flex h-16 w-16 self-center text-gray-400" />
+        {icon ?? (
+          <CircleAlert className="flex h-16 w-16 self-center text-gray-400" />
+        )}
         <h2 className="text-xl font-semibold">{title}</h2>
         <p className="text-muted-foreground">{description}</p>
         {children}

@@ -146,7 +146,7 @@ export const updateSessionResponseTransformer = async (
 export const getSessionAggregatesResponseTransformer = async (
   data: any,
 ): Promise<GetSessionAggregatesResponse> => {
-  data = data.map((item: any) => {
+  data.aggregates = data.aggregates.map((item: any) => {
     return aggregateSchemaResponseTransformer(item);
   });
   return data;

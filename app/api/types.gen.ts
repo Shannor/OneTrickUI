@@ -205,7 +205,9 @@ export type WeaponInstanceMetrics = {
 
 export type InstancePerformance = {
   playerStats: PlayerStats;
-  weapons: Array<WeaponInstanceMetrics>;
+  weapons: {
+    [key: string]: WeaponInstanceMetrics;
+  };
   extra?: {
     [key: string]: UniqueStatValue;
   };
@@ -362,14 +364,41 @@ export type ItemProperties = {
  * All Player Stats from a match that we currently care about
  */
 export type PlayerStats = {
+  /**
+   * Number of kills done in the match
+   */
   kills?: StatsValuePair;
+  /**
+   * Number of assists done in the match
+   */
   assists?: StatsValuePair;
+  /**
+   * Number of deaths done in the match
+   */
   deaths?: StatsValuePair;
+  /**
+   * ratio of kill / deaths in the match
+   */
   kd?: StatsValuePair;
+  /**
+   * ratio of kills + assists/ deaths in the match
+   */
   kda?: StatsValuePair;
+  /**
+   * Win or lose in the match
+   */
   standing?: StatsValuePair;
+  /**
+   * Id for the team the player was on this match
+   */
   team?: StatsValuePair;
+  /**
+   * ID for the fireteam player was on. If the same as another player then they were together
+   */
   fireTeamId?: StatsValuePair;
+  /**
+   * Time in seconds the player was in the match
+   */
   timePlayed?: StatsValuePair;
 };
 
@@ -748,7 +777,12 @@ export type GetSessionAggregatesResponses = {
   /**
    * Array of aggregates
    */
-  200: Array<Aggregate>;
+  200: {
+    aggregates: Array<Aggregate>;
+    snapshots: {
+      [key: string]: CharacterSnapshot;
+    };
+  };
 };
 
 export type GetSessionAggregatesResponse =

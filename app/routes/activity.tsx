@@ -100,7 +100,7 @@ export default function Activity() {
           Weapons
         </h3>
         <div className="flex flex-row gap-6">
-          {(characterData?.weapons?.length ?? 0) === 0 && (
+          {Object.values(characterData?.weapons ?? {}).length === 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Heads up!</AlertTitle>
@@ -117,7 +117,7 @@ export default function Activity() {
               </AlertDescription>
             </Alert>
           )}
-          {characterData?.weapons.map((it) => (
+          {Object.values(characterData?.weapons ?? {}).map((it) => (
             <Card key={it.referenceId}>
               <CardHeader>
                 <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">

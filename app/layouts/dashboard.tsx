@@ -80,7 +80,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     },
   );
 }
-
+const LAST_POLL_KEY = 'lastPoll';
+interface PollData {
+  sessionId: string;
+  lastPoll: number;
+}
 export default function Dashboard() {
   const navigation = useNavigation();
   const location = useLocation();
