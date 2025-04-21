@@ -189,7 +189,6 @@ function Loadout({ snapshot, performances }: LoadoutProps) {
       {ordered.map((item) => {
         const kills = weaponStats[item.itemHash]?.kills ?? 0;
         const precision = weaponStats[item.itemHash]?.precisionKills ?? 0;
-        console.log(item.details);
         return (
           <div className="flex flex-row gap-4">
             <div className="flex flex-col">

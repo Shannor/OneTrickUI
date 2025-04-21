@@ -1,10 +1,11 @@
-import { AlertCircle, SquareArrowOutUpRight } from 'lucide-react';
+import { SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
 import { data, useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
-import { getActivity } from '~/api';
-import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
+import { getActivity, getSnapshot } from '~/api';
+import { Label } from '~/components/label';
+import { TeamScore } from '~/components/team-score';
 import {
   Card,
   CardContent,
@@ -12,7 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
+import { Weapon } from '~/components/weapon';
 import { isEmptyObject } from '~/lib/utils';
+import { SnapshotLinkDetails } from '~/organisims/snapshot-link-details';
 
 import type { Route } from './+types/activity';
 
@@ -38,12 +41,31 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (!res.data || isEmptyObject(res.data)) {
     throw data('Record Not Found', { status: 404 });
   }
-  return { data: res.data, characterId };
+  const link = res.data.aggregate?.snapshotLinks?.[characterId];
+  if (link && link.snapshotId) {
+    const { data, error } = await getSnapshot({
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        'X-User-ID': auth.id,
+        'X-Membership-ID': auth.primaryMembershipId,
+      },
+      path: {
+        snapshotId: link.snapshotId,
+      },
+      query: {
+        characterId,
+      },
+    });
+    if (!error) {
+      return { activityDetails: res.data, snapshot: data, characterId };
+    }
+  }
+  return { activityDetails: res.data, characterId };
 }
 
 export function meta({ data }: Route.MetaArgs) {
   const {
-    data: { activity },
+    activityDetails: { activity },
   } = data;
   return [
     { title: `One Trick - ${activity.mode}` },
@@ -58,22 +80,39 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
-const crucibleReportUrl = 'https://crucible.report/pgcr/';
+const crucibleReportUrl = 'https://crucible.report/pgcr';
 
 export default function Activity() {
-  const { data, characterId } = useLoaderData<typeof loader>();
-  const characterData = data.aggregate?.performance[characterId];
+  const {
+    activityDetails: { activity, aggregate, teams },
+    snapshot,
+    characterId,
+  } = useLoaderData<typeof loader>();
+
+  const personalValues = activity.personalValues;
+  const performance = aggregate?.performance[characterId];
+  const link = aggregate?.snapshotLinks[characterId];
+
+  console.log(performance, link);
   return (
     <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>{data.activity.mode}</CardTitle>
-          <CardDescription>{data.activity.location}</CardDescription>
+          <CardTitle>{activity.mode}</CardTitle>
+          <CardDescription>{activity.location}</CardDescription>
+          <Label
+            className="text-lg font-semibold data-[result=0]:text-green-500 data-[result=1]:text-red-500"
+            data-result={personalValues?.standing?.value ?? 0}
+          >
+            {personalValues?.standing?.displayValue}
+          </Label>
+          <TeamScore teams={teams} />
+
           <div className="flex flex-row gap-4">
             <div className="flex flex-row items-center gap-2 align-middle">
               <a
                 className="text-blue-500 hover:underline"
-                href={`${destinyTrackerUrl}/${data.activity.instanceId}`}
+                href={`${destinyTrackerUrl}/${activity.instanceId}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -84,7 +123,7 @@ export default function Activity() {
             <div className="flex flex-row items-center gap-2">
               <a
                 className="text-blue-500 hover:underline"
-                href={`${crucibleReportUrl}/${data.activity.instanceId}`}
+                href={`${crucibleReportUrl}/${activity.instanceId}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -95,73 +134,15 @@ export default function Activity() {
           </div>
         </CardHeader>
       </Card>
+      <SnapshotLinkDetails link={link} />
+
       <div className="flex flex-col gap-4">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Weapons
         </h3>
-        <div className="flex flex-row gap-6">
-          {Object.values(characterData?.weapons ?? {}).length === 0 && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Heads up!</AlertTitle>
-              <AlertDescription>
-                <p>
-                  Couldn't find any weapons for this activity. This is likely
-                  due to not having a matching snapshot at this time.
-                </p>
-                <p>
-                  In the future, we will be able to show you weapons that we saw
-                  you using and you can manually select the weapons that you
-                  think match it.
-                </p>
-              </AlertDescription>
-            </Alert>
-          )}
-          {Object.values(characterData?.weapons ?? {}).map((it) => (
-            <Card key={it.referenceId}>
-              <CardHeader>
-                <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                  {it.properties?.baseInfo?.name}
-                </h3>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col">
-                  <div className="pb-2 font-bold">Perks</div>
-                  {it.properties?.perks?.map((it) => (
-                    <div key={it.hash}>
-                      <div>{it.name}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-col">
-                  <div className="pb-2 font-bold">Sockets</div>
-                  {it.properties?.sockets?.map((it) => (
-                    <div key={it.plugHash}>
-                      <div>{it.name}</div>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div className="pb-2 font-bold">Stats</div>
-                  {it.properties?.stats &&
-                    Object.values(it.properties?.stats).map((it) => (
-                      <div key={it.hash} className="grid grid-cols-2 gap-2">
-                        <div>{it.name}</div>
-                        <div>{it.value}</div>
-                      </div>
-                    ))}
-                </div>
-                <div>
-                  <div className="pb-2 font-bold">Kills</div>
-                  {Object.values(it.stats ?? {})?.map((value) => (
-                    <div key={value.name} className="grid grid-cols-2 gap-2">
-                      <div>{value.name}</div>
-                      <div>{value.basic?.displayValue}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+        <div className="flex flex-col gap-6">
+          {Object.values(performance?.weapons ?? {}).map((it) => (
+            <Weapon key={it.referenceId} {...it} />
           ))}
         </div>
       </div>
