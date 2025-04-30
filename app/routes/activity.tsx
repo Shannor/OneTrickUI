@@ -85,7 +85,6 @@ const crucibleReportUrl = 'https://crucible.report/pgcr';
 export default function Activity() {
   const {
     activityDetails: { activity, aggregate, teams },
-    snapshot,
     characterId,
   } = useLoaderData<typeof loader>();
 
@@ -93,7 +92,6 @@ export default function Activity() {
   const performance = aggregate?.performance[characterId];
   const link = aggregate?.snapshotLinks[characterId];
 
-  console.log(performance, link);
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -136,11 +134,11 @@ export default function Activity() {
       </Card>
       <SnapshotLinkDetails link={link} />
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 p-4">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Weapons
         </h3>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-row gap-6">
           {Object.values(performance?.weapons ?? {}).map((it) => (
             <Weapon key={it.referenceId} {...it} />
           ))}

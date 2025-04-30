@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import { ChevronsDown } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import type { Aggregate } from '~/api';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Button } from '~/components/ui/button';
@@ -22,6 +23,7 @@ export function CollapsibleMaps({ aggregates }: MapProps) {
         new Date(b.activityDetails.period).getTime(),
     );
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,7 +43,10 @@ export function CollapsibleMaps({ aggregates }: MapProps) {
             return (
               <div
                 key={aggregate.id}
-                className="flex flex-row items-center gap-2"
+                className="flex cursor-pointer flex-row items-center gap-2"
+                onClick={() => {
+                  navigate(`/activities/${aggregate.activityId}`);
+                }}
               >
                 <Avatar className="rounded-sm opacity-75">
                   <AvatarImage src={imageUrl} alt={`${location} image`} />

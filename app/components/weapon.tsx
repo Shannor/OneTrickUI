@@ -13,7 +13,7 @@ export const Weapon: React.FC<Props> = ({
   display,
 }) => {
   return (
-    <Card key={referenceId}>
+    <Card key={referenceId} className="">
       <CardHeader className="flex flex-row gap-4">
         {display?.icon && (
           <img
@@ -31,22 +31,20 @@ export const Weapon: React.FC<Props> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="flex w-full flex-col">
+      <CardContent className="flex w-full flex-col gap-10">
         {stats && (
-          <div className="flex flex-col">
+          <div className="flex flex-col self-center">
             <WeaponKills stats={stats} />
           </div>
         )}
         <div className="flex w-full flex-grow flex-row gap-10">
           {properties?.stats && (
-            <div>
-              <div className="pb-2 font-bold">Stats</div>
+            <div className="w-1/2">
               <WeaponStats stats={properties.stats} />
             </div>
           )}
           {properties?.sockets && (
             <div className="flex flex-col">
-              <div className="pb-2 font-bold">Sockets</div>
               <WeaponSockets sockets={properties?.sockets} />
             </div>
           )}
