@@ -1,4 +1,5 @@
-import type { ActivityHistory, CharacterMapping } from '~/api';
+import { format } from 'date-fns';
+import type { ActivityHistory, CharacterSnapshot } from '~/api';
 import { Label } from '~/components/label';
 
 export function ActivityCard({
@@ -9,8 +10,9 @@ export function ActivityCard({
 }: {
   activity: ActivityHistory;
   onClick: () => void;
-  characterMapping?: CharacterMapping;
+  characterMapping?: any;
 }) {
+  console.log(activity);
   const { personalValues } = activity;
   return (
     <div
@@ -36,6 +38,7 @@ export function ActivityCard({
             <div className="text-xl font-bold">{activity.location}</div>
           </div>
         </div>
+        <div>{format(activity.period, 'MM/dd/yyyy - p')}</div>
         <div className="flex flex-row items-center gap-4">
           <Label
             className="text-lg font-semibold data-[result=0]:text-green-500 data-[result=1]:text-red-500"

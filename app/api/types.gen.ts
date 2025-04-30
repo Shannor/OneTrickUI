@@ -197,10 +197,18 @@ export type WeaponInstanceMetrics = {
    * The hash ID of the item definition that describes the weapon.
    */
   referenceId?: number;
+  display?: Display;
   properties?: ItemProperties;
   stats?: {
     [key: string]: UniqueStatValue;
   };
+};
+
+export type Display = {
+  name: string;
+  hasIcon: boolean;
+  description: string;
+  icon?: string;
 };
 
 export type InstancePerformance = {
@@ -400,6 +408,11 @@ export type PlayerStats = {
    * Time in seconds the player was in the match
    */
   timePlayed?: StatsValuePair;
+};
+
+export type PostGameEntry = {
+  characterId?: string;
+  standing?: number;
 };
 
 export type Session = {
@@ -639,6 +652,9 @@ export type GetActivityResponses = {
     activity: ActivityHistory;
     teams: Array<Team>;
     aggregate?: Aggregate;
+    postGameEntries?: Array<{
+      [key: string]: unknown;
+    }>;
   };
 };
 
