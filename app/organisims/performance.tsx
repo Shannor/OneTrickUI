@@ -1,13 +1,16 @@
 import { Skull, Tally5, Users } from 'lucide-react';
+import React from 'react';
 import type { InstancePerformance } from '~/api';
 import { calculateRatio } from '~/calculations/precision';
+import { Label } from '~/components/label';
+import { Stat } from '~/components/stat';
 
 interface PerformanceProps {
   performances: InstancePerformance[];
 }
 
 export function Performance({ performances }: PerformanceProps) {
-  const totalPerformance = performances.reduce(
+  const { kills, deaths, assists } = performances.reduce(
     (state, { playerStats }) => {
       state.kills += playerStats.kills?.value ?? 0;
       state.assists += playerStats.assists?.value ?? 0;
@@ -20,28 +23,15 @@ export function Performance({ performances }: PerformanceProps) {
       deaths: 0,
     },
   );
-  const kd = calculateRatio(totalPerformance.kills, totalPerformance.deaths);
-  const kda = calculateRatio(
-    totalPerformance.kills + totalPerformance.assists,
-    totalPerformance.deaths,
-  );
+  const kd = calculateRatio(kills, deaths);
+  const kda = calculateRatio(kills + assists, deaths);
   return (
-    <div className="flex flex-col gap-4">
-      <div>Performance</div>
-      <div>
-        <Tally5 />
-        <div>Kills: {totalPerformance.kills}</div>
-      </div>
-      <div className="flex flex-row gap-1">
-        <Users />
-        <div>Assists: {totalPerformance.assists}</div>
-      </div>
-      <div>
-        <Skull />
-        <div>Deaths: {totalPerformance.deaths}</div>
-      </div>
-      <div>K/D: {kd}</div>
-      <div>Efficiency: {kda}</div>
+    <div className="flex flex-row gap-4">
+      <Stat label="Kills" value={kills.toString()} />
+      <Stat label="Assists" value={assists.toString()} />
+      <Stat label="Deaths" value={deaths.toString()} />
+      <Stat label="K/D" value={kd.toString()} />
+      <Stat label="Effiecieny" value={kda.toString()} />
     </div>
   );
 }

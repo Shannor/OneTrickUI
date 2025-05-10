@@ -1,8 +1,8 @@
 import React from 'react';
 import type { WeaponInstanceMetrics } from '~/api';
+import { Sockets } from '~/components/sockets';
 import { Card, CardContent, CardHeader } from '~/components/ui/card';
 import { WeaponKills } from '~/components/weapon-kills';
-import { WeaponSockets } from '~/components/weapon-sockets';
 import { WeaponStats } from '~/components/weapon-stats';
 
 type Props = WeaponInstanceMetrics;
@@ -45,7 +45,7 @@ export const Weapon: React.FC<Props> = ({
           )}
           {properties?.sockets && (
             <div className="flex flex-col">
-              <WeaponSockets sockets={properties?.sockets} />
+              <Sockets sockets={properties?.sockets} />
             </div>
           )}
         </div>
