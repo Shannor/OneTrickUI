@@ -18,7 +18,6 @@ export const Class: React.FC<Props> = ({ snapshot }) => {
     name,
     details: { sockets, perks },
   } = itemSnapshot;
-  console.log(sockets, perks);
   return (
     <div>
       <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
