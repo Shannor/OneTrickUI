@@ -1,17 +1,24 @@
 import { format } from 'date-fns';
 import { Percent, Tally5, Target } from 'lucide-react';
+import React from 'react';
 import { useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import {
   type Aggregate,
   type CharacterSnapshot,
   type InstancePerformance,
+  type ItemSnapshot,
+  type UniqueStatValue,
   getSession,
   getSessionAggregates,
 } from '~/api';
 import { calculatePercentage } from '~/calculations/precision';
+import { Class } from '~/components/class';
 import { Empty } from '~/components/empty';
+import { Loadout } from '~/components/loadout';
+import { Stat } from '~/components/stat';
 import { Badge } from '~/components/ui/badge';
+import { Weapon } from '~/components/weapon';
 import { CollapsibleMaps } from '~/organisims/collapsible-maps';
 import { Performance } from '~/organisims/performance';
 
@@ -78,12 +85,24 @@ export default function Session() {
     );
   }
 
+  if (error) {
+    console.error(error);
+    return (
+      <div>
+        <Empty
+          title="Error loading Session"
+          description="Error loading this session. Please try again later."
+        />
+      </div>
+    );
+  }
+
   const isCurrent = session.status === 'pending';
   const group = groupAggregates(aggregates, session.characterId);
 
   return (
     <div>
-      <div className="flex flex-col items-start gap-4 border-b pb-2">
+      <div className="flex flex-col items-start gap-4 border-b p-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}
         <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
           {session.name}
@@ -91,12 +110,12 @@ export default function Session() {
         <div className="text-sm text-muted-foreground">
           {format(session.startedAt, 'MM/dd/yyyy - p')}
           {session.completedAt
-            ? `- ${format(session.completedAt, 'MM/dd/yyyy - p')}`
+            ? ` - ${format(session.completedAt, 'MM/dd/yyyy - p')}`
             : ''}
         </div>
       </div>
       {group.map(([key, value]) => {
-        const snapshot = snapshots[key];
+        const snapshot: CharacterSnapshot | undefined = snapshots[key];
         let title = '';
         switch (key) {
           case 'notFound':
@@ -112,14 +131,15 @@ export default function Session() {
           (a) => a.performance[session.characterId],
         );
         return (
-          <div key={key} className="flex flex-col gap-4 border-b p-4">
+          <div key={key} className="flex flex-col gap-6 border-b p-4">
             <div className="flex flex-col">
               <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
                 {title}
               </h4>
             </div>
-            <Loadout performances={performances} snapshot={snapshot} />
             <Performance performances={performances} />
+            <Class snapshot={snapshot} />
+            <Loadout performances={performances} snapshot={snapshot} />
             <CollapsibleMaps aggregates={value} />
           </div>
         );
@@ -133,92 +153,6 @@ export default function Session() {
     </div>
   );
 }
-
-const Kinetic = 1498876634;
-const Energy = 2465295065;
-const Power = 953998645;
-const SubClass = 3284755031;
-interface LoadoutProps {
-  snapshot?: CharacterSnapshot;
-  performances: InstancePerformance[];
-}
-
-interface Stats {
-  precisionKills: number;
-  kills: number;
-}
-const PrecisionKills = 'uniqueWeaponPrecisionKills';
-const UniqueKills = 'uniqueWeaponKills';
-function Loadout({ snapshot, performances }: LoadoutProps) {
-  if (!snapshot) {
-    return null;
-  }
-  const weaponStats = performances.reduce(
-    (state, currentValue) => {
-      Object.entries(currentValue.weapons).forEach(([key, weapon]) => {
-        if (!weapon.stats) {
-          return;
-        }
-        if (state[key]) {
-          state[key].kills += weapon.stats[UniqueKills].basic.value ?? 0;
-          state[key].precisionKills +=
-            weapon.stats[PrecisionKills].basic.value ?? 0;
-        } else {
-          state[key] = {
-            precisionKills: weapon.stats[PrecisionKills].basic.value ?? 0,
-            kills: weapon.stats[UniqueKills].basic.value ?? 0,
-          };
-        }
-      });
-      return state;
-    },
-    {} as Record<string, Stats>,
-  );
-
-  const kinetic = snapshot.loadout[Kinetic];
-  const energy = snapshot.loadout[Energy];
-  const power = snapshot.loadout[Power];
-  const subclass = snapshot.loadout[SubClass];
-  const ordered = [kinetic, energy, power].filter(Boolean);
-
-  return (
-    <div>
-      <div className="flex flex-row gap-4">
-        Class : {subclass?.name ?? 'Unknown'}
-      </div>
-      {ordered.map((item) => {
-        const kills = weaponStats[item.itemHash]?.kills ?? 0;
-        const precision = weaponStats[item.itemHash]?.precisionKills ?? 0;
-        return (
-          <div className="flex flex-row gap-4">
-            <div className="flex flex-col">
-              <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                {item.name}
-              </h4>
-              <div className="flex flex-row gap-4 text-sm text-muted-foreground">
-                <div>
-                  <Tally5 />
-                  <div>Kills: {kills}</div>
-                </div>
-                <div>
-                  <Target />
-                  <div>Precision:{precision}</div>
-                </div>
-                <div>
-                  <Percent />
-                  <div>
-                    Percentage: {calculatePercentage(precision, kills)}%
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 type GroupKey = 'notFound' | 'noMatch' | string;
 type GroupTuple = [GroupKey, Aggregate[]];
 

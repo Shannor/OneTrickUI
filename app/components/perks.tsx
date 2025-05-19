@@ -1,6 +1,5 @@
-import { TooltipArrow } from '@radix-ui/react-tooltip';
 import React from 'react';
-import type { Socket } from '~/api';
+import type { Perk } from '~/api';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import {
   Tooltip,
@@ -9,21 +8,21 @@ import {
 } from '~/components/ui/tooltip';
 
 interface Props {
-  sockets: Socket[];
+  perks: Perk[];
 }
 
 const DestinyURL = 'https://www.bungie.net';
-export const WeaponSockets: React.FC<Props> = ({ sockets }) => {
+export const Perks: React.FC<Props> = ({ perks }) => {
   return (
     <div className="flex flex-col gap-2">
-      {sockets
+      {perks
         .filter((it) => it.name !== '')
         .map((it) => {
-          const url = it.icon?.includes(DestinyURL)
-            ? it.icon
-            : `${DestinyURL}${it.icon}`;
+          const url = it.iconPath?.includes(DestinyURL)
+            ? it.iconPath
+            : `${DestinyURL}${it.iconPath}`;
           return (
-            <div key={it.plugHash} className="flex flex-row gap-4">
+            <div key={it.hash} className="flex flex-row gap-4">
               <Tooltip>
                 <TooltipContent>{it.description}</TooltipContent>
                 <TooltipTrigger>

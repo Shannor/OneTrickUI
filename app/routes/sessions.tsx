@@ -1,9 +1,9 @@
 import { format } from 'date-fns';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, StopCircleIcon } from 'lucide-react';
 import { useFetcher, useLoaderData, useNavigate } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
-import { type Session, getSessions, startSession } from '~/api';
+import { type Session, getSessions, startSession, updateSession } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { Badge } from '~/components/ui/badge';
@@ -67,32 +67,70 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
   const characterId = formData.get('characterId');
-
+  const sessionId = formData.get('sessionId');
+  const actionType = formData.get('actionType');
   if (!characterId) {
     return { error: 'No character id' };
   }
+  if (!actionType) {
+    return { error: 'Missing action type' };
+  }
+
   const auth = await getAuth(request);
   if (!auth) {
     return { error: 'No auth token' };
   }
-  const { data, error } = await startSession({
-    body: {
-      characterId: characterId.toString(),
-    },
-    headers: {
-      Authorization: `Bearer ${auth.accessToken}`,
-      'X-Membership-ID': auth.primaryMembershipId,
-      'X-User-ID': auth.id,
-    },
-  });
-  if (error) {
-    console.log('In error', error);
-    return { error: error };
+  switch (actionType) {
+    case 'start': {
+      const { data, error } = await startSession({
+        body: {
+          characterId: characterId.toString(),
+        },
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          'X-Membership-ID': auth.primaryMembershipId,
+          'X-User-ID': auth.id,
+        },
+      });
+      if (error) {
+        console.log('In error', error);
+        return { error: error };
+      }
+      if (!data) {
+        return { error: 'No data' };
+      }
+      return { data };
+    }
+
+    case 'end': {
+      if (!sessionId) {
+        return { error: 'No session id to end with' };
+      }
+      const { data, error } = await updateSession({
+        path: {
+          sessionId: sessionId.toString(),
+        },
+        body: {
+          characterId: characterId.toString(),
+          name: 'random name',
+          completedAt: new Date().toISOString(),
+        },
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          'X-Membership-ID': auth.primaryMembershipId,
+          'X-User-ID': auth.id,
+        },
+      });
+      if (error) {
+        console.log('In error', error);
+        return { error: error };
+      }
+      if (!data) {
+        return { error: 'No data' };
+      }
+      return { data };
+    }
   }
-  if (!data) {
-    return { error: 'No data' };
-  }
-  return { data };
 }
 
 export default function Sessions() {
@@ -125,19 +163,37 @@ export default function Sessions() {
             Sessions
           </h2>
         </div>
-        <Form method="post">
-          <input type="hidden" name="characterId" value={characterId} />
-          <LoadingButton
-            type="submit"
-            variant="outline"
-            disabled={!characterId || isSubmitting || hasCurrentSession}
-            isLoading={isSubmitting}
-            className={`${isSubmitting ? 'opacity-50' : ''}`}
-          >
-            <PlusIcon className="h-4 w-4" />
-            Start New Session
-          </LoadingButton>
-        </Form>
+        <div className="flex flex-row gap-4">
+          <Form method="post">
+            <input type="hidden" name="characterId" value={characterId} />
+            <input type="hidden" name="actionType" value="start" />
+            <LoadingButton
+              type="submit"
+              variant="outline"
+              disabled={!characterId || isSubmitting || hasCurrentSession}
+              isLoading={isSubmitting}
+              className={`${isSubmitting ? 'opacity-50' : ''}`}
+            >
+              <PlusIcon className="h-4 w-4" />
+              Start New Session
+            </LoadingButton>
+          </Form>
+          <Form method="post">
+            <input type="hidden" name="characterId" value={characterId} />
+            <input type="hidden" name="sessionId" value={current?.id} />
+            <input type="hidden" name="actionType" value="end" />
+            <LoadingButton
+              type="submit"
+              variant="outline"
+              disabled={!characterId || isSubmitting || !hasCurrentSession}
+              isLoading={isSubmitting}
+              className={`${isSubmitting ? 'opacity-50' : ''}`}
+            >
+              <StopCircleIcon className="h-4 w-4" />
+              Stop Session
+            </LoadingButton>
+          </Form>
+        </div>
       </div>
       <CurrentSession
         data={current}
@@ -167,22 +223,32 @@ export default function Sessions() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-1">
-        {data.map((session) => (
-          <Card
-            key={session.id}
-            className="cursor-pointer"
-            onClick={() => navigate(`/sessions/${session.id}`)}
-          >
-            <CardHeader>
-              <CardTitle>{session.name}</CardTitle>
-              <CardDescription>
-                {format(new Date(session.startedAt), 'MM/dd/yyyy - p')}
-                {session.completedAt &&
-                  format(new Date(session.completedAt), 'MM/dd/yyyy - p')}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
+        {data
+          .sort(
+            (a, b) =>
+              new Date(b.completedAt ?? a.startedAt).getTime() -
+              new Date(a.completedAt ?? a.startedAt).getTime(),
+          )
+          .map((session) => (
+            <Card
+              key={session.id}
+              className="cursor-pointer"
+              onClick={() => navigate(`/sessions/${session.id}`)}
+            >
+              <CardHeader className="flex flex-col gap-2">
+                <CardTitle>{session.name}</CardTitle>
+                <CardDescription>
+                  <div>Games Played: {session.aggregateIds.length}</div>
+                  <div>
+                    {format(new Date(session.startedAt), 'MM/dd/yyyy - p')}
+                    {' - '}
+                    {session.completedAt &&
+                      format(new Date(session.completedAt), 'MM/dd/yyyy - p')}
+                  </div>
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
       </div>
     </div>
   );

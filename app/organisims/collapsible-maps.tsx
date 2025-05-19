@@ -16,7 +16,7 @@ interface MapProps {
 }
 export function CollapsibleMaps({ aggregates }: MapProps) {
   const sorted = aggregates
-    .slice() // Create a shallow copy to avoid mutating the original array
+    .slice()
     .sort(
       (a, b) =>
         new Date(a.activityDetails.period).getTime() -
@@ -28,7 +28,7 @@ export function CollapsibleMaps({ aggregates }: MapProps) {
   return (
     <div className="flex flex-col gap-4">
       <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-2">
-        <div className="flex flex-row items-center gap-1 px-4">
+        <div className="flex flex-row items-center gap-1">
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="w-9 p-0">
               <ChevronsDown className="h-4 w-4" />
@@ -37,7 +37,7 @@ export function CollapsibleMaps({ aggregates }: MapProps) {
           </CollapsibleTrigger>
           <h4 className="font-semibold">Maps Played: {sorted.length}</h4>
         </div>
-        <CollapsibleContent className="space-y-2 px-6">
+        <CollapsibleContent className="space-y-3 divide-y-2">
           {sorted.map((aggregate) => {
             const { period, location, imageUrl } = aggregate.activityDetails;
             return (
