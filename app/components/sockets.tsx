@@ -30,7 +30,7 @@ export const Sockets: React.FC<Props> = ({ sockets, className }) => {
               <Tooltip>
                 <TooltipContent>{it.description}</TooltipContent>
                 <TooltipTrigger>
-                  <Avatar>
+                  <Avatar className="bg-gray-800 p-1 dark:bg-transparent">
                     <AvatarImage
                       src={url}
                       alt={`Icon for ${it.name}`}

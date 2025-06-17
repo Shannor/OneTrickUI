@@ -19,5 +19,6 @@ export default [
     route('/action/set-theme', 'routes/action.set-theme.tsx'),
     route('/action/session-check-in', 'actions/session-check-in.ts'),
     route('/action/set-preference', 'actions/set-preference.ts'),
+    route('/action/logout', 'actions/logout.ts'),
   ]),
 ] satisfies RouteConfig;

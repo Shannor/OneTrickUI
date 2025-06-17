@@ -1,24 +1,17 @@
 import { format } from 'date-fns';
-import { Percent, Tally5, Target } from 'lucide-react';
 import React from 'react';
 import { useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import {
   type Aggregate,
   type CharacterSnapshot,
-  type InstancePerformance,
-  type ItemSnapshot,
-  type UniqueStatValue,
   getSession,
   getSessionAggregates,
 } from '~/api';
-import { calculatePercentage } from '~/calculations/precision';
 import { Class } from '~/components/class';
 import { Empty } from '~/components/empty';
 import { Loadout } from '~/components/loadout';
-import { Stat } from '~/components/stat';
 import { Badge } from '~/components/ui/badge';
-import { Weapon } from '~/components/weapon';
 import { CollapsibleMaps } from '~/organisims/collapsible-maps';
 import { Performance } from '~/organisims/performance';
 
@@ -36,10 +29,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     path: {
       sessionId,
     },
-    headers: {
-      'X-Membership-ID': auth.primaryMembershipId,
-      'X-User-ID': auth.id,
-    },
   });
 
   if (!res.data) {
@@ -48,10 +37,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const aggRes = await getSessionAggregates({
     path: {
       sessionId,
-    },
-    headers: {
-      'X-Membership-ID': auth.primaryMembershipId,
-      'X-User-ID': auth.id,
     },
   });
   if (!aggRes.data) {
@@ -100,6 +85,9 @@ export default function Session() {
   const isCurrent = session.status === 'pending';
   const group = groupAggregates(aggregates, session.characterId);
 
+  const allPerformances = group.flatMap(([_, value]) =>
+    value.map((a) => a.performance[session.characterId]),
+  );
   return (
     <div>
       <div className="flex flex-col items-start gap-4 border-b p-4">
@@ -113,6 +101,7 @@ export default function Session() {
             ? ` - ${format(session.completedAt, 'MM/dd/yyyy - p')}`
             : ''}
         </div>
+        <Performance performances={allPerformances} />
       </div>
       {group.map(([key, value]) => {
         const snapshot: CharacterSnapshot | undefined = snapshots[key];
@@ -130,6 +119,7 @@ export default function Session() {
         const performances = value.map(
           (a) => a.performance[session.characterId],
         );
+
         return (
           <div key={key} className="flex flex-col gap-6 border-b p-4">
             <div className="flex flex-col">
@@ -137,6 +127,7 @@ export default function Session() {
                 {title}
               </h4>
             </div>
+
             <Performance performances={performances} />
             <Class snapshot={snapshot} />
             <Loadout performances={performances} snapshot={snapshot} />

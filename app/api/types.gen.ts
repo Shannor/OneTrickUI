@@ -39,6 +39,9 @@ export type CharacterSnapshot = {
    * Id of the character being recorded
    */
   characterId: string;
+  stats?: {
+    [key: string]: ClassStat;
+  };
   /**
    * Timestamp for when the snapshot was first created
    */
@@ -304,6 +307,8 @@ export type Socket = {
   name: string;
   description: string;
   icon?: string;
+  itemTypeDisplayName?: string;
+  itemTypeTieredDisplayName?: string;
 };
 
 export type BaseItemInfo = {
@@ -336,6 +341,9 @@ export type Character = {
   currentTitle: string;
   race: string;
   class: string;
+  stats?: {
+    [key: string]: ClassStat;
+  };
 };
 
 export type Team = {
@@ -415,6 +423,16 @@ export type PostGameEntry = {
   standing?: number;
 };
 
+export type ClassStat = {
+  name: string;
+  icon: string;
+  hasIcon: boolean;
+  description: string;
+  statCategory: number;
+  aggregationType: number;
+  value: number;
+};
+
 export type Session = {
   id: string;
   startedAt: Date;
@@ -450,6 +468,25 @@ export type GetPingResponses = {
 };
 
 export type GetPingResponse = GetPingResponses[keyof GetPingResponses];
+
+export type UpdateManifestData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/manifest';
+};
+
+export type UpdateManifestResponses = {
+  /**
+   * Return of success of updating manifest if needed
+   */
+  200: {
+    success: boolean;
+  };
+};
+
+export type UpdateManifestResponse =
+  UpdateManifestResponses[keyof UpdateManifestResponses];
 
 export type ProfileData = {
   body?: never;
@@ -726,10 +763,6 @@ export type StartSessionResponse =
 
 export type GetSessionData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-    'X-Membership-ID': string;
-  };
   path: {
     sessionId: string;
   };
@@ -778,10 +811,6 @@ export type UpdateSessionResponse =
 
 export type GetSessionAggregatesData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-    'X-Membership-ID': string;
-  };
   path: {
     sessionId: string;
   };

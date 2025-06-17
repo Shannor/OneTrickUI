@@ -5,7 +5,6 @@ import {
   useFetcher,
   useLoaderData,
   useLocation,
-  useNavigation,
 } from 'react-router';
 import { getAuth, refreshHeaders } from '~/.server/auth';
 import { Logger } from '~/.server/logger';
@@ -80,16 +79,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     },
   );
 }
-const LAST_POLL_KEY = 'lastPoll';
-interface PollData {
-  sessionId: string;
-  lastPoll: number;
-}
+
 export default function Dashboard() {
-  const navigation = useNavigation();
   const location = useLocation();
   const { submit } = useFetcher();
-  const isNavigating = Boolean(navigation.location);
   const { profile, characterId, currentSession, membershipId } =
     useLoaderData<typeof loader>();
 
@@ -127,6 +120,12 @@ export default function Dashboard() {
             }).catch(console.error);
           }}
           currentCharacterId={characterId}
+          onLogout={() => {
+            submit(null, {
+              method: 'post',
+              action: '/action/logout',
+            }).catch(console.error);
+          }}
         />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -136,16 +135,7 @@ export default function Dashboard() {
             <ModeToggle />
           </header>
           <SessionTracker session={currentSession} />
-          <div className="flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-0">
-            {/*{isNavigating ? (*/}
-            {/*  <div className="flex flex-col gap-4">*/}
-            {/*    <Skeleton className="h-[60px] w-full rounded-full" />*/}
-            {/*    <Skeleton className="h-[60px] w-full rounded-full" />*/}
-            {/*    <Skeleton className="h-[60px] w-full rounded-full" />*/}
-            {/*    <Skeleton className="h-[60px] w-full rounded-full" />*/}
-            {/*    <Skeleton className="h-[60px] w-full rounded-full" />*/}
-            {/*  </div>*/}
-            {/*) : (*/}
+          <div className="flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
             <Outlet context={{ profile, characterId, currentSession }} />
           </div>
         </SidebarInset>

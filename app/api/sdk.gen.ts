@@ -50,6 +50,8 @@ import type {
   StartSessionData,
   StartSessionError,
   StartSessionResponse,
+  UpdateManifestData,
+  UpdateManifestResponse,
   UpdateSessionData,
   UpdateSessionResponse,
 } from './types.gen';
@@ -66,6 +68,19 @@ export const getPing = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: '/ping',
+  });
+};
+
+export const updateManifest = <ThrowOnError extends boolean = false>(
+  options?: Options<UpdateManifestData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    UpdateManifestResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    url: '/manifest',
   });
 };
 

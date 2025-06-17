@@ -8,7 +8,7 @@ import {
   LogOut,
   Sparkles,
 } from 'lucide-react';
-
+import type { Profile } from '~/api';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import {
   DropdownMenu,
@@ -25,9 +25,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '~/components/ui/sidebar';
-import type { Profile } from '~/api';
 
-export function NavUser({ user }: { user: Profile }) {
+export function NavUser({
+  user,
+  onLogout,
+}: {
+  user: Profile;
+  onLogout: () => void;
+}) {
   const { isMobile } = useSidebar();
 
   return (
@@ -72,27 +77,12 @@ export function NavUser({ user }: { user: Profile }) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
                 <Bell />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={onLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>
