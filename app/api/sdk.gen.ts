@@ -9,6 +9,9 @@ import {
   createSnapshotResponseTransformer,
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
+  getPublicSessionAggregatesResponseTransformer,
+  getPublicSessionResponseTransformer,
+  getPublicSessionsResponseTransformer,
   getSessionAggregatesResponseTransformer,
   getSessionResponseTransformer,
   getSessionsResponseTransformer,
@@ -28,6 +31,12 @@ import type {
   GetActivityResponse,
   GetPingData,
   GetPingResponse,
+  GetPublicSessionAggregatesData,
+  GetPublicSessionAggregatesResponse,
+  GetPublicSessionData,
+  GetPublicSessionResponse,
+  GetPublicSessionsData,
+  GetPublicSessionsResponse,
   GetSessionAggregatesData,
   GetSessionAggregatesResponse,
   GetSessionData,
@@ -45,6 +54,8 @@ import type {
   ProfileResponse,
   RefreshTokenData,
   RefreshTokenResponse,
+  SearchData,
+  SearchResponse,
   SessionCheckInData,
   SessionCheckInResponse,
   StartSessionData,
@@ -68,6 +79,26 @@ export const getPing = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: '/ping',
+  });
+};
+
+/**
+ * return a list from bungie of matching users
+ */
+export const search = <ThrowOnError extends boolean = false>(
+  options?: Options<SearchData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    SearchResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    url: '/search',
   });
 };
 
@@ -298,6 +329,53 @@ export const getSessionAggregates = <ThrowOnError extends boolean = false>(
     ...options,
     responseTransformer: getSessionAggregatesResponseTransformer,
     url: '/sessions/{sessionId}/aggregates',
+  });
+};
+
+export const getPublicSessions = <ThrowOnError extends boolean = false>(
+  options: Options<GetPublicSessionsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetPublicSessionsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getPublicSessionsResponseTransformer,
+    url: '/public/sessions',
+  });
+};
+
+/**
+ * Get a specific session
+ */
+export const getPublicSession = <ThrowOnError extends boolean = false>(
+  options: Options<GetPublicSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetPublicSessionResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getPublicSessionResponseTransformer,
+    url: '/public/sessions/{sessionId}',
+  });
+};
+
+export const getPublicSessionAggregates = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetPublicSessionAggregatesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetPublicSessionAggregatesResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getPublicSessionAggregatesResponseTransformer,
+    url: '/public/sessions/{sessionId}/aggregates',
   });
 };
 

@@ -2,12 +2,16 @@ import {
   type RouteConfig,
   index,
   layout,
+  prefix,
   route,
 } from '@react-router/dev/routes';
 
 export default [
   route('/login', 'routes/login.tsx'),
   route('/oauth', 'routes/oauth.tsx'),
+  ...prefix('public', [
+    layout('layouts/home.tsx', [index('routes/landing.tsx')]),
+  ]),
   layout('layouts/dashboard.tsx', [
     index('routes/home.tsx'),
     route('/activities', 'routes/activities.tsx'),

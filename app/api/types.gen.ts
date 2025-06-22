@@ -449,6 +449,27 @@ export type Session = {
   lastSeenTimestamp?: Date;
 };
 
+export type SearchUserResult = {
+  displayName: string;
+  nameCode: string;
+  bungieMembershipId: string;
+  memberships: Array<DestinyMembership>;
+};
+
+export type DestinyMembership = {
+  displayName: string;
+  membershipId: string;
+  membershipType: SourceSystem;
+  iconPath?: string;
+};
+
+export type SourceSystem =
+  | 'playstation'
+  | 'xbox'
+  | 'steam'
+  | 'stadia'
+  | 'unknown';
+
 export type XUserId = string;
 
 export type XMembershipId = string;
@@ -468,6 +489,28 @@ export type GetPingResponses = {
 };
 
 export type GetPingResponse = GetPingResponses[keyof GetPingResponses];
+
+export type SearchData = {
+  body?: {
+    prefix: string;
+    page: number;
+  };
+  path?: never;
+  query?: never;
+  url: '/search';
+};
+
+export type SearchResponses = {
+  /**
+   * Return a list of search results found
+   */
+  200: {
+    results: Array<SearchUserResult>;
+    hasMore: boolean;
+  };
+};
+
+export type SearchResponse = SearchResponses[keyof SearchResponses];
 
 export type UpdateManifestData = {
   body?: never;
@@ -832,6 +875,71 @@ export type GetSessionAggregatesResponses = {
 
 export type GetSessionAggregatesResponse =
   GetSessionAggregatesResponses[keyof GetSessionAggregatesResponses];
+
+export type GetPublicSessionsData = {
+  body?: never;
+  path?: never;
+  query: {
+    count: number;
+    page: number;
+    characterId?: string;
+    status?: 'pending' | 'complete';
+  };
+  url: '/public/sessions';
+};
+
+export type GetPublicSessionsResponses = {
+  /**
+   * List of Sessions
+   */
+  200: Array<Session>;
+};
+
+export type GetPublicSessionsResponse =
+  GetPublicSessionsResponses[keyof GetPublicSessionsResponses];
+
+export type GetPublicSessionData = {
+  body?: never;
+  path: {
+    sessionId: string;
+  };
+  query?: never;
+  url: '/public/sessions/{sessionId}';
+};
+
+export type GetPublicSessionResponses = {
+  /**
+   * Return a session
+   */
+  200: Session;
+};
+
+export type GetPublicSessionResponse =
+  GetPublicSessionResponses[keyof GetPublicSessionResponses];
+
+export type GetPublicSessionAggregatesData = {
+  body?: never;
+  path: {
+    sessionId: string;
+  };
+  query?: never;
+  url: '/public/sessions/{sessionId}/aggregates';
+};
+
+export type GetPublicSessionAggregatesResponses = {
+  /**
+   * Array of aggregates
+   */
+  200: {
+    aggregates: Array<Aggregate>;
+    snapshots: {
+      [key: string]: CharacterSnapshot;
+    };
+  };
+};
+
+export type GetPublicSessionAggregatesResponse =
+  GetPublicSessionAggregatesResponses[keyof GetPublicSessionAggregatesResponses];
 
 export type SessionCheckInData = {
   body: {
