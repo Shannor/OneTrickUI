@@ -52,7 +52,7 @@ async function refreshHeaders(request: Request, auth: AuthResponse) {
 }
 async function logout(request: Request) {
   const session = await getSession(request.headers.get('Cookie'));
-  return redirect('/login', {
+  return redirect('/', {
     headers: {
       'Set-Cookie': await destroySession(session),
     },

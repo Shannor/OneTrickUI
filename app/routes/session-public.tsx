@@ -1,12 +1,11 @@
 import { format } from 'date-fns';
 import React from 'react';
 import { useLoaderData } from 'react-router';
-import { getAuth } from '~/.server/auth';
 import {
   type Aggregate,
   type CharacterSnapshot,
-  getSession,
-  getSessionAggregates,
+  getPublicSession,
+  getPublicSessionAggregates,
 } from '~/api';
 import { Class } from '~/components/class';
 import { Empty } from '~/components/empty';
@@ -20,12 +19,7 @@ import type { Route } from '../../.react-router/types/app/routes/+types/session'
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { sessionId } = params;
 
-  const auth = await getAuth(request);
-  if (!auth) {
-    throw new Error('Not authenticated');
-  }
-
-  const res = await getSession({
+  const res = await getPublicSession({
     path: {
       sessionId,
     },
@@ -34,7 +28,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (!res.data) {
     return { session: undefined, error: 'Session Not Found' };
   }
-  const aggRes = await getSessionAggregates({
+  const aggRes = await getPublicSessionAggregates({
     path: {
       sessionId,
     },
@@ -55,7 +49,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   };
 }
 
-export default function Session() {
+export default function SessionPublic() {
   const { session, error, aggregates, snapshots } =
     useLoaderData<typeof loader>();
 

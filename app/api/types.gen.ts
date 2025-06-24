@@ -39,6 +39,9 @@ export type CharacterSnapshot = {
    * Id of the character being recorded
    */
   characterId: string;
+  stats?: {
+    [key: string]: ClassStat;
+  };
   /**
    * Timestamp for when the snapshot was first created
    */
@@ -304,6 +307,8 @@ export type Socket = {
   name: string;
   description: string;
   icon?: string;
+  itemTypeDisplayName?: string;
+  itemTypeTieredDisplayName?: string;
 };
 
 export type BaseItemInfo = {
@@ -336,6 +341,9 @@ export type Character = {
   currentTitle: string;
   race: string;
   class: string;
+  stats?: {
+    [key: string]: ClassStat;
+  };
 };
 
 export type Team = {
@@ -415,6 +423,16 @@ export type PostGameEntry = {
   standing?: number;
 };
 
+export type ClassStat = {
+  name: string;
+  icon: string;
+  hasIcon: boolean;
+  description: string;
+  statCategory: number;
+  aggregationType: number;
+  value: number;
+};
+
 export type Session = {
   id: string;
   startedAt: Date;
@@ -430,6 +448,27 @@ export type Session = {
   lastSeenActivityId?: string;
   lastSeenTimestamp?: Date;
 };
+
+export type SearchUserResult = {
+  displayName: string;
+  nameCode: string;
+  bungieMembershipId: string;
+  memberships: Array<DestinyMembership>;
+};
+
+export type DestinyMembership = {
+  displayName: string;
+  membershipId: string;
+  membershipType: SourceSystem;
+  iconPath?: string;
+};
+
+export type SourceSystem =
+  | 'playstation'
+  | 'xbox'
+  | 'steam'
+  | 'stadia'
+  | 'unknown';
 
 export type XUserId = string;
 
@@ -450,6 +489,47 @@ export type GetPingResponses = {
 };
 
 export type GetPingResponse = GetPingResponses[keyof GetPingResponses];
+
+export type SearchData = {
+  body?: {
+    prefix: string;
+    page: number;
+  };
+  path?: never;
+  query?: never;
+  url: '/search';
+};
+
+export type SearchResponses = {
+  /**
+   * Return a list of search results found
+   */
+  200: {
+    results: Array<SearchUserResult>;
+    hasMore: boolean;
+  };
+};
+
+export type SearchResponse = SearchResponses[keyof SearchResponses];
+
+export type UpdateManifestData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/manifest';
+};
+
+export type UpdateManifestResponses = {
+  /**
+   * Return of success of updating manifest if needed
+   */
+  200: {
+    success: boolean;
+  };
+};
+
+export type UpdateManifestResponse =
+  UpdateManifestResponses[keyof UpdateManifestResponses];
 
 export type ProfileData = {
   body?: never;
@@ -726,10 +806,6 @@ export type StartSessionResponse =
 
 export type GetSessionData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-    'X-Membership-ID': string;
-  };
   path: {
     sessionId: string;
   };
@@ -778,10 +854,6 @@ export type UpdateSessionResponse =
 
 export type GetSessionAggregatesData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-    'X-Membership-ID': string;
-  };
   path: {
     sessionId: string;
   };
@@ -803,6 +875,106 @@ export type GetSessionAggregatesResponses = {
 
 export type GetSessionAggregatesResponse =
   GetSessionAggregatesResponses[keyof GetSessionAggregatesResponses];
+
+export type GetPublicSessionsData = {
+  body?: never;
+  path?: never;
+  query: {
+    count: number;
+    page: number;
+    characterId?: string;
+    status?: 'pending' | 'complete';
+  };
+  url: '/public/sessions';
+};
+
+export type GetPublicSessionsResponses = {
+  /**
+   * List of Sessions
+   */
+  200: Array<Session>;
+};
+
+export type GetPublicSessionsResponse =
+  GetPublicSessionsResponses[keyof GetPublicSessionsResponses];
+
+export type GetPublicSessionData = {
+  body?: never;
+  path: {
+    sessionId: string;
+  };
+  query?: never;
+  url: '/public/sessions/{sessionId}';
+};
+
+export type GetPublicSessionResponses = {
+  /**
+   * Return a session
+   */
+  200: Session;
+};
+
+export type GetPublicSessionResponse =
+  GetPublicSessionResponses[keyof GetPublicSessionResponses];
+
+export type GetPublicSessionAggregatesData = {
+  body?: never;
+  path: {
+    sessionId: string;
+  };
+  query?: never;
+  url: '/public/sessions/{sessionId}/aggregates';
+};
+
+export type GetPublicSessionAggregatesResponses = {
+  /**
+   * Array of aggregates
+   */
+  200: {
+    aggregates: Array<Aggregate>;
+    snapshots: {
+      [key: string]: CharacterSnapshot;
+    };
+  };
+};
+
+export type GetPublicSessionAggregatesResponse =
+  GetPublicSessionAggregatesResponses[keyof GetPublicSessionAggregatesResponses];
+
+export type GetPublicProfileData = {
+  body?: never;
+  path?: never;
+  query: {
+    id: string;
+  };
+  url: '/public/profile';
+};
+
+export type GetPublicProfileErrors = {
+  /**
+   * Server is down
+   */
+  503: {
+    /**
+     * User friendly description of the error
+     */
+    message: string;
+    status: InternalError;
+  };
+};
+
+export type GetPublicProfileError =
+  GetPublicProfileErrors[keyof GetPublicProfileErrors];
+
+export type GetPublicProfileResponses = {
+  /**
+   * User Profile Info
+   */
+  200: Profile;
+};
+
+export type GetPublicProfileResponse =
+  GetPublicProfileResponses[keyof GetPublicProfileResponses];
 
 export type SessionCheckInData = {
   body: {
