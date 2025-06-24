@@ -59,6 +59,11 @@ const data = {
       url: '/dashboard/loadouts',
       icon: SquareLibrary,
     },
+    {
+      name: 'Search',
+      url: '/dashboard/loadouts',
+      icon: SquareLibrary,
+    },
   ],
 };
 
