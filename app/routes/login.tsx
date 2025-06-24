@@ -10,7 +10,7 @@ const CLIENT_ID = isDev() ? 48883 : 48722;
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
   if (auth) {
-    return redirect('/');
+    return redirect('/dashboard');
   }
   return null;
 }

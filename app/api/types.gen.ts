@@ -941,6 +941,41 @@ export type GetPublicSessionAggregatesResponses = {
 export type GetPublicSessionAggregatesResponse =
   GetPublicSessionAggregatesResponses[keyof GetPublicSessionAggregatesResponses];
 
+export type GetPublicProfileData = {
+  body?: never;
+  path?: never;
+  query: {
+    id: string;
+  };
+  url: '/public/profile';
+};
+
+export type GetPublicProfileErrors = {
+  /**
+   * Server is down
+   */
+  503: {
+    /**
+     * User friendly description of the error
+     */
+    message: string;
+    status: InternalError;
+  };
+};
+
+export type GetPublicProfileError =
+  GetPublicProfileErrors[keyof GetPublicProfileErrors];
+
+export type GetPublicProfileResponses = {
+  /**
+   * User Profile Info
+   */
+  200: Profile;
+};
+
+export type GetPublicProfileResponse =
+  GetPublicProfileResponses[keyof GetPublicProfileResponses];
+
 export type SessionCheckInData = {
   body: {
     sessionId: string;

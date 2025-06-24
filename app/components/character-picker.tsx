@@ -1,50 +1,53 @@
+import { type ReactNode, useState } from 'react';
 import type { Character } from '~/api';
 import { cn } from '~/lib/utils';
 
 interface Props {
-  onSubmit: (characterId: string) => void;
   characters: Character[];
-  currentCharacterId?: string;
+  currentCharacterId?: string | null;
+  children?: (current?: string | null, previous?: string | null) => ReactNode;
 }
 export function CharacterPicker({
-  onSubmit,
   characters,
   currentCharacterId,
+  children,
 }: Props) {
-  const character = characters.find((c) => c.id === currentCharacterId);
+  const [checked, setChecked] = useState<string | null | undefined>(
+    currentCharacterId,
+  );
   return (
     <div className="flex scroll-m-20 flex-col gap-4">
-      {!currentCharacterId ? (
-        <h3 className="scroll-m-20 self-center text-2xl font-semibold tracking-tight">
-          Pick a Guardian
-        </h3>
-      ) : (
-        <h3 className="scroll-m-20 self-center text-2xl font-semibold tracking-tight">
-          {character?.class} Selected
-        </h3>
-      )}
       <div className="flex flex-col justify-center gap-6">
         {characters.map((it) => (
-          <div
+          <label
             className={cn(
               'w-[300px] md:w-[400px]',
-              it.id !== currentCharacterId &&
+              it.id !== checked &&
                 'cursor-pointer drop-shadow-md hover:drop-shadow-xl dark:hover:border-2 dark:hover:border-yellow-300',
-              it.id === currentCharacterId &&
-                'cursor-default border-2 border-green-400',
             )}
             key={it.id}
-            onClick={() => {
-              onSubmit(it.id);
-            }}
           >
+            <input
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              hidden
+              type="radio"
+              value={it.id}
+              id={it.id}
+              checked={checked === it.id}
+              onChange={() => setChecked(it.id)}
+              name="characterId"
+            />
             <div
               style={{
                 backgroundImage: `url(${it.emblemBackgroundURL})`,
                 backgroundSize: 'cover',
                 height: 75,
+                filter: it.id !== checked ? 'grayscale(100%)' : 'none',
               }}
-              className="flex flex-row justify-between p-2 pl-20 align-middle"
+              className={cn(
+                'flex flex-row justify-between p-2 pl-20 align-middle',
+                it.id !== checked && 'transition-all hover:filter-none',
+              )}
             >
               <div>
                 <h2 className="text-lg font-semibold tracking-wider text-white">
@@ -60,9 +63,10 @@ export function CharacterPicker({
                 {it.light}
               </div>
             </div>
-          </div>
+          </label>
         ))}
       </div>
+      {children?.(checked, currentCharacterId)}
     </div>
   );
 }

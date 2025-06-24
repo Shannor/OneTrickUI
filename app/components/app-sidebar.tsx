@@ -18,7 +18,7 @@ const data = {
   base: [
     {
       name: 'Home',
-      url: '/',
+      url: '/dashboard',
       icon: Home,
     },
   ],
@@ -31,19 +31,19 @@ const data = {
       items: [
         {
           title: 'All PvP',
-          url: '/activities',
+          url: '/dashboard/activities',
         },
         {
           title: 'Competitive',
-          url: '/activities?type=competitive',
+          url: '/dashboard/activities?type=competitive',
         },
         {
           title: 'Quick Play',
-          url: '/activities?type=quickplay',
+          url: '/dashboard/activities?type=quickplay',
         },
         {
           title: 'Iron Banner',
-          url: '/activities?type=ironBanner',
+          url: '/dashboard/activities?type=ironBanner',
         },
       ],
     },
@@ -51,12 +51,12 @@ const data = {
   projects: [
     {
       name: 'Sessions',
-      url: '/sessions',
+      url: '/dashboard/sessions',
       icon: Hourglass,
     },
     {
       name: 'Loadouts',
-      url: '/loadouts',
+      url: '/dashboard/loadouts',
       icon: SquareLibrary,
     },
   ],

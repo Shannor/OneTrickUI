@@ -31,6 +31,9 @@ import type {
   GetActivityResponse,
   GetPingData,
   GetPingResponse,
+  GetPublicProfileData,
+  GetPublicProfileError,
+  GetPublicProfileResponse,
   GetPublicSessionAggregatesData,
   GetPublicSessionAggregatesResponse,
   GetPublicSessionData,
@@ -376,6 +379,19 @@ export const getPublicSessionAggregates = <
     ...options,
     responseTransformer: getPublicSessionAggregatesResponseTransformer,
     url: '/public/sessions/{sessionId}/aggregates',
+  });
+};
+
+export const getPublicProfile = <ThrowOnError extends boolean = false>(
+  options: Options<GetPublicProfileData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetPublicProfileResponse,
+    GetPublicProfileError,
+    ThrowOnError
+  >({
+    ...options,
+    url: '/public/profile',
   });
 };
 

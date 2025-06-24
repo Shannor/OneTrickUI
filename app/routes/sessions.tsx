@@ -6,6 +6,7 @@ import { getPreferences } from '~/.server/preferences';
 import { type Session, getSessions, startSession, updateSession } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
+import { SessionCard } from '~/components/session-card';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import {
@@ -230,24 +231,11 @@ export default function Sessions() {
               new Date(a.completedAt ?? a.startedAt).getTime(),
           )
           .map((session) => (
-            <Card
+            <SessionCard
               key={session.id}
-              className="cursor-pointer"
               onClick={() => navigate(`/sessions/${session.id}`)}
-            >
-              <CardHeader className="flex flex-col gap-2">
-                <CardTitle>{session.name}</CardTitle>
-                <CardDescription>
-                  <div>Games Played: {session.aggregateIds.length}</div>
-                  <div>
-                    {format(new Date(session.startedAt), 'MM/dd/yyyy - p')}
-                    {' - '}
-                    {session.completedAt &&
-                      format(new Date(session.completedAt), 'MM/dd/yyyy - p')}
-                  </div>
-                </CardDescription>
-              </CardHeader>
-            </Card>
+              session={session}
+            />
           ))}
       </div>
     </div>

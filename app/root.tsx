@@ -13,9 +13,9 @@ import {
   ThemeProvider,
   useTheme,
 } from 'remix-themes';
+import { themeSessionResolver } from '~/.server/sessions';
 import { client } from '~/api';
 import { isDev } from '~/lib/utils';
-import { themeSessionResolver } from '~/routes/sessions.server';
 
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
@@ -77,7 +77,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function AppWithProviders() {
   const data = useLoaderData<typeof loader>();
   return (
-    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+    <ThemeProvider
+      specifiedTheme={data.theme}
+      themeAction="/dashboard/action/set-theme"
+    >
       <App />
     </ThemeProvider>
   );

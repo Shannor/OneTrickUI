@@ -80,7 +80,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   );
 }
 
-export default function Dashboard() {
+export default function Sidebar() {
   const location = useLocation();
   const { submit } = useFetcher();
   const { profile, characterId, currentSession, membershipId } =
@@ -98,7 +98,7 @@ export default function Dashboard() {
         data.set('membershipId', membershipId);
         await submit(data, {
           method: 'post',
-          action: '/action/session-check-in',
+          action: 'dashboard/action/session-check-in',
         });
       }
     },
@@ -116,14 +116,14 @@ export default function Dashboard() {
             data.set('redirect', location.pathname);
             submit(data, {
               method: 'post',
-              action: '/action/set-preference',
+              action: 'dashboard/action/set-preference',
             }).catch(console.error);
           }}
           currentCharacterId={characterId}
           onLogout={() => {
             submit(null, {
               method: 'post',
-              action: '/action/logout',
+              action: '/dashboard/action/logout',
             }).catch(console.error);
           }}
         />
