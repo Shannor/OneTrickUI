@@ -81,7 +81,9 @@ export default function Activities() {
           <ActivityCard
             activity={activity}
             key={activity.instanceId}
-            onClick={() => navigate(`/activities/${activity.instanceId}`)}
+            onClick={() =>
+              navigate(`/dashboard/activities/${activity.instanceId}`)
+            }
             characterMapping={aggregate?.snapshotLinks[characterId]}
           />
         ))}
@@ -90,10 +92,13 @@ export default function Activities() {
       <div className="flex flex-row justify-between gap-4 self-end">
         <Button disabled={page === 0} variant="outline">
           <ChevronLeft />
-          <Link to={`/activities?page=${page - 1}`}> Previous Page</Link>
+          <Link to={`/dashboard/activities?page=${page - 1}`}>
+            {' '}
+            Previous Page
+          </Link>
         </Button>
         <Button disabled={noActivities} variant="outline">
-          <Link to={`/activities?page=${page + 1}`}>Next Page</Link>
+          <Link to={`/dashboard/activities?page=${page + 1}`}>Next Page</Link>
           <ChevronRight />
         </Button>
       </div>

@@ -198,7 +198,7 @@ export default function Sessions() {
       </div>
       <CurrentSession
         data={current}
-        onClick={() => navigate(`/sessions/${current?.id}`)}
+        onClick={() => navigate(`/dashboard/sessions/${current?.id}`)}
       />
       <div>
         {data.length === 0 && (
@@ -233,7 +233,7 @@ export default function Sessions() {
           .map((session) => (
             <SessionCard
               key={session.id}
-              onClick={() => navigate(`/sessions/${session.id}`)}
+              onClick={() => navigate(`/dashboard/sessions/${session.id}`)}
               session={session}
             />
           ))}
