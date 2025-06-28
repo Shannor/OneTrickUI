@@ -2,8 +2,15 @@ import { format } from 'date-fns';
 import { PlusIcon, StopCircleIcon } from 'lucide-react';
 import { useFetcher, useLoaderData, useNavigate } from 'react-router';
 import { getAuth } from '~/.server/auth';
+import { Logger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
-import { type Session, getSessions, startSession, updateSession } from '~/api';
+import {
+  type Session,
+  getPublicSessions,
+  getSessions,
+  startSession,
+  updateSession,
+} from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { SessionCard } from '~/components/session-card';
@@ -21,6 +28,52 @@ import type { Route } from '../../.react-router/types/app/routes/+types/sessions
 export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
   const page = Number(url.searchParams.get('page') || '0');
+  const paramCharacterId = url.searchParams.get('characterId');
+  const profileId = params.id;
+
+  if (profileId) {
+    if (paramCharacterId) {
+      const res = await getPublicSessions({
+        query: {
+          count: 10,
+          page: page,
+          characterId: paramCharacterId,
+          status: 'complete',
+        },
+      });
+      const currentRes = await getPublicSessions({
+        query: {
+          count: 1,
+          page: 0,
+          characterId: paramCharacterId,
+          status: 'pending',
+        },
+      });
+      if (!res.data) {
+        return {
+          data: [],
+          page,
+          current: undefined,
+          isOwner: false,
+        };
+      }
+
+      const current = currentRes.data?.at(0);
+      return {
+        data: res.data,
+        current,
+        page,
+        characterId: paramCharacterId,
+        isOwner: false,
+      };
+    }
+    return {
+      data: [],
+      page,
+      current: undefined,
+      isOwner: false,
+    };
+  }
 
   const auth = await getAuth(request);
   if (!auth) {
@@ -29,7 +82,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   const { characterId } = await getPreferences(request);
   if (!characterId) {
-    return { data: [], page, error: 'No character id' };
+    return { data: [], page, error: 'No character id', isOwner: true };
   }
 
   const res = await getSessions({
@@ -58,11 +111,17 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
   });
   if (!res.data) {
-    return { data: [], page, current: undefined, error: 'No records found' };
+    return {
+      data: [],
+      page,
+      current: undefined,
+      error: 'No records found',
+      isOwner: true,
+    };
   }
 
   const current = currentRes.data?.at(0);
-  return { data: res.data, current, page, characterId };
+  return { data: res.data, current, page, characterId, isOwner: true };
 }
 
 export async function action({ request }: Route.ClientActionArgs) {
@@ -94,7 +153,7 @@ export async function action({ request }: Route.ClientActionArgs) {
         },
       });
       if (error) {
-        console.log('In error', error);
+        Logger.error(error, 'failed to start session');
         return { error: error };
       }
       if (!data) {
@@ -123,7 +182,7 @@ export async function action({ request }: Route.ClientActionArgs) {
         },
       });
       if (error) {
-        console.log('In error', error);
+        Logger.error(error, 'failed to end session');
         return { error: error };
       }
       if (!data) {
@@ -135,7 +194,8 @@ export async function action({ request }: Route.ClientActionArgs) {
 }
 
 export default function Sessions() {
-  const { data, characterId, error, current } = useLoaderData<typeof loader>();
+  const { data, characterId, error, current, isOwner } =
+    useLoaderData<typeof loader>();
 
   const navigate = useNavigate();
 
@@ -164,41 +224,43 @@ export default function Sessions() {
             Sessions
           </h2>
         </div>
-        <div className="flex flex-row gap-4">
-          <Form method="post">
-            <input type="hidden" name="characterId" value={characterId} />
-            <input type="hidden" name="actionType" value="start" />
-            <LoadingButton
-              type="submit"
-              variant="outline"
-              disabled={!characterId || isSubmitting || hasCurrentSession}
-              isLoading={isSubmitting}
-              className={`${isSubmitting ? 'opacity-50' : ''}`}
-            >
-              <PlusIcon className="h-4 w-4" />
-              Start New Session
-            </LoadingButton>
-          </Form>
-          <Form method="post">
-            <input type="hidden" name="characterId" value={characterId} />
-            <input type="hidden" name="sessionId" value={current?.id} />
-            <input type="hidden" name="actionType" value="end" />
-            <LoadingButton
-              type="submit"
-              variant="outline"
-              disabled={!characterId || isSubmitting || !hasCurrentSession}
-              isLoading={isSubmitting}
-              className={`${isSubmitting ? 'opacity-50' : ''}`}
-            >
-              <StopCircleIcon className="h-4 w-4" />
-              Stop Session
-            </LoadingButton>
-          </Form>
-        </div>
+        {isOwner && (
+          <div className="flex flex-row gap-4">
+            <Form method="post">
+              <input type="hidden" name="characterId" value={characterId} />
+              <input type="hidden" name="actionType" value="start" />
+              <LoadingButton
+                type="submit"
+                variant="outline"
+                disabled={!characterId || isSubmitting || hasCurrentSession}
+                isLoading={isSubmitting}
+                className={`${isSubmitting ? 'opacity-50' : ''}`}
+              >
+                <PlusIcon className="h-4 w-4" />
+                Start New Session
+              </LoadingButton>
+            </Form>
+            <Form method="post">
+              <input type="hidden" name="characterId" value={characterId} />
+              <input type="hidden" name="sessionId" value={current?.id} />
+              <input type="hidden" name="actionType" value="end" />
+              <LoadingButton
+                type="submit"
+                variant="outline"
+                disabled={!characterId || isSubmitting || !hasCurrentSession}
+                isLoading={isSubmitting}
+                className={`${isSubmitting ? 'opacity-50' : ''}`}
+              >
+                <StopCircleIcon className="h-4 w-4" />
+                Stop Session
+              </LoadingButton>
+            </Form>
+          </div>
+        )}
       </div>
       <CurrentSession
         data={current}
-        onClick={() => navigate(`/dashboard/sessions/${current?.id}`)}
+        onClick={() => navigate(`${current?.id}`)}
       />
       <div>
         {data.length === 0 && (
@@ -233,7 +295,7 @@ export default function Sessions() {
           .map((session) => (
             <SessionCard
               key={session.id}
-              onClick={() => navigate(`/dashboard/sessions/${session.id}`)}
+              onClick={() => navigate(`${session.id}`)}
               session={session}
             />
           ))}

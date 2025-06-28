@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import React from 'react';
-import { useLoaderData } from 'react-router';
+import { useLoaderData, useNavigate } from 'react-router';
 import {
   type Aggregate,
   type CharacterSnapshot,
@@ -53,6 +53,7 @@ export default function SessionPublic() {
   const { session, error, aggregates, snapshots } =
     useLoaderData<typeof loader>();
 
+  const navigate = useNavigate();
   if (!session) {
     return (
       <div className="flex flex-col gap-4">
@@ -125,7 +126,12 @@ export default function SessionPublic() {
             <Performance performances={performances} />
             <Class snapshot={snapshot} />
             <Loadout performances={performances} snapshot={snapshot} />
-            <CollapsibleMaps aggregates={value} />
+            <CollapsibleMaps
+              aggregates={value}
+              onActivityClick={({ activityId }) => {
+                navigate(`/activities/${activityId}`);
+              }}
+            />
           </div>
         );
       })}

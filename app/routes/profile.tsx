@@ -1,5 +1,7 @@
 import {
   Form,
+  Link,
+  Outlet,
   useLoaderData,
   useLocation,
   useNavigate,
@@ -10,7 +12,6 @@ import { CharacterPicker } from '~/components/character-picker';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { NavLoading } from '~/components/nav-loading';
-import { SessionCard } from '~/components/session-card';
 import { useIsNavigating } from '~/lib/hooks';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
@@ -18,7 +19,6 @@ import type { Route } from '../../.react-router/types/app/routes/+types/sessions
 export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
   const characterId = url.searchParams.get('characterId');
-  console.log(characterId);
   const id = params.id;
 
   if (!id) {
@@ -96,19 +96,37 @@ export default function Profile() {
             }}
           </CharacterPicker>
         </Form>
-        <NavLoading>
-          <div className="flex w-full flex-col gap-4">
-            {sessions?.map((session) => (
-              <SessionCard
-                key={session.id}
-                onClick={() => {
-                  navigate(`sessions/${session.id}`);
-                }}
-                session={session}
-              />
-            ))}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-row gap-4">
+            <Link
+              to={{
+                pathname: 'sessions',
+                search: `?characterId=${characterId}`,
+              }}
+            >
+              Sessions
+            </Link>
+            <Link
+              to={{
+                pathname: 'loadouts',
+                search: `?characterId=${characterId}`,
+              }}
+            >
+              Loadouts
+            </Link>
+            <Link
+              to={{
+                pathname: 'activities',
+                search: `?characterId=${characterId}`,
+              }}
+            >
+              Activities
+            </Link>
           </div>
-        </NavLoading>
+          <NavLoading>
+            <Outlet />
+          </NavLoading>
+        </div>
       </div>
     </div>
   );

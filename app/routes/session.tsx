@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
-import React from 'react';
-import { useLoaderData } from 'react-router';
+import { Share2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { useLoaderData, useNavigate } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import {
   type Aggregate,
@@ -12,6 +13,12 @@ import { Class } from '~/components/class';
 import { Empty } from '~/components/empty';
 import { Loadout } from '~/components/loadout';
 import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/ui/tooltip';
 import { CollapsibleMaps } from '~/organisims/collapsible-maps';
 import { Performance } from '~/organisims/performance';
 
@@ -39,12 +46,21 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       sessionId,
     },
   });
+
+  const sharablePath = `profiles/${auth.id}/sessions/${sessionId}`;
+  let path = '';
+  if (process.env.NODE_ENV === 'development') {
+    path = `https://local.d2onetrick.ngrok.app/${sharablePath}`;
+  } else {
+    path = `https://d2onetrick.com/${sharablePath}`;
+  }
   if (!aggRes.data) {
     return {
       session: res.data,
       aggregates: [],
       snapshots: {},
       error: undefined,
+      path,
     };
   }
   return {
@@ -52,12 +68,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     aggregates: aggRes.data.aggregates,
     snapshots: aggRes.data.snapshots,
     error: undefined,
+    path,
   };
 }
 
 export default function Session() {
-  const { session, error, aggregates, snapshots } =
+  const { session, error, aggregates, snapshots, path } =
     useLoaderData<typeof loader>();
+  const navigate = useNavigate();
 
   if (!session) {
     return (
@@ -88,13 +106,35 @@ export default function Session() {
   const allPerformances = group.flatMap(([_, value]) =>
     value.map((a) => a.performance[session.characterId]),
   );
+  const [copyStatus, setCopyStatus] = useState('');
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(path);
+      setCopyStatus('Copied!');
+    } catch (err) {
+      setCopyStatus('Failed to copy!');
+      console.error('Failed to copy text: ', err);
+    }
+    setTimeout(() => setCopyStatus(''), 2000);
+  };
   return (
     <div>
       <div className="flex flex-col items-start gap-4 border-b p-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}
-        <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
-          {session.name}
-        </h2>
+        <div className="flex flex-row gap-4">
+          <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
+            {session.name}
+          </h2>
+          <Tooltip open={Boolean(copyStatus)}>
+            <TooltipContent>{copyStatus}</TooltipContent>
+            <TooltipTrigger>
+              <Button onClick={handleCopy} variant="outline">
+                <Share2 className="h-6 w-6" /> Share
+              </Button>
+            </TooltipTrigger>
+          </Tooltip>
+        </div>
         <div className="text-sm text-muted-foreground">
           {format(session.startedAt, 'MM/dd/yyyy - p')}
           {session.completedAt
@@ -131,7 +171,12 @@ export default function Session() {
             <Performance performances={performances} />
             <Class snapshot={snapshot} />
             <Loadout performances={performances} snapshot={snapshot} />
-            <CollapsibleMaps aggregates={value} />
+            <CollapsibleMaps
+              aggregates={value}
+              onActivityClick={({ activityId }) => {
+                navigate(`/dashboard/activities/${activityId}`);
+              }}
+            />
           </div>
         );
       })}

@@ -1,6 +1,12 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
-import { Form, Link, useLoaderData, useNavigate } from 'react-router';
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+} from 'react-router';
 import { type SearchUserResult, search } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
 import { NavLoading } from '~/components/nav-loading';
@@ -33,6 +39,18 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   return { page, query };
 }
 
+function getBase(path: string): string {
+  const root = path.split('/').at(1);
+  switch (root) {
+    case 'dashboard':
+      return '/dashboard/';
+    case 'search':
+      return '/';
+    default:
+      return '/';
+  }
+}
+
 export default function Search() {
   const { data, page, query } = useLoaderData<typeof loader>();
 
@@ -40,6 +58,9 @@ export default function Search() {
   const hasMore = data?.hasMore ?? false;
   const navigate = useNavigate();
   const [isLoading] = useIsNavigating();
+  const location = useLocation();
+  const pathname = location.pathname;
+  const root = getBase(location.pathname);
 
   return (
     <div className="flex flex-col gap-8">
@@ -72,7 +93,7 @@ export default function Search() {
                 key={data.bungieMembershipId}
                 user={data}
                 onClick={() => {
-                  navigate(`/profile/${data.bungieMembershipId}`);
+                  navigate(`${root}profiles/${data.bungieMembershipId}`);
                 }}
               />
             ))}
@@ -82,12 +103,12 @@ export default function Search() {
           <div className="flex flex-row justify-between gap-4 self-end">
             <Button disabled={page === 0} variant="outline">
               <ChevronLeft />
-              <Link to={`/search?page=${page - 1}&query=${query}`}>
+              <Link to={`${pathname}?page=${page - 1}&query=${query}`}>
                 Previous Page
               </Link>
             </Button>
             <Button disabled={!hasMore} variant="outline">
-              <Link to={`/search?page=${page + 1}&query=${query}`}>
+              <Link to={`${pathname}?page=${page + 1}&query=${query}`}>
                 Next Page
               </Link>
               <ChevronRight />
