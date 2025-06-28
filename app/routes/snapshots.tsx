@@ -157,7 +157,7 @@ export default function Snapshots({ actionData }: Route.ComponentProps) {
           <Card
             key={snapshot.id}
             className="cursor-pointer"
-            onClick={() => navigate(`/loadouts/${snapshot.id}`)}
+            onClick={() => navigate(`/dashboard/loadouts/${snapshot.id}`)}
           >
             <CardHeader>
               <CardTitle>

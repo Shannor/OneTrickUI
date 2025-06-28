@@ -26,7 +26,7 @@ export default function Home() {
         Welcome, {profile?.displayName}!
       </h2>
       <div className="grid place-items-center">
-        <Form action="/action/set-preference" method="post">
+        <Form action="/dashboard/action/set-preference" method="post">
           <CharacterPicker
             characters={profile.characters}
             currentCharacterId={characterId}

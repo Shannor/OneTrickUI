@@ -98,7 +98,7 @@ export default function Sidebar() {
         data.set('membershipId', membershipId);
         await submit(data, {
           method: 'post',
-          action: 'dashboard/action/session-check-in',
+          action: '/dashboard/action/session-check-in',
         });
       }
     },
@@ -116,7 +116,7 @@ export default function Sidebar() {
             data.set('redirect', location.pathname);
             submit(data, {
               method: 'post',
-              action: 'dashboard/action/set-preference',
+              action: '/dashboard/action/set-preference',
             }).catch(console.error);
           }}
           currentCharacterId={characterId}

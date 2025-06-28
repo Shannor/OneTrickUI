@@ -16,7 +16,7 @@ export function SessionCard(props: {
       <CardHeader className="flex flex-col gap-2">
         <CardTitle>{props.session.name}</CardTitle>
         <CardDescription>
-          <div>Games Played: {props.session.aggregateIds.length}</div>
+          <div>Games Played: {props.session.aggregateIds?.length ?? 0}</div>
           <div>
             {format(new Date(props.session.startedAt), 'MM/dd/yyyy - p')}
             {' - '}
