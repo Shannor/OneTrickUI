@@ -11,6 +11,7 @@ export type Profile = {
   displayName: string;
   uniqueName: string;
   characters: Array<Character>;
+  fireteam?: Array<FireteamMember>;
 };
 
 export type DetailActivity = {
@@ -331,6 +332,12 @@ export type Color = {
   green: number;
   blue: number;
   alpha: number;
+};
+
+export type FireteamMember = {
+  id: string;
+  membershipId: string;
+  displayName: string;
 };
 
 export type Character = {

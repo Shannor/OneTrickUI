@@ -26,6 +26,7 @@ export default [
     route('loadouts/:snapshotId', 'routes/snapshot.tsx'),
     route('sessions', 'routes/sessions.tsx'),
     route('sessions/:sessionId', 'routes/session.tsx'),
+    route('fireteam', 'routes/fireteam.tsx'),
 
     // Profile Routes
     route('profiles', 'routes/search.tsx', { id: 'profiles' }),
@@ -44,5 +45,6 @@ export default [
     route('action/session-check-in', 'actions/session-check-in.ts'),
     route('action/set-preference', 'actions/set-preference.ts'),
     route('action/logout', 'actions/logout.ts'),
+    route('action/set-fireteam', 'actions/set-fireteam.ts'),
   ]),
 ] satisfies RouteConfig;

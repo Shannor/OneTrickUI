@@ -1,4 +1,11 @@
-import { Home, Hourglass, Search, SquareLibrary, Swords } from 'lucide-react';
+import {
+  Home,
+  Hourglass,
+  Search,
+  SquareLibrary,
+  Swords,
+  UsersRound,
+} from 'lucide-react';
 import * as React from 'react';
 import type { Profile } from '~/api';
 import { CharacterSwitcher } from '~/components/character-switcher';
@@ -58,6 +65,11 @@ const data = {
       name: 'Loadouts',
       url: '/dashboard/loadouts',
       icon: SquareLibrary,
+    },
+    {
+      name: 'Fireteam',
+      url: '/dashboard/fireteam',
+      icon: UsersRound,
     },
     {
       name: 'Guardians',
