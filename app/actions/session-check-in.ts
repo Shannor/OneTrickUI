@@ -14,6 +14,7 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (!sessionId) {
     return { error: 'No session id' };
   }
+
   const response = await sessionCheckIn({
     body: {
       sessionId: sessionId.toString(),

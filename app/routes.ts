@@ -46,5 +46,7 @@ export default [
     route('action/set-preference', 'actions/set-preference.ts'),
     route('action/logout', 'actions/logout.ts'),
     route('action/set-fireteam', 'actions/set-fireteam.ts'),
+    route('action/start-session', 'actions/start-session.ts'),
+    route('action/end-session', 'actions/end-session.ts'),
   ]),
 ] satisfies RouteConfig;

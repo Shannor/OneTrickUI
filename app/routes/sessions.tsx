@@ -2,15 +2,8 @@ import { format } from 'date-fns';
 import { PlusIcon, StopCircleIcon } from 'lucide-react';
 import { useFetcher, useLoaderData, useNavigate } from 'react-router';
 import { getAuth } from '~/.server/auth';
-import { Logger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
-import {
-  type Session,
-  getPublicSessions,
-  getSessions,
-  startSession,
-  updateSession,
-} from '~/api';
+import { type Session, getPublicSessions, getSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { SessionCard } from '~/components/session-card';
@@ -117,84 +110,23 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       current: undefined,
       error: 'No records found',
       isOwner: true,
+      userId: auth.id,
     };
   }
 
   const current = currentRes.data?.at(0);
-  return { data: res.data, current, page, characterId, isOwner: true };
-}
-
-export async function action({ request }: Route.ClientActionArgs) {
-  const formData = await request.formData();
-  const characterId = formData.get('characterId');
-  const sessionId = formData.get('sessionId');
-  const actionType = formData.get('actionType');
-  if (!characterId) {
-    return { error: 'No character id' };
-  }
-  if (!actionType) {
-    return { error: 'Missing action type' };
-  }
-
-  const auth = await getAuth(request);
-  if (!auth) {
-    return { error: 'No auth token' };
-  }
-  switch (actionType) {
-    case 'start': {
-      const { data, error } = await startSession({
-        body: {
-          characterId: characterId.toString(),
-        },
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          'X-Membership-ID': auth.primaryMembershipId,
-          'X-User-ID': auth.id,
-        },
-      });
-      if (error) {
-        Logger.error(error, 'failed to start session');
-        return { error: error };
-      }
-      if (!data) {
-        return { error: 'No data' };
-      }
-      return { data };
-    }
-
-    case 'end': {
-      if (!sessionId) {
-        return { error: 'No session id to end with' };
-      }
-      const { data, error } = await updateSession({
-        path: {
-          sessionId: sessionId.toString(),
-        },
-        body: {
-          characterId: characterId.toString(),
-          name: 'random name',
-          completedAt: new Date().toISOString(),
-        },
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          'X-Membership-ID': auth.primaryMembershipId,
-          'X-User-ID': auth.id,
-        },
-      });
-      if (error) {
-        Logger.error(error, 'failed to end session');
-        return { error: error };
-      }
-      if (!data) {
-        return { error: 'No data' };
-      }
-      return { data };
-    }
-  }
+  return {
+    data: res.data,
+    current,
+    page,
+    characterId,
+    isOwner: true,
+    userId: auth.id,
+  };
 }
 
 export default function Sessions() {
-  const { data, characterId, error, current, isOwner } =
+  const { data, characterId, error, current, userId, isOwner } =
     useLoaderData<typeof loader>();
 
   const navigate = useNavigate();
@@ -226,9 +158,9 @@ export default function Sessions() {
         </div>
         {isOwner && (
           <div className="flex flex-row gap-4">
-            <Form method="post">
+            <Form method="post" action="/dashboard/action/start-session">
               <input type="hidden" name="characterId" value={characterId} />
-              <input type="hidden" name="actionType" value="start" />
+              <input type="hidden" name="userId" value={userId} />
               <LoadingButton
                 type="submit"
                 variant="outline"
@@ -240,10 +172,9 @@ export default function Sessions() {
                 Start New Session
               </LoadingButton>
             </Form>
-            <Form method="post">
+            <Form method="post" action="/dashboard/action/end-session">
               <input type="hidden" name="characterId" value={characterId} />
               <input type="hidden" name="sessionId" value={current?.id} />
-              <input type="hidden" name="actionType" value="end" />
               <LoadingButton
                 type="submit"
                 variant="outline"

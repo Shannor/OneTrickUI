@@ -447,6 +447,8 @@ export type Session = {
   userId: string;
   characterId: string;
   name?: string;
+  startedBy?: AuditField;
+  completedBy?: AuditField;
   status?: 'pending' | 'complete';
   /**
    * List of aggregates linked to this session
@@ -468,6 +470,11 @@ export type DestinyMembership = {
   membershipId: string;
   membershipType: SourceSystem;
   iconPath?: string;
+};
+
+export type AuditField = {
+  id: string;
+  username: string;
 };
 
 export type SourceSystem =
@@ -780,6 +787,7 @@ export type StartSessionData = {
    */
   body: {
     characterId: string;
+    userId: string;
   };
   headers: {
     'X-User-ID': string;

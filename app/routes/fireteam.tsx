@@ -1,10 +1,4 @@
-import {
-  Form,
-  Link,
-  data,
-  useLoaderData,
-  useViewTransitionState,
-} from 'react-router';
+import { Form, Link, data, useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import {
   commitSession,
@@ -20,6 +14,7 @@ import {
 import { CharacterPicker } from '~/components/character-picker';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
+import { useIsNavigating } from '~/lib/hooks';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/fireteam';
 
@@ -60,11 +55,13 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       if (error) {
         return {
           id: member.membershipId,
+          userId: member.id,
           characters: [],
         };
       }
       return {
         id: member.membershipId,
+        userId: member.id,
         characters: data?.characters ?? [],
       };
     }),
@@ -120,11 +117,15 @@ interface SessionTemp {
   membershipId: string;
   session?: Session;
 }
+// Can end the session for someone else? I'm thinking nah
+// Double dipping with multiple snapshots when in a fireteam by each memeber.
+
 export default function Fireteam() {
   const { members, fireteamCharacters, sessions } =
     useLoaderData<typeof loader>();
 
-  const isSubmitting = useViewTransitionState('/dashboard/action/set-fireteam');
+  const [isSubmitting] = useIsNavigating();
+
   const sessionMap =
     sessions?.reduce<Record<string, SessionTemp>>((state, current) => {
       if (current) {
@@ -149,26 +150,71 @@ export default function Fireteam() {
         if (!data) {
           return <div>Empty</div>;
         }
-        const sessionData = sessionMap[data.id];
+        const { session, characterId } = sessionMap[data.id] ?? {};
         return (
-          <Form
-            action="/dashboard/action/set-fireteam"
-            method="post"
-            key={data.id}
-            viewTransition={true}
-          >
-            <Link to={`/dashboard/profiles/${sessionData.membershipId}`}>
-              {m.displayName}
-            </Link>
-            <input hidden value={data.id} name="membershipId" />
-            <CharacterPicker
-              characters={data?.characters ?? []}
-              currentCharacterId={sessionData?.characterId}
-            />
-            <LoadingButton type="submit" isLoading={isSubmitting}>
-              Choose Character
-            </LoadingButton>
-          </Form>
+          <div className="flex flex-col gap-4">
+            <Form
+              action="/dashboard/action/set-fireteam"
+              method="post"
+              key={data.id}
+              viewTransition={true}
+              className="flex flex-col gap-4"
+            >
+              <Link to={`/dashboard/profiles/${data.id}`} viewTransition>
+                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight hover:text-blue-400 hover:underline">
+                  {m.displayName}
+                </h4>
+              </Link>
+              <input hidden value={data.id} name="membershipId" />
+              <CharacterPicker
+                characters={data?.characters ?? []}
+                currentCharacterId={characterId}
+              >
+                {(current, previous) => {
+                  const isDisabled =
+                    Boolean(current) &&
+                    Boolean(previous) &&
+                    current === previous;
+                  return (
+                    <LoadingButton
+                      type="submit"
+                      isLoading={isSubmitting}
+                      disabled={isDisabled}
+                    >
+                      {!characterId ? 'Pick a Guardian' : 'Change Guardian'}
+                    </LoadingButton>
+                  );
+                }}
+              </CharacterPicker>
+            </Form>
+            <Form
+              className="flex flex-col gap-4"
+              method="post"
+              action="/dashboard/action/start-session"
+              viewTransition
+            >
+              <input hidden name="characterId" value={characterId} />
+              <input hidden name="userId" value={data.userId} />
+              <div>Current Session</div>
+              {session ? (
+                <div>
+                  <div>{session.name}</div>
+                  <div>Games: {session.aggregateIds?.length ?? 0}</div>
+                </div>
+              ) : (
+                <div>
+                  <div>No current session.</div>
+                  <LoadingButton
+                    type="submit"
+                    isLoading={isSubmitting}
+                    disabled={isSubmitting}
+                  >
+                    Start a Session
+                  </LoadingButton>
+                </div>
+              )}
+            </Form>
+          </div>
         );
       })}
     </div>
