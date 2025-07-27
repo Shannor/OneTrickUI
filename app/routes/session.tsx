@@ -24,6 +24,28 @@ import { Performance } from '~/organisims/performance';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/session';
 
+export function meta({ data }: Route.MetaArgs) {
+  if (data.session) {
+    return [
+      {
+        title: `Session - ${data.session.name ?? ''}: Games - ${data.aggregates?.length ?? 0}`,
+      },
+      {
+        name: 'description',
+        content: `Detailed session information`,
+      },
+    ];
+  }
+
+  return [
+    { title: `Session` },
+    {
+      name: 'description',
+      content: `Detailed session information`,
+    },
+  ];
+}
+
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { sessionId } = params;
 

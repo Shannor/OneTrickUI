@@ -56,14 +56,6 @@ export const links: Route.LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
 ];
 
-export function HydrateFallback() {
-  return (
-    <div id="loading-splash">
-      <div id="loading-splash-spinner" />
-      <p>Loading, please wait...</p>
-    </div>
-  );
-}
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { getTheme } = await themeSessionResolver(request);
   return {

@@ -71,6 +71,14 @@ async function setAuth(request: Request, auth: AuthResponse) {
     },
   });
 }
+
+async function redirectBack(
+  request: Request,
+  { fallback }: { fallback: string },
+) {
+  return redirect(request.headers.get('Referer') ?? fallback);
+}
+
 export {
   getSession,
   commitSession,
@@ -79,4 +87,5 @@ export {
   refreshHeaders,
   setAuth,
   logout,
+  redirectBack,
 };

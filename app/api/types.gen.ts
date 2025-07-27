@@ -11,6 +11,7 @@ export type Profile = {
   displayName: string;
   uniqueName: string;
   characters: Array<Character>;
+  fireteam?: Array<FireteamMember>;
 };
 
 export type DetailActivity = {
@@ -333,6 +334,12 @@ export type Color = {
   alpha: number;
 };
 
+export type FireteamMember = {
+  id: string;
+  membershipId: string;
+  displayName: string;
+};
+
 export type Character = {
   id: string;
   light: number;
@@ -440,6 +447,8 @@ export type Session = {
   userId: string;
   characterId: string;
   name?: string;
+  startedBy?: AuditField;
+  completedBy?: AuditField;
   status?: 'pending' | 'complete';
   /**
    * List of aggregates linked to this session
@@ -461,6 +470,11 @@ export type DestinyMembership = {
   membershipId: string;
   membershipType: SourceSystem;
   iconPath?: string;
+};
+
+export type AuditField = {
+  id: string;
+  username: string;
 };
 
 export type SourceSystem =
@@ -773,6 +787,7 @@ export type StartSessionData = {
    */
   body: {
     characterId: string;
+    userId: string;
   };
   headers: {
     'X-User-ID': string;

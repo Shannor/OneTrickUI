@@ -1,7 +1,8 @@
-import { createCookieSessionStorage } from 'react-router';
+import { type Session, createCookieSessionStorage } from 'react-router';
 
 type SessionData = {
   characterId?: string;
+  fireteam?: Record<string, string>;
 };
 
 type SessionFlashData = {
@@ -24,15 +25,40 @@ const { getSession, commitSession, destroySession } =
 async function getPreferences(request: Request): Promise<SessionData> {
   const preferences = await getSession(request.headers.get('Cookie'));
   const characterId = preferences.get('characterId');
+  const fireteam = preferences.get('fireteam');
   return {
     characterId,
+    fireteam,
   };
 }
+
+async function getPreferenceSession(
+  request: Request,
+): Promise<Session<SessionData, SessionFlashData>> {
+  return await getSession(request.headers.get('Cookie'));
+}
+
 async function setPreferences(request: Request, preferences: SessionData) {
   const session = await getSession(request.headers.get('Cookie'));
-  session.set('characterId', preferences.characterId);
+  if (preferences.characterId) {
+    session.set('characterId', preferences.characterId);
+  }
+  if (preferences.fireteam) {
+    const existing = session.get('fireteam');
+    if (existing) {
+      session.set('fireteam', { ...existing, ...preferences.fireteam });
+    } else {
+      session.set('fireteam', preferences.fireteam);
+    }
+  }
   return {
     headers: { 'Set-Cookie': await commitSession(session) },
   };
 }
-export { commitSession, destroySession, getPreferences, setPreferences };
+export {
+  commitSession,
+  destroySession,
+  getPreferences,
+  getPreferenceSession,
+  setPreferences,
+};
