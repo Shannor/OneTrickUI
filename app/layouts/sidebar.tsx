@@ -23,6 +23,7 @@ import { useInterval } from '~/hooks/use-interval';
 
 import type { Route } from '../../.react-router/types/app/+types/root';
 
+const FIVE_MINS = 300000;
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
   if (!auth) {
@@ -89,10 +90,10 @@ export default function Sidebar() {
   const runInterval = Boolean(
     currentSession?.status === 'pending' && currentSession?.id,
   );
+
   useInterval(
     async () => {
       if (runInterval && currentSession) {
-        console.log('running interval call', characterId);
         const data = new FormData();
         data.set('sessionId', currentSession.id);
         data.set('membershipId', membershipId);
@@ -102,9 +103,10 @@ export default function Sidebar() {
         });
       }
     },
-    runInterval ? 2000000 : null,
+    runInterval ? FIVE_MINS : null,
     { immediate: true },
   );
+
   return (
     <SidebarProvider>
       <TooltipProvider>
