@@ -994,6 +994,12 @@ export type GetPublicProfileResponse =
 export type SessionCheckInData = {
   body: {
     sessionId: string;
+    /**
+     * fireteam member user id mapped to their chosen character id
+     */
+    fireteam: {
+      [key: string]: string;
+    };
   };
   headers: {
     'X-Membership-ID': string;

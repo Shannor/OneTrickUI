@@ -40,6 +40,9 @@ export default [
     route('profiles/:id/sessions/:sessionId', 'routes/session.tsx', {
       id: 'profile-session',
     }),
+    route('profiles/:id/activities/:activityId', 'routes/activity.tsx', {
+      id: 'profile-activity',
+    }),
     // User Actions
     route('action/set-theme', 'actions/set-theme.ts'),
     route('action/session-check-in', 'actions/session-check-in.ts'),
