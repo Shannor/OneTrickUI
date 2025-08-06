@@ -7,9 +7,8 @@ import {
   useLocation,
 } from 'react-router';
 import { getAuth, refreshHeaders } from '~/.server/auth';
-import { Logger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
-import { type Session, getSessions, profile } from '~/api';
+import { type Character, type Session, getSessions, profile } from '~/api';
 import { AppSidebar } from '~/components/app-sidebar';
 import { ModeToggle } from '~/components/mode-toggle';
 import SessionTracker from '~/components/session-tracker';
@@ -19,109 +18,35 @@ import {
   SidebarTrigger,
 } from '~/components/ui/sidebar';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import { useInterval } from '~/hooks/use-interval';
 
-import type { Route } from '../../.react-router/types/app/+types/root';
+import type { Route } from './+types/sidebar';
 
-const FIVE_MINS = 300000;
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
   if (!auth) {
     return redirect('/login');
   }
-  const { characterId } = await getPreferences(request);
-  const { data: profileData, error } = await profile({
-    headers: {
-      Authorization: `Bearer ${auth.accessToken}`,
-      'X-Membership-ID': auth.membershipId,
-      'X-User-ID': auth.id,
-    },
-  });
-  if (error) {
-    if (error.status === 'DestinyServerDown') {
-      throw data(error.message, { status: 503 });
-    }
-    Logger.error(error.message, { error });
-    throw data(error.message, { status: 500 });
-  }
-  if (!profileData) {
-    throw data('No profile data', { status: 500 });
-  }
-
-  let session: Session | undefined = undefined;
-  if (characterId) {
-    const res = await getSessions({
-      query: {
-        count: 1,
-        page: 0,
-        status: 'pending',
-        characterId,
-      },
-      headers: {
-        'X-Membership-ID': auth.membershipId,
-        'X-User-ID': auth.id,
-      },
-    });
-    if (res.data?.length) {
-      session = res.data[0];
-    }
-  }
-
   const headers = await refreshHeaders(request, auth);
-  return data(
-    {
-      profile: profileData,
-      characterId,
-      currentSession: session,
-      membershipId: auth.primaryMembershipId,
-    },
-    {
-      ...headers,
-    },
-  );
+  const { character } = await getPreferences(request);
+  if (!character) {
+    return redirect('/character-select', { ...headers });
+  }
+
+  return data(character, {
+    ...headers,
+  });
 }
 
-export default function Sidebar() {
-  const location = useLocation();
+export default function Sidebar({ loaderData }: Route.ComponentProps) {
   const { submit } = useFetcher();
-  const { profile, characterId, currentSession, membershipId } =
-    useLoaderData<typeof loader>();
-
-  const runInterval = Boolean(
-    currentSession?.status === 'pending' && currentSession?.id,
-  );
-
-  useInterval(
-    async () => {
-      if (runInterval && currentSession) {
-        const data = new FormData();
-        data.set('sessionId', currentSession.id);
-        data.set('membershipId', membershipId);
-        await submit(data, {
-          method: 'post',
-          action: '/dashboard/action/session-check-in',
-        });
-      }
-    },
-    runInterval ? FIVE_MINS : null,
-    { immediate: true },
-  );
+  const character = loaderData;
 
   return (
     <SidebarProvider>
       <TooltipProvider>
         <AppSidebar
-          profile={profile}
-          onChangeCharacter={(characterId) => {
-            const data = new FormData();
-            data.set('characterId', characterId);
-            data.set('redirect', location.pathname);
-            submit(data, {
-              method: 'post',
-              action: '/dashboard/action/set-preference',
-            }).catch(console.error);
-          }}
-          currentCharacterId={characterId}
+          character={character}
+          currentCharacterId={character?.id}
           onLogout={() => {
             submit(null, {
               method: 'post',
@@ -136,9 +61,8 @@ export default function Sidebar() {
             </div>
             <ModeToggle />
           </header>
-          <SessionTracker session={currentSession} />
           <div className="flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
-            <Outlet context={{ profile, characterId, currentSession }} />
+            <Outlet />
           </div>
         </SidebarInset>
       </TooltipProvider>

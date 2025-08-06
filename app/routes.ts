@@ -18,6 +18,7 @@ export default [
       id: 'public-activity',
     }),
   ]),
+  route('/character-select', 'routes/character-select.tsx'),
   route('dashboard', 'layouts/sidebar.tsx', [
     index('routes/home.tsx'),
     route('activities', 'routes/activities.tsx'),

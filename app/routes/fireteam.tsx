@@ -120,7 +120,8 @@ interface SessionTemp {
 // Can end the session for someone else? I'm thinking nah
 // Double dipping with multiple snapshots when in a fireteam by each memeber.
 
-export default function Fireteam() {
+export default function Fireteam({ matches }: Route.ComponentProps) {
+  console.log(matches);
   const { members, fireteamCharacters, sessions } =
     useLoaderData<typeof loader>();
 

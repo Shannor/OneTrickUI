@@ -1,7 +1,8 @@
 import { type Session, createCookieSessionStorage } from 'react-router';
+import type { Character } from '~/api';
 
 type SessionData = {
-  characterId?: string;
+  character?: Character;
   fireteam?: Record<string, string>;
 };
 
@@ -24,10 +25,10 @@ const { getSession, commitSession, destroySession } =
 
 async function getPreferences(request: Request): Promise<SessionData> {
   const preferences = await getSession(request.headers.get('Cookie'));
-  const characterId = preferences.get('characterId');
+  const character = preferences.get('character');
   const fireteam = preferences.get('fireteam');
   return {
-    characterId,
+    character,
     fireteam,
   };
 }
@@ -40,8 +41,8 @@ async function getPreferenceSession(
 
 async function setPreferences(request: Request, preferences: SessionData) {
   const session = await getSession(request.headers.get('Cookie'));
-  if (preferences.characterId) {
-    session.set('characterId', preferences.characterId);
+  if (preferences.character) {
+    session.set('character', preferences.character);
   }
   if (preferences.fireteam) {
     const existing = session.get('fireteam');

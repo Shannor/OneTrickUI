@@ -1,6 +1,7 @@
-import * as React from 'react';
 import { ChevronsUpDown, Plus } from 'lucide-react';
-
+import * as React from 'react';
+import type { Profile } from '~/api';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,8 +17,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '~/components/ui/sidebar';
-import type { Profile } from '~/api';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 
 export function CharacterSwitcher({
   characters,
@@ -26,7 +25,7 @@ export function CharacterSwitcher({
 }: {
   characters: Profile['characters'];
   currentCharacterId?: string;
-  onChangeCharacter: (characterId: string) => void;
+  onChangeCharacter?: (characterId: string) => void;
 }) {
   const { isMobile } = useSidebar();
   const currentCharacter = characters.find((c) => c.id === currentCharacterId);
@@ -78,7 +77,7 @@ export function CharacterSwitcher({
               <DropdownMenuItem
                 key={team.id}
                 onClick={() => {
-                  onChangeCharacter(team.id);
+                  onChangeCharacter?.(team.id);
                 }}
                 className="gap-6 p-4"
               >

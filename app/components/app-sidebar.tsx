@@ -7,7 +7,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import * as React from 'react';
-import type { Profile } from '~/api';
+import type { Character, Profile } from '~/api';
 import { CharacterSwitcher } from '~/components/character-switcher';
 import { NavMain } from '~/components/nav-main';
 import { NavProjects } from '~/components/nav-projects';
@@ -80,15 +80,13 @@ const data = {
 };
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  profile: Profile;
-  onChangeCharacter: (characterId: string) => void;
+  character: Character;
   currentCharacterId?: string;
   onLogout: () => void;
 }
 export function AppSidebar({
-  profile,
-  onChangeCharacter,
   currentCharacterId,
+  character,
   onLogout,
   ...props
 }: AppSidebarProps) {
@@ -96,18 +94,17 @@ export function AppSidebar({
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <CharacterSwitcher
-          characters={profile.characters}
+          characters={[character]}
           currentCharacterId={currentCharacterId}
-          onChangeCharacter={onChangeCharacter}
         />
       </SidebarHeader>
       <SidebarContent>
         <NavProjects projects={data.base} />
-        <NavMain items={data.navMain} />
+        {/*<NavMain items={data.navMain} />*/}
         <NavProjects projects={data.projects} label="Tracking" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={profile} onLogout={onLogout} />
+        {/*<NavUser user={profile} onLogout={onLogout} />*/}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
