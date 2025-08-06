@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { Fragment, type ReactNode, useState } from 'react';
 import type { Character } from '~/api';
 import { cn } from '~/lib/utils';
 
@@ -19,14 +19,57 @@ export function CharacterPicker({
     <div className="flex scroll-m-20 flex-col gap-4">
       <div className="flex flex-col justify-center gap-6">
         {characters.map((it) => (
-          <>
-            <input readOnly hidden name="emblemUrl" value={it.emblemURL} />
-            <input readOnly hidden name="class" value={it.class} />
-            <input readOnly hidden name="title" value={it.currentTitle} />
-            <input readOnly hidden name="light" value={it.light} />
-            <input readOnly hidden name="race" value={it.race} />
+          <Fragment key={it.id}>
             <input
+              type="radio"
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              checked={checked === it.id}
               readOnly
+              hidden
+              name="emblemUrl"
+              value={it.emblemURL}
+            />
+            <input
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              type="radio"
+              checked={checked === it.id}
+              readOnly
+              hidden
+              name="class"
+              value={it.class}
+            />
+            <input
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              type="radio"
+              checked={checked === it.id}
+              readOnly
+              hidden
+              name="title"
+              value={it.currentTitle}
+            />
+            <input
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              type="radio"
+              checked={checked === it.id}
+              readOnly
+              hidden
+              name="light"
+              value={it.light}
+            />
+            <input
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              type="radio"
+              checked={checked === it.id}
+              readOnly
+              hidden
+              name="race"
+              value={it.race}
+            />
+            <input
+              className="pointer-events-none absolute h-0 w-0 opacity-0"
+              type="radio"
+              readOnly
+              checked={checked === it.id}
               hidden
               name="backgroundUrl"
               value={it.emblemBackgroundURL}
@@ -37,7 +80,6 @@ export function CharacterPicker({
                 it.id !== checked &&
                   'cursor-pointer drop-shadow-md hover:drop-shadow-xl dark:hover:border-2 dark:hover:border-yellow-300',
               )}
-              key={it.id}
             >
               <input
                 className="pointer-events-none absolute h-0 w-0 opacity-0"
@@ -76,7 +118,7 @@ export function CharacterPicker({
                 </div>
               </div>
             </label>
-          </>
+          </Fragment>
         ))}
       </div>
       {children?.(checked, currentCharacterId)}

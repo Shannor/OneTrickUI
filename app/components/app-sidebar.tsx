@@ -8,10 +8,8 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import type { Character, Profile } from '~/api';
-import { CharacterSwitcher } from '~/components/character-switcher';
-import { NavMain } from '~/components/nav-main';
+import { CharacterViewer } from '~/components/character-viewer';
 import { NavProjects } from '~/components/nav-projects';
-import { NavUser } from '~/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -93,10 +91,7 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <CharacterSwitcher
-          characters={[character]}
-          currentCharacterId={currentCharacterId}
-        />
+        <CharacterViewer character={character} />
       </SidebarHeader>
       <SidebarContent>
         <NavProjects projects={data.base} />

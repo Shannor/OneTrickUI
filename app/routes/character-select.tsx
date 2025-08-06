@@ -55,14 +55,8 @@ export default function CharacterSelect({ loaderData }: Route.ComponentProps) {
             currentCharacterId={character?.id}
           >
             {(current, previous) => {
-              const isDisabled =
-                Boolean(current) && Boolean(previous) && current === previous;
               return (
-                <LoadingButton
-                  type="submit"
-                  disabled={isDisabled}
-                  isLoading={isNavigating}
-                >
+                <LoadingButton type="submit" isLoading={isNavigating}>
                   {!character?.id ? 'Pick a Guardian' : 'Change Guardian'}
                 </LoadingButton>
               );

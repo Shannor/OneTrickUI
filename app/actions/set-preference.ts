@@ -1,5 +1,4 @@
 import { redirect } from 'react-router';
-import { Logger } from '~/.server/logger';
 import { setPreferences } from '~/.server/preferences';
 
 import type { Route } from './+types/set-preference';
@@ -35,7 +34,6 @@ export async function action({ request }: Route.ClientActionArgs) {
   });
 
   const redirectTo = formData.get('redirectTo');
-  Logger.info(`redirect to ${redirectTo}`);
   return redirect(redirectTo?.toString() || '/', {
     ...headers,
   });
