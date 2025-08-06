@@ -11,7 +11,6 @@ export type Profile = {
   displayName: string;
   uniqueName: string;
   characters: Array<Character>;
-  fireteam?: Array<FireteamMember>;
 };
 
 export type DetailActivity = {
@@ -526,24 +525,41 @@ export type SearchResponses = {
 
 export type SearchResponse = SearchResponses[keyof SearchResponses];
 
-export type UpdateManifestData = {
+export type GetFireteamData = {
   body?: never;
+  headers: {
+    'X-User-ID': string;
+    'X-Membership-ID': string;
+  };
   path?: never;
   query?: never;
-  url: '/manifest';
+  url: '/fireteam';
 };
 
-export type UpdateManifestResponses = {
+export type GetFireteamErrors = {
   /**
-   * Return of success of updating manifest if needed
+   * Server is down
    */
-  200: {
-    success: boolean;
+  503: {
+    /**
+     * User friendly description of the error
+     */
+    message: string;
+    status: InternalError;
   };
 };
 
-export type UpdateManifestResponse =
-  UpdateManifestResponses[keyof UpdateManifestResponses];
+export type GetFireteamError = GetFireteamErrors[keyof GetFireteamErrors];
+
+export type GetFireteamResponses = {
+  /**
+   * Returns the current fireteam. Will include the user if they are online. If offline the array will be empty
+   */
+  200: Array<FireteamMember>;
+};
+
+export type GetFireteamResponse =
+  GetFireteamResponses[keyof GetFireteamResponses];
 
 export type ProfileData = {
   body?: never;

@@ -1,10 +1,11 @@
-import { Form, data, redirect } from 'react-router';
+import { Suspense } from 'react';
+import { Await, Form, data, redirect } from 'react-router';
 import { getAuth } from '~/.server/auth';
-import { Logger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
 import { profile } from '~/api';
 import { CharacterPicker } from '~/components/character-picker';
 import { LoadingButton } from '~/components/loading-button';
+import { Skeleton } from '~/components/ui/skeleton';
 import { useIsNavigating } from '~/lib/hooks';
 
 import type { Route } from './+types/character-select';
@@ -15,54 +16,88 @@ export async function loader({ request }: Route.LoaderArgs) {
     return redirect('/login');
   }
   const { character } = await getPreferences(request);
-  const { data: profileData, error } = await profile({
+  const profileData = profile({
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
       'X-Membership-ID': auth.membershipId,
       'X-User-ID': auth.id,
     },
   });
-  if (error) {
-    if (error.status === 'DestinyServerDown') {
-      throw data(error.message, { status: 503 });
-    }
-    Logger.error(error.message, { error });
-    throw data(error.message, { status: 500 });
-  }
-  if (!profileData) {
-    throw data('No profile data', { status: 500 });
-  }
   return data({
     profile: profileData,
     character,
-    membershipId: auth.primaryMembershipId,
   });
 }
 
 export default function CharacterSelect({ loaderData }: Route.ComponentProps) {
-  const { profile, character, membershipId } = loaderData;
+  const { profile, character } = loaderData;
   const [isNavigating] = useIsNavigating();
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-        Welcome, {profile?.displayName}!
-      </h2>
-      <div className="grid place-items-center">
-        <Form action="/dashboard/action/set-preference" method="post">
-          <input readOnly hidden name="redirectTo" value="/dashboard" />
-          <CharacterPicker
-            characters={profile.characters}
-            currentCharacterId={character?.id}
-          >
-            {(current, previous) => {
+    <div className="flex h-screen items-center justify-center">
+      <div className="">
+        <Suspense
+          fallback={
+            <div className="w-full">
+              <div className="flex flex-row gap-4">
+                <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+                  Welcome,
+                </h2>
+                <Skeleton className="h-10 w-64" />
+              </div>
+              <div className="grid place-items-center gap-4">
+                {[1, 2, 3].map((value) => {
+                  return <Skeleton key={value} className="h-20 w-full" />;
+                })}
+                <Skeleton key="button" className="h-10 w-full" />
+              </div>
+            </div>
+          }
+        >
+          <Await resolve={profile}>
+            {({ data, error }) => {
+              if (error) {
+                return <div>Failed to load your characters!</div>;
+              }
               return (
-                <LoadingButton type="submit" isLoading={isNavigating}>
-                  {!character?.id ? 'Pick a Guardian' : 'Change Guardian'}
-                </LoadingButton>
+                <>
+                  <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+                    Welcome, {data.displayName}!
+                  </h2>
+                  <div className="grid place-items-center">
+                    <Form
+                      action="/dashboard/action/set-preference"
+                      method="post"
+                    >
+                      <input
+                        readOnly
+                        hidden
+                        name="redirectTo"
+                        value="/dashboard"
+                      />
+                      <CharacterPicker
+                        characters={data.characters}
+                        currentCharacterId={character?.id}
+                      >
+                        {(current, previous) => {
+                          return (
+                            <LoadingButton
+                              type="submit"
+                              isLoading={isNavigating}
+                            >
+                              {!character?.id
+                                ? 'Pick a Guardian'
+                                : 'Change Guardian'}
+                            </LoadingButton>
+                          );
+                        }}
+                      </CharacterPicker>
+                    </Form>
+                  </div>
+                </>
               );
             }}
-          </CharacterPicker>
-        </Form>
+          </Await>
+        </Suspense>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import {
 } from '~/.server/preferences';
 import {
   type Session,
+  getFireteam,
   getPublicProfile,
   getPublicSessions,
   profile,
@@ -16,7 +17,7 @@ import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { useIsNavigating } from '~/lib/hooks';
 
-import type { Route } from '../../.react-router/types/app/routes/+types/fireteam';
+import type { Route } from './+types/fireteam';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
@@ -24,7 +25,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Error('Not authenticated');
   }
 
-  const { data: profileData, error } = await profile({
+  const { data: fireteam, error } = await getFireteam({
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
       'X-Membership-ID': auth.membershipId,
@@ -34,19 +35,17 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (error) {
     return { members: [], error: 'failed to get profile data', sessions: [] };
   }
-  if (!profileData) {
+  if (!fireteam) {
     return { members: [], error: 'no data returned' };
   }
-  if (!profileData.fireteam?.length) {
+  if (!fireteam?.length) {
     return { members: [], fireteamCharacters: [], sessions: [] };
   }
-  const fireteamMemberIds = new Set(
-    profileData.fireteam.map((f) => f.membershipId),
-  );
+  const fireteamMemberIds = new Set(fireteam.map((f) => f.membershipId));
   const { fireteam: savedFireteam } = await getPreferences(request);
 
   const characterInformation = await Promise.all(
-    profileData.fireteam.map(async (member) => {
+    fireteam.map(async (member) => {
       const { data, error } = await getPublicProfile({
         query: {
           id: member.membershipId,
@@ -100,7 +99,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   );
   return data(
     {
-      members: profileData.fireteam ?? [],
+      members: fireteam ?? [],
       fireteamCharacters: characterInformation ?? [],
       sessions: sessionData.filter(Boolean),
     },
@@ -120,10 +119,11 @@ interface SessionTemp {
 // Can end the session for someone else? I'm thinking nah
 // Double dipping with multiple snapshots when in a fireteam by each memeber.
 
-export default function Fireteam({ matches }: Route.ComponentProps) {
-  console.log(matches);
-  const { members, fireteamCharacters, sessions } =
-    useLoaderData<typeof loader>();
+export default function Fireteam({
+  matches,
+  loaderData,
+}: Route.ComponentProps) {
+  const { members, fireteamCharacters, sessions } = loaderData;
 
   const [isSubmitting] = useIsNavigating();
 

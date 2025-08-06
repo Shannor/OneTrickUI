@@ -29,6 +29,9 @@ import type {
   GetActivitiesResponse,
   GetActivityData,
   GetActivityResponse,
+  GetFireteamData,
+  GetFireteamError,
+  GetFireteamResponse,
   GetPingData,
   GetPingResponse,
   GetPublicProfileData,
@@ -64,8 +67,6 @@ import type {
   StartSessionData,
   StartSessionError,
   StartSessionResponse,
-  UpdateManifestData,
-  UpdateManifestResponse,
   UpdateSessionData,
   UpdateSessionResponse,
 } from './types.gen';
@@ -105,16 +106,16 @@ export const search = <ThrowOnError extends boolean = false>(
   });
 };
 
-export const updateManifest = <ThrowOnError extends boolean = false>(
-  options?: Options<UpdateManifestData, ThrowOnError>,
+export const getFireteam = <ThrowOnError extends boolean = false>(
+  options: Options<GetFireteamData, ThrowOnError>,
 ) => {
-  return (options?.client ?? client).post<
-    UpdateManifestResponse,
-    unknown,
+  return (options?.client ?? client).get<
+    GetFireteamResponse,
+    GetFireteamError,
     ThrowOnError
   >({
     ...options,
-    url: '/manifest',
+    url: '/fireteam',
   });
 };
 
