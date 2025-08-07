@@ -1,9 +1,10 @@
 import { type Session, createCookieSessionStorage } from 'react-router';
-import type { Character } from '~/api';
+import type { Character, Profile } from '~/api';
 
 type SessionData = {
   character?: Character;
   fireteam?: Record<string, string>;
+  profile?: Omit<Profile, 'characters'>;
 };
 
 type SessionFlashData = {
@@ -27,9 +28,11 @@ async function getPreferences(request: Request): Promise<SessionData> {
   const preferences = await getSession(request.headers.get('Cookie'));
   const character = preferences.get('character');
   const fireteam = preferences.get('fireteam');
+  const profile = preferences.get('profile');
   return {
     character,
     fireteam,
+    profile,
   };
 }
 
@@ -43,6 +46,9 @@ async function setPreferences(request: Request, preferences: SessionData) {
   const session = await getSession(request.headers.get('Cookie'));
   if (preferences.character) {
     session.set('character', preferences.character);
+  }
+  if (preferences.profile) {
+    session.set('profile', preferences.profile);
   }
   if (preferences.fireteam) {
     const existing = session.get('fireteam');

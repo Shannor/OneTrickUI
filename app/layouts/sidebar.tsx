@@ -27,19 +27,22 @@ export async function loader({ request }: Route.LoaderArgs) {
     return redirect('/login');
   }
   const headers = await refreshHeaders(request, auth);
-  const { character } = await getPreferences(request);
+  const { character, profile } = await getPreferences(request);
   if (!character) {
     return redirect('/character-select', { ...headers });
   }
 
-  return data(character, {
-    ...headers,
-  });
+  return data(
+    { character, profile },
+    {
+      ...headers,
+    },
+  );
 }
 
 export default function Sidebar({ loaderData }: Route.ComponentProps) {
   const { submit } = useFetcher();
-  const character = loaderData;
+  const { character } = loaderData;
 
   return (
     <SidebarProvider>

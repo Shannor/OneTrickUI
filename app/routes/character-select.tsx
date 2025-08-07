@@ -74,6 +74,25 @@ export default function CharacterSelect({ loaderData }: Route.ComponentProps) {
                         name="redirectTo"
                         value="/dashboard"
                       />
+                      <input readOnly hidden name="profileId" value={data.id} />
+                      <input
+                        readOnly
+                        hidden
+                        name="displayName"
+                        value={data.displayName}
+                      />
+                      <input
+                        readOnly
+                        hidden
+                        name="uniqueName"
+                        value={data.uniqueName}
+                      />
+                      <input
+                        readOnly
+                        hidden
+                        name="memebershipId"
+                        value={data.membershipId}
+                      />
                       <CharacterPicker
                         characters={data.characters}
                         currentCharacterId={character?.id}

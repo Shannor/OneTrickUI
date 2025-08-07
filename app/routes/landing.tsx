@@ -3,7 +3,7 @@ import { getAuth } from '~/.server/auth';
 import { LoadingButton } from '~/components/loading-button';
 import { useIsNavigating } from '~/lib/hooks';
 
-import type { Route } from '../../.react-router/types/app/routes/+types/login';
+import type { Route } from './+types/landing';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -32,7 +32,7 @@ export default function Landing() {
             <Link to="/login">Sign In</Link>
           </LoadingButton>
           <LoadingButton variant="outline" isLoading={isLoading}>
-            <Link to="/search"> Search For A Friend</Link>
+            <Link to="/search"> Search for a Friend</Link>
           </LoadingButton>
         </div>
       </div>

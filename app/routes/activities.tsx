@@ -30,8 +30,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Error('Not authenticated');
   }
 
-  const { characterId } = await getPreferences(request);
-  if (!characterId) {
+  const { character } = await getPreferences(request);
+  if (!character) {
     return { data: [], page, error: 'No character id', activityType };
   }
 
@@ -39,7 +39,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     query: {
       count: 10,
       page: page,
-      characterId,
+      characterId: character.id,
       mode: activityType || undefined,
     },
     headers: {
@@ -52,13 +52,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw data('No records found', { status: 404 });
   }
 
-  return { data: res.data, page, activityType, characterId };
+  return { data: res.data, page, activityType, characterId: character.id };
 }
 
-export default function Activities() {
+export default function Activities({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
-  const { data, page, activityType, characterId } =
-    useLoaderData<typeof loader>();
+  const { data, page, activityType, characterId } = loaderData;
 
   const noActivities = data?.length === 0;
   if (!characterId) {

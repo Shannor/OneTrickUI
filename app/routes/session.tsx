@@ -22,29 +22,7 @@ import {
 import { CollapsibleMaps } from '~/organisims/collapsible-maps';
 import { Performance } from '~/organisims/performance';
 
-import type { Route } from '../../.react-router/types/app/routes/+types/session';
-
-export function meta({ data }: Route.MetaArgs) {
-  if (data.session) {
-    return [
-      {
-        title: `Session - ${data.session.name ?? ''}: Games - ${data.aggregates?.length ?? 0}`,
-      },
-      {
-        name: 'description',
-        content: `Detailed session information`,
-      },
-    ];
-  }
-
-  return [
-    { title: `Session` },
-    {
-      name: 'description',
-      content: `Detailed session information`,
-    },
-  ];
-}
+import type { Route } from './+types/session';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { sessionId } = params;
@@ -94,9 +72,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   };
 }
 
-export default function Session() {
-  const { session, error, aggregates, snapshots, path } =
-    useLoaderData<typeof loader>();
+export default function Session({ loaderData }: Route.ComponentProps) {
+  const { session, error, aggregates, snapshots, path } = loaderData;
   const navigate = useNavigate();
 
   if (!session) {
@@ -140,6 +117,7 @@ export default function Session() {
     }
     setTimeout(() => setCopyStatus(''), 2000);
   };
+
   return (
     <div>
       <div className="flex flex-col items-start gap-4 border-b p-4">

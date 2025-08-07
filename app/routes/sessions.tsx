@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 
-import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
+import type { Route } from './+types/sessions';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
@@ -73,8 +73,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Error('Not authenticated');
   }
 
-  const { characterId } = await getPreferences(request);
-  if (!characterId) {
+  const { character } = await getPreferences(request);
+  if (!character) {
     return { data: [], page, error: 'No character id', isOwner: true };
   }
 
@@ -82,7 +82,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     query: {
       count: 10,
       page: page,
-      characterId,
+      characterId: character.id,
       status: 'complete',
     },
     headers: {
@@ -95,7 +95,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     query: {
       count: 1,
       page: page,
-      characterId,
+      characterId: character.id,
       status: 'pending',
     },
     headers: {
@@ -119,15 +119,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     data: res.data,
     current,
     page,
-    characterId,
+    characterId: character.id,
     isOwner: true,
     userId: auth.id,
   };
 }
 
-export default function Sessions() {
-  const { data, characterId, error, current, userId, isOwner } =
-    useLoaderData<typeof loader>();
+export default function Sessions({ loaderData }: Route.ComponentProps) {
+  const { data, characterId, error, current, userId, isOwner } = loaderData;
 
   const navigate = useNavigate();
 

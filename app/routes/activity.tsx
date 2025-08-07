@@ -24,14 +24,17 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (!auth) {
     throw new Error('Not authenticated');
   }
-  const { characterId } = await getPreferences(request);
-  if (characterId === undefined) {
+  const { character } = await getPreferences(request);
+  if (!character) {
     throw data('No character id', { status: 404 });
+  }
+  if (!params.instanceId) {
+    throw new Error('Missing instance id');
   }
   const res = await getActivity({
     path: { activityId: params.instanceId },
     query: {
-      characterId,
+      characterId: character.id,
     },
     headers: {
       'X-Membership-ID': auth.primaryMembershipId,
@@ -41,7 +44,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (!res.data || isEmptyObject(res.data)) {
     throw data('Record Not Found', { status: 404 });
   }
-  const link = res.data.aggregate?.snapshotLinks?.[characterId];
+  const link = res.data.aggregate?.snapshotLinks?.[character.id];
   if (link && link.snapshotId) {
     const { data, error } = await getSnapshot({
       headers: {
@@ -53,40 +56,28 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         snapshotId: link.snapshotId,
       },
       query: {
-        characterId,
+        characterId: character.id,
       },
     });
     if (!error) {
-      return { activityDetails: res.data, snapshot: data, characterId };
+      return {
+        activityDetails: res.data,
+        snapshot: data,
+        characterId: character.id,
+      };
     }
   }
-  return { activityDetails: res.data, characterId };
-}
-
-export function meta({ data }: Route.MetaArgs) {
-  const {
-    activityDetails: { activity },
-  } = data;
-  return [
-    { title: `One Trick - ${activity.mode}` },
-    {
-      name: 'description',
-      content: `Details about ${activity.location} - ${activity.mode}`,
-    },
-  ];
-}
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  return <div>Oops, something went wrong!</div>;
+  return { activityDetails: res.data, characterId: character.id };
 }
 
 const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
 const crucibleReportUrl = 'https://crucible.report/pgcr';
 
-export default function Activity() {
+export default function Activity({ loaderData }: Route.ComponentProps) {
   const {
     activityDetails: { activity, aggregate, teams },
     characterId,
-  } = useLoaderData<typeof loader>();
+  } = loaderData;
 
   const personalValues = activity.personalValues;
   const performance = aggregate?.performance[characterId];

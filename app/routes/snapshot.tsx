@@ -6,47 +6,22 @@ import { getSnapshot } from '~/api';
 
 import type { Route } from './+types/snapshot';
 
-export function meta({ location }: Route.MetaArgs) {}
-
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  if (isRouteErrorResponse(error)) {
-    return (
-      <>
-        <h1>
-          {error.status} {error.statusText}
-        </h1>
-        <p>{error.data}</p>
-      </>
-    );
-  } else if (error instanceof Error) {
-    return (
-      <div>
-        <h1>Error</h1>
-        <p>{error.message}</p>
-        <p>The stack trace is:</p>
-        <pre>{error.stack}</pre>
-      </div>
-    );
-  } else {
-    return <h1>Unknown Error</h1>;
-  }
-}
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { snapshotId } = params;
   const auth = await getAuth(request);
-  const { characterId } = await getPreferences(request);
+  const { character } = await getPreferences(request);
   if (!auth) {
     throw new Error('Not authenticated');
   }
 
-  if (!characterId) {
-    throw data('No character id', { status: 400 });
+  if (!character) {
+    throw data('No character', { status: 400 });
   }
 
   const result = await getSnapshot({
     path: { snapshotId },
     query: {
-      characterId,
+      characterId: character.id,
     },
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
@@ -59,8 +34,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return result.data;
 }
 
-export default function Snapshot({}: Route.ComponentProps) {
-  const snapshot = useLoaderData<typeof loader>();
+export default function Snapshot({ loaderData }: Route.ComponentProps) {
+  const snapshot = loaderData;
 
   return (
     <div className="flex flex-col gap-4">
@@ -75,6 +50,7 @@ export default function Snapshot({}: Route.ComponentProps) {
             the time.
           </p>
         </div>
+        <div>TBD</div>
       </div>
     </div>
   );

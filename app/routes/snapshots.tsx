@@ -11,6 +11,7 @@ import {
 import { getAuth } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
 import { createSnapshot, getSnapshots, profile } from '~/api';
+import { LoadingButton } from '~/components/loading-button';
 import { Button } from '~/components/ui/button';
 import {
   Card,
@@ -20,8 +21,6 @@ import {
 } from '~/components/ui/card';
 
 import type { Route } from './+types/snapshots';
-
-export function meta({ location }: Route.MetaArgs) {}
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   if (isRouteErrorResponse(error)) {
@@ -46,6 +45,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     return <h1>Unknown Error</h1>;
   }
 }
+
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
   const page = url.searchParams.get('page') || 0;
@@ -54,22 +54,16 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw new Error('Not logged in');
   }
 
-  const { characterId } = await getPreferences(request);
-  if (!characterId) {
-    throw data('No character id');
+  const { character } = await getPreferences(request);
+  if (!character) {
+    throw data('No character');
   }
-  const { data: profileData } = await profile({
-    headers: {
-      Authorization: `Bearer ${auth.accessToken}`,
-      'X-Membership-ID': auth.membershipId,
-      'X-User-ID': auth.id,
-    },
-  });
+
   const res = await getSnapshots({
     query: {
       count: 10,
       page: Number(page),
-      characterId: characterId,
+      characterId: character.id,
     },
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
@@ -79,7 +73,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!res.data) {
     throw data('Records Not Found', { status: 404 });
   }
-  return { snapshots: res.data, profile: profileData, characterId };
+  return {
+    snapshots: res.data,
+    characterId: character.id,
+  };
 }
 
 export async function action({ request }: Route.ClientActionArgs) {
@@ -112,15 +109,13 @@ export async function action({ request }: Route.ClientActionArgs) {
   return data;
 }
 
-export default function Snapshots({ actionData }: Route.ComponentProps) {
-  const submit = useSubmit();
+export default function Snapshots({ loaderData }: Route.ComponentProps) {
   const fetcher = useFetcher();
-  const { snapshots, characterId } = useLoaderData<typeof loader>();
+  const { snapshots, characterId } = loaderData;
   const navigate = useNavigate();
 
   const isSubmitting = fetcher.state === 'submitting';
-  const formData = new FormData();
-  formData.set('characterId', characterId);
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row justify-between gap-4">
@@ -135,21 +130,15 @@ export default function Snapshots({ actionData }: Route.ComponentProps) {
         </div>
         <fetcher.Form method="post">
           <input type="hidden" name="characterId" value={characterId} />
-          <Button
+          <LoadingButton
             type="submit"
             variant="outline"
             disabled={!characterId || isSubmitting}
-            className={`${isSubmitting ? 'opacity-50' : ''}`}
+            isLoading={isSubmitting}
           >
-            {isSubmitting ? (
-              <></>
-            ) : (
-              <>
-                <PlusIcon className="h-4 w-4" />
-                Create New Snapshot
-              </>
-            )}
-          </Button>
+            <PlusIcon className="h-4 w-4" />
+            Create New Snapshot
+          </LoadingButton>
         </fetcher.Form>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

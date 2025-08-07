@@ -13,6 +13,11 @@ export async function action({ request }: Route.ClientActionArgs) {
   const light = formData.get('light');
   const race = formData.get('race');
 
+  const profileId = formData.get('profileId');
+  const displayName = formData.get('displayName');
+  const uniqueName = formData.get('uniqueName');
+  const membershipId = formData.get('membershipId');
+
   if (!characterId) {
     return { message: 'No character id' };
   }
@@ -30,6 +35,12 @@ export async function action({ request }: Route.ClientActionArgs) {
       currentTitle: currentTitle?.toString() ?? '',
       race: race?.toString() ?? '',
       emblemBackgroundURL: background?.toString() ?? '',
+    },
+    profile: {
+      id: profileId?.toString() ?? '',
+      displayName: displayName?.toString() ?? '',
+      uniqueName: uniqueName?.toString() ?? '',
+      membershipId: membershipId?.toString() ?? '',
     },
   });
 
