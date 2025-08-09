@@ -10,8 +10,10 @@ import * as React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import type { Character, FireteamMember, Profile } from '~/api';
 import { CharacterViewer } from '~/components/character-viewer';
+import { ClientFallback } from '~/components/client-fallback';
 import { FireteamPreview } from '~/components/fireteam-preview';
 import { NavProjects } from '~/components/nav-projects';
+import { NavUser } from '~/components/nav-user';
 import { Avatar, AvatarImage } from '~/components/ui/avatar';
 import {
   Sidebar,
@@ -88,6 +90,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   character: Character;
   currentCharacterId?: string;
   fireteam: Route.ComponentProps['loaderData']['fireteam'];
+  displayName: string;
   onLogout: () => void;
 }
 export function AppSidebar({
@@ -95,6 +98,7 @@ export function AppSidebar({
   character,
   onLogout,
   fireteam,
+  displayName,
   ...props
 }: AppSidebarProps) {
   return (
@@ -103,31 +107,27 @@ export function AppSidebar({
         <CharacterViewer character={character} />
       </SidebarHeader>
       <SidebarContent>
-        <ErrorBoundary
-          fallback={
+        <ClientFallback
+          errorFallback={
             <Well>
               <div>Failed to Load Fireteam</div>
             </Well>
           }
+          suspenseFallback={
+            <div>
+              <Skeleton className="h-40 w-full" />
+            </div>
+          }
         >
-          <React.Suspense
-            fallback={
-              <div>
-                <Skeleton className="h-40 w-full" />
-              </div>
-            }
-          >
-            <Well>
-              <FireteamPreview p={fireteam} />
-            </Well>
-          </React.Suspense>
-        </ErrorBoundary>
+          <Well>
+            <FireteamPreview p={fireteam} />
+          </Well>
+        </ClientFallback>
         <NavProjects projects={data.base} />
-        {/*<NavMain items={data.navMain} />*/}
         <NavProjects projects={data.projects} label="Tracking" />
       </SidebarContent>
       <SidebarFooter>
-        {/*<NavUser user={profile} onLogout={onLogout} />*/}
+        <NavUser displayName={displayName} onLogout={onLogout} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

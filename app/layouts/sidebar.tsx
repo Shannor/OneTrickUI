@@ -43,7 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Sidebar({ loaderData }: Route.ComponentProps) {
   const { submit } = useFetcher();
-  const { character, fireteam } = loaderData;
+  const { character, fireteam, profile } = loaderData;
 
   return (
     <SidebarProvider>
@@ -58,6 +58,7 @@ export default function Sidebar({ loaderData }: Route.ComponentProps) {
             }).catch(console.error);
           }}
           fireteam={fireteam}
+          displayName={profile?.displayName ?? ''}
         />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">

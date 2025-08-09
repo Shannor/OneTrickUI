@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Label } from '~/components/label';
 import { Avatar, AvatarImage } from '~/components/ui/avatar';
 import { cn } from '~/lib/utils';
 
@@ -22,36 +23,41 @@ export function FireteamPreview({
     return state;
   }, {});
   return (
-    <div className="flex cursor-default flex-col gap-2">
-      {fireteam.map((m) => {
-        const characterId = selectedCharacters?.[m.membershipId];
-        const character = membershipToCharacters[
-          m.membershipId
-        ]?.characters.find((it) => it.id === characterId);
+    <div className="flex flex-col gap-1">
+      <Label>Fireteam</Label>
+      <div className="flex cursor-default flex-col gap-2">
+        {fireteam.map((m) => {
+          const characterId = selectedCharacters?.[m.membershipId];
+          const character = membershipToCharacters[
+            m.membershipId
+          ]?.characters.find((it) => it.id === characterId);
 
-        if (!character) {
+          if (!character) {
+            return (
+              <div key={m.id} className="w-full p-4 dark:bg-gray-400">
+                {m.displayName}
+              </div>
+            );
+          }
+          const { red, green, blue, alpha } = character.emblemColor;
           return (
-            <div key={m.id} className="w-full p-4 dark:bg-gray-400">
-              {m.displayName}
+            <div
+              key={m.id}
+              style={{
+                backgroundColor: `rgba(${red}, ${green}, ${blue}, ${alpha})`,
+              }}
+              className={cn(
+                `flex h-8 flex-row items-center gap-3 rounded-[4px]`,
+              )}
+            >
+              <Avatar className="h-8 w-8 rounded-[4px]">
+                <AvatarImage src={character.emblemURL} />
+              </Avatar>
+              <h2 className="text-md text-white">{m.displayName}</h2>
             </div>
           );
-        }
-        const { red, green, blue, alpha } = character.emblemColor;
-        return (
-          <div
-            key={m.id}
-            style={{
-              backgroundColor: `rgba(${red}, ${green}, ${blue}, ${alpha})`,
-            }}
-            className={cn(`flex h-8 flex-row items-center gap-3 rounded-[4px]`)}
-          >
-            <Avatar className="h-8 rounded-[4px]">
-              <AvatarImage src={character.emblemURL} />
-            </Avatar>
-            <h2 className="text-md text-white">{m.displayName}</h2>
-          </div>
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 }
