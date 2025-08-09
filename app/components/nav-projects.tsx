@@ -1,4 +1,5 @@
 import { type LucideIcon } from 'lucide-react';
+import { Link, NavLink } from 'react-router';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -25,10 +26,15 @@ export function NavProjects({
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <a href={item.url}>
+              <NavLink
+                to={item.url}
+                className={({ isActive, isPending }) =>
+                  isPending ? 'pending' : isActive ? 'active' : ''
+                }
+              >
                 <item.icon />
-                <span>{item.name}</span>
-              </a>
+                {item.name}
+              </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}

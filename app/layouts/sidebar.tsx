@@ -1,17 +1,17 @@
+import React from 'react';
 import {
   Outlet,
   data,
+  isRouteErrorResponse,
   redirect,
   useFetcher,
-  useLoaderData,
-  useLocation,
 } from 'react-router';
 import { getAuth, refreshHeaders } from '~/.server/auth';
+import { getFireteamData } from '~/.server/fireteam';
 import { getPreferences } from '~/.server/preferences';
-import { type Character, type Session, getSessions, profile } from '~/api';
+import { type FireteamMember, getFireteam } from '~/api';
 import { AppSidebar } from '~/components/app-sidebar';
 import { ModeToggle } from '~/components/mode-toggle';
-import SessionTracker from '~/components/session-tracker';
 import {
   SidebarInset,
   SidebarProvider,
@@ -32,8 +32,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     return redirect('/character-select', { ...headers });
   }
 
+  const fireteam = getFireteamData(request);
   return data(
-    { character, profile },
+    { character, profile, fireteam },
     {
       ...headers,
     },
@@ -42,7 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Sidebar({ loaderData }: Route.ComponentProps) {
   const { submit } = useFetcher();
-  const { character } = loaderData;
+  const { character, fireteam } = loaderData;
 
   return (
     <SidebarProvider>
@@ -56,6 +57,7 @@ export default function Sidebar({ loaderData }: Route.ComponentProps) {
               action: '/dashboard/action/logout',
             }).catch(console.error);
           }}
+          fireteam={fireteam}
         />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">

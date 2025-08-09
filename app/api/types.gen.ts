@@ -345,6 +345,7 @@ export type Character = {
   emblemURL: string;
   emblemBackgroundURL: string;
   currentTitle: string;
+  emblemColor: Color;
   race: string;
   class: string;
   stats?: {

@@ -7,9 +7,12 @@ import {
   UsersRound,
 } from 'lucide-react';
 import * as React from 'react';
-import type { Character, Profile } from '~/api';
+import { ErrorBoundary } from 'react-error-boundary';
+import type { Character, FireteamMember, Profile } from '~/api';
 import { CharacterViewer } from '~/components/character-viewer';
+import { FireteamPreview } from '~/components/fireteam-preview';
 import { NavProjects } from '~/components/nav-projects';
+import { Avatar, AvatarImage } from '~/components/ui/avatar';
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +20,10 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '~/components/ui/sidebar';
+import { Skeleton } from '~/components/ui/skeleton';
+import { Well } from '~/components/well';
+
+import type { Route } from '../../.react-router/types/app/layouts/+types/sidebar';
 
 // This is sample data.
 const data = {
@@ -80,12 +87,14 @@ const data = {
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   character: Character;
   currentCharacterId?: string;
+  fireteam: Route.ComponentProps['loaderData']['fireteam'];
   onLogout: () => void;
 }
 export function AppSidebar({
   currentCharacterId,
   character,
   onLogout,
+  fireteam,
   ...props
 }: AppSidebarProps) {
   return (
@@ -94,6 +103,25 @@ export function AppSidebar({
         <CharacterViewer character={character} />
       </SidebarHeader>
       <SidebarContent>
+        <ErrorBoundary
+          fallback={
+            <Well>
+              <div>Failed to Load Fireteam</div>
+            </Well>
+          }
+        >
+          <React.Suspense
+            fallback={
+              <div>
+                <Skeleton className="h-40 w-full" />
+              </div>
+            }
+          >
+            <Well>
+              <FireteamPreview p={fireteam} />
+            </Well>
+          </React.Suspense>
+        </ErrorBoundary>
         <NavProjects projects={data.base} />
         {/*<NavMain items={data.navMain} />*/}
         <NavProjects projects={data.projects} label="Tracking" />
