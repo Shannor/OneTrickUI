@@ -23,6 +23,8 @@ import {
   updateSessionResponseTransformer,
 } from './transformers.gen';
 import type {
+  BackfillAllUsersCharacterIdsData,
+  BackfillAllUsersCharacterIdsResponse,
   CreateSnapshotData,
   CreateSnapshotResponse,
   GetActivitiesData,
@@ -83,6 +85,21 @@ export const getPing = <ThrowOnError extends boolean = false>(
   >({
     ...options,
     url: '/ping',
+  });
+};
+
+export const backfillAllUsersCharacterIds = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<BackfillAllUsersCharacterIdsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    BackfillAllUsersCharacterIdsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    url: '/admin/backfill-character-ids',
   });
 };
 

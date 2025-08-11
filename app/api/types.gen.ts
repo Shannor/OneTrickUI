@@ -107,7 +107,6 @@ export type ActivityHistory = {
    * Name
    */
   mode?: string;
-  personalValues?: PlayerStats;
 };
 
 export type Pong = {
@@ -472,6 +471,23 @@ export type DestinyMembership = {
   iconPath?: string;
 };
 
+export type User = {
+  id: string;
+  memberId: string;
+  primaryMembershipId: string;
+  uniqueName: string;
+  displayName: string;
+  memberships: Array<Membership>;
+  createdAt: Date;
+  characterIds: Array<string>;
+};
+
+export type Membership = {
+  id: string;
+  type: number;
+  displayName: string;
+};
+
 export type AuditField = {
   id: string;
   username: string;
@@ -503,6 +519,26 @@ export type GetPingResponses = {
 };
 
 export type GetPingResponse = GetPingResponses[keyof GetPingResponses];
+
+export type BackfillAllUsersCharacterIdsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/admin/backfill-character-ids';
+};
+
+export type BackfillAllUsersCharacterIdsResponses = {
+  /**
+   * Summary of backfilled users
+   */
+  200: {
+    updated: number;
+    failed: number;
+  };
+};
+
+export type BackfillAllUsersCharacterIdsResponse =
+  BackfillAllUsersCharacterIdsResponses[keyof BackfillAllUsersCharacterIdsResponses];
 
 export type SearchData = {
   body?: {
@@ -739,18 +775,14 @@ export type GetActivitiesResponse =
 
 export type GetActivityData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-    'X-Membership-ID': string;
-  };
   path: {
     /**
      * The unique identifier for the activity.
      */
     activityId: string;
   };
-  query: {
-    characterId: string;
+  query?: {
+    characterId?: string;
   };
   url: '/activities/{activityId}';
 };
@@ -763,9 +795,15 @@ export type GetActivityResponses = {
     activity: ActivityHistory;
     teams: Array<Team>;
     aggregate?: Aggregate;
+    snapshots: {
+      [key: string]: CharacterSnapshot;
+    };
     postGameEntries?: Array<{
       [key: string]: unknown;
     }>;
+    users: {
+      [key: string]: User;
+    };
   };
 };
 
