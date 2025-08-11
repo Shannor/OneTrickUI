@@ -1,7 +1,5 @@
-import { TooltipArrow } from '@radix-ui/react-tooltip';
 import { clsx } from 'clsx';
 import React from 'react';
-import { twMerge } from 'tailwind-merge';
 import type { Socket } from '~/api';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import {
@@ -9,28 +7,48 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
+import { cn } from '~/lib/utils';
 
 interface Props {
   sockets: Socket[];
   className?: string;
+  /**
+   * Controls how sockets are displayed:
+   * - 'label' (default): show icon with name text next to it; tooltip shows description only
+   * - 'iconOnly': show a larger icon only; tooltip shows name and description
+   */
+  displayMode?: 'label' | 'iconOnly';
 }
 
 const DestinyURL = 'https://www.bungie.net';
-export const Sockets: React.FC<Props> = ({ sockets, className }) => {
+export const Sockets: React.FC<Props> = ({
+  sockets,
+  className,
+  displayMode = 'label',
+}) => {
   return (
-    <div className={twMerge(clsx('flex flex-col gap-2', className))}>
+    <div className={cn('flex flex-col gap-2', className)}>
       {sockets
         .filter((it) => it.isEnabled && it.isVisible)
         .map((it) => {
           const url = it.icon?.includes(DestinyURL)
             ? it.icon
             : `${DestinyURL}${it.icon}`;
+
+          const isIconOnly = displayMode === 'iconOnly';
           return (
-            <div key={it.plugHash} className="flex flex-row gap-4">
+            <div
+              key={it.plugHash}
+              className={cn('flex flex-row items-center gap-4')}
+            >
               <Tooltip>
-                <TooltipContent>{it.description}</TooltipContent>
                 <TooltipTrigger>
-                  <Avatar className="bg-gray-800 p-1 dark:bg-transparent">
+                  <Avatar
+                    className={cn(
+                      'bg-gray-800 dark:bg-transparent',
+                      isIconOnly ? 'h-12 w-12 p-1.5' : 'h-8 w-8 p-1',
+                    )}
+                  >
                     <AvatarImage
                       src={url}
                       alt={`Icon for ${it.name}`}
@@ -40,8 +58,22 @@ export const Sockets: React.FC<Props> = ({ sockets, className }) => {
                     </AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
+                <TooltipContent>
+                  <div className="max-w-xs text-sm">
+                    {isIconOnly ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="font-semibold">{it.name}</div>
+                        <div className="text-muted-foreground">
+                          {it.description}
+                        </div>
+                      </div>
+                    ) : (
+                      it.description
+                    )}
+                  </div>
+                </TooltipContent>
               </Tooltip>
-              <div>{it.name}</div>
+              {isIconOnly ? null : <div className="text-sm">{it.name}</div>}
             </div>
           );
         })}

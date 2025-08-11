@@ -41,6 +41,7 @@ Never call a tool before the `<UPDATE>` block. Never omit the tool call.
 5. Verify:
    - Re-run reproduction steps/tests.
    - Ensure no related tests regress.
+   - Run npm run typecheck to make sure typescript compiles. If not fix the compile errors.
 6. Report:
    - Summarize changes and outcomes in `<UPDATE>`.
    - If complete, mark plan items ✓ and proceed to submit when asked.
