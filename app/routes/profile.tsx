@@ -7,7 +7,7 @@ import {
   useNavigate,
   useSearchParams,
 } from 'react-router';
-import { type Profile, getPublicProfile, getPublicSessions } from '~/api';
+import { getPublicProfile } from '~/api';
 import { CharacterPicker } from '~/components/character-picker';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
@@ -24,11 +24,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (!id) {
     return { error: 'missing id' };
   }
-  let account: Profile;
   try {
     const { data } = await getPublicProfile({ query: { id } });
     if (data) {
-      account = data;
+      return { account: data, characterId };
     } else {
       return { error: 'no account found' };
     }
@@ -36,28 +35,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     console.error(e);
     return { error: 'unexpected error' };
   }
-
-  if (!characterId) {
-    return { account, sessions: [] };
-  }
-
-  try {
-    const sessions = await getPublicSessions({
-      query: {
-        count: 10,
-        page: 0,
-        characterId,
-      },
-    });
-    return { account, sessions: sessions.data ?? [] };
-  } catch (e) {
-    console.error(e);
-    return { error: 'unexpected error' };
-  }
 }
 
 export default function Profile() {
-  const { account, error, sessions } = useLoaderData<typeof loader>();
+  const { account, error } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
   const [isNavigating] = useIsNavigating();
 

@@ -6,6 +6,7 @@ import {
   redirect,
   useFetcher,
 } from 'react-router';
+import { Loader2 } from 'lucide-react';
 import { getAuth, refreshHeaders } from '~/.server/auth';
 import { getFireteamData } from '~/.server/fireteam';
 import { getPreferences } from '~/.server/preferences';
@@ -18,6 +19,7 @@ import {
   SidebarTrigger,
 } from '~/components/ui/sidebar';
 import { TooltipProvider } from '~/components/ui/tooltip';
+import { useIsNavigating } from '~/lib/hooks';
 
 import type { Route } from './+types/sidebar';
 
@@ -44,6 +46,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function Sidebar({ loaderData }: Route.ComponentProps) {
   const { submit } = useFetcher();
   const { character, fireteam, profile } = loaderData;
+  const [isNavigating] = useIsNavigating();
 
   return (
     <SidebarProvider>
@@ -67,7 +70,16 @@ export default function Sidebar({ loaderData }: Route.ComponentProps) {
             </div>
             <ModeToggle />
           </header>
-          <div className="flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
+          <div className="relative flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
+            {/* Overlay shown during route navigation */}
+            {isNavigating ? (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+                <div className="flex items-center gap-3 rounded-md border bg-background/80 px-4 py-3 shadow-sm">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Loading…</span>
+                </div>
+              </div>
+            ) : null}
             <Outlet />
           </div>
         </SidebarInset>

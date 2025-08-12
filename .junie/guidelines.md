@@ -52,6 +52,9 @@ Never call a tool before the `<UPDATE>` block. Never omit the tool call.
   - Favor explicit types in public APIs; allow inference in local scope when clear.
   - Keep components small, pure, and accessible.
   - Avoid breaking changes to routes and shared components without coordination.
+- Styling
+  - When styling components use tailwind styles and any Shadcn components 
+  - Use the `cn` utility method for joining classnames inside components or divs
 - Tests:
   - Prefer existing testing framework patterns.
   - Add targeted tests when fixing bugs.

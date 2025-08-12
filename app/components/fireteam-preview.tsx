@@ -14,18 +14,25 @@ export function FireteamPreview({
   if (response.status === 'error') {
     return <div></div>;
   }
+
   const { fireteam, selectedCharacters, charactersPromise } = response;
+
   const characters = React.use(charactersPromise);
+
   const membershipToCharacters = characters.reduce<
     Record<string, (typeof characters)[0]>
   >((state, current) => {
     state[current.membershipId] = current;
     return state;
   }, {});
+
   return (
     <div className="flex flex-col gap-1">
       <Label>Fireteam</Label>
       <div className="flex cursor-default flex-col gap-2">
+        {fireteam.length === 0 && (
+          <div className="text-center">Currently Offline...</div>
+        )}
         {fireteam.map((m) => {
           const characterId = selectedCharacters?.[m.membershipId];
           const character = membershipToCharacters[

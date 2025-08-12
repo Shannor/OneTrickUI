@@ -37,15 +37,18 @@ const crucibleReportUrl = 'https://crucible.report/pgcr';
 export default function Activity({ loaderData }: Route.ComponentProps) {
   const {
     activityDetails: { activity, aggregate, teams, snapshots, users },
-    characterId,
   } = loaderData;
 
-  // const selectedCharacterId = characterId;
-  // const performance = aggregate?.performance[selectedCharacterId];
-  // const link = aggregate?.snapshotLinks[selectedCharacterId];
-
-  const allPerformances = Object.entries(aggregate?.performance ?? {});
-  const snapshotEntries = Object.entries(snapshots ?? {});
+  const allPerformances = Object.entries(aggregate?.performance ?? {}).filter(
+    ([characterId]) => {
+      const link = aggregate?.snapshotLinks[characterId];
+      return (
+        link &&
+        link.confidenceLevel !== 'noMatch' &&
+        link.confidenceLevel !== 'notFound'
+      );
+    },
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,10 +57,10 @@ export default function Activity({ loaderData }: Route.ComponentProps) {
           <img
             src={activity.imageUrl}
             alt="activity background"
-            className="h-40 w-full object-cover"
+            className="h-40 w-full rounded-t-lg object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/20" />
-          <CardHeader className="relative z-10 text-white">
+          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-black/70 to-black/20" />
+          <CardHeader className="relative z-10 rounded-lg text-white">
             <div className="flex items-center gap-4">
               {activity.activityIcon && (
                 <img
@@ -112,35 +115,21 @@ export default function Activity({ loaderData }: Route.ComponentProps) {
       {/*<SnapshotLinkDetails link={link} />*/}
 
       {/* Players (Stats + Weapons + Snapshot) */}
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-4">
         <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           Players
         </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4">
           {allPerformances.map(([charId, perf]) => (
             <PlayerCard
               key={charId}
-              characterId={charId}
               performance={perf}
               user={users[charId]}
               snapshot={snapshots[charId]}
-              selected={charId === characterId}
             />
           ))}
         </div>
       </div>
-
-      {/* Selected Player Weapons */}
-      {/*<div className="flex flex-col gap-4 p-4">*/}
-      {/*  <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">*/}
-      {/*    Weapons*/}
-      {/*  </h3>*/}
-      {/*  <div className="flex flex-row gap-6">*/}
-      {/*    {Object.values(performance?.weapons ?? {}).map((it) => (*/}
-      {/*      <Weapon key={it.referenceId} {...it} />*/}
-      {/*    ))}*/}
-      {/*  </div>*/}
-      {/*</div>*/}
     </div>
   );
 }

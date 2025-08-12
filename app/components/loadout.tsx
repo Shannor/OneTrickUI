@@ -54,18 +54,16 @@ export function Loadout({ snapshot, performances }: Props) {
   const ordered = [kinetic, energy, power].filter(Boolean);
 
   return (
-    <div className="flex flex-row flex-wrap gap-4">
+    <div className="flex flex-row flex-wrap gap-10">
       {ordered.map((item) => {
         const stats = createStats(weaponStats, item);
         return (
-          <div className="flex flex-row gap-4">
-            <Weapon
-              key={item.itemHash}
-              referenceId={item.itemHash}
-              properties={item.details}
-              stats={stats}
-            />
-          </div>
+          <Weapon
+            key={item.itemHash}
+            referenceId={item.itemHash}
+            properties={item.details}
+            stats={stats}
+          />
         );
       })}
     </div>

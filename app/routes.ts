@@ -8,6 +8,7 @@ import {
 export default [
   route('/login', 'routes/login.tsx'),
   route('/oauth', 'routes/oauth.tsx'),
+  route('/character-select', 'routes/character-select.tsx'),
   // Public Routes
   layout('layouts/basic.tsx', [
     index('routes/landing.tsx'),
@@ -18,7 +19,6 @@ export default [
       id: 'public-activity',
     }),
   ]),
-  route('/character-select', 'routes/character-select.tsx'),
   route('dashboard', 'layouts/sidebar.tsx', [
     index('routes/home.tsx'),
     route('activities', 'routes/activities.tsx'),

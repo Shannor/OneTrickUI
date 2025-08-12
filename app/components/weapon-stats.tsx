@@ -45,14 +45,14 @@ export const WeaponStats: React.FC<Props> = ({ stats }) => {
     .filter((it) => SPECIAL_STATS[it.hash] === undefined && it.value <= 100)
     .sort((a, b) => ORDER[a.hash] - ORDER[b.hash]);
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       {barStats.map((it) => (
-        <div key={it.hash} className="flex flex-col gap-1">
-          <div className="flex flex-row justify-between">
-            <div>{updateNames(it)}</div>
-            <div>{it.value}</div>
+        <div key={it.hash} className="grid grid-cols-12 items-center gap-4">
+          <div className="col-span-3">{updateNames(it)}</div>
+          <div className="col-span-7">
+            <Bar value={it.value} />
           </div>
-          <Bar value={it.value} />
+          <div className="col-span-2">{it.value}</div>
         </div>
       ))}
     </div>
@@ -64,9 +64,11 @@ function updateNames(stat: GunStat): string {
     case StatEnum.RPM:
       return 'RPM';
     case StatEnum.AE:
-      return 'Airborne Eff.';
+      return 'A.E.';
     case StatEnum.Reload:
       return 'Reload';
+    case StatEnum.AA:
+      return 'A.A.';
     default:
       return stat.name;
   }
