@@ -90,7 +90,7 @@ export default function CharacterSelect({ loaderData }: Route.ComponentProps) {
                       <input
                         readOnly
                         hidden
-                        name="memebershipId"
+                        name="membershipId"
                         value={data.membershipId}
                       />
                       <CharacterPicker

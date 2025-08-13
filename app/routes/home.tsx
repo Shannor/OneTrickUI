@@ -1,5 +1,5 @@
 import { data, redirect, useNavigate, useRouteLoaderData } from 'react-router';
-import { getAuth, refreshHeaders } from '~/.server/auth';
+import { getAuth } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
 import { getSessions } from '~/api';
 import { Empty } from '~/components/empty';
@@ -13,8 +13,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!auth) {
     return redirect('/login');
   }
-  const headers = await refreshHeaders(request, auth);
-  const { character, profile } = await getPreferences(request);
+  const { character } = await getPreferences(request);
 
   if (!character) {
     return { error: 'no character picked', session: undefined };
@@ -23,19 +22,14 @@ export async function loader({ request }: Route.LoaderArgs) {
     query: {
       count: 1,
       page: 0,
-      characterId: character?.id,
+      characterId: character.id,
     },
     headers: {
       'X-Membership-ID': auth.primaryMembershipId,
       'X-User-ID': auth.id,
     },
   });
-  return data(
-    { session: session.data?.at(0), error: undefined },
-    {
-      ...headers,
-    },
-  );
+  return data({ session: session.data?.at(0), error: undefined });
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {

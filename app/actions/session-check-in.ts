@@ -1,3 +1,4 @@
+import { redirectBack } from '~/.server/auth';
 import { Logger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
 import { sessionCheckIn } from '~/api';
@@ -31,5 +32,5 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (response.error) {
     return { error: response.error };
   }
-  return response.data;
+  return redirectBack(request, { fallback: '/dashboard' });
 }

@@ -1,33 +1,59 @@
-import { format } from 'date-fns';
 import React from 'react';
+import { useSubmit } from 'react-router';
 import type { Session } from '~/api';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
+import { Label } from '~/components/label';
+import { Badge } from '~/components/ui/badge';
+import { Well } from '~/components/well';
+import { useCountdown } from '~/hooks/use-countdown';
 
 interface SessionTrackerProps {
   session?: Session;
+  membershipId?: string;
 }
-const SessionTracker: React.FC<SessionTrackerProps> = ({ session }) => {
+const FIVE_MINS = 300000;
+const SessionTracker: React.FC<SessionTrackerProps> = ({
+  session,
+  membershipId,
+}) => {
+  const submit = useSubmit();
+  const { reset, formatted } = useCountdown(
+    FIVE_MINS,
+    () => {
+      if (session?.id && membershipId) {
+        const data = new FormData();
+        data.set('membershipId', membershipId);
+        data.set('sessionId', session?.id);
+        submit(data, {
+          method: 'post',
+          action: '/dashboard/action/session-check-in',
+        })
+          .then(() => reset())
+          .catch(console.error);
+      } else {
+        console.error('Missing required data ');
+      }
+    },
+    {
+      persistKey: 'session-countdown',
+      paused: session?.status === 'complete',
+    },
+  );
+
   if (!session) return null;
+  if (session.status === 'complete') {
+    return null;
+  }
   return (
-    <div className="absolute right-0 top-1 z-40 cursor-default">
-      <Tooltip>
-        <TooltipTrigger className="cursor-default">
-          <div className="flex flex-row gap-4 rounded-lg bg-indigo-700/30 px-4 py-2">
-            <div>Session Update - 2:34 </div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div>{session.name}</div>
-          <div>
-            Started At: {format(new Date(session.startedAt), 'MM/dd/yyyy - p')}
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <Well>
+      <div className="flex flex-row items-center justify-between">
+        <Label>Check-in </Label>
+        <Badge variant="secondary" className="tex-sm">
+          {formatted}
+        </Badge>
+      </div>
+      <div>{session.name}</div>
+      <div>Matches: {session.aggregateIds?.length ?? 0}</div>
+    </Well>
   );
 };
 

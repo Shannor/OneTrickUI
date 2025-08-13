@@ -6,11 +6,11 @@ import { cn } from '~/lib/utils';
 import type { Route } from '../../.react-router/types/app/layouts/+types/sidebar';
 
 export function FireteamPreview({
-  p,
+  fireteamPromise,
 }: {
-  p: Route.ComponentProps['loaderData']['fireteam'];
+  fireteamPromise: Route.ComponentProps['loaderData']['fireteam'];
 }) {
-  const response = React.use(p);
+  const response = React.use(fireteamPromise);
   if (response.status === 'error') {
     return <div></div>;
   }

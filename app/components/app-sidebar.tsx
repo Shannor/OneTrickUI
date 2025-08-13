@@ -7,14 +7,10 @@ import {
   UsersRound,
 } from 'lucide-react';
 import * as React from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
-import type { Character, FireteamMember, Profile } from '~/api';
+import type { Character } from '~/api';
 import { CharacterViewer } from '~/components/character-viewer';
-import { ClientFallback } from '~/components/client-fallback';
-import { FireteamPreview } from '~/components/fireteam-preview';
 import { NavProjects } from '~/components/nav-projects';
 import { NavUser } from '~/components/nav-user';
-import { Avatar, AvatarImage } from '~/components/ui/avatar';
 import {
   Sidebar,
   SidebarContent,
@@ -22,10 +18,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '~/components/ui/sidebar';
-import { Skeleton } from '~/components/ui/skeleton';
-import { Well } from '~/components/well';
-
-import type { Route } from '../../.react-router/types/app/layouts/+types/sidebar';
 
 // This is sample data.
 const data = {
@@ -89,16 +81,16 @@ const data = {
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   character: Character;
   currentCharacterId?: string;
-  fireteam: Route.ComponentProps['loaderData']['fireteam'];
   displayName: string;
   onLogout: () => void;
+  children: React.ReactNode;
 }
 export function AppSidebar({
   currentCharacterId,
   character,
   onLogout,
-  fireteam,
   displayName,
+  children,
   ...props
 }: AppSidebarProps) {
   return (
@@ -107,22 +99,7 @@ export function AppSidebar({
         <CharacterViewer character={character} />
       </SidebarHeader>
       <SidebarContent>
-        <ClientFallback
-          errorFallback={
-            <Well>
-              <div>Failed to Load Fireteam</div>
-            </Well>
-          }
-          suspenseFallback={
-            <div>
-              <Skeleton className="h-40 w-full" />
-            </div>
-          }
-        >
-          <Well>
-            <FireteamPreview p={fireteam} />
-          </Well>
-        </ClientFallback>
+        {children}
         <NavProjects projects={data.base} />
         <NavProjects projects={data.projects} label="Tracking" />
       </SidebarContent>
