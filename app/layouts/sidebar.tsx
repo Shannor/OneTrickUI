@@ -92,6 +92,7 @@ export default function Sidebar({ loaderData }: Route.ComponentProps) {
             <SessionTracker
               session={session}
               membershipId={profile?.membershipId}
+              characterId={character.id}
             />
           </>
         </AppSidebar>

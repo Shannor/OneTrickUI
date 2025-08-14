@@ -9,21 +9,27 @@ export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
   const membershipId = formData.get('membershipId');
   const sessionId = formData.get('sessionId');
+  const characterId = formData.get('characterId');
 
   if (!membershipId) {
     return { error: 'No membership id' };
   }
-
   if (!sessionId) {
     return { error: 'No session id' };
   }
-  const { fireteam } = await getPreferences(request);
-  Logger.child({ fireteam, sessionId, membershipId }).info('Session Check-In');
 
+  const { fireteam } = await getPreferences(request);
+  const f = fireteam ?? {};
+  if (characterId) {
+    f[membershipId.toString()] = characterId.toString();
+  }
+  Logger.child({ fireteam, sessionId, membershipId, characterId }).info(
+    'Session Check-In',
+  );
   const response = await sessionCheckIn({
     body: {
       sessionId: sessionId.toString(),
-      fireteam: fireteam ?? {},
+      fireteam: f,
     },
     headers: {
       'X-Membership-ID': membershipId.toString(),

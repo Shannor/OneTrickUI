@@ -9,20 +9,23 @@ import { useCountdown } from '~/hooks/use-countdown';
 interface SessionTrackerProps {
   session?: Session;
   membershipId?: string;
+  characterId?: string;
 }
 const FIVE_MINS = 300000;
 const SessionTracker: React.FC<SessionTrackerProps> = ({
   session,
   membershipId,
+  characterId,
 }) => {
   const submit = useSubmit();
   const { reset, formatted } = useCountdown(
     FIVE_MINS,
     () => {
-      if (session?.id && membershipId) {
+      if (session?.id && membershipId && characterId) {
         const data = new FormData();
         data.set('membershipId', membershipId);
         data.set('sessionId', session?.id);
+        data.set('characterId', characterId);
         submit(data, {
           method: 'post',
           action: '/dashboard/action/session-check-in',

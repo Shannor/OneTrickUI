@@ -13,11 +13,9 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (!characterId) {
     return { error: 'No character id' };
   }
-
   if (!userId) {
     return { error: 'No user id' };
   }
-
   const auth = await getAuth(request);
   if (!auth) {
     return { error: 'No auth token' };

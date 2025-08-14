@@ -1,4 +1,4 @@
-import { type Session, createCookieSessionStorage } from 'react-router';
+import { createCookieSessionStorage } from 'react-router';
 import type { Character, Profile } from '~/api';
 
 type SessionData = {
@@ -36,12 +36,6 @@ async function getPreferences(request: Request): Promise<SessionData> {
   };
 }
 
-async function getPreferenceSession(
-  request: Request,
-): Promise<Session<SessionData, SessionFlashData>> {
-  return await getSession(request.headers.get('Cookie'));
-}
-
 async function setPreferences(request: Request, preferences: SessionData) {
   const session = await getSession(request.headers.get('Cookie'));
   if (preferences.character) {
@@ -51,21 +45,10 @@ async function setPreferences(request: Request, preferences: SessionData) {
     session.set('profile', preferences.profile);
   }
   if (preferences.fireteam) {
-    const existing = session.get('fireteam');
-    if (existing) {
-      session.set('fireteam', { ...existing, ...preferences.fireteam });
-    } else {
-      session.set('fireteam', preferences.fireteam);
-    }
+    session.set('fireteam', preferences.fireteam);
   }
   return {
     headers: { 'Set-Cookie': await commitSession(session) },
   };
 }
-export {
-  commitSession,
-  destroySession,
-  getPreferences,
-  getPreferenceSession,
-  setPreferences,
-};
+export { commitSession, destroySession, getPreferences, setPreferences };
