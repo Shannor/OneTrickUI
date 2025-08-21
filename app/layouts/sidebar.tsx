@@ -89,11 +89,7 @@ export default function Sidebar({ loaderData }: Route.ComponentProps) {
                 <FireteamPreview fireteamPromise={fireteam} />
               </Well>
             </ClientFallback>
-            <SessionTracker
-              session={session}
-              membershipId={profile?.membershipId}
-              characterId={character.id}
-            />
+            <SessionTracker session={session} />
           </>
         </AppSidebar>
         <SidebarInset>
