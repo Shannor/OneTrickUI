@@ -54,7 +54,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               {session.completedAt ? 'Last' : 'Active'} Session
             </h3>
             <SessionCard
-              onClick={() => navigate(`/dashboard/session/${session.id}`)}
+              onClick={() => navigate(`/dashboard/sessions/${session.id}`)}
               session={session}
             />
           </section>

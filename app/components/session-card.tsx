@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { twMerge } from 'tailwind-merge';
 import type { Session } from '~/api';
 import { Badge } from '~/components/ui/badge';
 import {
@@ -15,25 +14,23 @@ export function SessionCard(props: {
   session: Session;
   classname?: string;
 }) {
+  const { session, classname, onClick } = props;
   return (
-    <Card
-      className={cn('cursor-pointer', props.classname)}
-      onClick={props.onClick}
-    >
+    <Card className={cn('cursor-pointer', classname)} onClick={onClick}>
       <CardHeader className="flex flex-col gap-4">
         <CardTitle className="flex flex-row items-center gap-4 text-lg">
-          {!props.session.completedAt && (
+          {!session.completedAt && session.status === 'complete' && (
             <Badge className="animate-pulse">Active</Badge>
           )}
-          {props.session.name}
+          {session.name}
         </CardTitle>
         <CardDescription className="flex flex-col gap-2">
-          <div>Games Played: {props.session.aggregateIds?.length ?? 0}</div>
+          <div>Games Played: {session.aggregateIds?.length ?? 0}</div>
           <div>
-            {format(new Date(props.session.startedAt), 'MM/dd/yyyy - p')}
-            {props.session.completedAt && ' - '}
-            {props.session.completedAt &&
-              format(new Date(props.session.completedAt), 'MM/dd/yyyy - p')}
+            {format(new Date(session.startedAt), 'MM/dd/yyyy - p')}
+            {session.completedAt && ' - '}
+            {session.completedAt &&
+              format(new Date(session.completedAt), 'MM/dd/yyyy - p')}
           </div>
         </CardDescription>
       </CardHeader>
