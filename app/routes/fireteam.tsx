@@ -1,9 +1,8 @@
-import { type ReactNode, Suspense, use } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import { type ReactNode, use } from 'react';
 import { Form, Link, data } from 'react-router';
 import { getFireteamData } from '~/.server/fireteam';
 import { setPreferences } from '~/.server/preferences';
-import { type FireteamMember, type Session, getPublicSessions } from '~/api';
+import { type FireteamMember, getPublicSessions } from '~/api';
 import { CharacterPicker } from '~/components/character-picker';
 import { ClientFallback } from '~/components/client-fallback';
 import { Empty } from '~/components/empty';
@@ -169,7 +168,8 @@ function CharacterView({
         >
           {(current, previous) => {
             const isDisabled =
-              Boolean(current) && Boolean(previous) && current === previous;
+              (Boolean(current) && Boolean(previous) && current === previous) ||
+              !current;
             return (
               <LoadingButton
                 type="submit"

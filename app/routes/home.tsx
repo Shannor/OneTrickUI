@@ -4,7 +4,6 @@ import { getPreferences } from '~/.server/preferences';
 import { getSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { SessionCard } from '~/components/session-card';
-import { useIsNavigating } from '~/lib/hooks';
 
 import type { Route } from './+types/home';
 
@@ -34,8 +33,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
-  const [isNavigating] = useIsNavigating();
-  const { character, profile } = useRouteLoaderData('layouts/sidebar');
+  const { profile } = useRouteLoaderData('layouts/sidebar');
   const { session, error } = loaderData;
 
   if (error) {

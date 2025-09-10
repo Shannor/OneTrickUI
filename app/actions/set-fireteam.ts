@@ -1,6 +1,6 @@
 import { redirect } from 'react-router';
 import { Logger } from '~/.server/logger';
-import { setPreferences } from '~/.server/preferences';
+import { getPreferences, setPreferences } from '~/.server/preferences';
 
 import type { Route } from '../../.react-router/types/app/+types/root';
 
@@ -11,11 +11,15 @@ export async function action({ request }: Route.ClientActionArgs) {
 
   Logger.child({ membershipId, characterId }).info('passed in data');
   if (!characterId || !membershipId) {
-    return { message: 'Missing ids' };
+    return redirect('/dashboard/fireteam');
   }
 
+  const { fireteam } = await getPreferences(request);
   const headers = await setPreferences(request, {
-    fireteam: { [membershipId.toString()]: characterId.toString() },
+    fireteam: {
+      ...fireteam,
+      [membershipId.toString()]: characterId.toString(),
+    },
   });
 
   // const redirectLocation = formData.get('redirect');
