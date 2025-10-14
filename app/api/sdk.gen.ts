@@ -9,6 +9,8 @@ import {
   createSnapshotResponseTransformer,
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
+  getBestPerformingLoadoutsResponseTransformer,
+  getMostUsedLoadoutsResponseTransformer,
   getPublicSessionAggregatesResponseTransformer,
   getPublicSessionResponseTransformer,
   getPublicSessionsResponseTransformer,
@@ -31,9 +33,13 @@ import type {
   GetActivitiesResponse,
   GetActivityData,
   GetActivityResponse,
+  GetBestPerformingLoadoutsData,
+  GetBestPerformingLoadoutsResponse,
   GetFireteamData,
   GetFireteamError,
   GetFireteamResponse,
+  GetMostUsedLoadoutsData,
+  GetMostUsedLoadoutsResponse,
   GetPingData,
   GetPingResponse,
   GetPublicProfileData,
@@ -430,5 +436,33 @@ export const sessionCheckIn = <ThrowOnError extends boolean = false>(
       ...options?.headers,
     },
     url: '/actions/session-checkin',
+  });
+};
+
+export const getMostUsedLoadouts = <ThrowOnError extends boolean = false>(
+  options: Options<GetMostUsedLoadoutsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetMostUsedLoadoutsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getMostUsedLoadoutsResponseTransformer,
+    url: '/metrics/most-used-loadouts',
+  });
+};
+
+export const getBestPerformingLoadouts = <ThrowOnError extends boolean = false>(
+  options: Options<GetBestPerformingLoadoutsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetBestPerformingLoadoutsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getBestPerformingLoadoutsResponseTransformer,
+    url: '/metrics/best-performing-loadouts',
   });
 };

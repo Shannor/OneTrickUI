@@ -1073,3 +1073,64 @@ export type SessionCheckInResponses = {
 
 export type SessionCheckInResponse =
   SessionCheckInResponses[keyof SessionCheckInResponses];
+
+export type GetMostUsedLoadoutsData = {
+  body?: never;
+  path?: never;
+  query: {
+    characterId: string;
+    userId: string;
+  };
+  url: '/metrics/most-used-loadouts';
+};
+
+export type GetMostUsedLoadoutsResponses = {
+  /**
+   * Return the top snapshots for a user
+   */
+  200: {
+    items: Array<CharacterSnapshot>;
+    count: {
+      [key: string]: number;
+    };
+  };
+};
+
+export type GetMostUsedLoadoutsResponse =
+  GetMostUsedLoadoutsResponses[keyof GetMostUsedLoadoutsResponses];
+
+export type GetBestPerformingLoadoutsData = {
+  body?: never;
+  path?: never;
+  query: {
+    characterId: string;
+    userId: string;
+    gameMode?:
+      | 'GameModeAny'
+      | 'GameModeQuickPlay'
+      | 'GameModeCompetitive'
+      | 'GameModeTrials'
+      | 'GameModeIronBanner';
+    count?: number;
+    minimumGames?: number;
+  };
+  url: '/metrics/best-performing-loadouts';
+};
+
+export type GetBestPerformingLoadoutsResponses = {
+  /**
+   * Return the top snapshots for a user
+   */
+  200: {
+    items: Array<CharacterSnapshot>;
+    stats: {
+      [key: string]: PlayerStats;
+    };
+    count: {
+      [key: string]: number;
+    };
+  };
+};
+
+export type GetBestPerformingLoadoutsResponse =
+  GetBestPerformingLoadoutsResponses[keyof GetBestPerformingLoadoutsResponses];

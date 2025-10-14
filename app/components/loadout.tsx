@@ -7,10 +7,13 @@ import type {
 } from '~/api';
 import { calculatePercentage } from '~/calculations/precision';
 import { Weapon } from '~/components/weapon';
+import { cn } from '~/lib/utils';
 
 interface Props {
   snapshot?: CharacterSnapshot;
-  performances: InstancePerformance[];
+  performances?: InstancePerformance[];
+  className?: string;
+  hideStats?: boolean;
 }
 const Kinetic = 1498876634;
 const Energy = 2465295065;
@@ -22,31 +25,37 @@ interface Stats {
   precisionKills: number;
   kills: number;
 }
-export function Loadout({ snapshot, performances }: Props) {
+export function Loadout({
+  snapshot,
+  performances,
+  className,
+  hideStats,
+}: Props) {
   if (!snapshot) {
     return null;
   }
-  const weaponStats = performances.reduce(
-    (state, currentValue) => {
-      Object.entries(currentValue.weapons).forEach(([key, weapon]) => {
-        if (!weapon.stats) {
-          return;
-        }
-        if (state[key]) {
-          state[key].kills += weapon.stats[UniqueKills].basic.value ?? 0;
-          state[key].precisionKills +=
-            weapon.stats[PrecisionKills].basic.value ?? 0;
-        } else {
-          state[key] = {
-            precisionKills: weapon.stats[PrecisionKills].basic.value ?? 0,
-            kills: weapon.stats[UniqueKills].basic.value ?? 0,
-          };
-        }
-      });
-      return state;
-    },
-    {} as Record<string, Stats>,
-  );
+  const weaponStats =
+    performances?.reduce(
+      (state, currentValue) => {
+        Object.entries(currentValue.weapons).forEach(([key, weapon]) => {
+          if (!weapon.stats) {
+            return;
+          }
+          if (state[key]) {
+            state[key].kills += weapon.stats[UniqueKills].basic.value ?? 0;
+            state[key].precisionKills +=
+              weapon.stats[PrecisionKills].basic.value ?? 0;
+          } else {
+            state[key] = {
+              precisionKills: weapon.stats[PrecisionKills].basic.value ?? 0,
+              kills: weapon.stats[UniqueKills].basic.value ?? 0,
+            };
+          }
+        });
+        return state;
+      },
+      {} as Record<string, Stats>,
+    ) ?? {};
 
   const kinetic = snapshot.loadout[Kinetic];
   const energy = snapshot.loadout[Energy];
@@ -54,7 +63,7 @@ export function Loadout({ snapshot, performances }: Props) {
   const ordered = [kinetic, energy, power].filter(Boolean);
 
   return (
-    <div className="flex flex-row flex-wrap gap-10">
+    <div className={cn('flex flex-row flex-wrap gap-10', className)}>
       {ordered.map((item) => {
         const stats = createStats(weaponStats, item);
         return (
@@ -63,6 +72,7 @@ export function Loadout({ snapshot, performances }: Props) {
             referenceId={item.itemHash}
             properties={item.details}
             stats={stats}
+            hideStats={hideStats}
           />
         );
       })}
@@ -70,10 +80,16 @@ export function Loadout({ snapshot, performances }: Props) {
   );
 }
 
-function createStats(weaponStats: Record<string, Stats>, item: ItemSnapshot) {
+function createStats(
+  weaponStats: Record<string, Stats>,
+  item: ItemSnapshot,
+): Record<string, UniqueStatValue> | undefined {
+  if (!weaponStats[item.itemHash]) {
+    return;
+  }
   const kills = weaponStats[item.itemHash]?.kills ?? 0;
   const precision = weaponStats[item.itemHash]?.precisionKills ?? 0;
-  const stats: Record<string, UniqueStatValue> = {
+  const stats = {
     uniqueWeaponKills: {
       name: 'kills',
       basic: {

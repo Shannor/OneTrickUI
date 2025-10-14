@@ -1,4 +1,11 @@
-import { Loader2 } from 'lucide-react';
+import {
+  Home,
+  Hourglass,
+  Loader2,
+  Search,
+  SquareLibrary,
+  UsersRound,
+} from 'lucide-react';
 import React from 'react';
 import { Outlet, data, redirect, useFetcher } from 'react-router';
 import { getAuth, refreshHeaders } from '~/.server/auth';
@@ -58,12 +65,44 @@ export default function Sidebar({ loaderData }: Route.ComponentProps) {
   const { character, fireteam, profile, session } = loaderData;
   const [isNavigating] = useIsNavigating();
 
+  const data = {
+    base: [
+      {
+        name: 'Home',
+        url: '/dashboard',
+        icon: Home,
+      },
+    ],
+    projects: [
+      {
+        name: 'Sessions',
+        url: '/dashboard/sessions',
+        icon: Hourglass,
+      },
+      {
+        name: 'Loadouts',
+        url: '/dashboard/loadouts',
+        icon: SquareLibrary,
+      },
+      {
+        name: 'Fireteam',
+        url: '/dashboard/fireteam',
+        icon: UsersRound,
+      },
+      {
+        name: 'Guardians',
+        url: '/dashboard/profiles',
+        icon: Search,
+      },
+    ],
+  };
   return (
     <SidebarProvider>
       <TooltipProvider>
         <AppSidebar
           character={character}
           currentCharacterId={character.id}
+          navigationData={data}
           onLogout={() => {
             submit(null, {
               method: 'post',

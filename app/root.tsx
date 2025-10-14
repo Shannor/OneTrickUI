@@ -83,7 +83,8 @@ export function App() {
   const [theme] = useTheme();
 
   return (
-    <html lang="en" className={clsx(theme)}>
+    // Needed for setting the theme on the website
+    <html lang="en" className={clsx(theme)} suppressHydrationWarning={true}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

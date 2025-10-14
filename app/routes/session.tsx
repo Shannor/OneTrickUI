@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { Share2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useLoaderData, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import {
   type Aggregate,
@@ -128,7 +128,7 @@ export default function Session({ loaderData }: Route.ComponentProps) {
           </h2>
           <Tooltip open={Boolean(copyStatus)}>
             <TooltipContent>{copyStatus}</TooltipContent>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <Button onClick={handleCopy} variant="outline">
                 <Share2 className="h-6 w-6" /> Share
               </Button>

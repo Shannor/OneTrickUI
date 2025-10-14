@@ -1,5 +1,5 @@
 import { type LucideIcon } from 'lucide-react';
-import { Link, NavLink } from 'react-router';
+import { NavLink } from 'react-router';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -25,7 +25,8 @@ export function NavProjects({
       <SidebarMenu>
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
+            {/* Find a way in the future to not need this */}
+            <SidebarMenuButton asChild suppressHydrationWarning={true}>
               <NavLink
                 to={item.url}
                 className={({ isActive, isPending }) =>

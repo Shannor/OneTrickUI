@@ -1,16 +1,26 @@
-import { Skull, Tally5, Users } from 'lucide-react';
 import React from 'react';
 import type { InstancePerformance } from '~/api';
 import { calculateRatio } from '~/calculations/precision';
-import { Label } from '~/components/label';
 import { Stat } from '~/components/stat';
 
+interface RawValues {
+  kills: number;
+  deaths: number;
+  assists: number;
+  kd: number;
+  kda: number;
+}
 interface PerformanceProps {
-  performances: InstancePerformance[];
+  performances?: InstancePerformance[];
+  rawValues?: RawValues;
 }
 
-export function Performance({ performances }: PerformanceProps) {
-  const { kills, deaths, assists } = performances.reduce(
+export function Performance({ performances, rawValues }: PerformanceProps) {
+  if (!performances && !rawValues) {
+    return null;
+  }
+
+  const { kills, deaths, assists } = performances?.reduce(
     (state, { playerStats }) => {
       state.kills += playerStats.kills?.value ?? 0;
       state.assists += playerStats.assists?.value ?? 0;
@@ -22,16 +32,18 @@ export function Performance({ performances }: PerformanceProps) {
       assists: 0,
       deaths: 0,
     },
-  );
-  const kd = calculateRatio(kills, deaths);
-  const kda = calculateRatio(kills + assists, deaths);
+  ) ??
+    rawValues ?? { kills: 0, deaths: 0, assists: 0 };
+
+  const kd = rawValues?.kd ?? calculateRatio(kills, deaths);
+  const kda = rawValues?.kda ?? calculateRatio(kills + assists, deaths);
   return (
     <div className="flex flex-row gap-4">
       <Stat label="Kills" value={kills.toString()} />
       <Stat label="Assists" value={assists.toString()} />
       <Stat label="Deaths" value={deaths.toString()} />
-      <Stat label="K/D" value={kd.toString()} />
-      <Stat label="Effiecieny" value={kda.toString()} />
+      <Stat label="K/D" value={kd.toFixed(2)} />
+      <Stat label="Effiecieny" value={kda.toFixed(2)} />
     </div>
   );
 }
