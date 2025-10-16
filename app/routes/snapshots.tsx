@@ -8,10 +8,7 @@ import {
 } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
-import {
-  type GetBestPerformingLoadoutsData,
-  getBestPerformingLoadouts,
-} from '~/api';
+import { type GameMode, getBestPerformingLoadouts } from '~/api';
 import { Class } from '~/components/class';
 import { Empty } from '~/components/empty';
 import { Loadout } from '~/components/loadout';
@@ -59,12 +56,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 }
 
-type GameMode = GetBestPerformingLoadoutsData['query']['gameMode'];
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
   const characterId = url.searchParams.get('characterId');
   const userId = url.searchParams.get('userId');
-  const mode = (url.searchParams.get('mode') ?? 'GameModeAny') as GameMode;
+  const mode = (url.searchParams.get('mode') ?? 'allGameModes') as GameMode;
   const countParam = url.searchParams.get('count');
   const minParams = url.searchParams.get('minimum');
 
@@ -178,23 +174,23 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
           }}
         >
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="GameModeAny" id="all-modes" />
+            <RadioGroupItem value="allGameModes" id="all-modes" />
             <FormLabel htmlFor="all-modes">All Modes</FormLabel>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="GameModeQuickPlay" id="quickplay" />
+            <RadioGroupItem value="quickplay" id="quickplay" />
             <FormLabel htmlFor="quickplay">Quickplay</FormLabel>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="GameModeCompetitive" id="comp" />
+            <RadioGroupItem value="competitive" id="comp" />
             <FormLabel htmlFor="comp">Competitive </FormLabel>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="GameModeTrials" id="trials" />
+            <RadioGroupItem value="trials" id="trials" />
             <FormLabel htmlFor="trials">Trials</FormLabel>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="GameModeIronBanner" id="iron-banner" />
+            <RadioGroupItem value="ironBanner" id="iron-banner" />
             <FormLabel htmlFor="iron-banner">Iron Banner</FormLabel>
           </div>
         </RadioGroup>

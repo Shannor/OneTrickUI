@@ -9,12 +9,9 @@ import {
 import React from 'react';
 import { Outlet, data, redirect, useFetcher } from 'react-router';
 import { getAuth, refreshHeaders } from '~/.server/auth';
-import { getFireteamData } from '~/.server/fireteam';
 import { getPreferences } from '~/.server/preferences';
 import { getSessions } from '~/api';
 import { AppSidebar } from '~/components/app-sidebar';
-import { ClientFallback } from '~/components/client-fallback';
-import { FireteamPreview } from '~/components/fireteam-preview';
 import { ModeToggle } from '~/components/mode-toggle';
 import SessionTracker from '~/components/session-tracker';
 import {
@@ -22,9 +19,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '~/components/ui/sidebar';
-import { Skeleton } from '~/components/ui/skeleton';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import { Well } from '~/components/well';
 import { useIsNavigating } from '~/lib/hooks';
 
 import type { Route } from './+types/sidebar';
@@ -40,7 +35,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     return redirect('/character-select', { ...headers });
   }
 
-  const fireteam = getFireteamData(request);
+  // const fireteam = getFireteamData(request);
   const { data: sessions } = await getSessions({
     query: {
       count: 1,
@@ -53,7 +48,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     },
   });
   return data(
-    { character, profile, fireteam, session: sessions?.at(0) },
+    { character, profile, session: sessions?.at(0) },
     {
       ...headers,
     },
@@ -62,7 +57,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Sidebar({ loaderData }: Route.ComponentProps) {
   const { submit } = useFetcher();
-  const { character, fireteam, profile, session } = loaderData;
+  const { character, profile, session } = loaderData;
   const [isNavigating] = useIsNavigating();
 
   const data = {
@@ -112,22 +107,22 @@ export default function Sidebar({ loaderData }: Route.ComponentProps) {
           displayName={profile?.displayName ?? ''}
         >
           <>
-            <ClientFallback
-              errorFallback={
-                <Well>
-                  <div>Failed to Load Fireteam</div>
-                </Well>
-              }
-              suspenseFallback={
-                <div>
-                  <Skeleton className="h-40 w-full" />
-                </div>
-              }
-            >
-              <Well>
-                <FireteamPreview fireteamPromise={fireteam} />
-              </Well>
-            </ClientFallback>
+            {/*<ClientFallback*/}
+            {/*  errorFallback={*/}
+            {/*    <Well>*/}
+            {/*      <div>Failed to Load Fireteam</div>*/}
+            {/*    </Well>*/}
+            {/*  }*/}
+            {/*  suspenseFallback={*/}
+            {/*    <div>*/}
+            {/*      <Skeleton className="h-40 w-full" />*/}
+            {/*    </div>*/}
+            {/*  }*/}
+            {/*>*/}
+            {/*  <Well>*/}
+            {/*    <FireteamPreview fireteamPromise={fireteam} />*/}
+            {/*  </Well>*/}
+            {/*</ClientFallback>*/}
             <SessionTracker session={session} />
           </>
         </AppSidebar>

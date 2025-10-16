@@ -10,13 +10,13 @@ import {
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
   getBestPerformingLoadoutsResponseTransformer,
-  getMostUsedLoadoutsResponseTransformer,
   getPublicSessionAggregatesResponseTransformer,
   getPublicSessionResponseTransformer,
   getPublicSessionsResponseTransformer,
   getSessionAggregatesResponseTransformer,
   getSessionResponseTransformer,
   getSessionsResponseTransformer,
+  getSnapshotAggregatesResponseTransformer,
   getSnapshotResponseTransformer,
   getSnapshotsResponseTransformer,
   loginResponseTransformer,
@@ -38,8 +38,6 @@ import type {
   GetFireteamData,
   GetFireteamError,
   GetFireteamResponse,
-  GetMostUsedLoadoutsData,
-  GetMostUsedLoadoutsResponse,
   GetPingData,
   GetPingResponse,
   GetPublicProfileData,
@@ -57,6 +55,8 @@ import type {
   GetSessionResponse,
   GetSessionsData,
   GetSessionsResponse,
+  GetSnapshotAggregatesData,
+  GetSnapshotAggregatesResponse,
   GetSnapshotData,
   GetSnapshotResponse,
   GetSnapshotsData,
@@ -241,6 +241,23 @@ export const getSnapshot = <ThrowOnError extends boolean = false>(
     ...options,
     responseTransformer: getSnapshotResponseTransformer,
     url: '/snapshots/{snapshotId}',
+  });
+};
+
+/**
+ * Returns a collection of aggregate metrics for a snapshot
+ */
+export const getSnapshotAggregates = <ThrowOnError extends boolean = false>(
+  options: Options<GetSnapshotAggregatesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetSnapshotAggregatesResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getSnapshotAggregatesResponseTransformer,
+    url: '/snapshots/{snapshotId}/aggregates',
   });
 };
 
@@ -436,20 +453,6 @@ export const sessionCheckIn = <ThrowOnError extends boolean = false>(
       ...options?.headers,
     },
     url: '/actions/session-checkin',
-  });
-};
-
-export const getMostUsedLoadouts = <ThrowOnError extends boolean = false>(
-  options: Options<GetMostUsedLoadoutsData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).get<
-    GetMostUsedLoadoutsResponse,
-    unknown,
-    ThrowOnError
-  >({
-    ...options,
-    responseTransformer: getMostUsedLoadoutsResponseTransformer,
-    url: '/metrics/most-used-loadouts',
   });
 };
 

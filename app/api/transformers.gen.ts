@@ -4,13 +4,13 @@ import type {
   GetActivitiesResponse,
   GetActivityResponse,
   GetBestPerformingLoadoutsResponse,
-  GetMostUsedLoadoutsResponse,
   GetPublicSessionAggregatesResponse,
   GetPublicSessionResponse,
   GetPublicSessionsResponse,
   GetSessionAggregatesResponse,
   GetSessionResponse,
   GetSessionsResponse,
+  GetSnapshotAggregatesResponse,
   GetSnapshotResponse,
   GetSnapshotsResponse,
   LoginResponse,
@@ -77,6 +77,15 @@ const aggregateSchemaResponseTransformer = (data: any) => {
     data.activityDetails,
   );
   data.createdAt = new Date(data.createdAt);
+  return data;
+};
+
+export const getSnapshotAggregatesResponseTransformer = async (
+  data: any,
+): Promise<GetSnapshotAggregatesResponse> => {
+  data = data.map((item: any) => {
+    return aggregateSchemaResponseTransformer(item);
+  });
   return data;
 };
 
@@ -178,15 +187,6 @@ export const getPublicSessionAggregatesResponseTransformer = async (
 ): Promise<GetPublicSessionAggregatesResponse> => {
   data.aggregates = data.aggregates.map((item: any) => {
     return aggregateSchemaResponseTransformer(item);
-  });
-  return data;
-};
-
-export const getMostUsedLoadoutsResponseTransformer = async (
-  data: any,
-): Promise<GetMostUsedLoadoutsResponse> => {
-  data.items = data.items.map((item: any) => {
-    return characterSnapshotSchemaResponseTransformer(item);
   });
   return data;
 };
