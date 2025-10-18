@@ -24,7 +24,10 @@ export default [
     route('activities', 'routes/activities.tsx'),
     route(`activities/:instanceId`, 'routes/activity.tsx'),
     route('loadouts', 'routes/snapshots.tsx'),
-    route('loadouts/:snapshotId', 'routes/snapshot.tsx'),
+    route('loadouts/:snapshotId', 'routes/snapshot.tsx', [
+      index('routes/loadout-details.tsx', { id: 'loadout-details' }),
+      route('metrics', 'routes/metrics.tsx', { id: 'loadout-metrics' }),
+    ]) /**/,
     route('sessions', 'routes/sessions.tsx'),
     route('sessions/:sessionId', 'routes/session.tsx'),
     route('fireteam', 'routes/fireteam.tsx'),

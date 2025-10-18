@@ -9,6 +9,7 @@ import {
 import { getAuth } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
 import { type GameMode, getBestPerformingLoadouts } from '~/api';
+import { ClassStats } from '~/charts/ClassStats';
 import { Class } from '~/components/class';
 import { Empty } from '~/components/empty';
 import { Loadout } from '~/components/loadout';
@@ -244,35 +245,49 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
         />
       )}
       <div className="grid grid-cols-1 gap-4">
-        {loadouts?.items?.map((snapshot, index) => (
-          <Card
-            key={snapshot.id}
-            className="cursor-pointer"
-            onClick={() => navigate(`/dashboard/loadouts/${snapshot.id}`)}
-          >
-            <CardHeader>
-              <CardTitle>
-                <Stat
-                  label="Games"
-                  value={loadouts.count[snapshot.id]?.toString() ?? '0'}
-                />
-                <Performance
-                  rawValues={{
-                    kills: loadouts.stats[snapshot.id]?.kills?.value ?? 0,
-                    deaths: loadouts.stats[snapshot.id]?.deaths?.value ?? 0,
-                    assists: loadouts.stats[snapshot.id]?.assists?.value ?? 0,
-                    kd: loadouts.stats[snapshot.id]?.kd?.value ?? 0,
-                    kda: loadouts.stats[snapshot.id]?.kda?.value ?? 0,
-                  }}
-                />
-              </CardTitle>
-              <CardDescription>
-                <Loadout snapshot={snapshot} hideStats />
-                <Class snapshot={snapshot} />
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
+        {loadouts?.items?.map((snapshot, index) => {
+          const values = Object.values(snapshot.stats ?? {})
+            .map((stat) => ({
+              stat: stat.name,
+              value: stat.value ?? 0,
+            }))
+            .filter((it) => it.stat !== 'Power');
+          return (
+            <Card
+              key={snapshot.id}
+              className="cursor-pointer"
+              onClick={() => navigate(`/dashboard/loadouts/${snapshot.id}`)}
+            >
+              <CardHeader>
+                <CardTitle className="flex flex-row items-center gap-4">
+                  <Loadout snapshot={snapshot} hideStats />
+                </CardTitle>
+                <CardDescription className="flex flex-col gap-4">
+                  <div className="flex flex-row gap-4">
+                    <Stat
+                      label="Games"
+                      value={loadouts.count[snapshot.id]?.toString() ?? '0'}
+                    />
+                    <Performance
+                      rawValues={{
+                        kills: loadouts.stats[snapshot.id]?.kills?.value ?? 0,
+                        deaths: loadouts.stats[snapshot.id]?.deaths?.value ?? 0,
+                        assists:
+                          loadouts.stats[snapshot.id]?.assists?.value ?? 0,
+                        kd: loadouts.stats[snapshot.id]?.kd?.value ?? 0,
+                        kda: loadouts.stats[snapshot.id]?.kda?.value ?? 0,
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-20 md:flex-row">
+                    <Class snapshot={snapshot} />
+                    <ClassStats data={values} />
+                  </div>
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
