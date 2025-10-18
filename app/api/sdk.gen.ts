@@ -9,12 +9,14 @@ import {
   createSnapshotResponseTransformer,
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
+  getBestPerformingLoadoutsResponseTransformer,
   getPublicSessionAggregatesResponseTransformer,
   getPublicSessionResponseTransformer,
   getPublicSessionsResponseTransformer,
   getSessionAggregatesResponseTransformer,
   getSessionResponseTransformer,
   getSessionsResponseTransformer,
+  getSnapshotAggregatesResponseTransformer,
   getSnapshotResponseTransformer,
   getSnapshotsResponseTransformer,
   loginResponseTransformer,
@@ -31,6 +33,8 @@ import type {
   GetActivitiesResponse,
   GetActivityData,
   GetActivityResponse,
+  GetBestPerformingLoadoutsData,
+  GetBestPerformingLoadoutsResponse,
   GetFireteamData,
   GetFireteamError,
   GetFireteamResponse,
@@ -51,6 +55,8 @@ import type {
   GetSessionResponse,
   GetSessionsData,
   GetSessionsResponse,
+  GetSnapshotAggregatesData,
+  GetSnapshotAggregatesResponse,
   GetSnapshotData,
   GetSnapshotResponse,
   GetSnapshotsData,
@@ -235,6 +241,23 @@ export const getSnapshot = <ThrowOnError extends boolean = false>(
     ...options,
     responseTransformer: getSnapshotResponseTransformer,
     url: '/snapshots/{snapshotId}',
+  });
+};
+
+/**
+ * Returns a collection of aggregate metrics for a snapshot
+ */
+export const getSnapshotAggregates = <ThrowOnError extends boolean = false>(
+  options: Options<GetSnapshotAggregatesData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetSnapshotAggregatesResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getSnapshotAggregatesResponseTransformer,
+    url: '/snapshots/{snapshotId}/aggregates',
   });
 };
 
@@ -430,5 +453,19 @@ export const sessionCheckIn = <ThrowOnError extends boolean = false>(
       ...options?.headers,
     },
     url: '/actions/session-checkin',
+  });
+};
+
+export const getBestPerformingLoadouts = <ThrowOnError extends boolean = false>(
+  options: Options<GetBestPerformingLoadoutsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetBestPerformingLoadoutsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getBestPerformingLoadoutsResponseTransformer,
+    url: '/metrics/best-performing-loadouts',
   });
 };

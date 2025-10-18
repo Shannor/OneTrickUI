@@ -40,8 +40,15 @@ const isOriginTrait = (itemTypeDisplayName: string): boolean =>
 const isMemento = (itemTypeDisplayName: string): boolean =>
   itemTypeDisplayName.toLowerCase().includes('memento');
 
-type Props = WeaponInstanceMetrics;
-export const Weapon: React.FC<Props> = ({ properties, stats, display }) => {
+interface Props extends WeaponInstanceMetrics {
+  hideStats?: boolean;
+}
+export const Weapon: React.FC<Props> = ({
+  properties,
+  stats,
+  display,
+  hideStats,
+}) => {
   const weaponSockets: WeaponSockets = properties?.sockets?.reduce(
     (acc, socket) => {
       if (
@@ -131,26 +138,28 @@ export const Weapon: React.FC<Props> = ({ properties, stats, display }) => {
             <WeaponKills stats={stats} />
           </div>
         )}
-        <div className="flex w-full flex-grow flex-col gap-4">
-          {properties?.stats && <WeaponStats stats={properties.stats} />}
-          {properties?.sockets && (
-            <div className="flex flex-col gap-2">
-              {/* Row 1: Intrinsic, Mod, Shader */}
-              <Sockets
-                sockets={row1}
-                displayMode="iconOnly"
-                className="flex-row flex-wrap items-center"
-              />
+        {!hideStats && (
+          <div className="flex w-full flex-grow flex-col gap-4">
+            {properties?.stats && <WeaponStats stats={properties.stats} />}
+            {properties?.sockets && (
+              <div className="flex flex-col gap-2">
+                {/* Row 1: Intrinsic, Mod, Shader */}
+                <Sockets
+                  sockets={row1}
+                  displayMode="iconOnly"
+                  className="flex-row flex-wrap items-center"
+                />
 
-              {/* Row 2: Barrel, Magazine, Traits..., Origin Trait */}
-              <Sockets
-                sockets={row2}
-                displayMode="iconOnly"
-                className="flex-row flex-wrap items-center"
-              />
-            </div>
-          )}
-        </div>
+                {/* Row 2: Barrel, Magazine, Traits..., Origin Trait */}
+                <Sockets
+                  sockets={row2}
+                  displayMode="iconOnly"
+                  className="flex-row flex-wrap items-center"
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { CharacterSnapshot, Socket } from '~/api';
+import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import { Sockets } from '~/components/sockets';
 
@@ -47,8 +48,9 @@ export const Class: React.FC<Props> = ({ snapshot }) => {
 
   const itemSnapshot = snapshot.loadout[SubClass];
   if (!itemSnapshot) {
-    return null;
+    return <Empty title="Unknown Subclass" />;
   }
+
   const {
     name,
     details: { sockets },
@@ -102,6 +104,15 @@ export const Class: React.FC<Props> = ({ snapshot }) => {
     abilities?.melee,
     abilities?.grenade,
   ].filter(Boolean) as Socket[];
+
+  if (abilitiesRow.length === 0) {
+    return (
+      <Empty
+        title="No Subclass Found"
+        description="The class couldn't be found. Could be a legacy loadout."
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">

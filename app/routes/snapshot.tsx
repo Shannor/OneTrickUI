@@ -1,57 +1,72 @@
 import { format } from 'date-fns';
-import { data, isRouteErrorResponse, useLoaderData } from 'react-router';
-import { getAuth } from '~/.server/auth';
-import { getPreferences } from '~/.server/preferences';
+import React from 'react';
+import { NavLink, Outlet, data, useLocation } from 'react-router';
 import { getSnapshot } from '~/api';
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 
 import type { Route } from './+types/snapshot';
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { snapshotId } = params;
-  const auth = await getAuth(request);
-  const { character } = await getPreferences(request);
-  if (!auth) {
-    throw new Error('Not authenticated');
-  }
-
-  if (!character) {
-    throw data('No character', { status: 400 });
-  }
-
-  const result = await getSnapshot({
+  const { data: snapshot, error } = await getSnapshot({
     path: { snapshotId },
-    query: {
-      characterId: character.id,
-    },
-    headers: {
-      Authorization: `Bearer ${auth.accessToken}`,
-      'X-User-ID': auth.id,
-    },
   });
-  if (!result.data) {
+  if (error) {
+    console.error(error);
+    throw data('Unexpected Error', { status: 500 });
+  }
+  if (!snapshot) {
     throw data('Record Not Found', { status: 404 });
   }
-  return result.data;
+  return {
+    snapshot,
+    characterId: snapshot.characterId,
+  };
 }
 
 export default function Snapshot({ loaderData }: Route.ComponentProps) {
-  const snapshot = loaderData;
+  const { snapshot } = loaderData;
+  const location = useLocation();
+
+  const currentTab = React.useMemo(() => {
+    const tabPatterns = {
+      metrics: /\/metrics\/?$/,
+      loadout: /.*/,
+    };
+
+    return (
+      Object.entries(tabPatterns).find(([_, pattern]) =>
+        pattern.test(location.pathname),
+      )?.[0] ?? 'loadout'
+    );
+  }, [location.pathname]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-10">
       <div className="flex flex-row justify-between gap-4">
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-            Snapshot - {format(new Date(snapshot.createdAt), 'MM/dd/yyyy - p')}
-            {snapshot.id}
+            {snapshot.name ?? 'Snapshot'}
           </h2>
           <p>
-            Snapshots are equipped loadouts that your character was wearing at
-            the time.
+            Started Recording on{' '}
+            {format(new Date(snapshot.createdAt), 'MMMM d, yyyy')}
           </p>
         </div>
-        <div>TBD</div>
       </div>
+      <Tabs value={currentTab}>
+        <TabsList>
+          <TabsTrigger value="loadout" asChild>
+            <NavLink to="." end>
+              Loadout
+            </NavLink>
+          </TabsTrigger>
+          <TabsTrigger value="metrics" asChild>
+            <NavLink to="metrics">Metrics</NavLink>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <Outlet />
     </div>
   );
 }

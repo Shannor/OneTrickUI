@@ -20,6 +20,11 @@ const editor = {
 export default defineConfig({
   server: {
     allowedHosts: ['local.d2onetrick.ngrok.app'],
+    hmr: {
+      host: 'local.d2onetrick.ngrok.app',
+      port: 5173,
+      clientPort: 443,
+    },
   },
   css: {
     postcss: {

@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { Share2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useLoaderData, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import {
   type Aggregate,
@@ -9,6 +9,7 @@ import {
   getSession,
   getSessionAggregates,
 } from '~/api';
+import { ClassStats } from '~/charts/ClassStats';
 import { Class } from '~/components/class';
 import { Empty } from '~/components/empty';
 import { Loadout } from '~/components/loadout';
@@ -105,6 +106,7 @@ export default function Session({ loaderData }: Route.ComponentProps) {
   const allPerformances = group.flatMap(([_, value]) =>
     value.map((a) => a.performance[session.characterId]),
   );
+
   const [copyStatus, setCopyStatus] = useState('');
 
   const handleCopy = async () => {
@@ -128,7 +130,7 @@ export default function Session({ loaderData }: Route.ComponentProps) {
           </h2>
           <Tooltip open={Boolean(copyStatus)}>
             <TooltipContent>{copyStatus}</TooltipContent>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <Button onClick={handleCopy} variant="outline">
                 <Share2 className="h-6 w-6" /> Share
               </Button>
@@ -145,6 +147,12 @@ export default function Session({ loaderData }: Route.ComponentProps) {
       </div>
       {group.map(([key, value]) => {
         const snapshot: CharacterSnapshot | undefined = snapshots[key];
+        const values = Object.values(snapshot.stats ?? {})
+          .map((stat) => ({
+            stat: stat.name,
+            value: stat.value ?? 0,
+          }))
+          .filter((it) => it.stat !== 'Power');
         let title = '';
         switch (key) {
           case 'notFound':
@@ -162,14 +170,11 @@ export default function Session({ loaderData }: Route.ComponentProps) {
 
         return (
           <div key={key} className="flex flex-col gap-6 border-b p-4">
-            <div className="flex flex-col">
-              <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                {title}
-              </h4>
-            </div>
-
             <Performance performances={performances} />
-            <Class snapshot={snapshot} />
+            <div className="flex flex-row gap-4">
+              <Class snapshot={snapshot} />
+              <ClassStats data={values} />
+            </div>
             <Loadout performances={performances} snapshot={snapshot} />
             <CollapsibleMaps
               aggregates={value}

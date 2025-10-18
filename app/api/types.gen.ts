@@ -500,6 +500,13 @@ export type SourceSystem =
   | 'stadia'
   | 'unknown';
 
+export type GameMode =
+  | 'allGameModes'
+  | 'quickplay'
+  | 'competitive'
+  | 'trials'
+  | 'ironBanner';
+
 export type XUserId = string;
 
 export type XMembershipId = string;
@@ -722,18 +729,13 @@ export type CreateSnapshotResponse =
 
 export type GetSnapshotData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-  };
   path: {
     /**
      * The unique identifier for the snapshot.
      */
     snapshotId: string;
   };
-  query: {
-    characterId: string;
-  };
+  query?: never;
   url: '/snapshots/{snapshotId}';
 };
 
@@ -746,6 +748,33 @@ export type GetSnapshotResponses = {
 
 export type GetSnapshotResponse =
   GetSnapshotResponses[keyof GetSnapshotResponses];
+
+export type GetSnapshotAggregatesData = {
+  body?: never;
+  path: {
+    /**
+     * The unique identifier for the snapshot.
+     */
+    snapshotId: string;
+  };
+  query?: {
+    /**
+     * The game mode for the snapshot metrics
+     */
+    gameMode?: GameMode;
+  };
+  url: '/snapshots/{snapshotId}/aggregates';
+};
+
+export type GetSnapshotAggregatesResponses = {
+  /**
+   * Aggregates for a snapshot
+   */
+  200: Array<Aggregate>;
+};
+
+export type GetSnapshotAggregatesResponse =
+  GetSnapshotAggregatesResponses[keyof GetSnapshotAggregatesResponses];
 
 export type GetActivitiesData = {
   body?: never;
@@ -1073,3 +1102,34 @@ export type SessionCheckInResponses = {
 
 export type SessionCheckInResponse =
   SessionCheckInResponses[keyof SessionCheckInResponses];
+
+export type GetBestPerformingLoadoutsData = {
+  body?: never;
+  path?: never;
+  query: {
+    characterId: string;
+    userId: string;
+    gameMode?: GameMode;
+    count?: number;
+    minimumGames?: number;
+  };
+  url: '/metrics/best-performing-loadouts';
+};
+
+export type GetBestPerformingLoadoutsResponses = {
+  /**
+   * Return the top snapshots for a user
+   */
+  200: {
+    items: Array<CharacterSnapshot>;
+    stats: {
+      [key: string]: PlayerStats;
+    };
+    count: {
+      [key: string]: number;
+    };
+  };
+};
+
+export type GetBestPerformingLoadoutsResponse =
+  GetBestPerformingLoadoutsResponses[keyof GetBestPerformingLoadoutsResponses];

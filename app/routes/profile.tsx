@@ -1,12 +1,4 @@
-import {
-  Form,
-  Link,
-  Outlet,
-  useLoaderData,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from 'react-router';
+import { Form, Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { getPublicProfile } from '~/api';
 import { CharacterPicker } from '~/components/character-picker';
 import { Empty } from '~/components/empty';
@@ -38,14 +30,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 export default function Profile() {
-  const { account, error } = useLoaderData<typeof loader>();
+  const { account, error, characterId } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
   const [isNavigating] = useIsNavigating();
-
-  const [params] = useSearchParams();
-  const characterId = params.get('characterId');
-
-  const navigate = useNavigate();
 
   if (error) {
     return <Empty title="Error" />;
@@ -77,12 +64,12 @@ export default function Profile() {
             }}
           </CharacterPicker>
         </Form>
-        <div className="flex flex-col gap-4">
+        <div className="gap- flex w-full flex-col">
           <div className="flex flex-row gap-4">
             <Link
               to={{
                 pathname: 'sessions',
-                search: `?characterId=${characterId}`,
+                search: `?characterId=${characterId}&userId=${account?.id}`,
               }}
             >
               Sessions
@@ -90,7 +77,7 @@ export default function Profile() {
             <Link
               to={{
                 pathname: 'loadouts',
-                search: `?characterId=${characterId}`,
+                search: `?characterId=${characterId}&userId=${account?.id}`,
               }}
             >
               Loadouts
@@ -98,7 +85,7 @@ export default function Profile() {
             <Link
               to={{
                 pathname: 'activities',
-                search: `?characterId=${characterId}`,
+                search: `?characterId=${characterId}&userId=${account?.id}`,
               }}
             >
               Activities
