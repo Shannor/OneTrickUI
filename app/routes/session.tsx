@@ -1,18 +1,10 @@
 import { format } from 'date-fns';
-import { Share2 } from 'lucide-react';
+import { ExternalLink, Share2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { getAuth } from '~/.server/auth';
-import {
-  type Aggregate,
-  type CharacterSnapshot,
-  getSession,
-  getSessionAggregates,
-} from '~/api';
-import { ClassStats } from '~/charts/ClassStats';
-import { Class } from '~/components/class';
+import { type Aggregate, getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
-import { Loadout } from '~/components/loadout';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import {
@@ -20,7 +12,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { CollapsibleMaps } from '~/organisims/collapsible-maps';
+import { WeaponHeader } from '~/components/weapon-header';
+import { cn, getWeaponsFromLoadout } from '~/lib/utils';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session';
@@ -122,7 +115,7 @@ export default function Session({ loaderData }: Route.ComponentProps) {
 
   return (
     <div>
-      <div className="flex flex-col items-start gap-4 border-b p-4">
+      <div className="flex flex-col items-start gap-4 p-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}
         <div className="flex flex-row gap-4">
           <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
@@ -145,46 +138,173 @@ export default function Session({ loaderData }: Route.ComponentProps) {
         </div>
         <Performance performances={allPerformances} />
       </div>
-      {group.map(([key, value]) => {
-        const snapshot: CharacterSnapshot | undefined = snapshots[key];
-        const values = Object.values(snapshot.stats ?? {})
-          .map((stat) => ({
-            stat: stat.name,
-            value: stat.value ?? 0,
-          }))
-          .filter((it) => it.stat !== 'Power');
-        let title = '';
-        switch (key) {
-          case 'notFound':
-            title = 'No Found Snapshots';
-            break;
-          case 'noMatch':
-            title = 'No Matching Weapons';
-            break;
-          default:
-            title = snapshot?.name ?? 'Unknown';
-        }
-        const performances = value.map(
-          (a) => a.performance[session.characterId],
-        );
+      {aggregates
+        .sort(
+          (a, b) =>
+            new Date(b.activityDetails.period).getTime() -
+            new Date(a.activityDetails.period).getTime(),
+        )
+        .map((value, index, arr) => {
+          const {
+            activityDetails,
+            snapshotLinks,
+            performance: performances,
+          } = value;
+          const link = snapshotLinks[session.characterId];
+          const performance = performances[session.characterId];
+          const snapshot = link.snapshotId
+            ? snapshots[link.snapshotId]
+            : undefined;
+          let title = '';
+          let titleClassName = '';
+          let hasLoadout = false;
+          switch (link?.confidenceLevel) {
+            case 'high':
+              title = 'High Confidence';
+              titleClassName = 'bg-green-500 text-white';
+              hasLoadout = true;
+              break;
+            case 'medium':
+              title = 'Medium Confidence';
+              titleClassName = 'bg-yellow-500 text-white';
+              hasLoadout = true;
+              break;
+            case 'low':
+              title = 'Low Confidence';
+              titleClassName = 'bg-red-500 text-white';
+              hasLoadout = true;
+              break;
+            case 'noMatch':
+              title = 'No Match';
+              titleClassName = 'bg-gray-500 text-white';
+              break;
+            case 'notFound':
+              title = 'Not Found';
+              titleClassName = 'bg-gray-500 text-white';
+              break;
+            default:
+              title = 'Unknown';
+              titleClassName = 'bg-gray-500 text-white';
+          }
+          const previous = index > 0 ? arr[index - 1] : undefined;
+          const showLoadout =
+            !previous ||
+            previous.snapshotLinks[session.characterId]?.snapshotId !==
+              link.snapshotId;
 
-        return (
-          <div key={key} className="flex flex-col gap-6 border-b p-4">
-            <Performance performances={performances} />
-            <div className="flex flex-row gap-4">
-              <Class snapshot={snapshot} />
-              <ClassStats data={values} />
+          return (
+            <div className={cn('flex flex-col gap-4 p-4')}>
+              {!hasLoadout && (
+                <div
+                  className={cn(
+                    'flex flex-row items-center gap-4 border-b-4 p-4',
+                  )}
+                >
+                  No Found Loadout for Games
+                </div>
+              )}
+              {snapshot && showLoadout && (
+                <div
+                  className={cn(
+                    'flex flex-row items-center gap-4 border-b-4 p-4',
+                  )}
+                >
+                  {getWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
+                    <WeaponHeader
+                      key={weapon.itemHash}
+                      properties={weapon.details}
+                      onlyIcon
+                    />
+                  ))}
+                  <Button variant="ghost">
+                    <Link to={`/dashboard/loadouts/${snapshot.id}`}>
+                      View Loadout
+                    </Link>
+                    <ExternalLink />
+                  </Button>
+                </div>
+              )}
+              <div
+                className="flex w-full flex-row gap-8 p-4 hover:bg-muted"
+                onClick={() => {
+                  navigate(
+                    `/dashboard/activities/${activityDetails.instanceId}`,
+                  );
+                }}
+              >
+                <img
+                  src={activityDetails.imageUrl}
+                  className="h-auto w-36 rounded-lg object-cover"
+                  alt="activity image"
+                />
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-row items-center gap-2">
+                    <img
+                      src={activityDetails.activityIcon}
+                      className="h-12 w-12 rounded-lg bg-black/50 object-cover"
+                      alt="activity image"
+                    />
+
+                    <div className="flex flex-col gap-2">
+                      <Description
+                        activity={activityDetails.activity}
+                        mode={activityDetails.mode}
+                      />
+                      <div className="text-xl font-bold">
+                        {activityDetails.location}
+                      </div>
+
+                      <div className="text-muted-foreground">
+                        {format(new Date(activityDetails.period), 'p')}
+                      </div>
+                    </div>
+                  </div>
+                  <Performance performances={[performance]} />
+                </div>
+              </div>
             </div>
-            <Loadout performances={performances} snapshot={snapshot} />
-            <CollapsibleMaps
-              aggregates={value}
-              onActivityClick={({ activityId }) => {
-                navigate(`/dashboard/activities/${activityId}`);
-              }}
-            />
-          </div>
-        );
-      })}
+          );
+        })}
+      {/*{group.map(([key, value]) => {*/}
+      {/*  const snapshot: CharacterSnapshot | undefined = snapshots[key];*/}
+      {/*  const values = Object.values(snapshot.stats ?? {})*/}
+      {/*    .map((stat) => ({*/}
+      {/*      stat: stat.name,*/}
+      {/*      value: stat.value ?? 0,*/}
+      {/*    }))*/}
+      {/*    .filter((it) => it.stat !== 'Power');*/}
+      {/*  let title = '';*/}
+      {/*  switch (key) {*/}
+      {/*    case 'notFound':*/}
+      {/*      title = 'No Found Snapshots';*/}
+      {/*      break;*/}
+      {/*    case 'noMatch':*/}
+      {/*      title = 'No Matching Weapons';*/}
+      {/*      break;*/}
+      {/*    default:*/}
+      {/*      title = snapshot?.name ?? 'Unknown';*/}
+      {/*  }*/}
+      {/*  const performances = value.map(*/}
+      {/*    (a) => a.performance[session.characterId],*/}
+      {/*  );*/}
+
+      {/*  return (*/}
+      {/*    <div key={key} className="flex flex-col gap-6 border-b p-4">*/}
+      {/*      <Performance performances={performances} />*/}
+      {/*      <div className="flex flex-row gap-4">*/}
+      {/*        <Class snapshot={snapshot} />*/}
+      {/*        <ClassStats data={values} />*/}
+      {/*      </div>*/}
+      {/*      <Loadout performances={performances} snapshot={snapshot} />*/}
+      {/*      <CollapsibleMaps*/}
+      {/*        aggregates={value}*/}
+      {/*        onActivityClick={({ activityId }) => {*/}
+      {/*          navigate(`/dashboard/activities/${activityId}`);*/}
+      {/*        }}*/}
+      {/*      />*/}
+      {/*    </div>*/}
+      {/*  );*/}
+      {/*})}*/}
       {(aggregates?.length ?? 0) === 0 && (
         <Empty
           title="No Activities Tracked"
@@ -256,4 +376,37 @@ function groupAggregates(
 
     return priorityA - priorityB;
   });
+}
+
+function Description({ activity, mode }: { activity: string; mode?: string }) {
+  const ironBanner = 'iron banner';
+  if (activity.toLowerCase().includes(ironBanner)) {
+    return (
+      <div className="text-sm uppercase tracking-wide text-muted-foreground">
+        {activity}
+      </div>
+    );
+  }
+  const control = 'control';
+  const competitive = 'competitive';
+
+  let label = activity;
+  let modeLabel = mode;
+  if (activity.toLowerCase().includes(control)) {
+    label = 'Quickplay';
+    if (mode) {
+      modeLabel = mode.replace('Quickplay', '');
+    }
+  } else if (activity.toLowerCase().includes(competitive)) {
+    label = 'Competitive';
+    if (mode) {
+      modeLabel = mode.replace('Competitive', '').replace('Quickplay', '');
+    }
+  }
+  return (
+    <div className="text-sm uppercase tracking-wide text-muted-foreground">
+      {label}
+      {modeLabel && <span>{' - ' + modeLabel}</span>}
+    </div>
+  );
 }

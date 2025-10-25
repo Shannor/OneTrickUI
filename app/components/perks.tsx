@@ -6,6 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
+import { setBungieUrl } from '~/lib/utils';
 
 interface Props {
   perks: Perk[];
@@ -18,9 +19,7 @@ export const Perks: React.FC<Props> = ({ perks }) => {
       {perks
         .filter((it) => it.name !== '')
         .map((it) => {
-          const url = it.iconPath?.includes(DestinyURL)
-            ? it.iconPath
-            : `${DestinyURL}${it.iconPath}`;
+          const url = setBungieUrl(it.iconPath);
           return (
             <div key={it.hash} className="flex flex-row gap-4">
               <Tooltip>

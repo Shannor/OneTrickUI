@@ -312,6 +312,7 @@ export type Socket = {
 
 export type BaseItemInfo = {
   name: string;
+  icon?: string;
   itemHash: number;
   instanceId: string;
   bucketHash: number;

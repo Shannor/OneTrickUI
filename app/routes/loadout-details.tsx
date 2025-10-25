@@ -2,6 +2,7 @@ import React from 'react';
 import { data } from 'react-router';
 import { getSnapshot } from '~/api';
 import { ClassStats } from '~/charts/ClassStats';
+import { ArmorSet } from '~/components/armor-set';
 import { Class } from '~/components/class';
 import { Loadout } from '~/components/loadout';
 
@@ -24,6 +25,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   };
 }
 
+// TODO: Join this component with the player-card.tsx
 export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
   const { snapshot } = loaderData;
   const values = Object.values(snapshot.stats ?? {})
@@ -38,6 +40,7 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
         <Class snapshot={snapshot} />
         <ClassStats data={values} />
       </div>
+      <ArmorSet snapshot={snapshot} />
       <Loadout snapshot={snapshot} />
     </div>
   );

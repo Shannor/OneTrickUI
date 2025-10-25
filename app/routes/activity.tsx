@@ -1,9 +1,10 @@
 import { SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
-import { data } from 'react-router';
+import { Link, data } from 'react-router';
 import { getActivity } from '~/api';
 import { PlayerCard } from '~/components/player-card';
 import { TeamScore } from '~/components/team-score';
+import { Button } from '~/components/ui/button';
 import {
   Card,
   CardDescription,
@@ -120,14 +121,33 @@ export default function Activity({ loaderData }: Route.ComponentProps) {
           Players
         </h3>
         <div className="grid grid-cols-1 gap-4">
-          {allPerformances.map(([charId, perf]) => (
-            <PlayerCard
-              key={charId}
-              performance={perf}
-              user={users[charId]}
-              snapshot={snapshots[charId]}
-            />
-          ))}
+          {allPerformances.map(([charId, perf]) => {
+            const link = aggregate?.snapshotLinks[charId];
+            return (
+              <div>
+                {link && (
+                  <div className="flex flex-row gap-4">
+                    <Button asChild variant="ghost">
+                      <Link to={`/dashboard/sessions/${link.sessionId}`}>
+                        View Session
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost">
+                      <Link to={`/dashboard/loadouts/${link.snapshotId}`}>
+                        View Loadout
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+                <PlayerCard
+                  key={charId}
+                  performance={perf}
+                  user={users[charId]}
+                  snapshot={snapshots[charId]}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

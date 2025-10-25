@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 import type { CharacterSnapshot, InstancePerformance, User } from '~/api';
+import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
 import { Class } from '~/components/class';
 import { Label } from '~/components/label';
@@ -24,6 +25,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     (it) => !!it?.properties?.baseInfo?.name,
   );
 
+  const values = Object.values(snapshot?.stats ?? {})
+    .map((stat) => ({
+      stat: stat.name,
+      value: stat.value,
+    }))
+    .filter((it) => it.stat !== 'Power');
   return (
     <Card>
       <CardContent className="grid grid-cols-12 gap-12 p-4">
@@ -48,6 +55,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         <div className="col-span-12 grid grid-cols-1 gap-4 md:grid-cols-2">
           <Class snapshot={snapshot} />
           <ArmorSet snapshot={snapshot} />
+          <ClassStats data={values} />
         </div>
 
         {weapons.length > 0 && (

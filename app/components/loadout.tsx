@@ -7,7 +7,7 @@ import type {
 } from '~/api';
 import { calculatePercentage } from '~/calculations/precision';
 import { Weapon } from '~/components/weapon';
-import { cn } from '~/lib/utils';
+import { cn, getWeaponsFromLoadout } from '~/lib/utils';
 
 interface Props {
   snapshot?: CharacterSnapshot;
@@ -15,9 +15,7 @@ interface Props {
   className?: string;
   hideStats?: boolean;
 }
-const Kinetic = 1498876634;
-const Energy = 2465295065;
-const Power = 953998645;
+
 const PrecisionKills = 'uniqueWeaponPrecisionKills';
 const UniqueKills = 'uniqueWeaponKills';
 
@@ -57,11 +55,7 @@ export function Loadout({
       {} as Record<string, Stats>,
     ) ?? {};
 
-  const kinetic = snapshot.loadout[Kinetic];
-  const energy = snapshot.loadout[Energy];
-  const power = snapshot.loadout[Power];
-  const ordered = [kinetic, energy, power].filter(Boolean);
-
+  const ordered = getWeaponsFromLoadout(snapshot.loadout);
   return (
     <div className={cn('flex flex-row flex-wrap gap-10', className)}>
       {ordered.map((item) => {
