@@ -29,6 +29,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     return state;
   }, {});
 
+  // TODO: Remove public sessions call to use the user one
   // Clear fireteam if someone leaves
   const sessionPromise = Promise.all(
     Object.entries(fireteamMemWithCharacters).map(

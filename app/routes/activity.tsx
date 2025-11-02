@@ -16,20 +16,17 @@ import { isEmptyObject } from '~/lib/utils';
 import type { Route } from './+types/activity';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  if (!params.instanceId) {
-    throw new Error('Missing instance id');
-  }
+  const { instanceId } = params;
   const url = new URL(request.url);
-  const selectedCharacterId = url.searchParams.get('characterId');
 
   const res = await getActivity({
-    path: { activityId: params.instanceId },
+    path: { activityId: instanceId },
   });
 
   if (!res.data || isEmptyObject(res.data)) {
     throw data('Record Not Found', { status: 404 });
   }
-  return { activityDetails: res.data, characterId: selectedCharacterId };
+  return { activityDetails: res.data };
 }
 
 const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';

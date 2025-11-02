@@ -35,6 +35,12 @@ export async function action({ request }: Route.ClientActionArgs) {
       currentTitle: currentTitle?.toString() ?? '',
       race: race?.toString() ?? '',
       emblemBackgroundURL: background?.toString() ?? '',
+      emblemColor: {
+        red: 0,
+        green: 0,
+        blue: 0,
+        alpha: 0,
+      },
     },
     profile: {
       id: profileId?.toString() ?? '',

@@ -13,9 +13,11 @@ import type {
   GetSnapshotAggregatesResponse,
   GetSnapshotResponse,
   GetSnapshotsResponse,
+  GetUserSessionsResponse,
   LoginResponse,
   RefreshTokenResponse,
   StartSessionResponse,
+  StartUserSessionResponse,
   UpdateSessionResponse,
 } from './types.gen';
 
@@ -35,6 +37,33 @@ export const refreshTokenResponseTransformer = async (
   data: any,
 ): Promise<RefreshTokenResponse> => {
   data = authResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const sessionSchemaResponseTransformer = (data: any) => {
+  data.startedAt = new Date(data.startedAt);
+  if (data.completedAt) {
+    data.completedAt = new Date(data.completedAt);
+  }
+  if (data.lastSeenTimestamp) {
+    data.lastSeenTimestamp = new Date(data.lastSeenTimestamp);
+  }
+  return data;
+};
+
+export const getUserSessionsResponseTransformer = async (
+  data: any,
+): Promise<GetUserSessionsResponse> => {
+  data = data.map((item: any) => {
+    return sessionSchemaResponseTransformer(item);
+  });
+  return data;
+};
+
+export const startUserSessionResponseTransformer = async (
+  data: any,
+): Promise<StartUserSessionResponse> => {
+  data = sessionSchemaResponseTransformer(data);
   return data;
 };
 
@@ -112,17 +141,6 @@ export const getActivityResponseTransformer = async (
   data.activity = activityHistorySchemaResponseTransformer(data.activity);
   if (data.aggregate) {
     data.aggregate = aggregateSchemaResponseTransformer(data.aggregate);
-  }
-  return data;
-};
-
-const sessionSchemaResponseTransformer = (data: any) => {
-  data.startedAt = new Date(data.startedAt);
-  if (data.completedAt) {
-    data.completedAt = new Date(data.completedAt);
-  }
-  if (data.lastSeenTimestamp) {
-    data.lastSeenTimestamp = new Date(data.lastSeenTimestamp);
   }
   return data;
 };

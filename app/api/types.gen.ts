@@ -606,18 +606,16 @@ export type GetFireteamResponses = {
 export type GetFireteamResponse =
   GetFireteamResponses[keyof GetFireteamResponses];
 
-export type ProfileData = {
+export type GetUserData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-    'X-Membership-ID': string;
+  path: {
+    userId: string;
   };
-  path?: never;
   query?: never;
-  url: '/profile';
+  url: '/users/{userId}';
 };
 
-export type ProfileErrors = {
+export type GetUserErrors = {
   /**
    * Server is down
    */
@@ -630,16 +628,16 @@ export type ProfileErrors = {
   };
 };
 
-export type ProfileError = ProfileErrors[keyof ProfileErrors];
+export type GetUserError = GetUserErrors[keyof GetUserErrors];
 
-export type ProfileResponses = {
+export type GetUserResponses = {
   /**
-   * Current user info
+   * User Profile Info
    */
   200: Profile;
 };
 
-export type ProfileResponse = ProfileResponses[keyof ProfileResponses];
+export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
 
 export type LoginData = {
   body?: {
@@ -677,6 +675,71 @@ export type RefreshTokenResponses = {
 
 export type RefreshTokenResponse =
   RefreshTokenResponses[keyof RefreshTokenResponses];
+
+export type GetUserSessionsData = {
+  body?: never;
+  path: {
+    userId: string;
+  };
+  query: {
+    count: number;
+    page: number;
+    characterId: string;
+    status?: 'pending' | 'complete';
+  };
+  url: '/users/{userId}/sessions';
+};
+
+export type GetUserSessionsResponses = {
+  /**
+   * List of Sessions
+   */
+  200: Array<Session>;
+};
+
+export type GetUserSessionsResponse =
+  GetUserSessionsResponses[keyof GetUserSessionsResponses];
+
+export type StartUserSessionData = {
+  /**
+   * Provide the character to start the session for
+   */
+  body: {
+    characterId: string;
+    userId: string;
+  };
+  headers: {
+    'X-User-ID': string;
+    'X-Membership-ID': string;
+  };
+  path: {
+    userId: string;
+  };
+  query?: never;
+  url: '/users/{userId}/sessions';
+};
+
+export type StartUserSessionErrors = {
+  /**
+   * Request is invalid
+   */
+  400: {
+    message: string;
+  };
+};
+
+export type StartUserSessionError =
+  StartUserSessionErrors[keyof StartUserSessionErrors];
+
+export type StartUserSessionResponses = {
+  /**
+   * Return the created session
+   */
+  201: Session;
+};
+
+export type StartUserSessionResponse =
+  StartUserSessionResponses[keyof StartUserSessionResponses];
 
 export type GetSnapshotsData = {
   body?: never;
@@ -1040,41 +1103,6 @@ export type GetPublicSessionAggregatesResponses = {
 
 export type GetPublicSessionAggregatesResponse =
   GetPublicSessionAggregatesResponses[keyof GetPublicSessionAggregatesResponses];
-
-export type GetPublicProfileData = {
-  body?: never;
-  path?: never;
-  query: {
-    id: string;
-  };
-  url: '/public/profile';
-};
-
-export type GetPublicProfileErrors = {
-  /**
-   * Server is down
-   */
-  503: {
-    /**
-     * User friendly description of the error
-     */
-    message: string;
-    status: InternalError;
-  };
-};
-
-export type GetPublicProfileError =
-  GetPublicProfileErrors[keyof GetPublicProfileErrors];
-
-export type GetPublicProfileResponses = {
-  /**
-   * User Profile Info
-   */
-  200: Profile;
-};
-
-export type GetPublicProfileResponse =
-  GetPublicProfileResponses[keyof GetPublicProfileResponses];
 
 export type SessionCheckInData = {
   body: {

@@ -14,7 +14,7 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
   if (auth) {
-    return redirect('/dashboard');
+    return redirect(`/profile/${auth.id}`);
   }
   return null;
 }

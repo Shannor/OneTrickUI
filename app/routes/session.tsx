@@ -2,7 +2,6 @@ import { format } from 'date-fns';
 import { ExternalLink, Share2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { getAuth } from '~/.server/auth';
 import { type Aggregate, getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
 import { Badge } from '~/components/ui/badge';
@@ -19,13 +18,7 @@ import { Performance } from '~/organisims/performance';
 import type { Route } from './+types/session';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { sessionId } = params;
-
-  const auth = await getAuth(request);
-  if (!auth) {
-    throw new Error('Not authenticated');
-  }
-
+  const { sessionId, id, characterId } = params;
   const res = await getSession({
     path: {
       sessionId,
@@ -41,7 +34,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
   });
 
-  const sharablePath = `profiles/${auth.id}/sessions/${sessionId}`;
+  const sharablePath = `profile/${id}/c/${characterId}/sessions/${sessionId}`;
   let path = '';
   if (process.env.NODE_ENV === 'development') {
     path = `https://local.d2onetrick.ngrok.app/${sharablePath}`;

@@ -20,11 +20,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
   return {
     snapshot,
-    characterId: snapshot.characterId,
   };
 }
 
-export default function Snapshot({ loaderData }: Route.ComponentProps) {
+export default function Snapshot({ loaderData, params }: Route.ComponentProps) {
   const { snapshot } = loaderData;
   const location = useLocation();
 

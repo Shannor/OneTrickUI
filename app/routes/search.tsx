@@ -39,18 +39,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   return { page, query };
 }
 
-function getBase(path: string): string {
-  const root = path.split('/').at(1);
-  switch (root) {
-    case 'dashboard':
-      return '/dashboard/';
-    case 'search':
-      return '/';
-    default:
-      return '/';
-  }
-}
-
 export default function Search() {
   const { data, page, query } = useLoaderData<typeof loader>();
 
@@ -60,7 +48,6 @@ export default function Search() {
   const [isLoading] = useIsNavigating();
   const location = useLocation();
   const pathname = location.pathname;
-  const root = getBase(location.pathname);
 
   return (
     <div className="flex flex-col gap-8">
@@ -93,7 +80,7 @@ export default function Search() {
                 key={data.bungieMembershipId}
                 user={data}
                 onClick={() => {
-                  navigate(`${root}profiles/${data.bungieMembershipId}`);
+                  navigate(`/profile/${data.bungieMembershipId}`);
                 }}
               />
             ))}

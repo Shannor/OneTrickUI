@@ -2,130 +2,98 @@ import {
   Home,
   Hourglass,
   Loader2,
-  Search,
   SquareLibrary,
   UsersRound,
 } from 'lucide-react';
 import React from 'react';
-import { Outlet, data, redirect, useFetcher } from 'react-router';
-import { getAuth, refreshHeaders } from '~/.server/auth';
-import { getPreferences } from '~/.server/preferences';
-import { getSessions } from '~/api';
+import { Link, Outlet, useFetcher, useNavigate } from 'react-router';
 import { AppSidebar } from '~/components/app-sidebar';
+import { CharacterItem } from '~/components/character-item';
 import { ModeToggle } from '~/components/mode-toggle';
-import SessionTracker from '~/components/session-tracker';
+import { NavUser } from '~/components/nav-user';
+import { Button } from '~/components/ui/button';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '~/components/ui/sidebar';
-import { TooltipProvider } from '~/components/ui/tooltip';
-import { useIsNavigating } from '~/lib/hooks';
+import { useIsNavigating, useProfileData } from '~/lib/hooks';
 
 import type { Route } from './+types/sidebar';
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const auth = await getAuth(request);
-  if (!auth) {
-    return redirect('/login');
-  }
-  const headers = await refreshHeaders(request, auth);
-  const { character, profile } = await getPreferences(request);
-  if (!character) {
-    return redirect('/character-select', { ...headers });
-  }
-
-  // const fireteam = getFireteamData(request);
-  const { data: sessions } = await getSessions({
-    query: {
-      count: 1,
-      page: 0,
-      characterId: character.id,
-    },
-    headers: {
-      'X-Membership-ID': auth.primaryMembershipId,
-      'X-User-ID': auth.id,
-    },
-  });
-  return data(
-    { character, profile, session: sessions?.at(0) },
-    {
-      ...headers,
-    },
-  );
-}
-
-export default function Sidebar({ loaderData }: Route.ComponentProps) {
+export default function Sidebar({ params }: Route.ComponentProps) {
   const { submit } = useFetcher();
-  const { character, profile, session } = loaderData;
+  const { characterId } = params;
+  const response = useProfileData();
+  const navigate = useNavigate();
   const [isNavigating] = useIsNavigating();
 
-  const data = {
-    base: [
-      {
-        name: 'Home',
-        url: '/dashboard',
-        icon: Home,
-      },
-    ],
-    projects: [
-      {
-        name: 'Sessions',
-        url: '/dashboard/sessions',
-        icon: Hourglass,
-      },
-      {
-        name: 'Loadouts',
-        url: '/dashboard/loadouts',
-        icon: SquareLibrary,
-      },
-      {
-        name: 'Fireteam',
-        url: '/dashboard/fireteam',
-        icon: UsersRound,
-      },
-      {
-        name: 'Guardians',
-        url: '/dashboard/profiles',
-        icon: Search,
-      },
-    ],
-  };
-  return (
-    <SidebarProvider>
-      <TooltipProvider>
+  if (response.type === 'error') {
+    return <Outlet />;
+  }
+  if (response.type === 'owner' || response.type === 'viewer') {
+    const { profile, isSignedIn, type, auth } = response;
+    const isOwner = type === 'owner';
+    const canReturnBack = isSignedIn && auth.id !== profile.id;
+    const characters = profile.characters;
+    const data = {
+      base: [
+        {
+          name: isOwner ? 'Home' : `${profile.displayName}'s Profile`,
+          url: `/profile/${profile.id}/c/${characterId}`,
+          icon: Home,
+        },
+      ],
+      projects: [
+        {
+          name: 'Sessions',
+          url: `/profile/${profile.id}/c/${characterId}/sessions`,
+          icon: Hourglass,
+        },
+        {
+          name: 'Loadouts',
+          url: `/profile/${profile.id}/c/${characterId}/loadouts`,
+          icon: SquareLibrary,
+        },
+        isOwner
+          ? {
+              name: 'Fireteam',
+              url: `/profile/${profile.id}/c/${characterId}/fireteam`,
+              icon: UsersRound,
+            }
+          : undefined,
+      ].filter((x) => !!x),
+    };
+    return (
+      <SidebarProvider>
         <AppSidebar
-          character={character}
-          currentCharacterId={character.id}
           navigationData={data}
-          onLogout={() => {
-            submit(null, {
-              method: 'post',
-              action: '/dashboard/action/logout',
-            }).catch(console.error);
-          }}
-          displayName={profile?.displayName ?? ''}
-        >
-          <>
-            {/*<ClientFallback*/}
-            {/*  errorFallback={*/}
-            {/*    <Well>*/}
-            {/*      <div>Failed to Load Fireteam</div>*/}
-            {/*    </Well>*/}
-            {/*  }*/}
-            {/*  suspenseFallback={*/}
-            {/*    <div>*/}
-            {/*      <Skeleton className="h-40 w-full" />*/}
-            {/*    </div>*/}
-            {/*  }*/}
-            {/*>*/}
-            {/*  <Well>*/}
-            {/*    <FireteamPreview fireteamPromise={fireteam} />*/}
-            {/*  </Well>*/}
-            {/*</ClientFallback>*/}
-            <SessionTracker session={session} />
-          </>
-        </AppSidebar>
+          header={
+            <div className="flex flex-col justify-center gap-2 p-4">
+              <h1 className="text-2xl font-bold tracking-tight">
+                D2 One Trick
+              </h1>
+              {canReturnBack && (
+                <Button asChild variant="ghost">
+                  <Link to={`/profile/${auth.id}`}>Return to your profile</Link>
+                </Button>
+              )}
+            </div>
+          }
+          footer={
+            isOwner && (
+              <NavUser
+                displayName="Settings"
+                onLogout={() =>
+                  submit(null, {
+                    method: 'post',
+                    action: '/action/logout',
+                  }).catch(console.error)
+                }
+              />
+            )
+          }
+        />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
@@ -143,10 +111,28 @@ export default function Sidebar({ loaderData }: Route.ComponentProps) {
                 </div>
               </div>
             ) : null}
-            <Outlet />
+            <div className="flex flex-col gap-12">
+              <div className="flex w-full flex-col justify-stretch gap-6 md:flex-row">
+                {characters?.map((character) => (
+                  <Link
+                    to={`/profile/${profile.id}/c/${character.id}`}
+                    className="w-full"
+                  >
+                    <CharacterItem
+                      character={character}
+                      isChecked={characterId === character.id}
+                    />
+                  </Link>
+                ))}
+              </div>
+
+              <Outlet />
+            </div>
           </div>
         </SidebarInset>
-      </TooltipProvider>
-    </SidebarProvider>
-  );
+      </SidebarProvider>
+    );
+  }
+  console.error('Unknown response type:', response);
+  return <Outlet />;
 }

@@ -19,9 +19,11 @@ import {
   getSnapshotAggregatesResponseTransformer,
   getSnapshotResponseTransformer,
   getSnapshotsResponseTransformer,
+  getUserSessionsResponseTransformer,
   loginResponseTransformer,
   refreshTokenResponseTransformer,
   startSessionResponseTransformer,
+  startUserSessionResponseTransformer,
   updateSessionResponseTransformer,
 } from './transformers.gen';
 import type {
@@ -40,9 +42,6 @@ import type {
   GetFireteamResponse,
   GetPingData,
   GetPingResponse,
-  GetPublicProfileData,
-  GetPublicProfileError,
-  GetPublicProfileResponse,
   GetPublicSessionAggregatesData,
   GetPublicSessionAggregatesResponse,
   GetPublicSessionData,
@@ -61,11 +60,13 @@ import type {
   GetSnapshotResponse,
   GetSnapshotsData,
   GetSnapshotsResponse,
+  GetUserData,
+  GetUserError,
+  GetUserResponse,
+  GetUserSessionsData,
+  GetUserSessionsResponse,
   LoginData,
   LoginResponse,
-  ProfileData,
-  ProfileError,
-  ProfileResponse,
   RefreshTokenData,
   RefreshTokenResponse,
   SearchData,
@@ -75,6 +76,9 @@ import type {
   StartSessionData,
   StartSessionError,
   StartSessionResponse,
+  StartUserSessionData,
+  StartUserSessionError,
+  StartUserSessionResponse,
   UpdateSessionData,
   UpdateSessionResponse,
 } from './types.gen';
@@ -142,16 +146,16 @@ export const getFireteam = <ThrowOnError extends boolean = false>(
   });
 };
 
-export const profile = <ThrowOnError extends boolean = false>(
-  options: Options<ProfileData, ThrowOnError>,
+export const getUser = <ThrowOnError extends boolean = false>(
+  options: Options<GetUserData, ThrowOnError>,
 ) => {
   return (options?.client ?? client).get<
-    ProfileResponse,
-    ProfileError,
+    GetUserResponse,
+    GetUserError,
     ThrowOnError
   >({
     ...options,
-    url: '/profile',
+    url: '/users/{userId}',
   });
 };
 
@@ -186,6 +190,41 @@ export const refreshToken = <ThrowOnError extends boolean = false>(
     },
     responseTransformer: refreshTokenResponseTransformer,
     url: '/refresh',
+  });
+};
+
+export const getUserSessions = <ThrowOnError extends boolean = false>(
+  options: Options<GetUserSessionsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).get<
+    GetUserSessionsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    responseTransformer: getUserSessionsResponseTransformer,
+    url: '/users/{userId}/sessions',
+  });
+};
+
+/**
+ * Create a new session
+ */
+export const startUserSession = <ThrowOnError extends boolean = false>(
+  options: Options<StartUserSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    StartUserSessionResponse,
+    StartUserSessionError,
+    ThrowOnError
+  >({
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    responseTransformer: startUserSessionResponseTransformer,
+    url: '/users/{userId}/sessions',
   });
 };
 
@@ -420,19 +459,6 @@ export const getPublicSessionAggregates = <
     ...options,
     responseTransformer: getPublicSessionAggregatesResponseTransformer,
     url: '/public/sessions/{sessionId}/aggregates',
-  });
-};
-
-export const getPublicProfile = <ThrowOnError extends boolean = false>(
-  options: Options<GetPublicProfileData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).get<
-    GetPublicProfileResponse,
-    GetPublicProfileError,
-    ThrowOnError
-  >({
-    ...options,
-    url: '/public/profile',
   });
 };
 
