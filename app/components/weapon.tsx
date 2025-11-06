@@ -135,7 +135,7 @@ export const Weapon: React.FC<Props> = ({
             <img
               alt={`${name} image`}
               src={icon}
-              className="h-auto w-24 rounded-lg object-cover"
+              className="h-auto w-12 rounded-lg object-cover"
             />
           </TooltipTrigger>
         </Tooltip>

@@ -43,53 +43,39 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   if (data.type === 'error') {
     return null;
   }
-  if (data.type === 'viewer') {
-    const { profile } = data;
-    return (
-      <div className="flex flex-col gap-4">
-        <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-          Viewing {profile.displayName}!
-        </h2>
-        <div className="w-1/3">
-          {session ? (
-            <section className="flex flex-col gap-4">
-              <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-                {session.completedAt ? 'Last' : 'Active'} Session
-              </h3>
-              <SessionCard
-                onClick={() => navigate(`sessions/${session.id}`)}
-                session={session}
-              />
-            </section>
-          ) : (
-            <Empty title="No Session recorded" description="Start a session!" />
-          )}
-        </div>
-      </div>
-    );
-  }
+  if (data.type === 'viewer' || data.type === 'owner') {
+    const { profile, type } = data;
 
-  if (data.type === 'owner') {
-    const { profile } = data;
     return (
-      <div className="flex flex-col gap-4">
-        <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-          Welcome, {profile.displayName}!
-        </h2>
-        <div className="w-1/3">
-          {session ? (
-            <section className="flex flex-col gap-4">
-              <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-                {session.completedAt ? 'Last' : 'Active'} Session
-              </h3>
-              <SessionCard
-                onClick={() => navigate(`sessions/${session.id}`)}
-                session={session}
+      <div>
+        <title>{`${profile.displayName}: Home`}</title>
+        <meta property="og:title" content={`${profile.displayName}: Home`} />
+        <meta
+          name="description"
+          content={`Home page for ${profile.displayName}`}
+        />
+        <div className="flex flex-col gap-4">
+          <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+            {type === 'viewer' ? 'Viewing' : 'Welcome'} {profile.displayName}!
+          </h2>
+          <div className="w-1/3">
+            {session ? (
+              <section className="flex flex-col gap-4">
+                <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
+                  {session.completedAt ? 'Last' : 'Active'} Session
+                </h3>
+                <SessionCard
+                  onClick={() => navigate(`sessions/${session.id}`)}
+                  session={session}
+                />
+              </section>
+            ) : (
+              <Empty
+                title="No Session recorded"
+                description="Start a session!"
               />
-            </section>
-          ) : (
-            <Empty title="No Session recorded" description="Start a session!" />
-          )}
+            )}
+          </div>
         </div>
       </div>
     );

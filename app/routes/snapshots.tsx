@@ -70,14 +70,21 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   };
 }
 
-export default function Snapshots({ loaderData }: Route.ComponentProps) {
+export default function Snapshots({
+  loaderData,
+  params,
+}: Route.ComponentProps) {
   const { loadouts, gameMode, count, minimumGames } = loaderData;
+  const { id, characterId } = params;
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const ref = useRef<HTMLFormElement>(null);
 
   return (
     <div className="flex w-full flex-col gap-4">
+      <title>{`Top ${count} Loadouts`}</title>
+      <meta property="og:title" content={`Top ${count} Loadouts`} />
+      <meta name="description" content={`Explore your top ${count} performing loadouts with filters for mode and minimum games.`} />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
@@ -181,7 +188,7 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
             <Card
               key={snapshot.id}
               className="cursor-pointer"
-              onClick={() => navigate(`/dashboard/loadouts/${snapshot.id}`)}
+              onClick={() => navigate(`${snapshot.id}`)}
             >
               <CardHeader>
                 <CardTitle className="flex flex-row items-center gap-4">

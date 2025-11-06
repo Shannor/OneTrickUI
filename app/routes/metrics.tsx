@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { data, unstable_useRoute } from 'react-router';
+import { data } from 'react-router';
 import { type GameMode, getSnapshotAggregates } from '~/api';
 import { AvgPerformance } from '~/charts/AvgPerformance';
 import { ChartHeader } from '~/charts/ChartHeader';
 import { KDPerformance } from '~/charts/KDPerformance';
+import { MapCount } from '~/charts/MapCount';
 import { MapPerformance } from '~/charts/MapPerformance';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
@@ -33,44 +34,31 @@ export async function loader({ params }: Route.LoaderArgs) {
   };
 }
 
-export default function Metrics({ loaderData, matches }: Route.ComponentProps) {
+export default function Metrics({ loaderData, params }: Route.ComponentProps) {
   const { aggregates } = loaderData;
-
-  const snapshotData = unstable_useRoute('routes/snapshot');
-  const { characterId } = useMemo(() => {
-    if (snapshotData) {
-      return {
-        characterId: snapshotData.loaderData?.snapshot.characterId,
-        createdAt: snapshotData.loaderData?.snapshot.createdAt,
-      };
-    }
-    return {};
-  }, []);
+  const { characterId } = params;
 
   const [time, setTime] = useState<TimeWindow>('one-day');
   const [gameMode, setGameMode] = useState<GameMode>('allGameModes');
 
   const data = useMemo(() => {
-    if (characterId) {
-      return generateKDAResultsForTimeWindow(
-        aggregates,
-        time,
-        characterId,
-        gameMode,
-      );
-    }
-    return [];
-  }, [aggregates, time, characterId, gameMode]);
+    return generateKDAResultsForTimeWindow(
+      aggregates,
+      time,
+      characterId,
+      gameMode,
+    );
+  }, [aggregates, time, gameMode]);
 
   const mapData = useMemo(() => {
-    if (characterId) {
-      return generatePerformancePerMap(aggregates, time, characterId, gameMode);
-    }
-    return [];
-  }, [aggregates, time, characterId, gameMode]);
+    return generatePerformancePerMap(aggregates, time, characterId, gameMode);
+  }, [aggregates, time, gameMode]);
 
   return (
     <div className="flex flex-col gap-4">
+      <title>Snapshot Metrics</title>
+      <meta property="og:title" content="Snapshot Metrics" />
+      <meta name="description" content="Analyze your Destiny 2 performance over time and by map/mode." />
       <div className="flex flex-col gap-4">
         <RadioGroup
           className="flex items-center gap-4"
@@ -146,7 +134,10 @@ export default function Metrics({ loaderData, matches }: Route.ComponentProps) {
           </ChartHeader>
         </div>
         <ChartHeader title="Map Performance">
-          <MapPerformance data={mapData} timeWindow={time} />
+          <MapPerformance data={mapData} timeWindow={time} syncId="map" />
+        </ChartHeader>
+        <ChartHeader title="Map Count">
+          <MapCount data={mapData} timeWindow={time} syncId="map" />
         </ChartHeader>
       </div>
     </div>

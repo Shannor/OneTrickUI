@@ -37,6 +37,9 @@ export default function Profile() {
 
   return (
     <div className="flex flex-col gap-4">
+      <title>{`${account?.displayName ?? 'Profile'}`}</title>
+      <meta property="og:title" content={`${account?.displayName ?? 'Profile'}`} />
+      <meta name="description" content={`View ${account?.displayName ?? 'the user'}'s Destiny 2 profile, sessions, loadouts, and activities.`} />
       <h1 className="scroll-m-20 text-balance text-center text-4xl font-extrabold tracking-tight">
         {account?.displayName}
       </h1>

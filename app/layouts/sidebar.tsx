@@ -115,6 +115,7 @@ export default function Sidebar({ params }: Route.ComponentProps) {
               <div className="flex w-full flex-col justify-stretch gap-6 md:flex-row">
                 {characters?.map((character) => (
                   <Link
+                    key={character.id}
                     to={`/profile/${profile.id}/c/${character.id}`}
                     className="w-full"
                   >

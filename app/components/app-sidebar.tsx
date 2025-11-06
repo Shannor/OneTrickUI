@@ -35,7 +35,9 @@ export function AppSidebar({
 }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>{header}</SidebarHeader>
+      <SidebarHeader className="group-data-[collapsible=icon]:overflow-hidden">
+        {header}
+      </SidebarHeader>
       <SidebarContent>
         {children}
         <NavProjects projects={navigationData.base} />

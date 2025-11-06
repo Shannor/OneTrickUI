@@ -73,7 +73,7 @@ export function ClassStats({ className, data }: Props) {
               >
                 <tspan className="fill-black dark:fill-white">{d.value}</tspan>
                 &nbsp;
-                <tspan fill="var(--color-desktop)">/</tspan>
+                <tspan className="fill-black dark:fill-white">/</tspan>
                 &nbsp;
                 <tspan className="fill-black dark:fill-white">
                   {isNew ? 200 : 100}

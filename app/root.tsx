@@ -69,10 +69,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function AppWithProviders() {
   const data = useLoaderData<typeof loader>();
   return (
-    <ThemeProvider
-      specifiedTheme={data.theme}
-      themeAction="/dashboard/action/set-theme"
-    >
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
       <App />
     </ThemeProvider>
   );

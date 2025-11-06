@@ -40,7 +40,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             <Label>Player</Label>
             {/*TODO: Make a big font and header*/}
             <h4 className="scroll-m-20 text-xl font-semibold tracking-tight hover:text-blue-500">
-              <Link to={`/dashboard/profiles/${user?.id}`} viewTransition>
+              <Link to={`/profile/${user?.id}`} viewTransition>
                 {user?.displayName ?? 'Unknown Player'}
               </Link>
             </h4>

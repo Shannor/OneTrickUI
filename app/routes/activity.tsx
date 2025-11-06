@@ -32,11 +32,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
 const crucibleReportUrl = 'https://crucible.report/pgcr';
 
-export default function Activity({ loaderData }: Route.ComponentProps) {
+export default function Activity({ loaderData, params }: Route.ComponentProps) {
   const {
     activityDetails: { activity, aggregate, teams, snapshots, users },
   } = loaderData;
 
+  const { characterId, id } = params;
   const allPerformances = Object.entries(aggregate?.performance ?? {}).filter(
     ([characterId]) => {
       const link = aggregate?.snapshotLinks[characterId];
@@ -50,6 +51,9 @@ export default function Activity({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      <title>{`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}</title>
+      <meta property="og:title" content={`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`} />
+      <meta name="description" content={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`} />
       <Card>
         <div className="relative">
           <img
@@ -125,12 +129,16 @@ export default function Activity({ loaderData }: Route.ComponentProps) {
                 {link && (
                   <div className="flex flex-row gap-4">
                     <Button asChild variant="ghost">
-                      <Link to={`/dashboard/sessions/${link.sessionId}`}>
+                      <Link
+                        to={`/profile/${id}/c/${characterId}/sessions/${link.sessionId}`}
+                      >
                         View Session
                       </Link>
                     </Button>
                     <Button asChild variant="ghost">
-                      <Link to={`/dashboard/loadouts/${link.snapshotId}`}>
+                      <Link
+                        to={`/profile/${id}/c/${characterId}/loadouts/${link.snapshotId}`}
+                      >
                         View Loadout
                       </Link>
                     </Button>

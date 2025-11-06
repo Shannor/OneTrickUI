@@ -1,6 +1,12 @@
 import { format } from 'date-fns';
-import { PlusIcon, StopCircleIcon } from 'lucide-react';
-import { useFetcher, useNavigate } from 'react-router';
+import {
+  ChevronLeft,
+  ChevronRight,
+  PlusIcon,
+  StopCircleIcon,
+} from 'lucide-react';
+import React from 'react';
+import { Link, useFetcher, useNavigate } from 'react-router';
 import { type Session, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
@@ -64,15 +70,18 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 export default function Sessions({ params, loaderData }: Route.ComponentProps) {
   const { type } = useProfileData();
   const { characterId, id: userId } = params;
-  const { data, current } = loaderData;
+  const { data, current, page } = loaderData;
   const isOwner = type === 'owner';
   const navigate = useNavigate();
-  const { state, data: actionData, Form } = useFetcher();
+  const { state, Form } = useFetcher();
   const isSubmitting = state === 'submitting';
   const hasCurrentSession = Boolean(current?.id);
 
   return (
     <div className="flex flex-col gap-8">
+      <title>Sessions</title>
+      <meta property="og:title" content="Sessions" />
+      <meta name="description" content="View and manage your Destiny 2 play sessions." />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
@@ -153,6 +162,16 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
               session={session}
             />
           ))}
+      </div>
+      <div className="flex flex-row justify-between gap-4 self-end">
+        <Button disabled={page === 0} variant="outline">
+          <ChevronLeft />
+          <Link to={`?page=${page - 1}`}>Previous Page</Link>
+        </Button>
+        <Button disabled={data.length !== 10} variant="outline">
+          <Link to={`?page=${page + 1}`}>Next Page</Link>
+          <ChevronRight />
+        </Button>
       </div>
     </div>
   );
