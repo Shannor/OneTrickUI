@@ -1,7 +1,8 @@
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { SessionCard } from '~/components/session-card';
+import { Button } from '~/components/ui/button';
 import { useProfileData } from '~/lib/hooks';
 
 import type { Route } from './+types/home';
@@ -70,10 +71,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 />
               </section>
             ) : (
-              <Empty
-                title="No Session recorded"
-                description="Start a session!"
-              />
+              <Empty title="No Session recorded" description="Start a session!">
+                <Button asChild>
+                  <Link to="sessions">Start Session</Link>
+                </Button>
+              </Empty>
             )}
           </div>
         </div>
