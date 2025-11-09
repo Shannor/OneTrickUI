@@ -86,10 +86,10 @@ export default function Search() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-1">
             {results.map((data) => (
               <UserCard
-                key={data.bungieMembershipId}
+                key={data.objectId}
                 user={data}
                 onClick={() => {
-                  navigate(`/profile/${data.bungieMembershipId}`);
+                  navigate(`/profile/${data.objectId}`);
                 }}
               />
             ))}
@@ -127,30 +127,16 @@ function UserCard({
     <Card className="cursor-pointer" onClick={onClick}>
       <CardHeader className="flex flex-col">
         <div className="flex flex-row items-baseline gap-1">
-          <CardTitle>{user.displayName}</CardTitle>
-          <div className="text-muted-foreground">#{user.nameCode}</div>
+          <CardTitle>{user.uniqueName}</CardTitle>
         </div>
         <CardDescription>
-          <div>Bungie Id: {user.bungieMembershipId}</div>
+          <div>Bungie Id: {user.bungieId}</div>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-row gap-4">
-          {user.memberships.map((ship) => {
-            return (
-              <div className="flex flex-row gap-1">
-                {ship.iconPath && (
-                  <img
-                    alt="source icon"
-                    src={ship.iconPath}
-                    className="h-6 w-6"
-                  />
-                )}
-                <div>
-                  <div>{ship.displayName}</div>
-                </div>
-              </div>
-            );
+          {user.alternateNames.map((ship) => {
+            return <div>{ship}</div>;
           })}
         </div>
       </CardContent>

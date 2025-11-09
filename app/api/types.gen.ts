@@ -460,9 +460,11 @@ export type Session = {
 
 export type SearchUserResult = {
   displayName: string;
-  nameCode: string;
-  bungieMembershipId: string;
-  memberships: Array<DestinyMembership>;
+  bungieId?: string;
+  primaryMembershipId: string;
+  uniqueName: string;
+  objectId: string;
+  alternateNames: Array<string>;
 };
 
 export type DestinyMembership = {
