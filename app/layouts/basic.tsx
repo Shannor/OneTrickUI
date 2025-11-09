@@ -5,7 +5,7 @@ export default function Basic() {
   return (
     <div>
       <TooltipProvider>
-        <div className="flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
+        <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-1 flex-col items-center justify-center overflow-y-auto p-6 2xl:p-6">
           <Outlet />
         </div>
       </TooltipProvider>

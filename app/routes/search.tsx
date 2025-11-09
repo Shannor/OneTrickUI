@@ -50,10 +50,16 @@ export default function Search() {
   const pathname = location.pathname;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex w-full max-w-[1080px] flex-col gap-8">
       <title>{`Search${query ? `: ${query}` : ''}`}</title>
-      <meta property="og:title" content={`Search${query ? `: ${query}` : ''}`} />
-      <meta name="description" content={`Search One Trick for Destiny 2 players${query ? ` matching "${query}"` : ''}.`} />
+      <meta
+        property="og:title"
+        content={`Search${query ? `: ${query}` : ''}`}
+      />
+      <meta
+        name="description"
+        content={`Search One Trick for Destiny 2 players${query ? ` matching "${query}"` : ''}.`}
+      />
       <div className="flex flex-col justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
