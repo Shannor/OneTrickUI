@@ -1,9 +1,10 @@
 import { SquareArrowOutUpRight } from 'lucide-react';
 import React from 'react';
-import { data } from 'react-router';
+import { Link, data } from 'react-router';
 import { getActivity } from '~/api';
 import { PlayerCard } from '~/components/player-card';
 import { TeamScore } from '~/components/team-score';
+import { Button } from '~/components/ui/button';
 import {
   Card,
   CardDescription,
@@ -15,30 +16,28 @@ import { isEmptyObject } from '~/lib/utils';
 import type { Route } from './+types/activity';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  if (!params.instanceId) {
-    throw new Error('Missing instance id');
-  }
+  const { instanceId } = params;
   const url = new URL(request.url);
-  const selectedCharacterId = url.searchParams.get('characterId');
 
   const res = await getActivity({
-    path: { activityId: params.instanceId },
+    path: { activityId: instanceId },
   });
 
   if (!res.data || isEmptyObject(res.data)) {
     throw data('Record Not Found', { status: 404 });
   }
-  return { activityDetails: res.data, characterId: selectedCharacterId };
+  return { activityDetails: res.data };
 }
 
 const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
 const crucibleReportUrl = 'https://crucible.report/pgcr';
 
-export default function Activity({ loaderData }: Route.ComponentProps) {
+export default function Activity({ loaderData, params }: Route.ComponentProps) {
   const {
     activityDetails: { activity, aggregate, teams, snapshots, users },
   } = loaderData;
 
+  const { characterId, id } = params;
   const allPerformances = Object.entries(aggregate?.performance ?? {}).filter(
     ([characterId]) => {
       const link = aggregate?.snapshotLinks[characterId];
@@ -52,6 +51,9 @@ export default function Activity({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      <title>{`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}</title>
+      <meta property="og:title" content={`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`} />
+      <meta name="description" content={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`} />
       <Card>
         <div className="relative">
           <img
@@ -120,14 +122,37 @@ export default function Activity({ loaderData }: Route.ComponentProps) {
           Players
         </h3>
         <div className="grid grid-cols-1 gap-4">
-          {allPerformances.map(([charId, perf]) => (
-            <PlayerCard
-              key={charId}
-              performance={perf}
-              user={users[charId]}
-              snapshot={snapshots[charId]}
-            />
-          ))}
+          {allPerformances.map(([charId, perf]) => {
+            const link = aggregate?.snapshotLinks[charId];
+            return (
+              <div>
+                {link && (
+                  <div className="flex flex-row gap-4">
+                    <Button asChild variant="ghost">
+                      <Link
+                        to={`/profile/${id}/c/${characterId}/sessions/${link.sessionId}`}
+                      >
+                        View Session
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost">
+                      <Link
+                        to={`/profile/${id}/c/${characterId}/loadouts/${link.snapshotId}`}
+                      >
+                        View Loadout
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+                <PlayerCard
+                  key={charId}
+                  performance={perf}
+                  user={users[charId]}
+                  snapshot={snapshots[charId]}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

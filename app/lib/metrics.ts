@@ -2,6 +2,7 @@ import {
   eachDayOfInterval,
   eachHourOfInterval,
   eachMonthOfInterval,
+  endOfDay,
   endOfToday,
   format,
   isAfter,
@@ -9,6 +10,7 @@ import {
   isFirstDayOfMonth,
   isLastDayOfMonth,
   startOfDay,
+  startOfMonth,
   startOfToday,
   subMonths,
   subWeeks,
@@ -22,6 +24,7 @@ interface KDA {
   assists: number;
   gameCount: number;
 }
+
 export interface KDAResult {
   time: string;
   avgKills: number;
@@ -30,6 +33,7 @@ export interface KDAResult {
   kd: number;
   kda: number;
 }
+
 export interface MapResult {
   location: string;
   avgKills: number;
@@ -39,11 +43,16 @@ export interface MapResult {
   kda: number;
   count: number;
 }
+
+export type CustomTimeWindow = {
+  start: Date;
+  end: Date;
+};
 export type TimeWindow = 'one-day' | 'one-week' | 'one-month' | 'six-months';
 
 export function generatePerformancePerMap(
   aggregates: Aggregate[],
-  time: TimeWindow,
+  time: TimeWindow | CustomTimeWindow,
   characterId: string,
   filterBy?: GameMode,
 ): MapResult[] {
@@ -85,7 +94,7 @@ export function generatePerformancePerMap(
 
 export function generateKDAResultsForTimeWindow(
   aggregates: Aggregate[],
-  time: TimeWindow,
+  time: TimeWindow | CustomTimeWindow,
   characterId: string,
   filterBy?: GameMode,
 ): KDAResult[] {
@@ -97,7 +106,10 @@ export function generateKDAResultsForTimeWindow(
       // Maybe need to remove this
       return acc;
     }
-    const day = startOfDay(new Date(agg.activityDetails.period));
+    let day = startOfDay(new Date(agg.activityDetails.period));
+    if (time === 'six-months') {
+      day = startOfMonth(new Date(agg.activityDetails.period));
+    }
     if (!acc[day.toISOString()]) {
       acc[day.toISOString()] = {
         kills: p.playerStats.kills?.value ?? 0,
@@ -139,11 +151,23 @@ export function generateKDAResultsForTimeWindow(
     })
     .filter(Boolean);
 }
-function getTimes(time: TimeWindow): {
+function getTimes(time: TimeWindow | CustomTimeWindow): {
   intervals: Date[];
   startDay: Date;
   endDay: Date;
 } {
+  if (typeof time !== 'string' && 'start' in time && 'end' in time) {
+    const startDay = startOfDay(new Date(time.start));
+    const endDay = endOfDay(new Date(time.end));
+    return {
+      intervals: eachDayOfInterval({
+        start: startDay,
+        end: endDay,
+      }),
+      startDay: startDay,
+      endDay: endDay,
+    };
+  }
   const endDay = endOfToday();
   let startDay: Date;
   let intervals: Date[];
@@ -187,7 +211,7 @@ function getTimes(time: TimeWindow): {
 }
 
 function sortAggregates(
-  time: TimeWindow,
+  time: TimeWindow | CustomTimeWindow,
   aggregates: Aggregate[],
   filterBy?: GameMode,
 ) {

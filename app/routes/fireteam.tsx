@@ -29,6 +29,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     return state;
   }, {});
 
+  // TODO: Remove public sessions call to use the user one
   // Clear fireteam if someone leaves
   const sessionPromise = Promise.all(
     Object.entries(fireteamMemWithCharacters).map(
@@ -94,6 +95,9 @@ export default function Fireteam({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-row flex-wrap gap-4">
+      <title>Fireteam</title>
+      <meta property="og:title" content="Fireteam" />
+      <meta name="description" content="View your current fireteam and manage character selections." />
       {members.map((m) => {
         return (
           <div key={m.membershipId}>
@@ -150,13 +154,13 @@ function CharacterView({
   return (
     <div className="flex flex-col gap-4">
       <Form
-        action="/dashboard/action/set-fireteam"
+        action="/action/set-fireteam"
         method="post"
         key={member.membershipId}
         viewTransition={true}
         className="flex flex-col gap-4"
       >
-        <Link to={`/dashboard/profiles/${member.membershipId}`} viewTransition>
+        <Link to={`/profile/${member.id}`} viewTransition>
           <h4 className="scroll-m-20 text-xl font-semibold tracking-tight hover:text-blue-400 hover:underline">
             {member.displayName}
           </h4>
@@ -185,7 +189,7 @@ function CharacterView({
       <Form
         className="flex flex-col gap-4"
         method="post"
-        action="/dashboard/action/start-session"
+        action="/action/start-session"
         viewTransition
       >
         <input hidden name="characterId" value={characterId} />

@@ -1,14 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts';
 import {
   type ChartConfig,
   ChartContainer,
@@ -20,17 +13,6 @@ import {
 import type { MapResult, TimeWindow } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
-export const description = 'A multiple bar chart';
-
-const chartData = [
-  { month: 'January', desktop: 186, mobile: 80 },
-  { month: 'February', desktop: 305, mobile: 200 },
-  { month: 'March', desktop: 237, mobile: 120 },
-  { month: 'April', desktop: 73, mobile: 190 },
-  { month: 'May', desktop: 209, mobile: 130 },
-  { month: 'June', desktop: 214, mobile: 140 },
-];
-
 const chartConfig = {
   kd: {
     label: 'K/D',
@@ -40,24 +22,21 @@ const chartConfig = {
     label: 'Efficiency',
     color: 'var(--chart-secondary)',
   },
-  count: {
-    label: 'Games Played',
-    color: 'var(--chart-1)',
-  },
 } satisfies ChartConfig;
 
 interface Props {
   className?: string;
   data: MapResult[];
   timeWindow?: TimeWindow;
+  syncId?: string;
 }
-export function MapPerformance({ className, data }: Props) {
+export function MapPerformance({ className, data, syncId }: Props) {
   return (
     <ChartContainer
       config={chartConfig}
       className={cn('max-h-[400px] min-h-[200px] w-full', className)}
     >
-      <ComposedChart accessibilityLayer data={data}>
+      <ComposedChart accessibilityLayer data={data} syncId={syncId}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="location"
@@ -73,9 +52,8 @@ export function MapPerformance({ className, data }: Props) {
           cursor={false}
           content={<ChartTooltipContent indicator="dashed" />}
         />
-        <Bar dataKey="kd" fill="var(--color-kd)" radius={4} />
-        <Bar dataKey="kda" fill="var(--color-kda)" radius={4} />
-        <Line type="monotone" dataKey="count" fill="var(--color-count)" />
+        <Line dataKey="kd" type="monotone" fill="var(--color-kd)" />
+        <Line dataKey="kda" type="monotone" fill="var(--color-kda)" />
       </ComposedChart>
     </ChartContainer>
   );

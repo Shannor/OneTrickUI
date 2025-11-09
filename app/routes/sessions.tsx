@@ -1,9 +1,13 @@
 import { format } from 'date-fns';
-import { PlusIcon, StopCircleIcon } from 'lucide-react';
-import { useFetcher, useLoaderData, useNavigate } from 'react-router';
-import { getAuth } from '~/.server/auth';
-import { getPreferences } from '~/.server/preferences';
-import { type Session, getPublicSessions, getSessions } from '~/api';
+import {
+  ChevronLeft,
+  ChevronRight,
+  PlusIcon,
+  StopCircleIcon,
+} from 'lucide-react';
+import React from 'react';
+import { Link, useFetcher, useNavigate } from 'react-router';
+import { type Session, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { SessionCard } from '~/components/session-card';
@@ -15,92 +19,35 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
+import { useProfileData } from '~/lib/hooks';
 
 import type { Route } from './+types/sessions';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
   const page = Number(url.searchParams.get('page') || '0');
-  const paramCharacterId = url.searchParams.get('characterId');
-  const profileId = params.id;
+  const { characterId, id } = params;
 
-  if (profileId) {
-    if (paramCharacterId) {
-      const res = await getPublicSessions({
-        query: {
-          count: 10,
-          page: page,
-          characterId: paramCharacterId,
-          status: 'complete',
-        },
-      });
-      const currentRes = await getPublicSessions({
-        query: {
-          count: 1,
-          page: 0,
-          characterId: paramCharacterId,
-          status: 'pending',
-        },
-      });
-      if (!res.data) {
-        return {
-          data: [],
-          page,
-          current: undefined,
-          isOwner: false,
-        };
-      }
-
-      const current = currentRes.data?.at(0);
-      return {
-        data: res.data,
-        current,
-        page,
-        characterId: paramCharacterId,
-        isOwner: false,
-      };
-    }
-    return {
-      data: [],
-      page,
-      current: undefined,
-      isOwner: false,
-    };
-  }
-
-  const auth = await getAuth(request);
-  if (!auth) {
-    throw new Error('Not authenticated');
-  }
-
-  const { character } = await getPreferences(request);
-  if (!character) {
-    return { data: [], page, error: 'No character id', isOwner: true };
-  }
-
-  const res = await getSessions({
+  const res = await getUserSessions({
+    path: {
+      userId: id,
+    },
     query: {
       count: 10,
       page: page,
-      characterId: character.id,
+      characterId,
       status: 'complete',
     },
-    headers: {
-      'X-Membership-ID': auth.primaryMembershipId,
-      'X-User-ID': auth.id,
-    },
   });
-
-  const currentRes = await getSessions({
+  const currentRes = await getUserSessions({
+    path: {
+      userId: id,
+    },
     query: {
       count: 1,
-      page: page,
-      characterId: character.id,
+      page: 0,
+      characterId,
       status: 'pending',
-    },
-    headers: {
-      'X-Membership-ID': auth.primaryMembershipId,
-      'X-User-ID': auth.id,
     },
   });
   if (!res.data) {
@@ -108,9 +55,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       data: [],
       page,
       current: undefined,
-      error: 'No records found',
-      isOwner: true,
-      userId: auth.id,
     };
   }
 
@@ -119,36 +63,25 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     data: res.data,
     current,
     page,
-    characterId: character.id,
-    isOwner: true,
-    userId: auth.id,
+    characterId,
   };
 }
 
-export default function Sessions({ loaderData }: Route.ComponentProps) {
-  const { data, characterId, error, current, userId, isOwner } = loaderData;
-
+export default function Sessions({ params, loaderData }: Route.ComponentProps) {
+  const { type } = useProfileData();
+  const { characterId, id: userId } = params;
+  const { data, current, page } = loaderData;
+  const isOwner = type === 'owner';
   const navigate = useNavigate();
-
-  const { state, data: actionData, Form } = useFetcher();
-
+  const { state, Form } = useFetcher();
   const isSubmitting = state === 'submitting';
-
-  if (!characterId) {
-    return (
-      <div className="flex flex-col gap-4">
-        <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-          No Character Selected. Please choose a character from the profile
-          page.
-        </h2>
-      </div>
-    );
-  }
-
   const hasCurrentSession = Boolean(current?.id);
 
   return (
     <div className="flex flex-col gap-8">
+      <title>Sessions</title>
+      <meta property="og:title" content="Sessions" />
+      <meta name="description" content="View and manage your Destiny 2 play sessions." />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
@@ -157,7 +90,7 @@ export default function Sessions({ loaderData }: Route.ComponentProps) {
         </div>
         {isOwner && (
           <div className="flex flex-row gap-4">
-            <Form method="post" action="/dashboard/action/start-session">
+            <Form method="post" action="/action/start-session">
               <input type="hidden" name="characterId" value={characterId} />
               <input type="hidden" name="userId" value={userId} />
               <LoadingButton
@@ -171,7 +104,7 @@ export default function Sessions({ loaderData }: Route.ComponentProps) {
                 Start New Session
               </LoadingButton>
             </Form>
-            <Form method="post" action="/dashboard/action/end-session">
+            <Form method="post" action="/action/end-session">
               <input type="hidden" name="characterId" value={characterId} />
               <input type="hidden" name="sessionId" value={current?.id} />
               <LoadingButton
@@ -202,7 +135,7 @@ export default function Sessions({ loaderData }: Route.ComponentProps) {
                 : 'Start your first session to track activities automatically'
             }
           >
-            {!current && (
+            {!current && isOwner && (
               <Form method="post">
                 <input type="hidden" name="characterId" value={characterId} />
                 <Button type="submit" className="mt-8 w-full">
@@ -229,6 +162,16 @@ export default function Sessions({ loaderData }: Route.ComponentProps) {
               session={session}
             />
           ))}
+      </div>
+      <div className="flex flex-row justify-between gap-4 self-end">
+        <Button disabled={page === 0} variant="outline">
+          <ChevronLeft />
+          <Link to={`?page=${page - 1}`}>Previous Page</Link>
+        </Button>
+        <Button disabled={data.length !== 10} variant="outline">
+          <Link to={`?page=${page + 1}`}>Next Page</Link>
+          <ChevronRight />
+        </Button>
       </div>
     </div>
   );

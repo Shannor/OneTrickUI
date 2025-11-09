@@ -1,5 +1,5 @@
 import { Form, Link, Outlet, useLoaderData, useLocation } from 'react-router';
-import { getPublicProfile } from '~/api';
+import { getUser } from '~/api';
 import { CharacterPicker } from '~/components/character-picker';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
@@ -13,11 +13,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const characterId = url.searchParams.get('characterId');
   const id = params.id;
 
-  if (!id) {
-    return { error: 'missing id' };
-  }
   try {
-    const { data } = await getPublicProfile({ query: { id } });
+    const { data } = await getUser({ path: { userId: id } });
     if (data) {
       return { account: data, characterId };
     } else {
@@ -40,6 +37,9 @@ export default function Profile() {
 
   return (
     <div className="flex flex-col gap-4">
+      <title>{`${account?.displayName ?? 'Profile'}`}</title>
+      <meta property="og:title" content={`${account?.displayName ?? 'Profile'}`} />
+      <meta name="description" content={`View ${account?.displayName ?? 'the user'}'s Destiny 2 profile, sessions, loadouts, and activities.`} />
       <h1 className="scroll-m-20 text-balance text-center text-4xl font-extrabold tracking-tight">
         {account?.displayName}
       </h1>

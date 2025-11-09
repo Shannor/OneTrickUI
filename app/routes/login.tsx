@@ -10,7 +10,7 @@ const CLIENT_ID = isDev() ? 48883 : 48722;
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
   if (auth) {
-    return redirect('/dashboard');
+    return redirect(`/profile/${auth.id}`);
   }
   return null;
 }
@@ -18,6 +18,9 @@ export default function Login() {
   const href = `https://www.bungie.net/en/OAuth/Authorize?client_id=${CLIENT_ID}&response_type=code&state=1234`;
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
+      <title>Login - One Trick</title>
+      <meta property="og:title" content="Login - One Trick" />
+      <meta name="description" content="Sign in to One Trick using Bungie SSO to view your Destiny 2 stats and sessions." />
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <div className="flex items-center gap-2 font-medium">

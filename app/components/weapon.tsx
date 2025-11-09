@@ -1,8 +1,14 @@
 import React from 'react';
 import type { Socket, WeaponInstanceMetrics } from '~/api';
 import { Sockets } from '~/components/sockets';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/ui/tooltip';
 import { WeaponKills } from '~/components/weapon-kills';
 import { WeaponStats } from '~/components/weapon-stats';
+import { setBungieUrl } from '~/lib/utils';
 
 interface WeaponSockets {
   intrinsic: Socket | null;
@@ -118,15 +124,21 @@ export const Weapon: React.FC<Props> = ({
     weaponSockets.originTrait,
   ].filter(Boolean) as Socket[];
 
+  const icon = setBungieUrl(display?.icon ?? properties?.baseInfo?.icon);
+  const name = properties?.baseInfo?.name ?? display?.name;
   return (
     <div className="flex max-w-[350px] flex-col gap-4">
-      {display?.icon && (
-        <img
-          alt={`${display.name} image`}
-          width="75"
-          height="75"
-          src={display?.icon}
-        />
+      {icon && name && (
+        <Tooltip>
+          <TooltipContent>{name}</TooltipContent>
+          <TooltipTrigger>
+            <img
+              alt={`${name} image`}
+              src={icon}
+              className="h-auto w-12 rounded-lg object-cover"
+            />
+          </TooltipTrigger>
+        </Tooltip>
       )}
       <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
         {properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun'}

@@ -38,5 +38,5 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (response.error) {
     return { error: response.error };
   }
-  return redirectBack(request, { fallback: '/dashboard' });
+  return redirectBack(request, { fallback: '/' });
 }

@@ -5,7 +5,7 @@ import {
   type Character,
   type FireteamMember,
   getFireteam,
-  getPublicProfile,
+  getUser,
 } from '~/api';
 
 // Create properly tagged union types
@@ -55,9 +55,9 @@ export async function getFireteamData(request: Request): Promise<Response> {
   const { fireteam: selectedCharacters } = await getPreferences(request);
   const charactersPromise = Promise.all(
     fireteam.map(async (member): Promise<MembershipCharacters> => {
-      const { data, error } = await getPublicProfile({
-        query: {
-          id: member.membershipId,
+      const { data, error } = await getUser({
+        path: {
+          userId: member.membershipId,
         },
       });
       if (error) {
@@ -75,7 +75,7 @@ export async function getFireteamData(request: Request): Promise<Response> {
       return {
         membershipId: member.membershipId,
         userId: member.id,
-        characters: data?.characters ?? [],
+        characters: [],
       };
     }),
   );

@@ -1,6 +1,5 @@
 import { format } from 'date-fns';
-import type { ActivityHistory, CharacterSnapshot } from '~/api';
-import { Label } from '~/components/label';
+import type { ActivityHistory } from '~/api';
 
 export function ActivityCard({
   activity,
@@ -12,8 +11,6 @@ export function ActivityCard({
   onClick: () => void;
   characterMapping?: any;
 }) {
-  console.log(activity);
-  const { personalValues } = activity;
   return (
     <div
       key={activity.instanceId}
@@ -39,15 +36,6 @@ export function ActivityCard({
           </div>
         </div>
         <div>{format(activity.period, 'MM/dd/yyyy - p')}</div>
-        <div className="flex flex-row items-center gap-4">
-          <Label
-            className="text-lg font-semibold data-[result=0]:text-green-500 data-[result=1]:text-red-500"
-            data-result={personalValues?.standing?.value ?? 0}
-          >
-            {personalValues?.standing?.displayValue}
-          </Label>
-        </div>
-        <Stats values={personalValues} />
       </div>
     </div>
   );
@@ -67,32 +55,6 @@ function Description({ activity, mode }: { activity: string; mode?: string }) {
     <div className="text-sm uppercase tracking-wide text-muted-foreground">
       {activity}
       {mode && <span>{' - ' + mode}</span>}
-    </div>
-  );
-}
-
-function Stats({ values }: { values: ActivityHistory['personalValues'] }) {
-  if (!values) {
-    return null;
-  }
-  const { kills, deaths, kd, kda, assists } = values;
-
-  return (
-    <div className="flex flex-row gap-6">
-      <DisplayStat value={kills?.displayValue ?? 'N/A'} title="Kills" />
-      <DisplayStat value={deaths?.displayValue ?? 'N/A'} title="Deaths" />
-      <DisplayStat value={assists?.displayValue ?? 'N/A'} title="Assists" />
-      <DisplayStat value={kda?.displayValue ?? 'N/A'} title="KD/A" />
-      <DisplayStat value={kd?.displayValue ?? 'N/A'} title="K/D" />
-    </div>
-  );
-}
-
-function DisplayStat({ value, title }: { value: string; title: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <Label>{title}</Label>
-      <div className="font-bold">{value}</div>
     </div>
   );
 }

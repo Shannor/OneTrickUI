@@ -1,38 +1,23 @@
 import { format } from 'date-fns';
 import { Share2 } from 'lucide-react';
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { getAuth } from '~/.server/auth';
-import {
-  type Aggregate,
-  type CharacterSnapshot,
-  getSession,
-  getSessionAggregates,
-} from '~/api';
-import { ClassStats } from '~/charts/ClassStats';
-import { Class } from '~/components/class';
+import React, { useMemo, useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
+import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
-import { Loadout } from '~/components/loadout';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { CollapsibleMaps } from '~/organisims/collapsible-maps';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { sessionId } = params;
-
-  const auth = await getAuth(request);
-  if (!auth) {
-    throw new Error('Not authenticated');
-  }
-
+  const { sessionId, id, characterId } = params;
   const res = await getSession({
     path: {
       sessionId,
@@ -48,7 +33,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
   });
 
-  const sharablePath = `profiles/${auth.id}/sessions/${sessionId}`;
+  const sharablePath = `profile/${id}/c/${characterId}/sessions/${sessionId}`;
   let path = '';
   if (process.env.NODE_ENV === 'development') {
     path = `https://local.d2onetrick.ngrok.app/${sharablePath}`;
@@ -73,9 +58,25 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   };
 }
 
-export default function Session({ loaderData }: Route.ComponentProps) {
+export default function Session({ loaderData, params }: Route.ComponentProps) {
   const { session, error, aggregates, snapshots, path } = loaderData;
+  const { characterId } = params;
   const navigate = useNavigate();
+
+  const location = useLocation();
+
+  const currentTab = useMemo(() => {
+    const tabPatterns = {
+      metrics: /\/metrics\/?$/,
+      games: /.*/,
+    };
+
+    return (
+      Object.entries(tabPatterns).find(([_, pattern]) =>
+        pattern.test(location.pathname),
+      )?.[0] ?? 'games'
+    );
+  }, [location.pathname]);
 
   if (!session) {
     return (
@@ -101,11 +102,18 @@ export default function Session({ loaderData }: Route.ComponentProps) {
   }
 
   const isCurrent = session.status === 'pending';
-  const group = groupAggregates(aggregates, session.characterId);
-
-  const allPerformances = group.flatMap(([_, value]) =>
-    value.map((a) => a.performance[session.characterId]),
-  );
+  const allPerformances = aggregates
+    .map((agg) => {
+      const snapshot = agg.snapshotLinks[characterId];
+      if (
+        snapshot.confidenceLevel !== 'noMatch' &&
+        snapshot.confidenceLevel !== 'notFound'
+      ) {
+        return agg.performance[session.characterId];
+      }
+      return null;
+    })
+    .filter((x) => !!x);
 
   const [copyStatus, setCopyStatus] = useState('');
 
@@ -122,7 +130,10 @@ export default function Session({ loaderData }: Route.ComponentProps) {
 
   return (
     <div>
-      <div className="flex flex-col items-start gap-4 border-b p-4">
+      <title>{`${session.name} - Session`}</title>
+      <meta property="og:title" content={`${session.name} - Session`} />
+      <meta name="description" content={`View games, metrics, and details for session ${session.name}.`} />
+      <div className="flex flex-col items-start gap-4 p-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}
         <div className="flex flex-row gap-4">
           <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
@@ -137,6 +148,18 @@ export default function Session({ loaderData }: Route.ComponentProps) {
             </TooltipTrigger>
           </Tooltip>
         </div>
+        <Tabs value={currentTab}>
+          <TabsList>
+            <TabsTrigger value="games" asChild>
+              <NavLink to="." end>
+                Games
+              </NavLink>
+            </TabsTrigger>
+            <TabsTrigger value="metrics" asChild>
+              <NavLink to="metrics">Metrics</NavLink>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="text-sm text-muted-foreground">
           {format(session.startedAt, 'MM/dd/yyyy - p')}
           {session.completedAt
@@ -145,115 +168,7 @@ export default function Session({ loaderData }: Route.ComponentProps) {
         </div>
         <Performance performances={allPerformances} />
       </div>
-      {group.map(([key, value]) => {
-        const snapshot: CharacterSnapshot | undefined = snapshots[key];
-        const values = Object.values(snapshot.stats ?? {})
-          .map((stat) => ({
-            stat: stat.name,
-            value: stat.value ?? 0,
-          }))
-          .filter((it) => it.stat !== 'Power');
-        let title = '';
-        switch (key) {
-          case 'notFound':
-            title = 'No Found Snapshots';
-            break;
-          case 'noMatch':
-            title = 'No Matching Weapons';
-            break;
-          default:
-            title = snapshot?.name ?? 'Unknown';
-        }
-        const performances = value.map(
-          (a) => a.performance[session.characterId],
-        );
-
-        return (
-          <div key={key} className="flex flex-col gap-6 border-b p-4">
-            <Performance performances={performances} />
-            <div className="flex flex-row gap-4">
-              <Class snapshot={snapshot} />
-              <ClassStats data={values} />
-            </div>
-            <Loadout performances={performances} snapshot={snapshot} />
-            <CollapsibleMaps
-              aggregates={value}
-              onActivityClick={({ activityId }) => {
-                navigate(`/dashboard/activities/${activityId}`);
-              }}
-            />
-          </div>
-        );
-      })}
-      {(aggregates?.length ?? 0) === 0 && (
-        <Empty
-          title="No Activities Tracked"
-          description="No activities were tracked for this session yet."
-        />
-      )}
+      <Outlet />
     </div>
   );
-}
-type GroupKey = 'notFound' | 'noMatch' | string;
-type GroupTuple = [GroupKey, Aggregate[]];
-
-function groupAggregates(
-  aggregates: Aggregate[],
-  characterId: string,
-): GroupTuple[] {
-  // First, create the grouped object as before
-  const grouped = aggregates.reduce(
-    (state, current) => {
-      const link = current.snapshotLinks[characterId];
-      if (!link) {
-        return state;
-      }
-      switch (link.confidenceLevel) {
-        case 'high':
-        case 'medium':
-        case 'low':
-          if (link.snapshotId) {
-            if (state[link.snapshotId]) {
-              state[link.snapshotId].push(current);
-            } else {
-              state[link.snapshotId] = [current];
-            }
-          } else {
-            console.warn(
-              "Applied confidence level to aggregate but didn't have a snapshotId",
-            );
-          }
-          break;
-        case 'noMatch':
-        case 'notFound':
-          if (state[link.confidenceLevel]) {
-            state[link.confidenceLevel].push(current);
-          } else {
-            state[link.confidenceLevel] = [current];
-          }
-          break;
-      }
-      return state;
-    },
-    {} as Record<GroupKey, Aggregate[]>,
-  );
-
-  // Convert to array of tuples and sort
-  return Object.entries(grouped).sort((a, b) => {
-    // Helper function to get sort priority
-    const getPriority = (key: string): number => {
-      if (key === 'notFound') return 3;
-      if (key === 'noMatch') return 2;
-      return 1;
-    };
-
-    const priorityA = getPriority(a[0]);
-    const priorityB = getPriority(b[0]);
-
-    if (priorityA === priorityB) {
-      return b[1].length - a[1].length;
-    }
-
-    return priorityA - priorityB;
-  });
 }

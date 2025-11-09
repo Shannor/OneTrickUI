@@ -1,13 +1,5 @@
 import React, { useRef } from 'react';
-import {
-  Form,
-  data,
-  isRouteErrorResponse,
-  useLocation,
-  useNavigate,
-} from 'react-router';
-import { getAuth } from '~/.server/auth';
-import { getPreferences } from '~/.server/preferences';
+import { Form, useLocation, useNavigate } from 'react-router';
 import { type GameMode, getBestPerformingLoadouts } from '~/api';
 import { ClassStats } from '~/charts/ClassStats';
 import { Class } from '~/components/class';
@@ -33,34 +25,9 @@ import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/snapshots';
 
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  if (isRouteErrorResponse(error)) {
-    return (
-      <>
-        <h1>
-          {error.status} {error.statusText}
-        </h1>
-        <p>{error.data}</p>
-      </>
-    );
-  } else if (error instanceof Error) {
-    return (
-      <div>
-        <h1>Error</h1>
-        <p>{error.message}</p>
-        <p>The stack trace is:</p>
-        <pre>{error.stack}</pre>
-      </div>
-    );
-  } else {
-    return <h1>Unknown Error</h1>;
-  }
-}
-
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
-  const characterId = url.searchParams.get('characterId');
-  const userId = url.searchParams.get('userId');
+  const { id: userId, characterId } = params;
   const mode = (url.searchParams.get('mode') ?? 'allGameModes') as GameMode;
   const countParam = url.searchParams.get('count');
   const minParams = url.searchParams.get('minimum');
@@ -73,54 +40,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (countParam && countParam != '') {
     count = Number(countParam);
   }
-  if (characterId && userId) {
-    const { data: bestPerforming, error } = await getBestPerformingLoadouts({
-      query: {
-        characterId: characterId,
-        userId: userId,
-        gameMode: mode,
-        count: count,
-        minimumGames: minimumGames,
-      },
-    });
-    if (error) {
-      console.error(error);
-      return {
-        loadouts: {
-          items: [],
-          count: {},
-          stats: {},
-        },
-        gameMode: mode,
-        minimumGames: minimumGames,
-        count,
-      };
-    }
-    return {
-      loadouts: bestPerforming,
-      gameMode: mode,
-      minimumGames: minimumGames,
-      count,
-    };
-  }
-
-  const auth = await getAuth(request);
-  if (!auth) {
-    throw new Error('Not logged in');
-  }
-
-  const { character } = await getPreferences(request);
-  if (!character) {
-    throw data('No character');
-  }
-
   const { data: bestPerforming, error } = await getBestPerformingLoadouts({
     query: {
-      characterId: character.id,
-      userId: auth.id,
+      characterId,
+      userId,
       gameMode: mode,
-      count: count,
-      minimumGames: minimumGames,
+      count,
+      minimumGames,
     },
   });
   if (error) {
@@ -131,12 +57,11 @@ export async function loader({ request }: Route.LoaderArgs) {
         count: {},
         stats: {},
       },
-      count,
       gameMode: mode,
       minimumGames: minimumGames,
+      count,
     };
   }
-
   return {
     loadouts: bestPerforming,
     gameMode: mode,
@@ -145,14 +70,21 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
-export default function Snapshots({ loaderData }: Route.ComponentProps) {
+export default function Snapshots({
+  loaderData,
+  params,
+}: Route.ComponentProps) {
   const { loadouts, gameMode, count, minimumGames } = loaderData;
+  const { id, characterId } = params;
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const ref = useRef<HTMLFormElement>(null);
 
   return (
     <div className="flex w-full flex-col gap-4">
+      <title>{`Top ${count} Loadouts`}</title>
+      <meta property="og:title" content={`Top ${count} Loadouts`} />
+      <meta name="description" content={`Explore your top ${count} performing loadouts with filters for mode and minimum games.`} />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
@@ -256,7 +188,7 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
             <Card
               key={snapshot.id}
               className="cursor-pointer"
-              onClick={() => navigate(`/dashboard/loadouts/${snapshot.id}`)}
+              onClick={() => navigate(`${snapshot.id}`)}
             >
               <CardHeader>
                 <CardTitle className="flex flex-row items-center gap-4">
