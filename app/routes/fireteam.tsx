@@ -1,8 +1,8 @@
 import { type ReactNode, use } from 'react';
-import { Form, Link, data } from 'react-router';
+import { Form, Link, data, useLocation } from 'react-router';
 import { getFireteamData } from '~/.server/fireteam';
 import { setPreferences } from '~/.server/preferences';
-import { type FireteamMember, getPublicSessions } from '~/api';
+import { type FireteamMember, getUserSessions } from '~/api';
 import { CharacterPicker } from '~/components/character-picker';
 import { ClientFallback } from '~/components/client-fallback';
 import { Empty } from '~/components/empty';
@@ -18,12 +18,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw new Error(response.error);
   }
 
-  const { fireteam, selectedCharacters, charactersPromise } = response;
-  const fireteamMemberIds = new Set(fireteam.map((f) => f.membershipId));
-  const fireteamMemWithCharacters = Object.entries(
-    selectedCharacters ?? {},
-  ).reduce<Record<string, string>>((state, [key, value]) => {
-    if (fireteamMemberIds.has(key)) {
+  const { fireteam, selectedCharacters } = response;
+  const fireteamUserIds = new Set(fireteam.map((f) => f.id));
+  const withCharacters = Object.entries(selectedCharacters ?? {}).reduce<
+    Record<string, string>
+  >((state, [key, value]) => {
+    if (fireteamUserIds.has(key)) {
       state[key] = value;
     }
     return state;
@@ -32,40 +32,39 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   // TODO: Remove public sessions call to use the user one
   // Clear fireteam if someone leaves
   const sessionPromise = Promise.all(
-    Object.entries(fireteamMemWithCharacters).map(
-      async ([membershipId, characterId]) => {
-        const { data, error } = await getPublicSessions({
-          query: {
-            count: 1,
-            page: 0,
-            status: 'pending',
-            characterId,
-          },
-        });
-        if (error) {
-          return {
-            characterId,
-            membershipId,
-            session: undefined,
-          };
-        }
+    Object.entries(withCharacters).map(async ([userId, characterId]) => {
+      const { data, error } = await getUserSessions({
+        path: {
+          userId,
+        },
+        query: {
+          count: 1,
+          page: 0,
+          characterId,
+        },
+      });
+      if (error) {
         return {
           characterId,
-          membershipId,
-          session: data?.at(0),
+          userId,
+          session: undefined,
         };
-      },
-    ),
+      }
+      return {
+        characterId,
+        userId,
+        session: data?.at(0),
+      };
+    }),
   );
   const headers = await setPreferences(request, {
-    fireteam: fireteamMemWithCharacters,
+    fireteam: withCharacters,
   });
   return data(
     {
       members: fireteam ?? [],
-      charactersPromise,
       sessionPromise,
-      fireteamMemWithCharacters,
+      fireteamMemWithCharacters: withCharacters,
     },
     {
       ...headers,
@@ -77,12 +76,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 // Double dipping with multiple snapshots when in a fireteam by each memeber.
 
 export default function Fireteam({ loaderData }: Route.ComponentProps) {
-  const {
-    members,
-    charactersPromise,
-    sessionPromise,
-    fireteamMemWithCharacters,
-  } = loaderData;
+  const { members, sessionPromise, fireteamMemWithCharacters } = loaderData;
 
   if (members.length === 0) {
     return (
@@ -94,10 +88,13 @@ export default function Fireteam({ loaderData }: Route.ComponentProps) {
   }
 
   return (
-    <div className="flex flex-row flex-wrap gap-4">
+    <div className="flex w-full flex-row flex-wrap gap-4">
       <title>Fireteam</title>
       <meta property="og:title" content="Fireteam" />
-      <meta name="description" content="View your current fireteam and manage character selections." />
+      <meta
+        name="description"
+        content="View your current fireteam and manage character selections."
+      />
       {members.map((m) => {
         return (
           <div key={m.membershipId}>
@@ -112,10 +109,9 @@ export default function Fireteam({ loaderData }: Route.ComponentProps) {
               }
             >
               <CharacterView
-                charactersPromise={charactersPromise}
                 sessionPromise={sessionPromise}
                 member={m}
-                characterId={fireteamMemWithCharacters[m.membershipId]}
+                characterId={fireteamMemWithCharacters[m.id]}
               />
             </ClientFallback>
           </div>
@@ -126,31 +122,20 @@ export default function Fireteam({ loaderData }: Route.ComponentProps) {
 }
 
 interface Props {
-  charactersPromise: Route.ComponentProps['loaderData']['charactersPromise'];
   sessionPromise: Route.ComponentProps['loaderData']['sessionPromise'];
   member: FireteamMember;
   characterId?: string;
   children?: ReactNode;
 }
-function CharacterView({
-  charactersPromise,
-  sessionPromise,
-  member,
-  characterId,
-}: Props) {
+function CharacterView({ sessionPromise, member, characterId }: Props) {
   const [isSubmitting] = useIsNavigating();
-  // For current signed in player we can preselect
-  const allFireteamCharacters = use(charactersPromise);
-  const myCharacters = allFireteamCharacters.find(
-    (it) => it.membershipId === member.membershipId,
-  )?.characters;
-  if (!myCharacters) {
-  }
+  const location = useLocation();
 
   const sessions = use(sessionPromise);
-  const session = sessions.find(
-    (it) => it?.membershipId === member.membershipId,
-  )?.session;
+  const session = sessions.find((it) => it?.userId === member.id)?.session;
+  const path = characterId
+    ? `/profile/${member.id}/c/${characterId}`
+    : `/profile/${member.id}`;
   return (
     <div className="flex flex-col gap-4">
       <Form
@@ -160,14 +145,15 @@ function CharacterView({
         viewTransition={true}
         className="flex flex-col gap-4"
       >
-        <Link to={`/profile/${member.id}`} viewTransition>
+        <Link to={path} viewTransition>
           <h4 className="scroll-m-20 text-xl font-semibold tracking-tight hover:text-blue-400 hover:underline">
             {member.displayName}
           </h4>
         </Link>
-        <input hidden value={member.membershipId} name="membershipId" />
+        <input hidden value={member.id} name="userId" />
+        <input hidden value={location.pathname} name="redirect" />
         <CharacterPicker
-          characters={myCharacters ?? []}
+          characters={member.characters ?? []}
           currentCharacterId={characterId}
         >
           {(current, previous) => {

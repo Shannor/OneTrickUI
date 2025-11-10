@@ -46,7 +46,7 @@ export async function action({ request }: Route.ClientActionArgs) {
       id: profileId?.toString() ?? '',
       displayName: displayName?.toString() ?? '',
       uniqueName: uniqueName?.toString() ?? '',
-      membershipId: membershipId?.toString() ?? '',
+      userId: membershipId?.toString() ?? '',
     },
   });
 

@@ -1,12 +1,6 @@
 import { getAuth } from '~/.server/auth';
-import { Logger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
-import {
-  type Character,
-  type FireteamMember,
-  getFireteam,
-  getUser,
-} from '~/api';
+import { type Character, type FireteamMember, getFireteam } from '~/api';
 
 // Create properly tagged union types
 interface MembershipCharacters {
@@ -29,7 +23,6 @@ interface SuccessResponse {
   status: 'success';
   error?: never;
   fireteam: FireteamMember[];
-  charactersPromise: Promise<MembershipCharacters[]>;
   selectedCharacters: Record<string, string> | undefined;
 }
 
@@ -53,31 +46,5 @@ export async function getFireteamData(request: Request): Promise<Response> {
     };
   }
   const { fireteam: selectedCharacters } = await getPreferences(request);
-  const charactersPromise = Promise.all(
-    fireteam.map(async (member): Promise<MembershipCharacters> => {
-      const { data, error } = await getUser({
-        path: {
-          userId: member.membershipId,
-        },
-      });
-      if (error) {
-        Logger.error(
-          { error, membershipId: member.membershipId },
-          'failed to get profile for user',
-        );
-
-        return {
-          membershipId: member.membershipId,
-          userId: member.id,
-          characters: [],
-        };
-      }
-      return {
-        membershipId: member.membershipId,
-        userId: member.id,
-        characters: [],
-      };
-    }),
-  );
-  return { fireteam, charactersPromise, selectedCharacters, status: 'success' };
+  return { fireteam, selectedCharacters, status: 'success' };
 }

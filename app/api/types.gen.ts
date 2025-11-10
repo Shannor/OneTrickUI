@@ -7,7 +7,7 @@ export type InternalError =
 
 export type Profile = {
   id: string;
-  membershipId: string;
+  userId: string;
   displayName: string;
   uniqueName: string;
   characters: Array<Character>;
@@ -337,6 +337,7 @@ export type FireteamMember = {
   id: string;
   membershipId: string;
   displayName: string;
+  characters: Array<Character>;
 };
 
 export type Character = {

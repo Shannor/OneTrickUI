@@ -10,6 +10,7 @@ import {
   isFirstDayOfMonth,
   isLastDayOfMonth,
   startOfDay,
+  startOfHour,
   startOfMonth,
   startOfToday,
   subMonths,
@@ -107,8 +108,20 @@ export function generateKDAResultsForTimeWindow(
       return acc;
     }
     let day = startOfDay(new Date(agg.activityDetails.period));
-    if (time === 'six-months') {
-      day = startOfMonth(new Date(agg.activityDetails.period));
+    switch (time) {
+      case 'one-day': {
+        day = startOfHour(new Date(agg.activityDetails.period));
+        break;
+      }
+      case 'one-month':
+      case 'one-week': {
+        day = startOfDay(new Date(agg.activityDetails.period));
+        break;
+      }
+      case 'six-months': {
+        day = startOfMonth(new Date(agg.activityDetails.period));
+        break;
+      }
     }
     if (!acc[day.toISOString()]) {
       acc[day.toISOString()] = {

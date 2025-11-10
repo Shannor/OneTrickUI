@@ -74,9 +74,9 @@ async function setAuth(request: Request, auth: AuthResponse) {
 
 async function redirectBack(
   request: Request,
-  { fallback }: { fallback: string },
+  { fallback, response }: { fallback: string; response?: ResponseInit },
 ) {
-  return redirect(request.headers.get('Referer') ?? fallback);
+  return redirect(request.headers.get('Referer') ?? fallback, response);
 }
 
 export {

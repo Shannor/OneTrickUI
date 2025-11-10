@@ -1,4 +1,4 @@
-import { redirect } from 'react-router';
+import { redirectBack } from '~/.server/auth';
 import { getPreferences, setPreferences } from '~/.server/preferences';
 
 import type { Route } from '../../.react-router/types/app/+types/root';
@@ -6,22 +6,25 @@ import type { Route } from '../../.react-router/types/app/+types/root';
 export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
   const characterId = formData.get('characterId');
-  const membershipId = formData.get('membershipId');
+  const userId = formData.get('userId');
+  const redirectLocation = formData.get('redirect');
 
-  if (!characterId || !membershipId) {
-    return redirect('/fireteam');
+  if (!characterId || !userId) {
+    return null;
   }
 
   const { fireteam } = await getPreferences(request);
   const headers = await setPreferences(request, {
     fireteam: {
       ...fireteam,
-      [membershipId.toString()]: characterId.toString(),
+      [userId.toString()]: characterId.toString(),
     },
   });
 
-  // const redirectLocation = formData.get('redirect');
-  return redirect('/fireteam', {
-    ...headers,
+  return redirectBack(request, {
+    fallback: redirectLocation?.toString() ?? '/',
+    response: {
+      ...headers,
+    },
   });
 }

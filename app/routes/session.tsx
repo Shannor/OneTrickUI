@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { Share2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
 import { Badge } from '~/components/ui/badge';
@@ -61,7 +61,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 export default function Session({ loaderData, params }: Route.ComponentProps) {
   const { session, error, aggregates, snapshots, path } = loaderData;
   const { characterId } = params;
-  const navigate = useNavigate();
 
   const location = useLocation();
 
@@ -132,7 +131,10 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
     <div>
       <title>{`${session.name} - Session`}</title>
       <meta property="og:title" content={`${session.name} - Session`} />
-      <meta name="description" content={`View games, metrics, and details for session ${session.name}.`} />
+      <meta
+        name="description"
+        content={`View games, metrics, and details for session ${session.name}.`}
+      />
       <div className="flex flex-col items-start gap-4 p-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}
         <div className="flex flex-row gap-4">
