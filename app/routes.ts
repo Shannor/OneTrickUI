@@ -9,6 +9,9 @@ export default [
   index('routes/landing.tsx'),
   route('/login', 'routes/login.tsx'),
   route('/oauth', 'routes/oauth.tsx'),
+  // SEO / Crawlers
+  route('/robots.txt', 'routes/robots.txt.ts'),
+  route('/sitemap.xml', 'routes/sitemap.xml.ts'),
   // Public Routes
   layout('layouts/basic.tsx', [route('search', 'routes/search.tsx')]),
   route('profile/:id', 'routes/profile-state.tsx', [
