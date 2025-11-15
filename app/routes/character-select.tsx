@@ -28,7 +28,10 @@ export default function CharacterSelect({ loaderData }: Route.ComponentProps) {
     <div className="flex h-screen items-center justify-center">
       <title>Choose a Character</title>
       <meta property="og:title" content="Choose a Character" />
-      <meta name="description" content="Select the Destiny 2 character to view sessions, snapshots, and metrics." />
+      <meta
+        name="description"
+        content="Select the Destiny 2 character to view sessions, snapshots, and metrics."
+      />
       <div className="flex w-1/3 flex-col items-center gap-4">
         <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
           {type === 'viewer'
