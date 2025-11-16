@@ -180,9 +180,9 @@ function CharacterView({ sessionPromise, member, characterId }: Props) {
       >
         <input hidden name="characterId" value={characterId} />
         <input hidden name="userId" value={member.id} />
-        <div>Current Session</div>
-        {session ? (
+        {session?.status === 'pending' ? (
           <div>
+            <div>Current Session</div>
             <div>{session.name}</div>
             <div>Games: {session.aggregateIds?.length ?? 0}</div>
           </div>
