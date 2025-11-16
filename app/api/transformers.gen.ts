@@ -6,7 +6,6 @@ import type {
   GetBestPerformingLoadoutsResponse,
   GetPublicSessionAggregatesResponse,
   GetPublicSessionResponse,
-  GetPublicSessionsResponse,
   GetSessionAggregatesResponse,
   GetSessionResponse,
   GetSessionsResponse,
@@ -180,15 +179,6 @@ export const getSessionAggregatesResponseTransformer = async (
 ): Promise<GetSessionAggregatesResponse> => {
   data.aggregates = data.aggregates.map((item: any) => {
     return aggregateSchemaResponseTransformer(item);
-  });
-  return data;
-};
-
-export const getPublicSessionsResponseTransformer = async (
-  data: any,
-): Promise<GetPublicSessionsResponse> => {
-  data = data.map((item: any) => {
-    return sessionSchemaResponseTransformer(item);
   });
   return data;
 };

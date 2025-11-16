@@ -12,7 +12,6 @@ import {
   getBestPerformingLoadoutsResponseTransformer,
   getPublicSessionAggregatesResponseTransformer,
   getPublicSessionResponseTransformer,
-  getPublicSessionsResponseTransformer,
   getSessionAggregatesResponseTransformer,
   getSessionResponseTransformer,
   getSessionsResponseTransformer,
@@ -27,6 +26,8 @@ import {
   updateSessionResponseTransformer,
 } from './transformers.gen';
 import type {
+  BackfillAggregateDataData,
+  BackfillAggregateDataResponse,
   BackfillAllUsersCharacterIdsData,
   BackfillAllUsersCharacterIdsResponse,
   CreateSnapshotData,
@@ -46,8 +47,6 @@ import type {
   GetPublicSessionAggregatesResponse,
   GetPublicSessionData,
   GetPublicSessionResponse,
-  GetPublicSessionsData,
-  GetPublicSessionsResponse,
   GetSessionAggregatesData,
   GetSessionAggregatesResponse,
   GetSessionData,
@@ -110,6 +109,19 @@ export const backfillAllUsersCharacterIds = <
   >({
     ...options,
     url: '/admin/backfill-character-ids',
+  });
+};
+
+export const backfillAggregateData = <ThrowOnError extends boolean = false>(
+  options?: Options<BackfillAggregateDataData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    BackfillAggregateDataResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    url: '/admin/backfill-aggregate-data',
   });
 };
 
@@ -412,20 +424,6 @@ export const getSessionAggregates = <ThrowOnError extends boolean = false>(
     ...options,
     responseTransformer: getSessionAggregatesResponseTransformer,
     url: '/sessions/{sessionId}/aggregates',
-  });
-};
-
-export const getPublicSessions = <ThrowOnError extends boolean = false>(
-  options: Options<GetPublicSessionsData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).get<
-    GetPublicSessionsResponse,
-    unknown,
-    ThrowOnError
-  >({
-    ...options,
-    responseTransformer: getPublicSessionsResponseTransformer,
-    url: '/public/sessions',
   });
 };
 

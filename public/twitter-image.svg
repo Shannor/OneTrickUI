@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">D2 One Trick — Share Image</title>
+  <desc id="desc">Twitter card image with sci‑fi weapon focus</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- angled accents -->
+  <g opacity="0.25">
+    <rect x="-100" y="-50" width="400" height="200" transform="rotate(20)" fill="#38bdf8"/>
+    <rect x="900" y="500" width="400" height="200" transform="rotate(20)" fill="#a78bfa"/>
+  </g>
+
+  <!-- Abstract weapon silhouette -->
+  <path d="M140 360 h460 l30 -30 h120 l10 -20 h120 l10 20 h120 l-14 28 h-100 l-15 24 h-120 l-20 20 H340 l-60 40 H140 Z" fill="#60a5fa" opacity="0.28"/>
+
+  <text x="80" y="250" font-family="Inter, ui-sans-serif, system-ui" font-size="60" font-weight="800" fill="url(#accent)">D2 One Trick</text>
+  <text x="80" y="300" font-family="Inter, ui-sans-serif, system-ui" font-size="28" font-weight="600" fill="#e5e7eb">Destiny 2 Performance Tracker</text>
+  <text x="80" y="340" font-family="Inter, ui-sans-serif, system-ui" font-size="20" fill="#9ca3af">Sessions • Loadouts • Analytics</text>
+</svg>

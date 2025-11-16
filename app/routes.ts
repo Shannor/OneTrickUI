@@ -6,14 +6,16 @@ import {
 } from '@react-router/dev/routes';
 
 export default [
-  index('routes/landing.tsx'),
+  layout('layouts/basic.tsx', [
+    index('routes/landing.tsx'),
+    route('search', 'routes/search.tsx'),
+  ]),
   route('/login', 'routes/login.tsx'),
   route('/oauth', 'routes/oauth.tsx'),
   // SEO / Crawlers
   route('/robots.txt', 'routes/robots.txt.ts'),
   route('/sitemap.xml', 'routes/sitemap.xml.ts'),
   // Public Routes
-  layout('layouts/basic.tsx', [route('search', 'routes/search.tsx')]),
   route('profile/:id', 'routes/profile-state.tsx', [
     index('routes/character-select.tsx'),
     // In the future there may be a view to see all characters at once. It would need to go here

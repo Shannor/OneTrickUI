@@ -43,6 +43,9 @@ export const meta = () => [
   },
 ];
 export const links: Route.LinksFunction = () => [
+  // Favicon and app icons
+  { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' },
+
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
@@ -55,7 +58,6 @@ export const links: Route.LinksFunction = () => [
   },
   { rel: 'stylesheet', href: stylesheet },
 ];
-
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { getTheme } = await themeSessionResolver(request);
   return {
@@ -89,7 +91,7 @@ export function App() {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
-      <body>
+      <body style={{ height: '100vh' }}>
         <Outlet />
         <ScrollRestoration />
         <Scripts />

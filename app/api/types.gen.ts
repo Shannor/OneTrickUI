@@ -7,7 +7,7 @@ export type InternalError =
 
 export type Profile = {
   id: string;
-  userId: string;
+  membershipId: string;
   displayName: string;
   uniqueName: string;
   characters: Array<Character>;
@@ -151,6 +151,9 @@ export type SnapshotLink = {
 export type Aggregate = {
   id: string;
   activityId: string;
+  sessionIds: Array<string>;
+  characterIds: Array<string>;
+  snapshotIds: Array<string>;
   activityDetails: ActivityHistory;
   snapshotLinks: {
     [key: string]: SnapshotLink;
@@ -551,6 +554,26 @@ export type BackfillAllUsersCharacterIdsResponses = {
 export type BackfillAllUsersCharacterIdsResponse =
   BackfillAllUsersCharacterIdsResponses[keyof BackfillAllUsersCharacterIdsResponses];
 
+export type BackfillAggregateDataData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/admin/backfill-aggregate-data';
+};
+
+export type BackfillAggregateDataResponses = {
+  /**
+   * Summary of backfilled users
+   */
+  200: {
+    updated: number;
+    failed: number;
+  };
+};
+
+export type BackfillAggregateDataResponse =
+  BackfillAggregateDataResponses[keyof BackfillAggregateDataResponses];
+
 export type SearchData = {
   body?: {
     prefix: string;
@@ -908,15 +931,12 @@ export type GetActivityResponse =
 
 export type GetSessionsData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-    'X-Membership-ID': string;
-  };
   path?: never;
   query: {
     count: number;
     page: number;
-    characterId: string;
+    characterId?: string;
+    userId?: string;
     status?: 'pending' | 'complete';
   };
   url: '/sessions';
@@ -1041,28 +1061,6 @@ export type GetSessionAggregatesResponses = {
 
 export type GetSessionAggregatesResponse =
   GetSessionAggregatesResponses[keyof GetSessionAggregatesResponses];
-
-export type GetPublicSessionsData = {
-  body?: never;
-  path?: never;
-  query: {
-    count: number;
-    page: number;
-    characterId?: string;
-    status?: 'pending' | 'complete';
-  };
-  url: '/public/sessions';
-};
-
-export type GetPublicSessionsResponses = {
-  /**
-   * List of Sessions
-   */
-  200: Array<Session>;
-};
-
-export type GetPublicSessionsResponse =
-  GetPublicSessionsResponses[keyof GetPublicSessionsResponses];
 
 export type GetPublicSessionData = {
   body?: never;
