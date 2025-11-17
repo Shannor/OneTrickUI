@@ -6,8 +6,13 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from '~/components/ui/sidebar';
+
+// Navigation item type
 
 // Navigation item type
 type NavigationItem = {
@@ -26,17 +31,29 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   children?: React.ReactNode;
   header?: React.ReactNode;
   footer?: React.ReactNode;
+  headerProps?: React.ComponentProps<typeof SidebarMenuButton>;
 }
 export function AppSidebar({
   children,
   navigationData,
   header,
+  headerProps,
   ...props
 }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="group-data-[collapsible=icon]:overflow-hidden">
-        {header}
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              {...headerProps}
+            >
+              {header}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         {children}

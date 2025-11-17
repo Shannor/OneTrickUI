@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { type Profile, type Session, getSessions, getUser } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
+import { Logo } from '~/components/logo';
 import {
   Card,
   CardContent,
@@ -114,24 +115,9 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
     <div className="flex h-full flex-col justify-between">
       <div className="container mx-auto px-4 py-20 text-center">
         {/* Dual logo for light/dark */}
-        <img
-          src="/logo.svg"
-          alt="D2 One Trick logo"
-          className="mx-auto mb-6 h-16 w-auto dark:hidden"
-          width={128}
-          height={128}
-          loading="eager"
-        />
-        <img
-          src="/logo-white.svg"
-          alt="D2 One Trick logo"
-          className="mx-auto mb-6 hidden h-16 w-auto dark:block"
-          width={128}
-          height={128}
-          loading="eager"
-        />
+        <Logo className="mx-auto mb-6 h-16 w-auto" alt="D2 One Trick logo" />
         <h1 className="mx-auto max-w-3xl text-balance text-5xl font-extrabold tracking-tight text-foreground drop-shadow-sm md:text-6xl">
-          1 Trick
+          <span className="text-primary"> 1</span>Trick
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-balance text-muted-foreground">
           One Trick helps you track sessions, analyze loadouts, and uncover

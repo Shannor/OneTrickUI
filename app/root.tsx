@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { useEffect } from 'react';
 import {
   Links,
   Meta,
@@ -44,8 +45,7 @@ export const meta = () => [
 ];
 export const links: Route.LinksFunction = () => [
   // Favicon and app icons
-  { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' },
-
+  { rel: 'icon', type: 'image/svg+xml', href: '/logo.ico' },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
@@ -70,6 +70,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 // `themeAction` is the action name that's used to change the theme in the session storage.
 export default function AppWithProviders() {
   const data = useLoaderData<typeof loader>();
+  const theme = data.theme;
+  useEffect(() => {
+    const favicon = document.querySelector(
+      "link[rel='icon']",
+    ) as HTMLLinkElement;
+
+    if (favicon) {
+      if (theme === 'dark') {
+        favicon.href = '/logo-white.ico';
+      } else {
+        favicon.href = '/logo.ico';
+      }
+    }
+  }, [theme]);
   return (
     <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
       <App />

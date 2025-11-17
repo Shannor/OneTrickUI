@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router';
+import { Logo } from '~/components/logo';
 import { ModeToggle } from '~/components/mode-toggle';
 import { TooltipProvider } from '~/components/ui/tooltip';
 
@@ -10,16 +11,7 @@ export default function Basic() {
           <div className="mx-auto flex h-14 w-full max-w-[1440px] items-center justify-between px-6">
             <div className="flex items-center gap-4">
               <Link to="/" className="flex items-center gap-2">
-                <img
-                  src="/logo.svg"
-                  alt="OneTrick logo"
-                  className="block h-8 w-auto dark:hidden"
-                />
-                <img
-                  src="/logo-white.svg"
-                  alt="OneTrick logo"
-                  className="hidden h-8 w-auto dark:block"
-                />
+                <Logo className="h-8 w-auto" />
               </Link>
               <span className="font-medium uppercase tracking-wider">
                 1 Trick

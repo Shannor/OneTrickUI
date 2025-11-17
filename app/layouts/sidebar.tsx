@@ -9,9 +9,9 @@ import React from 'react';
 import { Link, Outlet, useFetcher, useNavigate } from 'react-router';
 import { AppSidebar } from '~/components/app-sidebar';
 import { CharacterItem } from '~/components/character-item';
+import { Logo } from '~/components/logo';
 import { ModeToggle } from '~/components/mode-toggle';
 import { NavUser } from '~/components/nav-user';
-import { Button } from '~/components/ui/button';
 import {
   SidebarInset,
   SidebarProvider,
@@ -64,20 +64,25 @@ export default function Sidebar({ params }: Route.ComponentProps) {
           : undefined,
       ].filter((x) => !!x),
     };
+
     return (
       <SidebarProvider>
         <AppSidebar
           navigationData={data}
+          headerProps={{
+            onClick: () => navigate(`/`),
+          }}
           header={
-            <div className="flex flex-col justify-center gap-2 p-4">
-              <h1 className="text-2xl font-bold tracking-tight">
-                D2 One Trick
-              </h1>
-              {canReturnBack && (
-                <Button asChild variant="ghost">
-                  <Link to={`/profile/${auth.id}`}>Return to your profile</Link>
-                </Button>
-              )}
+            <div className="flex w-full flex-row items-center gap-4">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <Logo className="h-10 w-auto" alt="D2 One Trick logo" />
+              </div>
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate text-lg font-bold">
+                  <span className="text-primary">1</span>
+                  Trick
+                </span>
+              </div>
             </div>
           }
           footer={
@@ -137,3 +142,18 @@ export default function Sidebar({ params }: Route.ComponentProps) {
   console.error('Unknown response type:', response);
   return <Outlet />;
 }
+// /*{/!*<div className="flex flex-col justify-center gap-2 p-4">*!/}
+// {/!*  <div className="flex flex-row gap-2">*!/}
+// {/!*    <Logo className="h-10 w-auto" alt="D2 One Trick logo" />*!/}
+// {/!*    <h1 className="text-2xl font-bold tracking-tight">*!/}
+// {/!*      1 Trick*!/}
+// {/!*    </h1>*!/}
+// {/!*  </div>*!/}
+// {/!*  {canReturnBack && (*!/}
+// {/!*    <Button asChild variant="ghost">*!/}
+// {/!*      <Link to={`/profile/${auth.id}`}>*!/}
+// {/!*        Return to your profile*!/}
+// {/!*      </Link>*!/}
+// {/!*    </Button>*!/}
+// {/!*  )}*!/}
+// // {*//*</div>*/}
