@@ -14,7 +14,7 @@ export default function Basic() {
                 <Logo className="h-8 w-auto" />
               </Link>
               <span className="font-medium uppercase tracking-wider">
-                1 Trick
+                <span className="text-primary">1</span> Trick
               </span>
             </div>
             <div className="flex items-center gap-2">
