@@ -39,7 +39,10 @@ export default function SessionGames({ params }: Route.ComponentProps) {
     <div>
       <title>Session Games</title>
       <meta property="og:title" content="Session Games" />
-      <meta name="description" content="Browse games from this session, loadouts, and performance details." />
+      <meta
+        name="description"
+        content="Browse games from this session, loadouts, and performance details."
+      />
       {aggregates
         .sort(
           (a, b) =>
@@ -94,7 +97,7 @@ export default function SessionGames({ params }: Route.ComponentProps) {
             previous.snapshotLinks[characterId]?.snapshotId !== link.snapshotId;
 
           return (
-            <div className={cn('flex flex-col gap-4 p-4')}>
+            <div key={value.id} className={cn('flex flex-col gap-4 p-4')}>
               {!hasLoadout && (
                 <div
                   className={cn(

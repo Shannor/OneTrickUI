@@ -1,8 +1,10 @@
+import { doc, onSnapshot } from '@firebase/firestore';
 import { format } from 'date-fns';
 import { Share2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
+import { db } from '~/api/firebaseConfig';
 import { Empty } from '~/components/empty';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -58,9 +60,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   };
 }
 
+type ISession = Awaited<ReturnType<typeof getSession>>;
 export default function Session({ loaderData, params }: Route.ComponentProps) {
-  const { session, error, aggregates, snapshots, path } = loaderData;
+  const { session, error, aggregates, path } = loaderData;
   const { characterId } = params;
+
+  const revalidator = useRevalidator();
 
   const location = useLocation();
 
@@ -76,6 +81,32 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
       )?.[0] ?? 'games'
     );
   }, [location.pathname]);
+
+  useEffect(() => {
+    // Listen for real-time updates from Firestore
+    if (!session) return;
+    if (session.status == 'pending') {
+      const unsubscribe = onSnapshot(
+        doc(db, 'sessions', session.id),
+        (snapshot) => {
+          const newData = snapshot.data() as ISession['data'];
+          if (!newData) return;
+          if (
+            newData.status == 'complete' ||
+            newData.aggregateIds.length !== session.aggregateIds.length
+          ) {
+            revalidator
+              .revalidate()
+              .then(() => console.log('firestore updated'));
+          }
+        },
+      );
+      return () => {
+        unsubscribe();
+      };
+    }
+    // Clean up the listener when the component unmounts
+  }, [revalidator]);
 
   if (!session) {
     return (
