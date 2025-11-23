@@ -14,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
+import { useProfileData } from '~/lib/hooks';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session';
@@ -62,6 +63,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 type ISession = Awaited<ReturnType<typeof getSession>>;
 export default function Session({ loaderData, params }: Route.ComponentProps) {
+  const { profile } = useProfileData();
   const { session, error, aggregates, path } = loaderData;
   const { characterId } = params;
 
@@ -164,7 +166,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
       <meta property="og:title" content={`${session.name} - Session`} />
       <meta
         name="description"
-        content={`View games, metrics, and details for session ${session.name}.`}
+        content={`View games, metrics, and details for ${profile?.displayName ?? ''}'s session ${session.name}.`}
       />
       <div className="flex flex-col items-start gap-4 p-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}

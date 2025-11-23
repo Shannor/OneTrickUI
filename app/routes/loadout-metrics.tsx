@@ -8,13 +8,9 @@ import { MapCount } from '~/charts/MapCount';
 import { MapPerformance } from '~/charts/MapPerformance';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
-import {
-  type TimeWindow,
-  generateKDAResultsForTimeWindow,
-  generatePerformancePerMap,
-} from '~/lib/metrics';
+import { generateKDAResultsForTimeWindow, generatePerformancePerMap, type TimeWindow } from '~/lib/metrics';
 
-import type { Route } from './+types/metrics';
+import type { Route } from './+types/loadout-metrics';
 
 export async function loader({ params }: Route.LoaderArgs) {
   const { snapshotId } = params;
@@ -34,7 +30,10 @@ export async function loader({ params }: Route.LoaderArgs) {
   };
 }
 
-export default function Metrics({ loaderData, params }: Route.ComponentProps) {
+export default function LoadoutMetrics({
+  loaderData,
+  params,
+}: Route.ComponentProps) {
   const { aggregates } = loaderData;
   const { characterId } = params;
 
@@ -58,7 +57,10 @@ export default function Metrics({ loaderData, params }: Route.ComponentProps) {
     <div className="flex flex-col gap-4">
       <title>Snapshot Metrics</title>
       <meta property="og:title" content="Snapshot Metrics" />
-      <meta name="description" content="Analyze your Destiny 2 performance over time and by map/mode." />
+      <meta
+        name="description"
+        content="Analyze your Destiny 2 performance over time and by map/mode."
+      />
       <div className="flex flex-col gap-4">
         <RadioGroup
           className="flex items-center gap-4"

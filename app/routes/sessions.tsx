@@ -68,7 +68,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 export default function Sessions({ params, loaderData }: Route.ComponentProps) {
-  const { type } = useProfileData();
+  const { type, profile } = useProfileData();
   const { characterId, id: userId } = params;
   const { data, current, page } = loaderData;
   const isOwner = type === 'owner';
@@ -79,9 +79,12 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <title>Sessions</title>
-      <meta property="og:title" content="Sessions" />
-      <meta name="description" content="View and manage your Destiny 2 play sessions." />
+      <title>{`Sessions - ${profile?.displayName ?? ''}`}</title>
+      <meta
+        property="og:title"
+        content={`Sessions - ${profile?.displayName ?? ''}  `}
+      />
+      <meta name="description" content="View and manage one trick sessions." />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">

@@ -52,8 +52,14 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
   return (
     <div className="flex flex-col gap-4">
       <title>{`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}</title>
-      <meta property="og:title" content={`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`} />
-      <meta name="description" content={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`} />
+      <meta
+        property="og:title"
+        content={`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}
+      />
+      <meta
+        name="description"
+        content={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`}
+      />
       <Card>
         <div className="relative">
           <img
@@ -114,7 +120,6 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
           </CardHeader>
         </div>
       </Card>
-      {/*<SnapshotLinkDetails link={link} />*/}
 
       {/* Players (Stats + Weapons + Snapshot) */}
       <div className="flex flex-col gap-4">
@@ -125,7 +130,7 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
           {allPerformances.map(([charId, perf]) => {
             const link = aggregate?.snapshotLinks[charId];
             return (
-              <div>
+              <div key={charId}>
                 {link && (
                   <div className="flex flex-row gap-4">
                     <Button asChild variant="ghost">

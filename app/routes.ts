@@ -32,7 +32,9 @@ export default [
       route('loadouts', 'routes/snapshots.tsx'),
       route('loadouts/:snapshotId', 'routes/snapshot.tsx', [
         index('routes/loadout-details.tsx', { id: 'loadout-details' }),
-        route('metrics', 'routes/metrics.tsx', { id: 'loadout-metrics' }),
+        route('metrics', 'routes/loadout-metrics.tsx', {
+          id: 'loadout-metrics',
+        }),
       ]),
       route('fireteam', 'routes/fireteam.tsx'),
     ]),

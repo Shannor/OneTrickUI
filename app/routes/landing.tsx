@@ -3,6 +3,7 @@ import { getAuth } from '~/.server/auth';
 import { type Profile, type Session, getSessions, getUser } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
 import { Logo } from '~/components/logo';
+import { Stat } from '~/components/stat';
 import {
   Card,
   CardContent,
@@ -15,16 +16,17 @@ import { useIsNavigating } from '~/lib/hooks';
 import type { Route } from './+types/landing';
 
 export function meta({}: Route.MetaArgs) {
-  const title = 'D2 One Trick — Destiny 2 Performance Tracker';
+  const title = 'One Trick — Destiny 2 Performance Tracker';
   const description =
-    'Track your Destiny 2 performance, sessions, and loadouts. Analyze stats and improve your game with D2 One Trick.';
+    'Track your Destiny 2 performance with your favorite loadouts. Analyze stats and improve your game with One Trick by tracking performance across different game modes.';
   const url = 'https://d2onetrick.com/';
   const image = '/og-image.svg';
   return [
     { title },
     { description },
     {
-      keywords: 'Destiny 2, tracker, stats, performance, loadouts, PvP, gaming',
+      keywords:
+        'Destiny 2, d2, tracker, stats, performance, loadouts, PvP, gaming, one trick',
     },
     { tagName: 'link', rel: 'canonical', href: url },
     { name: 'robots', content: 'index,follow' },
@@ -201,37 +203,47 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
               <ul className="grid gap-3 sm:grid-cols-3">
                 {recent.map((s) => (
                   <li key={s.id} className="text-left">
-                    <Card className="h-full">
-                      <CardContent className="p-4">
-                        <div className="font-medium text-foreground">
-                          {s.name ?? 'Session'}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {s.completedAt
-                            ? new Date(s.completedAt).toLocaleString()
-                            : 'Active'}
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <Link
+                      to={`/profile/${s.userId}/c/${s.characterId}/sessions/${s.id}`}
+                    >
+                      <Card className="h-full">
+                        <CardContent className="flex flex-col gap-4 p-4">
+                          <div>
+                            <div className="font-medium text-foreground">
+                              {s.name ?? 'Session'}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {s.completedAt
+                                ? new Date(s.completedAt).toLocaleString()
+                                : 'Active'}
+                            </div>
+                          </div>
+                          <Stat
+                            label="Games Played"
+                            value={s.aggregateIds.length.toString()}
+                          />
+                        </CardContent>
+                      </Card>
+                    </Link>
                   </li>
                 ))}
               </ul>
             )}
           </CardContent>
         </Card>
-        <span className="text-muted-foreground">
-          skein circle by Alexander Skowalsky from{' '}
-          <a
-            href="https://thenounproject.com/browse/icons/term/skein-circle/"
-            className="hover:text-blue-400"
-            target="_blank"
-            title="skein circle Icons"
-          >
-            Noun Project
-          </a>{' '}
-          (CC BY 3.0)
-        </span>
       </section>
+      <span className="text-muted-foreground">
+        skein circle by Alexander Skowalsky from{' '}
+        <a
+          href="https://thenounproject.com/browse/icons/term/skein-circle/"
+          className="hover:text-blue-400"
+          target="_blank"
+          title="skein circle Icons"
+        >
+          Noun Project
+        </a>{' '}
+        (CC BY 3.0)
+      </span>
     </div>
   );
 }

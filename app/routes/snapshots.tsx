@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { useProfileData } from '~/lib/hooks';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/snapshots';
@@ -79,12 +80,19 @@ export default function Snapshots({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const ref = useRef<HTMLFormElement>(null);
+  const { profile } = useProfileData();
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <title>{`Top ${count} Loadouts`}</title>
-      <meta property="og:title" content={`Top ${count} Loadouts`} />
-      <meta name="description" content={`Explore your top ${count} performing loadouts with filters for mode and minimum games.`} />
+      <title>{`${profile?.displayName ?? ''}'s Top ${count} Loadouts`}</title>
+      <meta
+        property="og:title"
+        content={`${profile?.displayName ?? ''}'s Top ${count} Loadouts`}
+      />
+      <meta
+        name="description"
+        content={`Explore ${profile?.displayName ?? ''}'s  top ${count} performing loadouts with filters for mode and minimum games.`}
+      />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
