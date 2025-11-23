@@ -232,13 +232,11 @@ function sortAggregates(
   return (
     aggregates
       .filter((a) => {
-        if (filterBy) {
-          if (a.activityDetails.mode && a.activityDetails.mode !== filterBy) {
-            const modes = gameModeToActivityModes(filterBy);
-            if (modes) {
-              if (!modes.includes(a.activityDetails.mode)) {
-                return false;
-              }
+        if (filterBy !== undefined && filterBy !== 'allGameModes') {
+          const modes = gameModeToActivityModes(filterBy);
+          if (modes) {
+            if (!modes.includes(a.activityDetails.activity)) {
+              return false;
             }
           }
         }
@@ -299,31 +297,26 @@ function gameModeToActivityModes(gameMode: GameMode): string[] | null {
     case 'allGameModes':
       return null;
     case 'competitive':
-      return [
-        'Control Competitive',
-        'Zone Control',
-        'Survival',
-        'Clash Competitive',
-      ];
+      return ['Competitive: Matchmade', 'Competitive'];
     case 'quickplay':
       return [
         'Control Quickplay',
         'Control',
-        'Rift',
+        'Control: Matchmade',
         'Clash',
         'Clash Quickplay',
       ];
     case 'ironBanner':
       return [
-        'Iron Banner Zone Control',
-        'Iron Banner Control',
+        'Iron Banner Zone:Control',
+        'Iron Banner:Control',
         'Iron Banner',
-        'Iron Banner Supremacy',
-        'Iron Banner Rift',
-        'Iron Banner Clash',
+        'Iron Banner:Supremacy',
+        'Iron Banner:Rift',
+        'Iron Banner:Clash',
       ];
     case 'trials':
-      return ['Trials of Osiris', 'Trials Survival', 'Trials Countdown'];
+      return ['Trials of Osiris', 'Trials of Osiris: Matchmade'];
     default:
       return null;
   }
