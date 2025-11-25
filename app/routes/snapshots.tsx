@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { useProfileData } from '~/lib/hooks';
-import { Performance } from '~/organisims/performance';
+import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/snapshots';
 
@@ -192,6 +192,20 @@ export default function Snapshots({
               value: stat.value ?? 0,
             }))
             .filter((it) => it.stat !== 'Power');
+
+          const kills = loadouts.stats[snapshot.id]?.kills?.value ?? 0;
+          const deaths = loadouts.stats[snapshot.id]?.deaths?.value ?? 0;
+          const assists = loadouts.stats[snapshot.id]?.assists?.value ?? 0;
+          const kd = loadouts.stats[snapshot.id]?.kd?.value ?? 0;
+          const kda = loadouts.stats[snapshot.id]?.kda?.value ?? 0;
+
+          const stats: StatItem[] = [
+            { label: 'Kills', value: kills.toString() },
+            { label: 'Deaths', value: deaths.toString() },
+            { label: 'Assists', value: assists.toString() },
+            { label: 'K/D', value: kd.toFixed(2) },
+            { label: 'Efficiency', value: kda.toFixed(2) },
+          ];
           return (
             <Card
               key={snapshot.id}
@@ -208,16 +222,7 @@ export default function Snapshots({
                       label="Games"
                       value={loadouts.count[snapshot.id]?.toString() ?? '0'}
                     />
-                    <Performance
-                      rawValues={{
-                        kills: loadouts.stats[snapshot.id]?.kills?.value ?? 0,
-                        deaths: loadouts.stats[snapshot.id]?.deaths?.value ?? 0,
-                        assists:
-                          loadouts.stats[snapshot.id]?.assists?.value ?? 0,
-                        kd: loadouts.stats[snapshot.id]?.kd?.value ?? 0,
-                        kda: loadouts.stats[snapshot.id]?.kda?.value ?? 0,
-                      }}
-                    />
+                    <Performance stats={stats} />
                   </div>
                   <div className="flex flex-col gap-20 md:flex-row">
                     <Class snapshot={snapshot} />
