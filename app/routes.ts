@@ -37,6 +37,9 @@ export default [
         }),
       ]),
       route('fireteam', 'routes/fireteam.tsx'),
+      layout('layouts/favorites.tsx', [
+        route('search', 'routes/search.tsx', { id: 'sign-search' }),
+      ]),
     ]),
   ]),
   // User Actions

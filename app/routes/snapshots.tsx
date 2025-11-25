@@ -71,12 +71,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   };
 }
 
-export default function Snapshots({
-  loaderData,
-  params,
-}: Route.ComponentProps) {
+export default function Snapshots({ loaderData }: Route.ComponentProps) {
   const { loadouts, gameMode, count, minimumGames } = loaderData;
-  const { id, characterId } = params;
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const ref = useRef<HTMLFormElement>(null);
@@ -110,7 +106,7 @@ export default function Snapshots({
           defaultValue={gameMode}
           className="flex items-center gap-4"
           name="mode"
-          onChange={(event) => {
+          onChange={() => {
             ref.current?.submit();
           }}
         >
@@ -185,7 +181,7 @@ export default function Snapshots({
         />
       )}
       <div className="grid grid-cols-1 gap-4">
-        {loadouts?.items?.map((snapshot, index) => {
+        {loadouts?.items?.map((snapshot) => {
           const values = Object.values(snapshot.stats ?? {})
             .map((stat) => ({
               stat: stat.name,

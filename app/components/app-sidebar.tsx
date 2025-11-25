@@ -19,12 +19,15 @@ type NavigationItem = {
   name: string;
   url: string;
   icon: LucideIcon;
+  isActive?: boolean;
+  title: string;
 };
 
 // Navigation data type
 type NavigationData = {
   base: NavigationItem[];
   projects: NavigationItem[];
+  friends: NavigationItem[];
 };
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   navigationData: NavigationData;
@@ -56,9 +59,9 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {children}
         <NavProjects projects={navigationData.base} />
         <NavProjects projects={navigationData.projects} label="Tracking" />
+        <NavProjects projects={navigationData.friends} label="Guardians" />
       </SidebarContent>
       <SidebarFooter>{props.footer}</SidebarFooter>
       <SidebarRail />

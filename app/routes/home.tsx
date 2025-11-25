@@ -45,12 +45,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     return null;
   }
   if (data.type === 'viewer' || data.type === 'owner') {
-    const { profile, type } = data;
-
+    const { profile, type, character } = data;
     return (
       <div>
-        <title>{`${profile.displayName}: Home`}</title>
-        <meta property="og:title" content={`${profile.displayName}: Home`} />
+        <title>{`${profile.displayName} - ${character?.class ?? 'Home'}`}</title>
+        <meta
+          property="og:title"
+          content={`${profile.displayName} - ${character?.class ?? 'Home'}`}
+        />
         <meta
           name="description"
           content={`Home page for ${profile.displayName}`}

@@ -20,13 +20,20 @@ export function NavProjects({
   label?: string;
 }) {
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
+    <SidebarGroup>
+      {label && projects.length > 0 && (
+        <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      )}
       <SidebarMenu>
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             {/* Find a way in the future to not need this */}
-            <SidebarMenuButton asChild suppressHydrationWarning={true}>
+            <SidebarMenuButton
+              asChild
+              suppressHydrationWarning={true}
+              title={item.name}
+              tooltip={item.name}
+            >
               <NavLink
                 to={item.url}
                 className={({ isActive, isPending }) =>

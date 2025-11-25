@@ -1,5 +1,5 @@
 // app/hooks/use-profile-layout.ts
-import { useNavigation, useRouteLoaderData } from 'react-router';
+import { useNavigation, useParams, useRouteLoaderData } from 'react-router';
 import type { loader } from '~/routes/profile-state';
 
 export function useIsNavigating(): [boolean] {
@@ -10,12 +10,12 @@ export function useIsNavigating(): [boolean] {
 
 export function useProfileData() {
   const data = useRouteLoaderData<typeof loader>('routes/profile-state');
-
+  const { characterId } = useParams();
   if (!data) {
     throw new Error(
       'useProfileData must be used within profile state parent route',
     );
   }
-
-  return data;
+  const character = data.profile?.characters.find((c) => c.id === characterId);
+  return { ...data, character };
 }

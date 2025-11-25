@@ -1,7 +1,9 @@
 import {
+  ArrowLeftFromLine,
   Home,
   Hourglass,
   Loader2,
+  SearchIcon,
   SquareLibrary,
   UsersRound,
 } from 'lucide-react';
@@ -39,30 +41,50 @@ export default function Sidebar({ params }: Route.ComponentProps) {
     const data = {
       base: [
         {
-          name: isOwner ? 'Home' : `${profile.displayName}'s Profile`,
+          name: isOwner ? 'Home' : `${profile.displayName}'s Home`,
+          title: isOwner ? 'Home' : `${profile.displayName}'s Home`,
           url: `/profile/${profile.id}/c/${characterId}`,
           icon: Home,
         },
-      ],
+        canReturnBack
+          ? {
+              name: 'Return to My Profile',
+              title: 'Return to My Profile',
+              url: `/profile/${auth.id}`,
+              icon: ArrowLeftFromLine,
+            }
+          : undefined,
+      ].filter((x) => !!x),
       projects: [
         {
           name: 'Sessions',
+          title: 'Sessions',
           url: `/profile/${profile.id}/c/${characterId}/sessions`,
           icon: Hourglass,
         },
         {
           name: 'Loadouts',
+          title: 'Loadouts',
           url: `/profile/${profile.id}/c/${characterId}/loadouts`,
           icon: SquareLibrary,
         },
-        isOwner
-          ? {
+      ],
+      friends: isOwner
+        ? [
+            {
+              title: 'Search',
+              name: 'Search',
+              url: `/profile/${profile.id}/c/${characterId}/search`,
+              icon: SearchIcon,
+            },
+            {
               name: 'Fireteam',
+              title: 'Fireteam',
               url: `/profile/${profile.id}/c/${characterId}/fireteam`,
               icon: UsersRound,
-            }
-          : undefined,
-      ].filter((x) => !!x),
+            },
+          ]
+        : [],
     };
 
     return (
@@ -142,18 +164,3 @@ export default function Sidebar({ params }: Route.ComponentProps) {
   console.error('Unknown response type:', response);
   return <Outlet />;
 }
-// /*{/!*<div className="flex flex-col justify-center gap-2 p-4">*!/}
-// {/!*  <div className="flex flex-row gap-2">*!/}
-// {/!*    <Logo className="h-10 w-auto" alt="D2 One Trick logo" />*!/}
-// {/!*    <h1 className="text-2xl font-bold tracking-tight">*!/}
-// {/!*      1 Trick*!/}
-// {/!*    </h1>*!/}
-// {/!*  </div>*!/}
-// {/!*  {canReturnBack && (*!/}
-// {/!*    <Button asChild variant="ghost">*!/}
-// {/!*      <Link to={`/profile/${auth.id}`}>*!/}
-// {/!*        Return to your profile*!/}
-// {/!*      </Link>*!/}
-// {/!*    </Button>*!/}
-// {/!*  )}*!/}
-// // {*//*</div>*/}

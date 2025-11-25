@@ -93,34 +93,37 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
         </div>
         {isOwner && (
           <div className="flex flex-row gap-4">
-            <Form method="post" action="/action/start-session">
-              <input type="hidden" name="characterId" value={characterId} />
-              <input type="hidden" name="userId" value={userId} />
-              <LoadingButton
-                type="submit"
-                variant="outline"
-                disabled={!characterId || isSubmitting || hasCurrentSession}
-                isLoading={isSubmitting}
-                className={`${isSubmitting ? 'opacity-50' : ''}`}
-              >
-                <PlusIcon className="h-4 w-4" />
-                Start New Session
-              </LoadingButton>
-            </Form>
-            <Form method="post" action="/action/end-session">
-              <input type="hidden" name="characterId" value={characterId} />
-              <input type="hidden" name="sessionId" value={current?.id} />
-              <LoadingButton
-                type="submit"
-                variant="outline"
-                disabled={!characterId || isSubmitting || !hasCurrentSession}
-                isLoading={isSubmitting}
-                className={`${isSubmitting ? 'opacity-50' : ''}`}
-              >
-                <StopCircleIcon className="h-4 w-4" />
-                Stop Session
-              </LoadingButton>
-            </Form>
+            {!hasCurrentSession ? (
+              <Form method="post" action="/action/start-session">
+                <input type="hidden" name="characterId" value={characterId} />
+                <input type="hidden" name="userId" value={userId} />
+                <LoadingButton
+                  type="submit"
+                  variant="default"
+                  disabled={!characterId || isSubmitting}
+                  isLoading={isSubmitting}
+                  className={`${isSubmitting ? 'opacity-50' : ''}`}
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Start Session
+                </LoadingButton>
+              </Form>
+            ) : (
+              <Form method="post" action="/action/end-session">
+                <input type="hidden" name="characterId" value={characterId} />
+                <input type="hidden" name="sessionId" value={current?.id} />
+                <LoadingButton
+                  type="submit"
+                  variant="outline"
+                  disabled={!characterId || isSubmitting}
+                  isLoading={isSubmitting}
+                  className={`${isSubmitting ? 'opacity-50' : ''}`}
+                >
+                  <StopCircleIcon className="h-4 w-4" />
+                  Stop Session
+                </LoadingButton>
+              </Form>
+            )}
           </div>
         )}
       </div>
