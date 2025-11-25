@@ -17,10 +17,10 @@ export function LoadingButton({
   return (
     <Button disabled={isLoading} {...props}>
       {isLoading ? (
-        <>
+        <div className="flex flex-row gap-2">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           {loadingText}
-        </>
+        </div>
       ) : (
         children
       )}
