@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts';
+import { Bar, CartesianGrid, ComposedChart, XAxis, YAxis } from 'recharts';
 import {
   type ChartConfig,
   ChartContainer,
@@ -31,29 +31,55 @@ interface Props {
   syncId?: string;
 }
 export function MapPerformance({ className, data, syncId }: Props) {
+  const sorted = [...data].sort((a, b) => b.count - a.count);
+
   return (
     <ChartContainer
       config={chartConfig}
       className={cn('max-h-[400px] min-h-[200px] w-full', className)}
     >
-      <ComposedChart accessibilityLayer data={data} syncId={syncId}>
+      <ComposedChart
+        accessibilityLayer
+        data={sorted}
+        syncId={syncId}
+        layout="vertical"
+        barCategoryGap="10%"
+      >
         <CartesianGrid vertical={false} />
-        <XAxis
+        <YAxis
+          type="category"
           dataKey="location"
-          tickLine={false}
-          tickMargin={10}
+          interval={0}
+          width={100}
           axisLine={false}
           tickFormatter={(value) => value}
         />
         <ChartLegend content={<ChartLegendContent />} />
 
-        <YAxis tickCount={5} tickLine={true} allowDecimals={false} />
+        <XAxis
+          tickCount={5}
+          type="number"
+          tickLine={false}
+          allowDecimals={false}
+        />
         <ChartTooltip
           cursor={false}
           content={<ChartTooltipContent indicator="dashed" />}
         />
-        <Line dataKey="kd" type="monotone" fill="var(--color-kd)" />
-        <Line dataKey="kda" type="monotone" fill="var(--color-kda)" />
+        <Bar
+          dataKey="kd"
+          type="monotone"
+          radius={2}
+          fill="var(--color-kd)"
+          barSize={10}
+        />
+        <Bar
+          dataKey="kda"
+          type="monotone"
+          radius={2}
+          fill="var(--color-kda)"
+          barSize={10}
+        />
       </ComposedChart>
     </ChartContainer>
   );

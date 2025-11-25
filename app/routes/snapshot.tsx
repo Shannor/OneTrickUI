@@ -43,8 +43,14 @@ export default function Snapshot({ loaderData, params }: Route.ComponentProps) {
   return (
     <div className="flex flex-col gap-10">
       <title>{`${snapshot.name ?? 'Snapshot'} - Loadout & Metrics`}</title>
-      <meta property="og:title" content={`${snapshot.name ?? 'Snapshot'} - Loadout & Metrics`} />
-      <meta name="description" content={`View the loadout and performance metrics for ${snapshot.name ?? 'this snapshot'}.`} />
+      <meta
+        property="og:title"
+        content={`${snapshot.name ?? 'Snapshot'} - Loadout & Metrics`}
+      />
+      <meta
+        name="description"
+        content={`View the loadout and performance metrics for ${snapshot.name ?? 'this snapshot'}.`}
+      />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">

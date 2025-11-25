@@ -42,7 +42,7 @@ export const KDPerformance: React.FC<Props> = ({
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn('max-h-[400px] min-h-[200px] w-full', className)}
+      className={cn('max-h-[400px] min-h-[50px] w-full', className)}
     >
       <LineChart
         accessibilityLayer

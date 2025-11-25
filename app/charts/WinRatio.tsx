@@ -1,5 +1,5 @@
 import React from 'react';
-import { CartesianGrid, Line, LineChart, XAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import {
   type ChartConfig,
   ChartContainer,
@@ -23,20 +23,13 @@ interface Props {
   syncId?: string;
 }
 const chartConfig = {
-  avgKills: {
-    label: 'Kills',
+  winRatio: {
+    label: 'Win Ratio',
     color: 'var(--chart-primary)',
   },
-  avgDeaths: {
-    label: 'Deaths',
-    color: 'var(--chart-error)',
-  },
-  avgAssists: {
-    label: 'Assists',
-    color: 'var(--chart-secondary)',
-  },
 } satisfies ChartConfig;
-export const AvgPerformance: React.FC<Props> = ({
+
+export const WinRatio: React.FC<Props> = ({
   data,
   timeWindow,
   className,
@@ -51,18 +44,24 @@ export const AvgPerformance: React.FC<Props> = ({
         accessibilityLayer
         data={data}
         margin={{
-          left: 12,
+          top: 12,
           right: 12,
         }}
         syncId={syncId}
       >
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={false} horizontal={true} />
         <XAxis
           dataKey="time"
           tickLine={false}
           axisLine={false}
-          tickMargin={8}
+          tickMargin={1}
           tickFormatter={(value) => tickFormater(value, timeWindow)}
+        />
+        <YAxis
+          domain={[0, 1]}
+          ticks={[0, 0.2, 0.4, 0.6, 0.8, 1]}
+          interval={0}
+          tickMargin={10}
         />
         <ChartTooltip
           cursor={false}
@@ -72,25 +71,12 @@ export const AvgPerformance: React.FC<Props> = ({
             />
           }
         />
+
         <ChartLegend content={<ChartLegendContent />} />
         <Line
-          dataKey="avgKills"
+          dataKey="winRatio"
           type="monotone"
-          stroke="var(--color-avgKills)"
-          strokeWidth={2}
-          dot={false}
-        />
-        <Line
-          dataKey="avgAssists"
-          type="monotone"
-          stroke="var(--color-avgAssists)"
-          strokeWidth={2}
-          dot={false}
-        />
-        <Line
-          dataKey="avgDeaths"
-          type="monotone"
-          stroke="var(--color-avgDeaths)"
+          stroke="var(--color-winRatio)"
           strokeWidth={2}
           dot={false}
         />

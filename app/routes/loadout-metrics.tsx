@@ -6,9 +6,14 @@ import { ChartHeader } from '~/charts/ChartHeader';
 import { KDPerformance } from '~/charts/KDPerformance';
 import { MapCount } from '~/charts/MapCount';
 import { MapPerformance } from '~/charts/MapPerformance';
+import { WinRatio } from '~/charts/WinRatio';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
-import { generateKDAResultsForTimeWindow, generatePerformancePerMap, type TimeWindow } from '~/lib/metrics';
+import {
+  type TimeWindow,
+  generateKDAResultsForTimeWindow,
+  generatePerformancePerMap,
+} from '~/lib/metrics';
 
 import type { Route } from './+types/loadout-metrics';
 
@@ -116,7 +121,7 @@ export default function LoadoutMetrics({
             <FormLabel htmlFor="ib">Iron Banner</FormLabel>
           </div>
         </RadioGroup>
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           <ChartHeader
             title="Average Performance"
             description="Shows the average kills/deaths/assists for the selected time window."
@@ -134,13 +139,27 @@ export default function LoadoutMetrics({
           >
             <KDPerformance data={data} timeWindow={time} syncId="performance" />
           </ChartHeader>
+          <ChartHeader
+            title="Win Ratio"
+            description="Shows the win ratio for the selected time window."
+          >
+            <WinRatio data={data} timeWindow={time} syncId="performance" />
+          </ChartHeader>
         </div>
-        <ChartHeader title="Map Performance">
-          <MapPerformance data={mapData} timeWindow={time} syncId="map" />
-        </ChartHeader>
-        <ChartHeader title="Map Count">
-          <MapCount data={mapData} timeWindow={time} syncId="map" />
-        </ChartHeader>
+        <div className="flex flex-col gap-4 md:flex-row">
+          <ChartHeader
+            title="Map Performance"
+            description="Shows the map performance for the selected time window."
+          >
+            <MapPerformance data={mapData} timeWindow={time} syncId="map" />
+          </ChartHeader>
+          <ChartHeader
+            title="Map Count"
+            description="Shows the number of games played for each map."
+          >
+            <MapCount data={mapData} timeWindow={time} syncId="map" />
+          </ChartHeader>
+        </div>
       </div>
     </div>
   );

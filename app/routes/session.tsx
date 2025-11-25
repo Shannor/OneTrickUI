@@ -1,11 +1,20 @@
 import { doc, onSnapshot } from '@firebase/firestore';
 import { format } from 'date-fns';
-import { Share2 } from 'lucide-react';
+import { Share2, StopCircleIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
+import {
+  Form,
+  NavLink,
+  Outlet,
+  useFetcher,
+  useLocation,
+  useRevalidator,
+} from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
 import { db } from '~/api/firebaseConfig';
+import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
+import { LoadingButton } from '~/components/loading-button';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
@@ -15,7 +24,7 @@ import {
   TooltipTrigger,
 } from '~/components/ui/tooltip';
 import { useProfileData } from '~/lib/hooks';
-import { Performance } from '~/organisims/performance';
+import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/session';
 
@@ -63,10 +72,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 type ISession = Awaited<ReturnType<typeof getSession>>;
 export default function Session({ loaderData, params }: Route.ComponentProps) {
-  const { profile } = useProfileData();
+  const { profile, type } = useProfileData();
   const { session, error, aggregates, path } = loaderData;
   const { characterId } = params;
-
+  const isOwner = type === 'owner';
+  const { state, Form } = useFetcher();
+  const isSubmitting = state === 'submitting';
   const revalidator = useRevalidator();
 
   const location = useLocation();
@@ -160,6 +171,46 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
     setTimeout(() => setCopyStatus(''), 2000);
   };
 
+  const { kills, deaths, assists, wins } = allPerformances.reduce(
+    (state, p) => {
+      state.kills += p.playerStats.kills?.value ?? 0;
+      state.assists += p.playerStats.assists?.value ?? 0;
+      state.deaths += p.playerStats.deaths?.value ?? 0;
+      state.wins += p.playerStats.standing?.value === 0 ? 1 : 0;
+      return state;
+    },
+    {
+      kills: 0,
+      assists: 0,
+      deaths: 0,
+      wins: 0,
+    },
+  );
+
+  const kd = calculateRatio(kills, deaths);
+  const kda = calculateRatio(kills + assists, deaths);
+  const winRatio = calculateRatio(wins, allPerformances.length);
+
+  const stats: StatItem[] = [
+    { label: 'Kills', value: kills.toString() },
+    { label: 'Assists', value: assists.toString() },
+    { label: 'Deaths', value: deaths.toString() },
+    { label: 'K/D', value: kd.toFixed(2) },
+    { label: 'Efficiency', value: kda.toFixed(2) },
+  ];
+
+  if (allPerformances.length > 1) {
+    stats.push({
+      label: 'Matches',
+      value: allPerformances.length.toString(),
+    });
+    stats.push({
+      label: 'Win Ratio',
+      value: winRatio.toFixed(2),
+      valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
+    });
+  }
+
   return (
     <div>
       <title>{`${session.name} - Session`}</title>
@@ -174,6 +225,24 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
           <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
             {session.name}
           </h2>
+          {isOwner && isCurrent && (
+            <div className="flex flex-row gap-4">
+              <Form method="post" action="/action/end-session">
+                <input type="hidden" name="characterId" value={characterId} />
+                <input type="hidden" name="sessionId" value={session.id} />
+                <LoadingButton
+                  type="submit"
+                  variant="outline"
+                  disabled={!characterId || isSubmitting}
+                  isLoading={isSubmitting}
+                  className={`${isSubmitting ? 'opacity-50' : ''}`}
+                >
+                  <StopCircleIcon className="h-4 w-4" />
+                  Stop Session
+                </LoadingButton>
+              </Form>
+            </div>
+          )}
           <Tooltip open={Boolean(copyStatus)}>
             <TooltipContent>{copyStatus}</TooltipContent>
             <TooltipTrigger asChild>
@@ -201,7 +270,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
             ? ` - ${format(session.completedAt, 'MM/dd/yyyy - p')}`
             : ''}
         </div>
-        <Performance performances={allPerformances} />
+        <Performance stats={stats} />
       </div>
       <Outlet />
     </div>

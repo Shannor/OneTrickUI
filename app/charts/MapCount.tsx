@@ -52,7 +52,7 @@ export function MapCount({ className, data, syncId }: Props) {
           width={100}
         />
 
-        <XAxis tickLine={true} allowDecimals={false} type="number" />
+        <XAxis tickLine={false} allowDecimals={false} type="number" />
         <ChartTooltip
           cursor={false}
           content={<ChartTooltipContent indicator="dashed" />}

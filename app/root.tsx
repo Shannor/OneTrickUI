@@ -46,13 +46,13 @@ export const links: Route.LinksFunction = () => [
   // Favicon and app icons
   {
     rel: 'icon',
-    type: 'image/ico',
+    type: 'image/x-icon',
     href: '/logo.ico',
     media: '(prefers-color-scheme: light)',
   },
   {
     rel: 'icon',
-    type: 'image/ico',
+    type: 'image/x-icon',
     href: '/logo-white.ico',
     media: '(prefers-color-scheme: dark)',
   },

@@ -24,6 +24,7 @@ interface KDA {
   deaths: number;
   assists: number;
   gameCount: number;
+  wins: number;
 }
 
 export interface KDAResult {
@@ -33,6 +34,8 @@ export interface KDAResult {
   avgAssists: number;
   kd: number;
   kda: number;
+  winRatio: number;
+  gameCount: number;
 }
 
 export interface MapResult {
@@ -70,12 +73,14 @@ export function generatePerformancePerMap(
         kills: p.playerStats.kills?.value ?? 0,
         deaths: p.playerStats.deaths?.value ?? 0,
         assists: p.playerStats.assists?.value ?? 0,
+        wins: p.playerStats.standing?.value === 0 ? 1 : 0,
         gameCount: 1,
       };
     } else {
       acc[location].kills += p.playerStats.kills?.value ?? 0;
       acc[location].deaths += p.playerStats.deaths?.value ?? 0;
       acc[location].assists += p.playerStats.assists?.value ?? 0;
+      acc[location].wins += p.playerStats.standing?.value === 0 ? 1 : 0;
       acc[location].gameCount += 1;
     }
     return acc;
@@ -88,6 +93,7 @@ export function generatePerformancePerMap(
       avgAssists: calculateRatio(value.assists, value.gameCount),
       kd: calculateRatio(value.kills, value.deaths),
       kda: calculateRatio(value.kills + value.assists, value.deaths),
+      winRatio: calculateRatio(value.wins, value.gameCount),
       count: value.gameCount,
     };
   });
@@ -128,12 +134,15 @@ export function generateKDAResultsForTimeWindow(
         kills: p.playerStats.kills?.value ?? 0,
         deaths: p.playerStats.deaths?.value ?? 0,
         assists: p.playerStats.assists?.value ?? 0,
+        wins: p.playerStats.standing?.value === 0 ? 1 : 0,
         gameCount: 1,
       };
     } else {
       acc[day.toISOString()].kills += p.playerStats.kills?.value ?? 0;
       acc[day.toISOString()].deaths += p.playerStats.deaths?.value ?? 0;
       acc[day.toISOString()].assists += p.playerStats.assists?.value ?? 0;
+      acc[day.toISOString()].wins +=
+        p.playerStats.standing?.value === 0 ? 1 : 0;
       acc[day.toISOString()].gameCount += 1;
     }
     return acc;
@@ -151,6 +160,8 @@ export function generateKDAResultsForTimeWindow(
           avgAssists: 0,
           kd: 1.0,
           kda: 1.0,
+          winRatio: 0.5,
+          gameCount: 0,
         };
       }
       return {
@@ -160,6 +171,8 @@ export function generateKDAResultsForTimeWindow(
         avgAssists: calculateRatio(value.assists, value.gameCount),
         kd: calculateRatio(value.kills, value.deaths),
         kda: calculateRatio(value.kills + value.assists, value.deaths),
+        winRatio: calculateRatio(value.wins, value.gameCount),
+        gameCount: value.gameCount,
       };
     })
     .filter(Boolean);

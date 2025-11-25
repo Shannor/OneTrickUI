@@ -2,11 +2,13 @@ import { format } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
 import { Link, useNavigate, useRouteLoaderData } from 'react-router';
+import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
+import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
 import { cn, getWeaponsFromLoadout } from '~/lib/utils';
-import { Performance } from '~/organisims/performance';
+import { Performance, type StatItem } from '~/organisims/performance';
 import type { loader } from '~/routes/session';
 
 import type { Route } from './+types/session-games';
@@ -95,6 +97,23 @@ export default function SessionGames({ params }: Route.ComponentProps) {
           const showLoadout =
             !previous ||
             previous.snapshotLinks[characterId]?.snapshotId !== link.snapshotId;
+          const won = performance?.playerStats?.standing?.value === 0;
+
+          let stats: StatItem[] = [];
+          if (performance) {
+            const kills = performance.playerStats.kills?.value ?? 0;
+            const assists = performance.playerStats.assists?.value ?? 0;
+            const deaths = performance.playerStats.deaths?.value ?? 0;
+            const kd = calculateRatio(kills, deaths);
+            const kda = calculateRatio(kills + assists, deaths);
+            stats = [
+              { label: 'Kills', value: kills.toString() },
+              { label: 'Assists', value: assists.toString() },
+              { label: 'Deaths', value: deaths.toString() },
+              { label: 'K/D', value: kd.toFixed(2) },
+              { label: 'Efficiency', value: kda.toFixed(2) },
+            ];
+          }
 
           return (
             <div key={value.id} className={cn('flex flex-col gap-4 p-4')}>
@@ -142,11 +161,24 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                   );
                 }}
               >
-                <img
-                  src={activityDetails.imageUrl}
-                  className="h-auto w-36 rounded-lg object-cover"
-                  alt="activity image"
-                />
+                <div className="flex flex-row gap-2">
+                  {won ? (
+                    <VerticalBanner
+                      label="Victory"
+                      className="bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
+                    />
+                  ) : (
+                    <VerticalBanner
+                      label="Defeat"
+                      className="bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
+                    />
+                  )}
+                  <img
+                    src={activityDetails.imageUrl}
+                    className="h-auto w-36 rounded-lg object-cover"
+                    alt="activity image"
+                  />
+                </div>
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-row items-center gap-2">
                     <img
@@ -169,7 +201,7 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                       </div>
                     </div>
                   </div>
-                  <Performance performances={[performance]} />
+                  <Performance stats={stats} />
                 </div>
               </div>
             </div>
