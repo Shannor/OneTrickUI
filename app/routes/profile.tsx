@@ -4,7 +4,7 @@ import { CharacterPicker } from '~/components/character-picker';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { NavLoading } from '~/components/nav-loading';
-import { useIsNavigating } from '~/lib/hooks';
+import { useIsNavigating } from '~/hooks/use-route-loaders';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 
@@ -38,8 +38,14 @@ export default function Profile() {
   return (
     <div className="flex flex-col gap-4">
       <title>{`${account?.displayName ?? 'Profile'}`}</title>
-      <meta property="og:title" content={`${account?.displayName ?? 'Profile'}`} />
-      <meta name="description" content={`View ${account?.displayName ?? 'the user'}'s Destiny 2 profile, sessions, loadouts, and activities.`} />
+      <meta
+        property="og:title"
+        content={`${account?.displayName ?? 'Profile'}`}
+      />
+      <meta
+        name="description"
+        content={`View ${account?.displayName ?? 'the user'}'s Destiny 2 profile, sessions, loadouts, and activities.`}
+      />
       <h1 className="scroll-m-20 text-balance text-center text-4xl font-extrabold tracking-tight">
         {account?.displayName}
       </h1>

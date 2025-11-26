@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
-import { useProfileData } from '~/lib/hooks';
+import { useProfileData } from '~/hooks/use-route-loaders';
 import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/snapshots';

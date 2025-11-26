@@ -1,20 +1,19 @@
 import { isAfter, isBefore } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
-import { Link, useRouteLoaderData } from 'react-router';
+import { Link } from 'react-router';
 import type { Aggregate } from '~/api';
 import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
+import { useSessionData } from '~/hooks/use-route-loaders';
 import { type KDAResult, generateKDAResultsForTimeWindow } from '~/lib/metrics';
 import { getWeaponsFromLoadout } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
-import type { loader } from '~/routes/session';
 
 import type { Route } from './+types/session-metrics';
 
 export default function SessionMetrics({ params }: Route.ComponentProps) {
-  const { aggregates, snapshots } =
-    useRouteLoaderData<typeof loader>('routes/session') ?? {};
+  const { aggregates, snapshots } = useSessionData();
   const { characterId, id } = params;
   const periods = findPeriodBoundaries(aggregates ?? []);
   const groupedBySnapshot = groupAggregates(aggregates ?? [], characterId);

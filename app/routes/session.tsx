@@ -22,8 +22,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
+import { useProfileData } from '~/hooks/use-route-loaders';
 import { db } from '~/lib/firebaseConfig';
-import { useProfileData } from '~/lib/hooks';
 import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/session';
@@ -85,6 +85,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
   const currentTab = useMemo(() => {
     const tabPatterns = {
       metrics: /\/metrics\/?$/,
+      loadouts: /\/loadouts\/?$/,
       games: /.*/,
     };
 
@@ -261,6 +262,9 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
             </TabsTrigger>
             <TabsTrigger value="metrics" asChild>
               <NavLink to="metrics">Metrics</NavLink>
+            </TabsTrigger>
+            <TabsTrigger value="loadouts" asChild>
+              <NavLink to="loadouts">Loadouts</NavLink>
             </TabsTrigger>
           </TabsList>
         </Tabs>

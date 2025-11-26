@@ -3,7 +3,7 @@ import { getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { SessionCard } from '~/components/session-card';
 import { Button } from '~/components/ui/button';
-import { useProfileData } from '~/lib/hooks';
+import { useProfileData } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/home';
 

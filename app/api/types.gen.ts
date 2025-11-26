@@ -845,7 +845,7 @@ export type GetSnapshotResponse =
 
 export type MergeSnapshotsData = {
   body?: {
-    snapshotIdToMerge: string;
+    sourceSnapshotId: string;
   };
   headers: {
     'X-User-ID': string;

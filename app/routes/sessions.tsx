@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { useProfileData } from '~/lib/hooks';
+import { useProfileData } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/sessions';
 

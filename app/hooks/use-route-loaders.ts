@@ -1,6 +1,6 @@
-// app/hooks/use-profile-layout.ts
 import { useNavigation, useParams, useRouteLoaderData } from 'react-router';
-import type { loader } from '~/routes/profile-state';
+import type { loader as profileStateLoader } from '~/routes/profile-state';
+import type { loader as sessionLoader } from '~/routes/session';
 
 export function useIsNavigating(): [boolean] {
   const navigation = useNavigation();
@@ -9,7 +9,9 @@ export function useIsNavigating(): [boolean] {
 }
 
 export function useProfileData() {
-  const data = useRouteLoaderData<typeof loader>('routes/profile-state');
+  const data = useRouteLoaderData<typeof profileStateLoader>(
+    'routes/profile-state',
+  );
   const { characterId } = useParams();
   if (!data) {
     throw new Error(
@@ -18,4 +20,14 @@ export function useProfileData() {
   }
   const character = data.profile?.characters.find((c) => c.id === characterId);
   return { ...data, character };
+}
+
+export function useSessionData() {
+  const data = useRouteLoaderData<typeof sessionLoader>('routes/session');
+  if (!data) {
+    throw new Error(
+      'useSessionData must be used within a session parent route',
+    );
+  }
+  return data;
 }
