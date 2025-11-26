@@ -11,7 +11,6 @@ import {
   useRevalidator,
 } from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
-import { db } from '~/api/firebaseConfig';
 import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
@@ -23,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
+import { db } from '~/lib/firebaseConfig';
 import { useProfileData } from '~/lib/hooks';
 import { Performance, type StatItem } from '~/organisims/performance';
 

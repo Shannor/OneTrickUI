@@ -44,7 +44,6 @@ export default [
   ]),
   // User Actions
   route('action/set-theme', 'actions/set-theme.ts'),
-  route('action/session-check-in', 'actions/session-check-in.ts'),
   route('action/set-preference', 'actions/set-preference.ts'),
   route('action/logout', 'actions/logout.ts'),
   route('action/set-fireteam', 'actions/set-fireteam.ts'),

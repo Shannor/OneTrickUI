@@ -10,8 +10,6 @@ import {
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
   getBestPerformingLoadoutsResponseTransformer,
-  getPublicSessionAggregatesResponseTransformer,
-  getPublicSessionResponseTransformer,
   getSessionAggregatesResponseTransformer,
   getSessionResponseTransformer,
   getSessionsResponseTransformer,
@@ -43,10 +41,6 @@ import type {
   GetFireteamResponse,
   GetPingData,
   GetPingResponse,
-  GetPublicSessionAggregatesData,
-  GetPublicSessionAggregatesResponse,
-  GetPublicSessionData,
-  GetPublicSessionResponse,
   GetSessionAggregatesData,
   GetSessionAggregatesResponse,
   GetSessionData,
@@ -66,12 +60,12 @@ import type {
   GetUserSessionsResponse,
   LoginData,
   LoginResponse,
+  MergeSnapshotsData,
+  MergeSnapshotsResponse,
   RefreshTokenData,
   RefreshTokenResponse,
   SearchData,
   SearchResponse,
-  SessionCheckInData,
-  SessionCheckInResponse,
   StartSessionData,
   StartSessionError,
   StartSessionResponse,
@@ -296,6 +290,26 @@ export const getSnapshot = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Merge two snapshots into a single snapshot
+ */
+export const mergeSnapshots = <ThrowOnError extends boolean = false>(
+  options: Options<MergeSnapshotsData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    MergeSnapshotsResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    url: '/snapshots/{snapshotId}/merge',
+  });
+};
+
+/**
  * Returns a collection of aggregate metrics for a snapshot
  */
 export const getSnapshotAggregates = <ThrowOnError extends boolean = false>(
@@ -424,59 +438,6 @@ export const getSessionAggregates = <ThrowOnError extends boolean = false>(
     ...options,
     responseTransformer: getSessionAggregatesResponseTransformer,
     url: '/sessions/{sessionId}/aggregates',
-  });
-};
-
-/**
- * Get a specific session
- */
-export const getPublicSession = <ThrowOnError extends boolean = false>(
-  options: Options<GetPublicSessionData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).get<
-    GetPublicSessionResponse,
-    unknown,
-    ThrowOnError
-  >({
-    ...options,
-    responseTransformer: getPublicSessionResponseTransformer,
-    url: '/public/sessions/{sessionId}',
-  });
-};
-
-export const getPublicSessionAggregates = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetPublicSessionAggregatesData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).get<
-    GetPublicSessionAggregatesResponse,
-    unknown,
-    ThrowOnError
-  >({
-    ...options,
-    responseTransformer: getPublicSessionAggregatesResponseTransformer,
-    url: '/public/sessions/{sessionId}/aggregates',
-  });
-};
-
-/**
- * Perform session update logic
- */
-export const sessionCheckIn = <ThrowOnError extends boolean = false>(
-  options: Options<SessionCheckInData, ThrowOnError>,
-) => {
-  return (options?.client ?? client).post<
-    SessionCheckInResponse,
-    unknown,
-    ThrowOnError
-  >({
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    url: '/actions/session-checkin',
   });
 };
 
