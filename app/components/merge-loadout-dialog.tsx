@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useFetcher } from 'react-router';
 import type { CharacterSnapshot } from '~/api';
+import { LoadingButton } from '~/components/loading-button';
 import { Button } from '~/components/ui/button';
 import {
   Dialog,
@@ -86,9 +87,14 @@ export function MergeLoadoutDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Merging...' : 'Confirm Merge'}
-            </Button>
+            <LoadingButton
+              type="submit"
+              disabled={isSubmitting}
+              isLoading={isSubmitting}
+              loadingText="Merging..."
+            >
+              Confirm Merge
+            </LoadingButton>
           </DialogFooter>
         </fetcher.Form>
       </DialogContent>

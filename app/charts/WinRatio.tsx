@@ -9,8 +9,8 @@ import {
   ChartTooltipContent,
 } from '~/components/ui/chart';
 import {
+  type CustomTimeWindow,
   type KDAResult,
-  type TimeWindow,
   labelFormater,
   tickFormater,
 } from '~/lib/metrics';
@@ -18,7 +18,7 @@ import { cn } from '~/lib/utils';
 
 interface Props {
   data: KDAResult[];
-  timeWindow: TimeWindow;
+  timeWindow: CustomTimeWindow;
   className?: string;
   syncId?: string;
 }

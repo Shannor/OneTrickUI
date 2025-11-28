@@ -28,7 +28,7 @@ import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/session';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
   const { sessionId, id, characterId } = params;
   const res = await getSession({
     path: {

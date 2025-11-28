@@ -22,7 +22,7 @@ export const WeaponHeader: React.FC<Props> = ({
   const name = properties?.baseInfo?.name ?? display?.name;
 
   return (
-    <div className={cn('flex max-w-[350px] flex-col gap-4', className)}>
+    <div className={cn('flex flex-col gap-4', className)}>
       {icon && name && (
         <Tooltip>
           <TooltipContent>

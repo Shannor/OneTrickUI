@@ -10,7 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '~/components/ui/chart';
-import type { MapResult, TimeWindow } from '~/lib/metrics';
+import type { MapResult, CustomTimeWindow } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 const chartConfig = {
@@ -27,7 +27,7 @@ const chartConfig = {
 interface Props {
   className?: string;
   data: MapResult[];
-  timeWindow?: TimeWindow;
+  timeWindow?: CustomTimeWindow;
   syncId?: string;
 }
 export function MapPerformance({ className, data, syncId }: Props) {
@@ -36,7 +36,7 @@ export function MapPerformance({ className, data, syncId }: Props) {
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn('max-h-[400px] min-h-[200px] w-full', className)}
+      className={cn('max-h-[800px] min-h-[50px] w-full', className)}
     >
       <ComposedChart
         accessibilityLayer

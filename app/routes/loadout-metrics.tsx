@@ -7,12 +7,16 @@ import { KDPerformance } from '~/charts/KDPerformance';
 import { MapCount } from '~/charts/MapCount';
 import { MapPerformance } from '~/charts/MapPerformance';
 import { WinRatio } from '~/charts/WinRatio';
+import { DateRangePicker } from '~/components/ui/date-range-picker';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
+import { useSnapshotData } from '~/hooks/use-route-loaders';
 import {
+  type CustomTimeWindow,
   type TimeWindow,
   generateKDAResultsForTimeWindow,
   generatePerformancePerMap,
+  timeWindowToCustom,
 } from '~/lib/metrics';
 
 import type { Route } from './+types/loadout-metrics';
@@ -41,22 +45,35 @@ export default function LoadoutMetrics({
 }: Route.ComponentProps) {
   const { aggregates } = loaderData;
   const { characterId } = params;
+  const { snapshot } = useSnapshotData();
 
-  const [time, setTime] = useState<TimeWindow>('one-day');
+  const [time, setTime] = useState<TimeWindow | CustomTimeWindow>('all-time');
   const [gameMode, setGameMode] = useState<GameMode>('allGameModes');
+
+  const customTime = useMemo(() => {
+    const allTimeStartDate = snapshot
+      ? new Date(snapshot.createdAt)
+      : undefined;
+    return timeWindowToCustom(time, aggregates, allTimeStartDate);
+  }, [time, snapshot, aggregates]);
 
   const data = useMemo(() => {
     return generateKDAResultsForTimeWindow(
       aggregates,
-      time,
+      customTime,
       characterId,
       gameMode,
     );
-  }, [aggregates, time, gameMode]);
+  }, [aggregates, customTime, gameMode, characterId]);
 
   const mapData = useMemo(() => {
-    return generatePerformancePerMap(aggregates, time, characterId, gameMode);
-  }, [aggregates, time, gameMode]);
+    return generatePerformancePerMap(
+      aggregates,
+      customTime,
+      characterId,
+      gameMode,
+    );
+  }, [aggregates, customTime, gameMode, characterId]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,60 +84,38 @@ export default function LoadoutMetrics({
         content="Analyze your Destiny 2 performance over time and by map/mode."
       />
       <div className="flex flex-col gap-4">
-        <RadioGroup
-          className="flex items-center gap-4"
-          name="time-window"
-          value={time}
-          onValueChange={(value) => {
-            setTime(value as TimeWindow);
-          }}
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="one-day" id="one-day" />
-            <FormLabel htmlFor="one-day">1 Day</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="one-week" id="one-week" />
-            <FormLabel htmlFor="one-week">1 Week</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="one-month" id="one-month" />
-            <FormLabel htmlFor="one-month">1 Month</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="six-months" id="six-months" />
-            <FormLabel htmlFor="six-months">6 Month</FormLabel>
-          </div>
-        </RadioGroup>
-        <RadioGroup
-          className="flex items-center gap-4"
-          name="game-mode"
-          value={gameMode}
-          onValueChange={(value) => {
-            setGameMode(value as GameMode);
-          }}
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="allGameModes" id="all" />
-            <FormLabel htmlFor="one">All</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="quickplay" id="quickplay" />
-            <FormLabel htmlFor="quickplay">Quickplay</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="competitive" id="comp" />
-            <FormLabel htmlFor="comp">Competitive</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="trials" id="trials" />
-            <FormLabel htmlFor="trials">Trials</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="ironBanner" id="ib" />
-            <FormLabel htmlFor="ib">Iron Banner</FormLabel>
-          </div>
-        </RadioGroup>
+        <div className="flex items-center justify-between">
+          <DateRangePicker value={time} onValueChange={setTime} />
+          <RadioGroup
+            className="flex items-center gap-4"
+            name="game-mode"
+            value={gameMode}
+            onValueChange={(value) => {
+              setGameMode(value as GameMode);
+            }}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="allGameModes" id="all" />
+              <FormLabel htmlFor="one">All</FormLabel>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="quickplay" id="quickplay" />
+              <FormLabel htmlFor="quickplay">Quickplay</FormLabel>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="competitive" id="comp" />
+              <FormLabel htmlFor="comp">Competitive</FormLabel>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="trials" id="trials" />
+              <FormLabel htmlFor="trials">Trials</FormLabel>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="ironBanner" id="ib" />
+              <FormLabel htmlFor="ib">Iron Banner</FormLabel>
+            </div>
+          </RadioGroup>
+        </div>
         <div className="flex flex-col gap-4 md:flex-row">
           <ChartHeader
             title="Average Performance"
@@ -128,7 +123,7 @@ export default function LoadoutMetrics({
           >
             <AvgPerformance
               data={data}
-              timeWindow={time}
+              timeWindow={customTime}
               syncId="performance"
             />
           </ChartHeader>
@@ -137,13 +132,21 @@ export default function LoadoutMetrics({
             title="K/D & Efficiency"
             description="Shows the ratios for the selected time window."
           >
-            <KDPerformance data={data} timeWindow={time} syncId="performance" />
+            <KDPerformance
+              data={data}
+              timeWindow={customTime}
+              syncId="performance"
+            />
           </ChartHeader>
           <ChartHeader
             title="Win Ratio"
             description="Shows the win ratio for the selected time window."
           >
-            <WinRatio data={data} timeWindow={time} syncId="performance" />
+            <WinRatio
+              data={data}
+              timeWindow={customTime}
+              syncId="performance"
+            />
           </ChartHeader>
         </div>
         <div className="flex flex-col gap-4 md:flex-row">
@@ -151,13 +154,17 @@ export default function LoadoutMetrics({
             title="Map Performance"
             description="Shows the map performance for the selected time window."
           >
-            <MapPerformance data={mapData} timeWindow={time} syncId="map" />
+            <MapPerformance
+              data={mapData}
+              timeWindow={customTime}
+              syncId="map"
+            />
           </ChartHeader>
           <ChartHeader
             title="Map Count"
             description="Shows the number of games played for each map."
           >
-            <MapCount data={mapData} timeWindow={time} syncId="map" />
+            <MapCount data={mapData} timeWindow={customTime} syncId="map" />
           </ChartHeader>
         </div>
       </div>
