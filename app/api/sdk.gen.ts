@@ -61,6 +61,7 @@ import type {
   LoginData,
   LoginResponse,
   MergeSnapshotsData,
+  MergeSnapshotsError,
   MergeSnapshotsResponse,
   RefreshTokenData,
   RefreshTokenResponse,
@@ -297,7 +298,7 @@ export const mergeSnapshots = <ThrowOnError extends boolean = false>(
 ) => {
   return (options?.client ?? client).post<
     MergeSnapshotsResponse,
-    unknown,
+    MergeSnapshotsError,
     ThrowOnError
   >({
     ...options,

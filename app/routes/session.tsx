@@ -276,7 +276,9 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
         </div>
         <Performance stats={stats} />
       </div>
-      <Outlet />
+      <div className="w-full overflow-x-hidden">
+        <Outlet />
+      </div>
     </div>
   );
 }

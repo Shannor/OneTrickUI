@@ -1,13 +1,35 @@
 import { useMemo } from 'react';
-import type { InstancePerformance, ItemSnapshot, UniqueStatValue } from '~/api';
+import type {
+  CharacterSnapshot,
+  InstancePerformance,
+  ItemSnapshot,
+  Loadout,
+  UniqueStatValue,
+} from '~/api';
 import { calculatePercentage } from '~/calculations/precision';
 
 const PRECISION_KILLS_KEY = 'uniqueWeaponPrecisionKills';
 const UNIQUE_KILLS_KEY = 'uniqueWeaponKills';
 
+const Kinetic = 1498876634;
+const Energy = 2465295065;
+const Power = 953998645;
+
 interface Stats {
   precisionKills: number;
   kills: number;
+}
+
+export function useWeaponsFromLoadout(loadout?: Loadout): ItemSnapshot[] {
+  return useMemo(() => {
+    if (!loadout) {
+      return [];
+    }
+    const kinetic = loadout[Kinetic];
+    const energy = loadout[Energy];
+    const power = loadout[Power];
+    return [kinetic, energy, power].filter(Boolean) as ItemSnapshot[];
+  }, [loadout]);
 }
 
 export function useWeaponStats(performances?: InstancePerformance[]) {
@@ -72,4 +94,29 @@ export function useCreateStats(
       },
     };
   }, [weaponStats, item]);
+}
+
+export function useWeaponLoadout(
+  loadout?: Loadout,
+  performances?: InstancePerformance[],
+) {
+  if (!loadout) return [];
+
+  const weaponStats = useWeaponStats(performances);
+  const ordered = useWeaponsFromLoadout(loadout);
+  return ordered.map((item) => {
+    return {
+      ...item,
+      stats: useCreateStats(weaponStats, item),
+    };
+  });
+}
+
+export function useClassStats(snapshot: CharacterSnapshot) {
+  return Object.values(snapshot.stats ?? {})
+    .map((stat) => ({
+      stat: stat.name,
+      value: stat.value ?? 0,
+    }))
+    .filter((it) => it.stat !== 'Power');
 }

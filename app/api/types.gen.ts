@@ -860,6 +860,18 @@ export type MergeSnapshotsData = {
   url: '/snapshots/{snapshotId}/merge';
 };
 
+export type MergeSnapshotsErrors = {
+  /**
+   * Error merging snapshots
+   */
+  500: {
+    message: string;
+  };
+};
+
+export type MergeSnapshotsError =
+  MergeSnapshotsErrors[keyof MergeSnapshotsErrors];
+
 export type MergeSnapshotsResponses = {
   /**
    * Merged snapshot

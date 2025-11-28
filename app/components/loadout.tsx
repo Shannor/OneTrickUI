@@ -1,8 +1,8 @@
 import React from 'react';
 import type { CharacterSnapshot, InstancePerformance } from '~/api';
 import { Weapon } from '~/components/weapon';
-import { cn, getWeaponsFromLoadout } from '~/lib/utils';
-import { useCreateStats, useWeaponStats } from '~/hooks/use-loadout';
+import { useWeaponLoadout } from '~/hooks/use-loadout';
+import { cn } from '~/lib/utils';
 
 interface Props {
   snapshot?: CharacterSnapshot;
@@ -19,11 +19,10 @@ export function Loadout({
   hideStats,
   layout = 'horizontal',
 }: Props) {
-  if (!snapshot) {
+  const data = useWeaponLoadout(snapshot?.loadout, performances);
+  if (data.length === 0) {
     return null;
   }
-  const weaponStats = useWeaponStats(performances);
-  const ordered = getWeaponsFromLoadout(snapshot.loadout);
 
   return (
     <div
@@ -33,14 +32,13 @@ export function Loadout({
         className,
       )}
     >
-      {ordered.map((item) => {
-        const stats = useCreateStats(weaponStats, item);
+      {data.map((item) => {
         return (
           <Weapon
             key={item.itemHash}
             referenceId={item.itemHash}
             properties={item.details}
-            stats={stats}
+            stats={item.stats}
             hideStats={hideStats}
             layout={layout}
           />

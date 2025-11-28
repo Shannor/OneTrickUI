@@ -17,8 +17,8 @@ const VerticalBanner = ({ label, className }: Props) => {
         {label
           .toUpperCase()
           .split('')
-          .map((letter) => (
-            <div key={letter}>
+          .map((letter, index) => (
+            <div key={`${letter}-${index}`}>
               {letter}
               <br />
             </div>

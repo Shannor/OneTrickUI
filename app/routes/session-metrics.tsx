@@ -5,9 +5,9 @@ import { Link } from 'react-router';
 import type { Aggregate } from '~/api';
 import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
+import { useWeaponsFromLoadout } from '~/hooks/use-loadout';
 import { useSessionData } from '~/hooks/use-route-loaders';
 import { type KDAResult, generateKDAResultsForTimeWindow } from '~/lib/metrics';
-import { getWeaponsFromLoadout } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
@@ -92,7 +92,7 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
               <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
             </div>
             <div className="flex flex-row gap-4">
-              {getWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
+              {useWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
                 <WeaponHeader
                   key={weapon.itemHash}
                   properties={weapon.details}
