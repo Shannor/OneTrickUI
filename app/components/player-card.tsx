@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router';
 import type { CharacterSnapshot, InstancePerformance, User } from '~/api';
+import { calculateRatio } from '~/calculations/precision';
 import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
 import { Label } from '~/components/label';
-import { PlayerStatsGrid } from '~/components/player-stats';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Card, CardContent } from '~/components/ui/card';
 import { Weapon } from '~/components/weapon';
+import { Performance, type StatItem } from '~/organisims/performance';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
 export type PlayerCardProps = {
@@ -21,10 +22,23 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   performance,
   snapshot,
 }) => {
-  const stats = performance.playerStats;
   const weapons = Object.values(performance.weapons ?? {}).filter(
     (it) => !!it?.properties?.baseInfo?.name,
   );
+
+  const kills = performance.playerStats.kills?.value ?? 0;
+  const assists = performance.playerStats.assists?.value ?? 0;
+  const deaths = performance.playerStats.deaths?.value ?? 0;
+  const kd = calculateRatio(kills, deaths);
+  const kda = calculateRatio(kills + assists, deaths);
+
+  const stats: StatItem[] = [
+    { label: 'Kills', value: kills.toString() },
+    { label: 'Assists', value: assists.toString() },
+    { label: 'Deaths', value: deaths.toString() },
+    { label: 'K/D', value: kd.toFixed(2) },
+    { label: 'Efficiency', value: kda.toFixed(2) },
+  ];
 
   const values = Object.values(snapshot?.stats ?? {})
     .map((stat) => ({
@@ -50,7 +64,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
         {/* Stats (Top, full width) */}
         <div className="col-span-12 flex flex-row items-start justify-between gap-4">
-          <PlayerStatsGrid stats={stats} />
+          <Performance stats={stats} />
         </div>
 
         {weapons.length > 0 && (
