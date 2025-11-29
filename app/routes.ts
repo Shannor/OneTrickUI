@@ -28,6 +28,9 @@ export default [
         route('metrics', 'routes/session-metrics.tsx', {
           id: 'session-metrics',
         }),
+        route('loadouts', 'routes/session-loadouts.tsx', {
+          id: 'session-loadout',
+        }),
       ]),
       route('loadouts', 'routes/snapshots.tsx'),
       route('loadouts/:snapshotId', 'routes/snapshot.tsx', [
@@ -44,11 +47,10 @@ export default [
   ]),
   // User Actions
   route('action/set-theme', 'actions/set-theme.ts'),
-  route('action/session-check-in', 'actions/session-check-in.ts'),
   route('action/set-preference', 'actions/set-preference.ts'),
   route('action/logout', 'actions/logout.ts'),
   route('action/set-fireteam', 'actions/set-fireteam.ts'),
   route('action/start-session', 'actions/start-session.ts'),
   route('action/end-session', 'actions/end-session.ts'),
-  // ]),
+  route('action/merge-loadout', 'actions/merge-loadout.ts'),
 ] satisfies RouteConfig;

@@ -11,8 +11,6 @@ import {
   useRevalidator,
 } from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
-import { db } from '~/api/firebaseConfig';
-import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { Badge } from '~/components/ui/badge';
@@ -23,12 +21,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { useProfileData } from '~/lib/hooks';
-import { Performance, type StatItem } from '~/organisims/performance';
+import { useProfileData } from '~/hooks/use-route-loaders';
+import { db } from '~/lib/firebaseConfig';
 
 import type { Route } from './+types/session';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
   const { sessionId, id, characterId } = params;
   const res = await getSession({
     path: {
@@ -71,6 +69,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 type ISession = Awaited<ReturnType<typeof getSession>>;
+
 export default function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
   const { session, error, aggregates, path } = loaderData;
@@ -85,6 +84,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
   const currentTab = useMemo(() => {
     const tabPatterns = {
       metrics: /\/metrics\/?$/,
+      loadouts: /\/loadouts\/?$/,
       games: /.*/,
     };
 
@@ -145,18 +145,6 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
   }
 
   const isCurrent = session.status === 'pending';
-  const allPerformances = aggregates
-    .map((agg) => {
-      const snapshot = agg.snapshotLinks[characterId];
-      if (
-        snapshot.confidenceLevel !== 'noMatch' &&
-        snapshot.confidenceLevel !== 'notFound'
-      ) {
-        return agg.performance[session.characterId];
-      }
-      return null;
-    })
-    .filter((x) => !!x);
 
   const [copyStatus, setCopyStatus] = useState('');
 
@@ -170,46 +158,6 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
     }
     setTimeout(() => setCopyStatus(''), 2000);
   };
-
-  const { kills, deaths, assists, wins } = allPerformances.reduce(
-    (state, p) => {
-      state.kills += p.playerStats.kills?.value ?? 0;
-      state.assists += p.playerStats.assists?.value ?? 0;
-      state.deaths += p.playerStats.deaths?.value ?? 0;
-      state.wins += p.playerStats.standing?.value === 0 ? 1 : 0;
-      return state;
-    },
-    {
-      kills: 0,
-      assists: 0,
-      deaths: 0,
-      wins: 0,
-    },
-  );
-
-  const kd = calculateRatio(kills, deaths);
-  const kda = calculateRatio(kills + assists, deaths);
-  const winRatio = calculateRatio(wins, allPerformances.length);
-
-  const stats: StatItem[] = [
-    { label: 'Kills', value: kills.toString() },
-    { label: 'Assists', value: assists.toString() },
-    { label: 'Deaths', value: deaths.toString() },
-    { label: 'K/D', value: kd.toFixed(2) },
-    { label: 'Efficiency', value: kda.toFixed(2) },
-  ];
-
-  if (allPerformances.length > 1) {
-    stats.push({
-      label: 'Matches',
-      value: allPerformances.length.toString(),
-    });
-    stats.push({
-      label: 'Win Ratio',
-      value: winRatio.toFixed(2),
-      valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
-    });
-  }
 
   return (
     <div>
@@ -262,6 +210,9 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
             <TabsTrigger value="metrics" asChild>
               <NavLink to="metrics">Metrics</NavLink>
             </TabsTrigger>
+            <TabsTrigger value="loadouts" asChild>
+              <NavLink to="loadouts">Loadouts</NavLink>
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="text-sm text-muted-foreground">
@@ -270,9 +221,10 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
             ? ` - ${format(session.completedAt, 'MM/dd/yyyy - p')}`
             : ''}
         </div>
-        <Performance stats={stats} />
       </div>
-      <Outlet />
+      <div className="w-full overflow-x-hidden">
+        <Outlet />
+      </div>
     </div>
   );
 }

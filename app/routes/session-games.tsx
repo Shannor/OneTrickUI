@@ -1,21 +1,21 @@
 import { format } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
-import { Link, useNavigate, useRouteLoaderData } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
-import { cn, getWeaponsFromLoadout } from '~/lib/utils';
+import { useWeaponsFromLoadout } from '~/hooks/use-loadout';
+import { useSessionData } from '~/hooks/use-route-loaders';
+import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
-import type { loader } from '~/routes/session';
 
 import type { Route } from './+types/session-games';
 
 export default function SessionGames({ params }: Route.ComponentProps) {
-  const { aggregates, snapshots } =
-    useRouteLoaderData<typeof loader>('routes/session') ?? {};
+  const { aggregates, snapshots } = useSessionData();
   const { characterId, id } = params;
   const navigate = useNavigate();
 
@@ -143,7 +143,7 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                       hidden: !hasLoadout,
                     })}
                   >
-                    {getWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
+                    {useWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
                       <WeaponHeader
                         key={weapon.itemHash}
                         properties={weapon.details}

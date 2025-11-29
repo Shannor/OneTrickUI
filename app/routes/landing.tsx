@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { useIsNavigating } from '~/lib/hooks';
+import { useIsNavigating } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/landing';
 

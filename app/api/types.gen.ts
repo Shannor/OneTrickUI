@@ -136,9 +136,13 @@ export type ConfidenceLevel =
 export type SnapshotLink = {
   characterId: string;
   /**
-   * ID of the snapshot for the particular player
+   * ID of the snapshot for the user. Can be updated by the user during a merge
    */
   snapshotId?: string;
+  /**
+   * ID of the snapshot that was used to create this link
+   */
+  originalSnapshotId?: string;
   /**
    * Optional ID of a session if this Snapshot link was added by a session check-in. Will be null in the case, where the link is added after the fact
    */
@@ -839,6 +843,45 @@ export type GetSnapshotResponses = {
 export type GetSnapshotResponse =
   GetSnapshotResponses[keyof GetSnapshotResponses];
 
+export type MergeSnapshotsData = {
+  body?: {
+    sourceSnapshotId: string;
+  };
+  headers: {
+    'X-User-ID': string;
+  };
+  path: {
+    /**
+     * The unique identifier for the snapshot.
+     */
+    snapshotId: string;
+  };
+  query?: never;
+  url: '/snapshots/{snapshotId}/merge';
+};
+
+export type MergeSnapshotsErrors = {
+  /**
+   * Error merging snapshots
+   */
+  500: {
+    message: string;
+  };
+};
+
+export type MergeSnapshotsError =
+  MergeSnapshotsErrors[keyof MergeSnapshotsErrors];
+
+export type MergeSnapshotsResponses = {
+  /**
+   * Merged snapshot
+   */
+  200: boolean;
+};
+
+export type MergeSnapshotsResponse =
+  MergeSnapshotsResponses[keyof MergeSnapshotsResponses];
+
 export type GetSnapshotAggregatesData = {
   body?: never;
   path: {
@@ -1061,77 +1104,6 @@ export type GetSessionAggregatesResponses = {
 
 export type GetSessionAggregatesResponse =
   GetSessionAggregatesResponses[keyof GetSessionAggregatesResponses];
-
-export type GetPublicSessionData = {
-  body?: never;
-  path: {
-    sessionId: string;
-  };
-  query?: never;
-  url: '/public/sessions/{sessionId}';
-};
-
-export type GetPublicSessionResponses = {
-  /**
-   * Return a session
-   */
-  200: Session;
-};
-
-export type GetPublicSessionResponse =
-  GetPublicSessionResponses[keyof GetPublicSessionResponses];
-
-export type GetPublicSessionAggregatesData = {
-  body?: never;
-  path: {
-    sessionId: string;
-  };
-  query?: never;
-  url: '/public/sessions/{sessionId}/aggregates';
-};
-
-export type GetPublicSessionAggregatesResponses = {
-  /**
-   * Array of aggregates
-   */
-  200: {
-    aggregates: Array<Aggregate>;
-    snapshots: {
-      [key: string]: CharacterSnapshot;
-    };
-  };
-};
-
-export type GetPublicSessionAggregatesResponse =
-  GetPublicSessionAggregatesResponses[keyof GetPublicSessionAggregatesResponses];
-
-export type SessionCheckInData = {
-  body: {
-    sessionId: string;
-    /**
-     * fireteam member user id mapped to their chosen character id
-     */
-    fireteam: {
-      [key: string]: string;
-    };
-  };
-  headers: {
-    'X-Membership-ID': string;
-  };
-  path?: never;
-  query?: never;
-  url: '/actions/session-checkin';
-};
-
-export type SessionCheckInResponses = {
-  /**
-   * Return the created session
-   */
-  200: boolean;
-};
-
-export type SessionCheckInResponse =
-  SessionCheckInResponses[keyof SessionCheckInResponses];
 
 export type GetBestPerformingLoadoutsData = {
   body?: never;

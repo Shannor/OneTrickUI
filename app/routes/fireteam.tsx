@@ -8,7 +8,7 @@ import { ClientFallback } from '~/components/client-fallback';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { Skeleton } from '~/components/ui/skeleton';
-import { useIsNavigating } from '~/lib/hooks';
+import { useIsNavigating } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/fireteam';
 

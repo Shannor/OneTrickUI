@@ -23,7 +23,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   };
 }
 
-export default function Snapshot({ loaderData, params }: Route.ComponentProps) {
+export default function Snapshot({ loaderData }: Route.ComponentProps) {
   const { snapshot } = loaderData;
   const location = useLocation();
 

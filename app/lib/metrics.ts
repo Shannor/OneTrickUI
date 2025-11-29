@@ -1,8 +1,10 @@
 import {
+  differenceInDays,
   eachDayOfInterval,
   eachHourOfInterval,
+  eachMinuteOfInterval,
   eachMonthOfInterval,
-  endOfDay,
+  endOfHour,
   endOfToday,
   format,
   isAfter,
@@ -13,6 +15,7 @@ import {
   startOfHour,
   startOfMonth,
   startOfToday,
+  subHours,
   subMonths,
   subWeeks,
 } from 'date-fns';
@@ -35,6 +38,7 @@ export interface KDAResult {
   kd: number;
   kda: number;
   winRatio: number;
+  wins: number;
   gameCount: number;
 }
 
@@ -52,11 +56,57 @@ export type CustomTimeWindow = {
   start: Date;
   end: Date;
 };
-export type TimeWindow = 'one-day' | 'one-week' | 'one-month' | 'six-months';
+
+export type TimeWindow =
+  | 'one-day'
+  | 'one-week'
+  | 'one-month'
+  | 'six-months'
+  | 'all-time'
+  | 'last-hour'
+  | 'last-3-hours'
+  | 'last-6-hours';
+
+export function timeWindowToCustom(
+  time: TimeWindow | CustomTimeWindow,
+  aggregates: Aggregate[],
+  allTimeStartDate?: Date,
+): CustomTimeWindow {
+  if (typeof time !== 'string') {
+    return time;
+  }
+
+  const end = new Date();
+  switch (time) {
+    case 'last-hour':
+      return { start: subHours(end, 1), end };
+    case 'last-3-hours':
+      return { start: subHours(end, 3), end };
+    case 'last-6-hours':
+      return { start: subHours(end, 6), end };
+    case 'one-day':
+      return { start: startOfToday(), end: endOfToday() };
+    case 'one-week':
+      return { start: subWeeks(startOfToday(), 1), end };
+    case 'one-month':
+      return { start: subMonths(startOfToday(), 1), end };
+    case 'six-months':
+      return { start: subMonths(startOfToday(), 6), end };
+    case 'all-time': {
+      const last = [...aggregates].sort(
+        (a, b) =>
+          new Date(b.activityDetails.period).getTime() -
+          new Date(a.activityDetails.period).getTime(),
+      )[0];
+      const endDate = last ? new Date(last.activityDetails.period) : end;
+      return { start: allTimeStartDate ?? new Date(0), end: endDate };
+    }
+  }
+}
 
 export function generatePerformancePerMap(
   aggregates: Aggregate[],
-  time: TimeWindow | CustomTimeWindow,
+  time: CustomTimeWindow,
   characterId: string,
   filterBy?: GameMode,
 ): MapResult[] {
@@ -65,7 +115,6 @@ export function generatePerformancePerMap(
     const p = agg.performance[characterId];
     const location = agg.activityDetails.location;
     if (!p) {
-      // Maybe need to remove this
       return acc;
     }
     if (!acc[location]) {
@@ -101,30 +150,35 @@ export function generatePerformancePerMap(
 
 export function generateKDAResultsForTimeWindow(
   aggregates: Aggregate[],
-  time: TimeWindow | CustomTimeWindow,
+  time: CustomTimeWindow,
   characterId: string,
   filterBy?: GameMode,
 ): KDAResult[] {
-  const { intervals } = getTimes(time);
+  const { intervals, intervalRate } = getTimes(time);
   const aggs = sortAggregates(time, aggregates, filterBy);
   const values = aggs.reduce<Record<string, KDA>>((acc, agg) => {
     const p = agg.performance[characterId];
     if (!p) {
-      // Maybe need to remove this
       return acc;
     }
-    let day = startOfDay(new Date(agg.activityDetails.period));
-    switch (time) {
-      case 'one-day': {
+    let day: Date;
+    switch (intervalRate) {
+      case 'minute': {
+        const d = new Date(agg.activityDetails.period);
+        const minutes = d.getMinutes();
+        const roundedMinutes = Math.floor(minutes / 15) * 15;
+        d.setMinutes(roundedMinutes, 0, 0);
+        day = d;
+        break;
+      }
+      case 'hour': {
         day = startOfHour(new Date(agg.activityDetails.period));
         break;
       }
-      case 'one-month':
-      case 'one-week': {
+      case 'day':
         day = startOfDay(new Date(agg.activityDetails.period));
         break;
-      }
-      case 'six-months': {
+      case 'month': {
         day = startOfMonth(new Date(agg.activityDetails.period));
         break;
       }
@@ -161,6 +215,7 @@ export function generateKDAResultsForTimeWindow(
           kd: 1.0,
           kda: 1.0,
           winRatio: 0.5,
+          wins: 0,
           gameCount: 0,
         };
       }
@@ -173,107 +228,99 @@ export function generateKDAResultsForTimeWindow(
         kda: calculateRatio(value.kills + value.assists, value.deaths),
         winRatio: calculateRatio(value.wins, value.gameCount),
         gameCount: value.gameCount,
+        wins: value.wins,
       };
     })
     .filter(Boolean);
 }
-function getTimes(time: TimeWindow | CustomTimeWindow): {
+function getTimes(time: CustomTimeWindow): {
   intervals: Date[];
   startDay: Date;
   endDay: Date;
+  intervalRate: 'minute' | 'hour' | 'day' | 'month';
 } {
-  if (typeof time !== 'string' && 'start' in time && 'end' in time) {
-    const startDay = startOfDay(new Date(time.start));
-    const endDay = endOfDay(new Date(time.end));
-    return {
-      intervals: eachDayOfInterval({
-        start: startDay,
-        end: endDay,
-      }),
-      startDay: startDay,
-      endDay: endDay,
-    };
-  }
-  const endDay = endOfToday();
-  let startDay: Date;
+  let intervalRate: 'minute' | 'hour' | 'day' | 'month' = 'hour';
+  const start = new Date(time.start);
+  const end = new Date(time.end);
+  const dayDifference = differenceInDays(end, start);
+
   let intervals: Date[];
-  switch (time) {
-    case 'one-day': {
-      startDay = startOfToday();
-      intervals = eachHourOfInterval({
-        start: startOfToday(),
-        end: endDay,
-      });
-      break;
-    }
-    case 'one-week': {
-      startDay = subWeeks(startOfToday(), 1);
-      intervals = eachDayOfInterval({
-        start: subWeeks(startOfToday(), 1),
-        end: endDay,
-      });
-      break;
-    }
-    case 'one-month': {
-      startDay = subMonths(startOfToday(), 1);
-      intervals = eachDayOfInterval({
-        start: subMonths(startOfToday(), 1),
-        end: endDay,
-      });
-      break;
-    }
-    case 'six-months': {
-      startDay = subMonths(startOfToday(), 6);
-      intervals = eachMonthOfInterval({
-        start: subMonths(startOfToday(), 6),
-        end: endDay,
-      });
-      break;
-    }
-    default:
-      throw new Error('Invalid time window');
+  if (dayDifference < 1) {
+    intervals = eachMinuteOfInterval(
+      { start: startOfHour(start), end: endOfHour(end) },
+      { step: 15 },
+    );
+    intervalRate = 'minute';
+  } else if (dayDifference <= 2) {
+    intervals = eachHourOfInterval({ start, end });
+    intervalRate = 'hour';
+  } else if (dayDifference <= 31) {
+    intervals = eachDayOfInterval({ start, end });
+    intervalRate = 'day';
+  } else {
+    intervals = eachMonthOfInterval({ start, end });
+    intervalRate = 'month';
   }
-  return { intervals, startDay, endDay };
+
+  return {
+    intervals,
+    startDay: start,
+    endDay: end,
+    intervalRate,
+  };
 }
 
 function sortAggregates(
-  time: TimeWindow | CustomTimeWindow,
+  time: CustomTimeWindow,
   aggregates: Aggregate[],
   filterBy?: GameMode,
 ) {
   const { endDay, startDay } = getTimes(time);
-  return (
-    aggregates
-      .filter((a) => {
-        if (filterBy !== undefined && filterBy !== 'allGameModes') {
-          const modes = gameModeToActivityModes(filterBy);
-          if (modes) {
-            if (!modes.includes(a.activityDetails.activity)) {
-              return false;
-            }
+  return aggregates
+    .filter((a) => {
+      if (filterBy !== undefined && filterBy !== 'allGameModes') {
+        const modes = gameModeToActivityModes(filterBy);
+        if (modes) {
+          if (!modes.includes(a.activityDetails.activity)) {
+            return false;
           }
         }
-        return (
-          isAfter(a.activityDetails.period, startDay) &&
-          isBefore(a.activityDetails.period, endDay)
-        );
-      })
-      // May not need thi sorting
-      .sort((a, b) => {
-        return (
-          new Date(a.activityDetails.period).getTime() -
-          new Date(b.activityDetails.period).getTime()
-        );
-      })
-  );
+      }
+      return (
+        isAfter(new Date(a.activityDetails.period), startDay) &&
+        isBefore(new Date(a.activityDetails.period), endDay)
+      );
+    })
+    .sort((a, b) => {
+      return (
+        new Date(a.activityDetails.period).getTime() -
+        new Date(b.activityDetails.period).getTime()
+      );
+    });
 }
-export function tickFormater(value: string, timeWindow: TimeWindow): string {
-  switch (timeWindow) {
-    case 'one-day':
+export function tickFormater(
+  value: string,
+  timeWindow: CustomTimeWindow,
+): string {
+  let rate: 'minute' | 'hour' | 'day' | 'month' = 'day';
+
+  const dayDifference = differenceInDays(timeWindow.end, timeWindow.start);
+  if (dayDifference < 1) {
+    rate = 'minute';
+  } else if (dayDifference <= 2) {
+    rate = 'hour';
+  } else if (dayDifference <= 31) {
+    rate = 'day';
+  } else {
+    rate = 'month';
+  }
+
+  switch (rate) {
+    case 'minute':
+      return format(new Date(value), 'h:mm aa');
+    case 'hour':
       return format(new Date(value), 'h aa');
-    case 'one-week':
-      return format(new Date(value), 'EEE');
-    case 'one-month': {
+    case 'day':
       if (
         isFirstDayOfMonth(new Date(value)) ||
         isLastDayOfMonth(new Date(value))
@@ -281,25 +328,39 @@ export function tickFormater(value: string, timeWindow: TimeWindow): string {
         return format(new Date(value), 'MMM d');
       }
       return format(new Date(value), 'd');
-    }
-    case 'six-months':
+    case 'month':
       return format(new Date(value), 'MMM');
     default:
       return value;
   }
 }
 
-export function labelFormater(value: string, timeWindow: TimeWindow): string {
-  switch (timeWindow) {
-    case 'one-day':
+export function labelFormater(
+  value: string,
+  timeWindow: CustomTimeWindow,
+): string {
+  let rate: 'minute' | 'hour' | 'day' | 'month' = 'day';
+
+  const dayDifference = differenceInDays(timeWindow.end, timeWindow.start);
+  if (dayDifference < 1) {
+    rate = 'minute';
+  } else if (dayDifference <= 2) {
+    rate = 'hour';
+  } else if (dayDifference <= 31) {
+    rate = 'day';
+  } else {
+    rate = 'month';
+  }
+
+  switch (rate) {
+    case 'minute':
+      return format(new Date(value), 'h:mm aa');
+    case 'hour':
       return format(new Date(value), 'h aa');
-    case 'one-week':
+    case 'day':
       return format(new Date(value), 'EEEE');
-    case 'one-month': {
+    case 'month':
       return format(new Date(value), 'MMMM do');
-    }
-    case 'six-months':
-      return format(new Date(value), 'MMMM');
     default:
       return value;
   }

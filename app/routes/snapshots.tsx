@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
-import { useProfileData } from '~/lib/hooks';
+import { useClassStats } from '~/hooks/use-loadout';
+import { useProfileData } from '~/hooks/use-route-loaders';
 import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/snapshots';
@@ -182,13 +183,7 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
       )}
       <div className="grid grid-cols-1 gap-4">
         {loadouts?.items?.map((snapshot) => {
-          const values = Object.values(snapshot.stats ?? {})
-            .map((stat) => ({
-              stat: stat.name,
-              value: stat.value ?? 0,
-            }))
-            .filter((it) => it.stat !== 'Power');
-
+          const classStats = useClassStats(snapshot);
           const kills = loadouts.stats[snapshot.id]?.kills?.value ?? 0;
           const deaths = loadouts.stats[snapshot.id]?.deaths?.value ?? 0;
           const assists = loadouts.stats[snapshot.id]?.assists?.value ?? 0;
@@ -222,7 +217,7 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
                   </div>
                   <div className="flex flex-col gap-20 md:flex-row">
                     <Class snapshot={snapshot} />
-                    <ClassStats data={values} />
+                    <ClassStats data={classStats} />
                   </div>
                 </CardDescription>
               </CardHeader>

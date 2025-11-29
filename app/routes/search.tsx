@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
-import { useIsNavigating } from '~/lib/hooks';
+import { useIsNavigating } from '~/hooks/use-route-loaders';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 

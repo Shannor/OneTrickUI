@@ -6,6 +6,7 @@ import { Sockets } from '~/components/sockets';
 
 interface Props {
   snapshot?: CharacterSnapshot;
+  condensed?: boolean;
 }
 
 const SubClass = 3284755031;
@@ -41,7 +42,7 @@ interface ClassAbilities {
   fragments: Socket[];
 }
 
-export const Class: React.FC<Props> = ({ snapshot }) => {
+export const Class: React.FC<Props> = ({ snapshot, condensed = false }) => {
   if (!snapshot) {
     return null;
   }
@@ -128,42 +129,46 @@ export const Class: React.FC<Props> = ({ snapshot }) => {
           </h4>
         </div>
       )}
-      <div className="flex flex-row gap-8">
-        {/* Abilities row: Super, Class, Movement, Melee, Grenade */}
-        {abilitiesRow.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <Label>Abilities</Label>
-            <Sockets
-              sockets={abilitiesRow}
-              displayMode="iconOnly"
-              className="flex-row flex-wrap items-center"
-            />
-          </div>
-        )}
+      {!condensed && (
+        <>
+          <div className="flex flex-row gap-8">
+            {/* Abilities row: Super, Class, Movement, Melee, Grenade */}
+            {abilitiesRow.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <Label>Abilities</Label>
+                <Sockets
+                  sockets={abilitiesRow}
+                  displayMode="iconOnly"
+                  className="flex-row flex-wrap items-center"
+                />
+              </div>
+            )}
 
-        {/* Aspects row */}
-        {abilities?.aspects?.length ? (
-          <div className="flex flex-col gap-2">
-            <Label>Aspects</Label>
-            <Sockets
-              sockets={abilities.aspects}
-              displayMode="iconOnly"
-              className="flex-row flex-wrap items-center"
-            />
+            {/* Aspects row */}
+            {abilities?.aspects?.length ? (
+              <div className="flex flex-col gap-2">
+                <Label>Aspects</Label>
+                <Sockets
+                  sockets={abilities.aspects}
+                  displayMode="iconOnly"
+                  className="flex-row flex-wrap items-center"
+                />
+              </div>
+            ) : null}
           </div>
-        ) : null}
-      </div>
-      {/* Fragments row */}
-      {abilities?.fragments?.length ? (
-        <div className="flex flex-col gap-2">
-          <Label>Fragments</Label>
-          <Sockets
-            sockets={abilities.fragments}
-            displayMode="iconOnly"
-            className="flex-row flex-wrap items-center"
-          />
-        </div>
-      ) : null}
+          {/* Fragments row */}
+          {abilities?.fragments?.length ? (
+            <div className="flex flex-col gap-2">
+              <Label>Fragments</Label>
+              <Sockets
+                sockets={abilities.fragments}
+                displayMode="iconOnly"
+                className="flex-row flex-wrap items-center"
+              />
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 };

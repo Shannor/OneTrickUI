@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import { CharacterPicker } from '~/components/character-picker';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
-import { useIsNavigating, useProfileData } from '~/lib/hooks';
+import { useIsNavigating, useProfileData } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/character-select';
 

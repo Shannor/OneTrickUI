@@ -5,6 +5,7 @@ import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
 import { Class } from '~/components/class';
 import { Loadout } from '~/components/loadout';
+import { useClassStats } from '~/hooks/use-loadout';
 
 import type { Route } from './+types/loadout-details';
 
@@ -28,17 +29,19 @@ export async function loader({ params }: Route.LoaderArgs) {
 // TODO: Join this component with the player-card.tsx
 export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
   const { snapshot } = loaderData;
-  const values = Object.values(snapshot.stats ?? {})
-    .map((stat) => ({
-      stat: stat.name,
-      value: stat.value,
-    }))
-    .filter((it) => it.stat !== 'Power');
+  const values = useClassStats(snapshot);
+
   return (
     <div className="flex flex-col gap-20">
       <title>{`${snapshot.name ?? 'Loadout'} - Details`}</title>
-      <meta property="og:title" content={`${snapshot.name ?? 'Loadout'} - Details`} />
-      <meta name="description" content={`View armor stats and gear details for ${snapshot.name ?? 'this loadout'}.`} />
+      <meta
+        property="og:title"
+        content={`${snapshot.name ?? 'Loadout'} - Details`}
+      />
+      <meta
+        name="description"
+        content={`View armor stats and gear details for ${snapshot.name ?? 'this loadout'}.`}
+      />
       <div className="flex flex-row gap-10">
         <Class snapshot={snapshot} />
         <ClassStats data={values} />

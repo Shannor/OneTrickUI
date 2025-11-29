@@ -8,7 +8,7 @@ import {
 } from '~/components/ui/tooltip';
 import { WeaponKills } from '~/components/weapon-kills';
 import { WeaponStats } from '~/components/weapon-stats';
-import { setBungieUrl } from '~/lib/utils';
+import { cn, setBungieUrl } from '~/lib/utils';
 
 interface WeaponSockets {
   intrinsic: Socket | null;
@@ -48,12 +48,14 @@ const isMemento = (itemTypeDisplayName: string): boolean =>
 
 interface Props extends WeaponInstanceMetrics {
   hideStats?: boolean;
+  layout?: 'horizontal' | 'vertical';
 }
 export const Weapon: React.FC<Props> = ({
   properties,
   stats,
   display,
   hideStats,
+  layout = 'horizontal',
 }) => {
   const weaponSockets: WeaponSockets = properties?.sockets?.reduce(
     (acc, socket) => {
@@ -128,21 +130,28 @@ export const Weapon: React.FC<Props> = ({
   const name = properties?.baseInfo?.name ?? display?.name;
   return (
     <div className="flex max-w-[350px] flex-col gap-4">
-      {icon && name && (
-        <Tooltip>
-          <TooltipContent>{name}</TooltipContent>
-          <TooltipTrigger>
-            <img
-              alt={`${name} image`}
-              src={icon}
-              className="h-auto w-12 rounded-lg object-cover"
-            />
-          </TooltipTrigger>
-        </Tooltip>
-      )}
-      <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
-        {properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun'}
-      </h3>
+      <div
+        className={cn(
+          'flex gap-4',
+          layout === 'horizontal' ? 'flex-col' : 'flex-row items-center',
+        )}
+      >
+        {icon && name && (
+          <Tooltip>
+            <TooltipContent>{name}</TooltipContent>
+            <TooltipTrigger>
+              <img
+                alt={`${name} image`}
+                src={icon}
+                className="h-auto w-12 rounded-lg object-cover"
+              />
+            </TooltipTrigger>
+          </Tooltip>
+        )}
+        <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
+          {properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun'}
+        </h3>
+      </div>
 
       <div className="flex w-full flex-col gap-8">
         {stats && (

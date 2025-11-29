@@ -10,7 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '~/components/ui/chart';
-import type { MapResult, TimeWindow } from '~/lib/metrics';
+import type { CustomTimeWindow, MapResult } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 const chartConfig = {
@@ -20,14 +20,14 @@ const chartConfig = {
   },
   kda: {
     label: 'Efficiency',
-    color: 'var(--chart-secondary)',
+    color: 'var(--chart-3)',
   },
 } satisfies ChartConfig;
 
 interface Props {
   className?: string;
   data: MapResult[];
-  timeWindow?: TimeWindow;
+  timeWindow?: CustomTimeWindow;
   syncId?: string;
 }
 export function MapPerformance({ className, data, syncId }: Props) {
@@ -36,7 +36,7 @@ export function MapPerformance({ className, data, syncId }: Props) {
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn('max-h-[400px] min-h-[200px] w-full', className)}
+      className={cn('max-h-[800px] min-h-[50px] w-full', className)}
     >
       <ComposedChart
         accessibilityLayer
@@ -71,14 +71,14 @@ export function MapPerformance({ className, data, syncId }: Props) {
           type="monotone"
           radius={2}
           fill="var(--color-kd)"
-          barSize={10}
+          barSize={8}
         />
         <Bar
           dataKey="kda"
           type="monotone"
           radius={2}
           fill="var(--color-kda)"
-          barSize={10}
+          barSize={8}
         />
       </ComposedChart>
     </ChartContainer>

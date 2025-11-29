@@ -10,7 +10,7 @@ import {
 } from '~/components/ui/chart';
 import {
   type KDAResult,
-  type TimeWindow,
+  type CustomTimeWindow,
   labelFormater,
   tickFormater,
 } from '~/lib/metrics';
@@ -18,7 +18,7 @@ import { cn } from '~/lib/utils';
 
 interface Props {
   data: KDAResult[];
-  timeWindow: TimeWindow;
+  timeWindow: CustomTimeWindow;
   className?: string;
   syncId?: string;
 }

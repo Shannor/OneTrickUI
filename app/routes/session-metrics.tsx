@@ -1,85 +1,60 @@
-import { isAfter, isBefore } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
-import { Link, useRouteLoaderData } from 'react-router';
-import type { Aggregate } from '~/api';
+import { Link } from 'react-router';
+import type { Aggregate, Session } from '~/api';
+import { calculateRatio } from '~/calculations/precision';
+import { ChartWrapper } from '~/charts/ChartWrapper';
+import { MapCount } from '~/charts/MapCount';
+import { MapPerformance } from '~/charts/MapPerformance';
+import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
-import { type KDAResult, generateKDAResultsForTimeWindow } from '~/lib/metrics';
-import { getWeaponsFromLoadout } from '~/lib/utils';
-import { Performance, type StatItem } from '~/organisims/performance';
-import type { loader } from '~/routes/session';
+import { useWeaponsFromLoadout } from '~/hooks/use-loadout';
+import { useSessionData } from '~/hooks/use-route-loaders';
+import { generatePerformancePerMap } from '~/lib/metrics';
+import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
 
 export default function SessionMetrics({ params }: Route.ComponentProps) {
-  const { aggregates, snapshots } =
-    useRouteLoaderData<typeof loader>('routes/session') ?? {};
+  const { aggregates, snapshots, session } = useSessionData();
   const { characterId, id } = params;
-  const periods = findPeriodBoundaries(aggregates ?? []);
+
+  const periods = findPeriodBoundaries(aggregates ?? [], session);
   const groupedBySnapshot = groupAggregates(aggregates ?? [], characterId);
 
-  let data: { snapshotId: string; performance: KDAResult | undefined }[] = [];
   if (!aggregates) {
-    return <div>No Aggregates</div>;
+    return (
+      <Empty
+        title="No Matches Found"
+        description="No matches found for this session."
+      />
+    );
   }
   if (!snapshots) {
-    return <div>No snapshots</div>;
+    return (
+      <Empty
+        title="No Loadouts Found"
+        description="No loadouts were found for this session."
+      />
+    );
   }
-  if (periods) {
-    data = groupedBySnapshot.map(([snapshotId, aggs]) => {
-      // The problem is that this only works if the session is 1 day long
-      const result = generateKDAResultsForTimeWindow(
-        aggs ?? [],
-        { start: periods.earliest, end: periods.latest },
-        characterId,
-      );
-      return {
-        snapshotId,
-        performance: result.pop(),
-      };
-    });
-  }
+  const data = getLoadoutData(
+    periods,
+    groupedBySnapshot,
+    characterId,
+    aggregates,
+  );
   return (
     <div>
-      <title>Session Metrics</title>
-      <meta property="og:title" content="Session Metrics" />
+      <title>{`${session?.name} - Metrics`}</title>
+      <meta property="og:title" content={`${session?.name} Metrics`} />
       <meta
         name="description"
         content="View per-loadout performance metrics for this session."
       />
-      {data.map(({ snapshotId, performance }) => {
+      {data?.map(({ snapshotId, stats, mapData, time }) => {
         const snapshot = snapshots[snapshotId];
-        const stats: StatItem[] = performance
-          ? [
-              {
-                label: 'Avg. Kills',
-                value: performance.avgKills.toString(),
-              },
-              {
-                label: 'Avg. Assists',
-                value: performance.avgAssists.toString(),
-              },
-              {
-                label: 'Avg. Deaths',
-                value: performance.avgDeaths.toString(),
-              },
-              { label: 'K/D', value: performance.kd.toFixed(2) },
-              { label: 'Efficiency', value: performance.kda.toFixed(2) },
-              {
-                label: 'Matches',
-                value: performance.gameCount.toString(),
-              },
-              {
-                label: 'Win Ratio',
-                value: performance.winRatio.toFixed(2),
-                valueClassName:
-                  performance.winRatio >= 0.5
-                    ? 'text-green-500'
-                    : 'text-red-500',
-              },
-            ]
-          : [];
         return (
           <div className="flex flex-col gap-4 p-4" key={snapshotId}>
             <div className="group flex flex-row gap-2">
@@ -93,7 +68,7 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
               <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
             </div>
             <div className="flex flex-row gap-4">
-              {getWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
+              {useWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
                 <WeaponHeader
                   key={weapon.itemHash}
                   properties={weapon.details}
@@ -101,11 +76,31 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
                 />
               ))}
             </div>
-            {performance ? (
+            <div className="flex flex-col gap-4 md:flex-row">
               <Performance stats={stats} />
-            ) : (
-              <div>No Performance Data</div>
-            )}
+            </div>
+            <div className="flex flex-col gap-4 md:flex-row">
+              <ChartWrapper
+                title="Map Performance"
+                description="Shows the map performance for the session with the loadout"
+              >
+                <MapPerformance
+                  data={mapData}
+                  timeWindow={time}
+                  syncId={`map-${snapshotId}`}
+                />
+              </ChartWrapper>
+              <ChartWrapper
+                title="Map Distrubution"
+                description="Shows the number of games played for each map with a given loadout."
+              >
+                <MapCount
+                  data={mapData}
+                  timeWindow={time}
+                  syncId={`map-${snapshotId}`}
+                />
+              </ChartWrapper>
+            </div>
           </div>
         );
       })}
@@ -115,20 +110,22 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
 
 function findPeriodBoundaries(
   aggregates: Aggregate[],
+  session: Session,
 ): PeriodBoundaries | null {
-  if (!aggregates.length) return null;
-
-  let earliest = aggregates[0].activityDetails.period;
-  let latest = aggregates[0].activityDetails.period;
-
-  for (const aggregate of aggregates) {
-    if (isBefore(new Date(aggregate.activityDetails.period), earliest)) {
-      earliest = aggregate.activityDetails.period;
-    }
-    if (isAfter(new Date(aggregate.activityDetails.period), latest)) {
-      latest = aggregate.activityDetails.period;
-    }
+  if (!aggregates.length) {
+    return {
+      earliest: session.startedAt,
+      latest: new Date(),
+    };
   }
+
+  const sorted = [...aggregates].sort(
+    (a, b) =>
+      new Date(b.activityDetails.period).getTime() -
+      new Date(a.activityDetails.period).getTime(),
+  );
+  const latest = new Date(sorted[0].activityDetails.period);
+  const earliest = new Date(sorted[sorted.length - 1].activityDetails.period);
 
   return { earliest, latest };
 }
@@ -172,10 +169,69 @@ function groupAggregates(
     {} as Record<string, Aggregate[]>,
   );
 
-  // Convert to array of tuples and sort
+  // Convert to an array of tuples and sort
   return Object.entries(grouped).sort((a, b) => {
     const aAggsLength = a[1].length;
     const bAggsLength = b[1].length;
     return bAggsLength - aAggsLength;
   });
+}
+
+function getLoadoutData(
+  periods: PeriodBoundaries | null,
+  groupedBySnapshot: GroupTuple[],
+  characterId: string,
+  aggregates: Aggregate[],
+) {
+  if (!periods) {
+    return;
+  }
+  const time = { start: periods.earliest, end: periods.latest };
+  return groupedBySnapshot.map(([snapshotId, aggs]) => {
+    const performances = getPerformances(aggs, characterId);
+    const { wins } = performances.reduce(
+      (state, p) => {
+        state.wins += p.playerStats.standing?.value === 0 ? 1 : 0;
+        return state;
+      },
+      {
+        wins: 0,
+      },
+    );
+
+    const winRatio = calculateRatio(wins, performances.length);
+    const stats = [];
+    if (performances.length > 1) {
+      stats.push({
+        label: 'Matches',
+        value: performances.length.toString(),
+      });
+      stats.push({
+        label: 'Win Ratio',
+        value: winRatio.toFixed(2),
+        valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
+      });
+    }
+    const mapData = generatePerformancePerMap(aggs, time, characterId);
+    return {
+      snapshotId,
+      stats,
+      mapData,
+      time,
+    };
+  });
+}
+function getPerformances(aggregates: Aggregate[], characterId: string) {
+  return aggregates
+    .map((agg) => {
+      const snapshot = agg.snapshotLinks[characterId];
+      if (
+        snapshot.confidenceLevel !== 'noMatch' &&
+        snapshot.confidenceLevel !== 'notFound'
+      ) {
+        return agg.performance[characterId];
+      }
+      return null;
+    })
+    .filter((x) => !!x);
 }

@@ -1,4 +1,4 @@
-import { redirect } from 'react-router';
+import { redirectBack } from '~/.server/auth';
 import { setPreferences } from '~/.server/preferences';
 
 import type { Route } from './+types/set-preference';
@@ -46,12 +46,15 @@ export async function action({ request }: Route.ClientActionArgs) {
       id: profileId?.toString() ?? '',
       displayName: displayName?.toString() ?? '',
       uniqueName: uniqueName?.toString() ?? '',
-      userId: membershipId?.toString() ?? '',
+      membershipId: membershipId?.toString() ?? '',
     },
   });
 
   const redirectTo = formData.get('redirectTo');
-  return redirect(redirectTo?.toString() || '/', {
-    ...headers,
+  return redirectBack(request, {
+    fallback: redirectTo?.toString() ?? '/',
+    response: {
+      ...headers,
+    },
   });
 }

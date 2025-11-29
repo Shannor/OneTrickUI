@@ -1,6 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import React, { type ReactNode } from 'react';
-import { useIsNavigating } from '~/lib/hooks';
+import { useIsNavigating } from '~/hooks/use-route-loaders';
 
 interface LoadingState {
   isNavigating: boolean;

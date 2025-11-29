@@ -19,7 +19,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '~/components/ui/sidebar';
-import { useIsNavigating, useProfileData } from '~/lib/hooks';
+import { useIsNavigating, useProfileData } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/sidebar';
 
