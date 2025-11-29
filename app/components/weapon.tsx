@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Socket, WeaponInstanceMetrics } from '~/api';
+import { Label } from '~/components/label';
 import { Sockets } from '~/components/sockets';
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import {
   Tooltip,
   TooltipContent,
@@ -49,13 +51,14 @@ const isMemento = (itemTypeDisplayName: string): boolean =>
 interface Props extends WeaponInstanceMetrics {
   hideStats?: boolean;
   layout?: 'horizontal' | 'vertical';
+  className?: string;
 }
 export const Weapon: React.FC<Props> = ({
   properties,
   stats,
   display,
   hideStats,
-  layout = 'horizontal',
+  className,
 }) => {
   const weaponSockets: WeaponSockets = properties?.sockets?.reduce(
     (acc, socket) => {
@@ -127,31 +130,49 @@ export const Weapon: React.FC<Props> = ({
   ].filter(Boolean) as Socket[];
 
   const icon = setBungieUrl(display?.icon ?? properties?.baseInfo?.icon);
-  const name = properties?.baseInfo?.name ?? display?.name;
+  const name = properties?.baseInfo?.name ?? display?.name ?? 'Unkown';
   return (
-    <div className="flex max-w-[350px] flex-col gap-4">
-      <div
-        className={cn(
-          'flex gap-4',
-          layout === 'horizontal' ? 'flex-col' : 'flex-row items-center',
-        )}
-      >
-        {icon && name && (
-          <Tooltip>
-            <TooltipContent>{name}</TooltipContent>
-            <TooltipTrigger>
-              <img
-                alt={`${name} image`}
-                src={icon}
-                className="h-auto w-12 rounded-lg object-cover"
-              />
-            </TooltipTrigger>
-          </Tooltip>
-        )}
+    <div className={cn('flex max-w-[350px] flex-col gap-4', className)}>
+      <Tooltip>
+        <TooltipContent className="flex flex-col gap-4">
+          <Label>{name}</Label>
+          {hideStats && (
+            <div className="flex flex-col gap-2">
+              {properties?.stats && <WeaponStats stats={properties.stats} />}
+              {properties?.sockets && (
+                <div className="flex flex-col gap-2">
+                  {/* Row 1: Intrinsic, Mod, Shader */}
+                  <Sockets
+                    sockets={row1}
+                    displayMode="iconOnly"
+                    className="flex-row flex-wrap items-center"
+                  />
+
+                  {/* Row 2: Barrel, Magazine, Traits..., Origin Trait */}
+                  <Sockets
+                    sockets={row2}
+                    displayMode="iconOnly"
+                    className="flex-row flex-wrap items-center"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </TooltipContent>
+        <TooltipTrigger>
+          <Avatar className="h-10 w-10 rounded-sm object-cover">
+            <AvatarImage src={icon} alt={`${name} image`} />
+            <AvatarFallback className="rounded-sm">
+              {name?.charAt(0).toUpperCase() ?? '?'}
+            </AvatarFallback>
+          </Avatar>
+        </TooltipTrigger>
+      </Tooltip>
+      {!icon && (
         <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
           {properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun'}
         </h3>
-      </div>
+      )}
 
       <div className="flex w-full flex-col gap-8">
         {stats && (

@@ -1,4 +1,3 @@
-import { clsx } from 'clsx';
 import React from 'react';
 import type { Socket } from '~/api';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
@@ -9,7 +8,7 @@ import {
 } from '~/components/ui/tooltip';
 import { cn } from '~/lib/utils';
 
-interface Props {
+export interface Props {
   sockets: Socket[];
   className?: string;
   /**
@@ -18,6 +17,7 @@ interface Props {
    * - 'iconOnly': show a larger icon only; tooltip shows name and description
    */
   displayMode?: 'label' | 'iconOnly';
+  tooltipContent?: React.ReactNode;
 }
 
 const DestinyURL = 'https://www.bungie.net';
@@ -25,6 +25,7 @@ export const Sockets: React.FC<Props> = ({
   sockets,
   className,
   displayMode = 'label',
+  tooltipContent,
 }) => {
   return (
     <div className={cn('flex flex-col gap-2', className)}>
@@ -59,18 +60,22 @@ export const Sockets: React.FC<Props> = ({
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <div className="max-w-xs text-sm">
-                    {isIconOnly ? (
-                      <div className="flex flex-col gap-1">
-                        <div className="font-semibold">{it.name}</div>
-                        <div className="text-muted-foreground">
-                          {it.description}
+                  {tooltipContent ? (
+                    tooltipContent
+                  ) : (
+                    <div className="max-w-xs text-sm">
+                      {isIconOnly ? (
+                        <div className="flex flex-col gap-1">
+                          <div className="font-semibold">{it.name}</div>
+                          <div className="text-muted-foreground">
+                            {it.description}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      it.description
-                    )}
-                  </div>
+                      ) : (
+                        it.description
+                      )}
+                    </div>
+                  )}
                 </TooltipContent>
               </Tooltip>
               {isIconOnly ? null : <div className="text-sm">{it.name}</div>}

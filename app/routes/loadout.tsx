@@ -4,7 +4,7 @@ import { NavLink, Outlet, data, useLocation } from 'react-router';
 import { getSnapshot } from '~/api';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 
-import type { Route } from './+types/snapshot';
+import type { Route } from './+types/loadout';
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { snapshotId } = params;
@@ -23,7 +23,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   };
 }
 
-export default function Snapshot({ loaderData }: Route.ComponentProps) {
+export default function Loadout({ loaderData }: Route.ComponentProps) {
   const { snapshot } = loaderData;
   const location = useLocation();
 

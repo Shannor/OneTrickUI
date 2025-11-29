@@ -139,7 +139,7 @@ export default function Sidebar({ params }: Route.ComponentProps) {
               </div>
             ) : null}
             <div className="flex flex-col gap-12">
-              <div className="flex w-full flex-col justify-stretch gap-6 md:flex-row">
+              <div className="flex w-full flex-col justify-stretch gap-6 lg:flex-row lg:gap-4">
                 {characters?.map((character) => (
                   <Link
                     key={character.id}

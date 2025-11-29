@@ -15,6 +15,12 @@ const Kinetic = 1498876634;
 const Energy = 2465295065;
 const Power = 953998645;
 
+const HelmetArmor = 3448274439;
+const GauntletsArmor = 3551918588;
+const ChestArmor = 14239492;
+const LegArmor = 20886954;
+const ClassArmor = 1585787867;
+
 interface Stats {
   precisionKills: number;
   kills: number;
@@ -29,6 +35,40 @@ export function useWeaponsFromLoadout(loadout?: Loadout): ItemSnapshot[] {
     const energy = loadout[Energy];
     const power = loadout[Power];
     return [kinetic, energy, power].filter(Boolean) as ItemSnapshot[];
+  }, [loadout]);
+}
+
+export function useExotic(loadout?: Loadout): {
+  weapon?: ItemSnapshot;
+  armor?: ItemSnapshot;
+} {
+  return useMemo(() => {
+    if (!loadout) {
+      return {};
+    }
+    // Get weapons
+    const kinetic = loadout[Kinetic];
+    const energy = loadout[Energy];
+    const power = loadout[Power];
+
+    // Get armor
+    const helmet = loadout[HelmetArmor];
+    const gauntlets = loadout[GauntletsArmor];
+    const chest = loadout[ChestArmor];
+    const leg = loadout[LegArmor];
+    const classArmor = loadout[ClassArmor];
+
+    const weapons = [kinetic, energy, power];
+    const armor = [helmet, gauntlets, chest, leg, classArmor];
+    const exoticWeapon = weapons.find(
+      (item) =>
+        !!item && item.details.baseInfo.tierTypeName.toLowerCase() === 'exotic',
+    );
+    const exoticArmor = armor.find(
+      (item) =>
+        !!item && item.details.baseInfo.tierTypeName.toLowerCase() === 'exotic',
+    );
+    return { weapon: exoticWeapon, armor: exoticArmor };
   }, [loadout]);
 }
 
@@ -96,10 +136,10 @@ export function useCreateStats(
   }, [weaponStats, item]);
 }
 
-export function useWeaponLoadout(
+export function useWeapons(
   loadout?: Loadout,
   performances?: InstancePerformance[],
-) {
+): (ItemSnapshot & { stats?: Record<string, UniqueStatValue> })[] {
   if (!loadout) return [];
 
   const weaponStats = useWeaponStats(performances);

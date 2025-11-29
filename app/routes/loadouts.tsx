@@ -1,17 +1,12 @@
 import React, { useRef } from 'react';
 import { Form, useLocation, useNavigate } from 'react-router';
 import { type GameMode, getBestPerformingLoadouts } from '~/api';
-import { ClassStats } from '~/charts/ClassStats';
-import { Class } from '~/components/class';
+import { ArmorStats } from '~/components/armor-stats';
 import { Empty } from '~/components/empty';
-import { Loadout } from '~/components/loadout';
-import { Stat } from '~/components/stat';
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
+import { ItemSnapshot } from '~/components/item-snapshot';
+import { Label } from '~/components/label';
+import { Super } from '~/components/sub-class';
+import { Card, CardContent, CardHeader } from '~/components/ui/card';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import {
@@ -21,11 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
-import { useClassStats } from '~/hooks/use-loadout';
+import { WeaponStats } from '~/components/weapon-stats';
+import { useClassStats, useExotic, useWeapons } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
+import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
+import { SubClassProvider } from '~/providers/sub-class-provider';
 
-import type { Route } from './+types/snapshots';
+import type { Route } from './+types/loadouts';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
@@ -72,7 +70,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   };
 }
 
-export default function Snapshots({ loaderData }: Route.ComponentProps) {
+export default function Loadouts({ loaderData }: Route.ComponentProps) {
   const { loadouts, gameMode, count, minimumGames } = loaderData;
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -105,7 +103,7 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
       >
         <RadioGroup
           defaultValue={gameMode}
-          className="flex items-center gap-4"
+          className="flex flex-col gap-4 md:flex-row md:items-center"
           name="mode"
           onChange={() => {
             ref.current?.submit();
@@ -133,9 +131,9 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
           </div>
         </RadioGroup>
 
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           <div>
-            <FormLabel htmlFor="minimum">Minimum Games Required</FormLabel>
+            <FormLabel htmlFor="minimum">Minimum Games</FormLabel>
             <Select
               defaultValue={minimumGames.toString()}
               name="minimum"
@@ -143,7 +141,7 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
                 ref.current?.submit();
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:max-w-[200px]">
                 <SelectValue placeholder="Minimum Games" />
               </SelectTrigger>
               <SelectContent>
@@ -163,7 +161,7 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
                 ref.current?.submit();
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:max-w-[200px]">
                 <SelectValue placeholder="Max Loadout" />
               </SelectTrigger>
               <SelectContent>
@@ -184,18 +182,25 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
       <div className="grid grid-cols-1 gap-4">
         {loadouts?.items?.map((snapshot) => {
           const classStats = useClassStats(snapshot);
-          const kills = loadouts.stats[snapshot.id]?.kills?.value ?? 0;
-          const deaths = loadouts.stats[snapshot.id]?.deaths?.value ?? 0;
-          const assists = loadouts.stats[snapshot.id]?.assists?.value ?? 0;
+          const { armor } = useExotic(snapshot?.loadout);
+          const data = useWeapons(snapshot?.loadout);
           const kd = loadouts.stats[snapshot.id]?.kd?.value ?? 0;
           const kda = loadouts.stats[snapshot.id]?.kda?.value ?? 0;
+          const winRatio = loadouts.stats[snapshot.id]?.standing?.value ?? 0;
 
           const stats: StatItem[] = [
-            { label: 'Kills', value: kills.toString() },
-            { label: 'Deaths', value: deaths.toString() },
-            { label: 'Assists', value: assists.toString() },
             { label: 'K/D', value: kd.toFixed(2) },
             { label: 'Efficiency', value: kda.toFixed(2) },
+            {
+              label: 'Win Ratio',
+              value: winRatio.toFixed(2),
+              valueClassName:
+                winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
+            },
+            {
+              label: 'Games',
+              value: loadouts.count[snapshot.id]?.toString() ?? '0',
+            },
           ];
           return (
             <Card
@@ -203,24 +208,50 @@ export default function Snapshots({ loaderData }: Route.ComponentProps) {
               className="cursor-pointer"
               onClick={() => navigate(`${snapshot.id}`)}
             >
-              <CardHeader>
-                <CardTitle className="flex flex-row items-center gap-4">
-                  <Loadout snapshot={snapshot} hideStats />
-                </CardTitle>
-                <CardDescription className="flex flex-col gap-4">
-                  <div className="flex flex-row gap-4">
-                    <Stat
-                      label="Games"
-                      value={loadouts.count[snapshot.id]?.toString() ?? '0'}
-                    />
-                    <Performance stats={stats} />
-                  </div>
-                  <div className="flex flex-col gap-20 md:flex-row">
-                    <Class snapshot={snapshot} />
-                    <ClassStats data={classStats} />
-                  </div>
-                </CardDescription>
+              <CardHeader className="flex flex-col gap-4">
+                <SubClassProvider snapshot={snapshot}>
+                  <Super />
+                </SubClassProvider>
+                <div className="flex flex-col flex-wrap gap-4 align-top lg:flex-row lg:items-center lg:align-middle">
+                  {data.map((item) => (
+                    <ItemSnapshot key={item.itemHash} item={item}>
+                      <div className="flex flex-col gap-4">
+                        <Label
+                          className={cn(
+                            'truncate',
+                            item.details.baseInfo.tierTypeName === 'Exotic'
+                              ? 'text-yellow-500'
+                              : 'text-purple-500',
+                          )}
+                        >
+                          {item.details.baseInfo.name}
+                        </Label>
+                        {item.details.stats && (
+                          <WeaponStats stats={item.details.stats} />
+                        )}
+                      </div>
+                    </ItemSnapshot>
+                  ))}
+                  {armor && (
+                    <ItemSnapshot item={armor}>
+                      <div className="flex flex-col gap-4">
+                        <Label className={cn('truncate text-yellow-500')}>
+                          {armor.details.baseInfo.name}
+                        </Label>
+                        {armor.details.stats && (
+                          <ArmorStats stats={armor.details.stats} />
+                        )}
+                      </div>
+                    </ItemSnapshot>
+                  )}
+                </div>
               </CardHeader>
+              <CardContent className="flex flex-col items-start gap-10">
+                <Performance
+                  stats={stats}
+                  className="flex flex-col flex-wrap items-start gap-4 align-top md:flex-row md:items-center md:align-middle"
+                />
+              </CardContent>
             </Card>
           );
         })}

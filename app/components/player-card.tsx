@@ -3,11 +3,12 @@ import { Link } from 'react-router';
 import type { CharacterSnapshot, InstancePerformance, User } from '~/api';
 import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
-import { Class } from '~/components/class';
 import { Label } from '~/components/label';
 import { PlayerStatsGrid } from '~/components/player-stats';
+import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Card, CardContent } from '~/components/ui/card';
 import { Weapon } from '~/components/weapon';
+import { SubClassProvider } from '~/providers/sub-class-provider';
 
 export type PlayerCardProps = {
   user?: User;
@@ -53,7 +54,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         </div>
 
         <div className="col-span-12 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Class snapshot={snapshot} />
+          <SubClassProvider snapshot={snapshot}>
+            <div className="flex flex-col gap-4">
+              <Super />
+              <Abilities />
+              <Aspects />
+              <Fragments />
+            </div>
+          </SubClassProvider>
           <ArmorSet snapshot={snapshot} />
           <ClassStats data={values} />
         </div>

@@ -323,6 +323,10 @@ export type BaseItemInfo = {
   itemHash: number;
   instanceId: string;
   bucketHash: number;
+  itemTypeAndTierDisplayName: string;
+  itemTypeDisplayName: string;
+  tierTypeName: string;
+  tierType: number;
   damage?: DamageInfo;
 };
 
@@ -557,6 +561,26 @@ export type BackfillAllUsersCharacterIdsResponses = {
 
 export type BackfillAllUsersCharacterIdsResponse =
   BackfillAllUsersCharacterIdsResponses[keyof BackfillAllUsersCharacterIdsResponses];
+
+export type BackfillSnapshotInfoData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/admin/backfill-snapshot-base-info';
+};
+
+export type BackfillSnapshotInfoResponses = {
+  /**
+   * Summary of backfilled users
+   */
+  200: {
+    updated: number;
+    failed: number;
+  };
+};
+
+export type BackfillSnapshotInfoResponse =
+  BackfillSnapshotInfoResponses[keyof BackfillSnapshotInfoResponses];
 
 export type BackfillAggregateDataData = {
   body?: never;

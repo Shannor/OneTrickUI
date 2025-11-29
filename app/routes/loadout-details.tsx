@@ -3,9 +3,11 @@ import { data } from 'react-router';
 import { getSnapshot } from '~/api';
 import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
-import { Class } from '~/components/class';
-import { Loadout } from '~/components/loadout';
-import { useClassStats } from '~/hooks/use-loadout';
+import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
+import { Weapon } from '~/components/weapon';
+import { useClassStats, useWeapons } from '~/hooks/use-loadout';
+import { cn } from '~/lib/utils';
+import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/loadout-details';
 
@@ -30,6 +32,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
   const { snapshot } = loaderData;
   const values = useClassStats(snapshot);
+  const data = useWeapons(snapshot?.loadout);
 
   return (
     <div className="flex flex-col gap-20">
@@ -42,12 +45,33 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
         name="description"
         content={`View armor stats and gear details for ${snapshot.name ?? 'this loadout'}.`}
       />
-      <div className="flex flex-row gap-10">
-        <Class snapshot={snapshot} />
+      <SubClassProvider snapshot={snapshot}>
+        <div className="flex flex-col gap-4">
+          <Super />
+          <Abilities />
+          <Aspects />
+          <Fragments />
+        </div>
+      </SubClassProvider>
+      <div
+        className={cn('flex flex-col flex-wrap gap-10 xl:flex-row xl:gap-4')}
+      >
+        {data.map((item) => {
+          return (
+            <Weapon
+              key={item.itemHash}
+              referenceId={item.itemHash}
+              properties={item.details}
+              stats={item.stats}
+              className="xl:max-w-[400px]"
+            />
+          );
+        })}
+      </div>
+      <div className="flex flex-col gap-10 md:flex-row">
+        <ArmorSet snapshot={snapshot} />
         <ClassStats data={values} />
       </div>
-      <ArmorSet snapshot={snapshot} />
-      <Loadout snapshot={snapshot} />
     </div>
   );
 }

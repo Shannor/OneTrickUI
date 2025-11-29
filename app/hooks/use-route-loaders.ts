@@ -1,7 +1,7 @@
 import { useNavigation, useParams, useRouteLoaderData } from 'react-router';
+import type { loader as snapshotLoader } from '~/routes/loadout';
 import type { loader as profileStateLoader } from '~/routes/profile-state';
 import type { loader as sessionLoader } from '~/routes/session';
-import type { loader as snapshotLoader } from '~/routes/snapshot';
 
 export function useIsNavigating(): [boolean] {
   const navigation = useNavigation();
@@ -38,12 +38,10 @@ export function useSessionData() {
   }
   return data;
 }
-export function useSnapshotData() {
-  const data = useRouteLoaderData<typeof snapshotLoader>('routes/snapshot');
+export function useLoadoutData() {
+  const data = useRouteLoaderData<typeof snapshotLoader>('routes/loadout');
   if (!data) {
-    throw new Error(
-      'useSnapshotData must be used within snapshot parent route',
-    );
+    throw new Error('useLoadoutData must be used within loadout parent route');
   }
   return data;
 }

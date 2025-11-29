@@ -47,7 +47,7 @@ export function ClassStats({ className, data }: Props) {
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn('min-h-[250px]', className)}
+      className={cn('max-h-[400px] min-h-[50px]', className)}
     >
       <RadarChart data={data}>
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />

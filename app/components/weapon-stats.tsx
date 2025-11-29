@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GunStat, Stats } from '~/api';
+import { Bar } from '~/components/ui/bar';
 
 interface Props {
   stats: Stats;
@@ -50,7 +51,7 @@ export const WeaponStats: React.FC<Props> = ({ stats }) => {
         <div key={it.hash} className="grid grid-cols-12 items-center gap-4">
           <div className="col-span-3">{updateNames(it)}</div>
           <div className="col-span-7">
-            <Bar value={it.value} />
+            <Bar value={it.value} max={100} />
           </div>
           <div className="col-span-2">{it.value}</div>
         </div>
@@ -73,14 +74,3 @@ function updateNames(stat: GunStat): string {
       return stat.name;
   }
 }
-const Bar: React.FC<{ value: number }> = ({ value }) => {
-  const percentage = Math.min(Math.max(value, 0), 100); // Ensures the value is between 0 and 100
-  return (
-    <div className="relative h-2 w-full rounded bg-gray-600">
-      <div
-        className="absolute left-0 top-0 h-2 rounded-l bg-primary"
-        style={{ width: `${percentage}%` }}
-      />
-    </div>
-  );
-};

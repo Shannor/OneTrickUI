@@ -28,6 +28,8 @@ import type {
   BackfillAggregateDataResponse,
   BackfillAllUsersCharacterIdsData,
   BackfillAllUsersCharacterIdsResponse,
+  BackfillSnapshotInfoData,
+  BackfillSnapshotInfoResponse,
   CreateSnapshotData,
   CreateSnapshotResponse,
   GetActivitiesData,
@@ -104,6 +106,19 @@ export const backfillAllUsersCharacterIds = <
   >({
     ...options,
     url: '/admin/backfill-character-ids',
+  });
+};
+
+export const backfillSnapshotInfo = <ThrowOnError extends boolean = false>(
+  options?: Options<BackfillSnapshotInfoData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).post<
+    BackfillSnapshotInfoResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    url: '/admin/backfill-snapshot-base-info',
   });
 };
 

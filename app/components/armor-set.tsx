@@ -29,13 +29,11 @@ export const ArmorSet: React.FC<Props> = ({ snapshot, className }) => {
 
   if (items.length === 0) return null;
 
+  console.log(items);
   return (
     <div className={cn('grid grid-cols-1 gap-3', className)}>
       {items.map((item) => (
-        <div key={item.instanceId} className="flex flex-col gap-1">
-          <div className="truncate text-sm font-medium">{item.name}</div>
-          <Armor {...item} />
-        </div>
+        <Armor key={item.instanceId} {...item} />
       ))}
     </div>
   );

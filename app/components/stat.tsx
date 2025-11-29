@@ -16,7 +16,7 @@ export const Stat: React.FC<Props> = ({
   valueClassName,
 }) => {
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-start gap-2 lg:items-center">
       <Label className={labelClassName}>{label}</Label>
       <h4
         className={cn('text-xl font-semibold tracking-tight', valueClassName)}

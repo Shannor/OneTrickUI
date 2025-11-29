@@ -32,8 +32,8 @@ export default [
           id: 'session-loadout',
         }),
       ]),
-      route('loadouts', 'routes/snapshots.tsx'),
-      route('loadouts/:snapshotId', 'routes/snapshot.tsx', [
+      route('loadouts', 'routes/loadouts.tsx'),
+      route('loadouts/:snapshotId', 'routes/loadout.tsx', [
         index('routes/loadout-details.tsx', { id: 'loadout-details' }),
         route('metrics', 'routes/loadout-metrics.tsx', {
           id: 'loadout-metrics',

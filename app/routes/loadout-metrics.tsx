@@ -12,7 +12,7 @@ import { CardTitle } from '~/components/ui/card';
 import { DateRangePicker } from '~/components/ui/date-range-picker';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
-import { useSnapshotData } from '~/hooks/use-route-loaders';
+import { useLoadoutData } from '~/hooks/use-route-loaders';
 import {
   type CustomTimeWindow,
   type TimeWindow,
@@ -48,7 +48,7 @@ export default function LoadoutMetrics({
 }: Route.ComponentProps) {
   const { aggregates } = loaderData;
   const { characterId } = params;
-  const { snapshot } = useSnapshotData();
+  const { snapshot } = useLoadoutData();
 
   const [time, setTime] = useState<TimeWindow | CustomTimeWindow>('all-time');
   const [gameMode, setGameMode] = useState<GameMode>('allGameModes');
@@ -95,10 +95,10 @@ export default function LoadoutMetrics({
         content="Analyze your Destiny 2 performance over time and by map/mode."
       />
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
           <DateRangePicker value={time} onValueChange={setTime} />
           <RadioGroup
-            className="flex items-center gap-4"
+            className="flex flex-col items-start gap-4 lg:flex-row lg:items-center"
             name="game-mode"
             value={gameMode}
             onValueChange={(value) => {
@@ -127,7 +127,7 @@ export default function LoadoutMetrics({
             </div>
           </RadioGroup>
         </div>
-        <div className="flex flex-col gap-4 md:flex-row">
+        <div className="flex flex-col gap-4 xl:flex-row">
           <ChartWrapper
             title="Average Performance"
             description="Shows the average kills/deaths/assists for the selected time window."
@@ -136,6 +136,7 @@ export default function LoadoutMetrics({
               data={data}
               timeWindow={customTime}
               syncId="performance"
+              className="lg:max-h-[200px] xl:max-h-[400px]"
             />
           </ChartWrapper>
 
@@ -147,6 +148,7 @@ export default function LoadoutMetrics({
               data={data}
               timeWindow={customTime}
               syncId="performance"
+              className="lg:max-h-[200px] xl:max-h-[400px]"
             />
           </ChartWrapper>
           <ChartWrapper
@@ -169,10 +171,11 @@ export default function LoadoutMetrics({
               data={data}
               timeWindow={customTime}
               syncId="performance"
+              className="lg:max-h-[200px] xl:max-h-[400px]"
             />
           </ChartWrapper>
         </div>
-        <div className="flex flex-col gap-4 md:flex-row">
+        <div className="flex flex-col gap-4 lg:flex-row">
           <ChartWrapper
             title="Map Performance"
             description="Shows the map performance for the selected time window."

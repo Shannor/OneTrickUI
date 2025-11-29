@@ -1,5 +1,6 @@
 import React from 'react';
 import { Stat } from '~/components/stat';
+import { cn } from '~/lib/utils';
 
 export interface StatItem {
   label: string;
@@ -9,15 +10,16 @@ export interface StatItem {
 
 interface PerformanceProps {
   stats: StatItem[];
+  className?: string;
 }
 
-export function Performance({ stats }: PerformanceProps) {
+export function Performance({ stats, className }: PerformanceProps) {
   if (!stats || stats.length === 0) {
     return null;
   }
 
   return (
-    <div className="flex flex-row gap-4">
+    <div className={cn('flex flex-row gap-4', className)}>
       {stats.map((stat) => (
         <Stat
           key={stat.label}
