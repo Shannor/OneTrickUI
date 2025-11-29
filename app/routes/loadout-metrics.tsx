@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { data } from 'react-router';
 import { type GameMode, getSnapshotAggregates } from '~/api';
+import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 import { AvgPerformance } from '~/charts/AvgPerformance';
-import { ChartHeader } from '~/charts/ChartHeader';
+import { ChartWrapper } from '~/charts/ChartWrapper';
 import { KDPerformance } from '~/charts/KDPerformance';
 import { MapCount } from '~/charts/MapCount';
 import { MapPerformance } from '~/charts/MapPerformance';
 import { WinRatio } from '~/charts/WinRatio';
+import { CardTitle } from '~/components/ui/card';
 import { DateRangePicker } from '~/components/ui/date-range-picker';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
@@ -18,6 +20,7 @@ import {
   generatePerformancePerMap,
   timeWindowToCustom,
 } from '~/lib/metrics';
+import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/loadout-metrics';
 
@@ -75,6 +78,14 @@ export default function LoadoutMetrics({
     );
   }, [aggregates, customTime, gameMode, characterId]);
 
+  const ratio = data.reduce(
+    (state, current) => {
+      state.wins += current.wins;
+      state.games += current.gameCount;
+      return state;
+    },
+    { wins: 0, games: 0 },
+  );
   return (
     <div className="flex flex-col gap-4">
       <title>Snapshot Metrics</title>
@@ -117,7 +128,7 @@ export default function LoadoutMetrics({
           </RadioGroup>
         </div>
         <div className="flex flex-col gap-4 md:flex-row">
-          <ChartHeader
+          <ChartWrapper
             title="Average Performance"
             description="Shows the average kills/deaths/assists for the selected time window."
           >
@@ -126,9 +137,9 @@ export default function LoadoutMetrics({
               timeWindow={customTime}
               syncId="performance"
             />
-          </ChartHeader>
+          </ChartWrapper>
 
-          <ChartHeader
+          <ChartWrapper
             title="K/D & Efficiency"
             description="Shows the ratios for the selected time window."
           >
@@ -137,9 +148,21 @@ export default function LoadoutMetrics({
               timeWindow={customTime}
               syncId="performance"
             />
-          </ChartHeader>
-          <ChartHeader
-            title="Win Ratio"
+          </ChartWrapper>
+          <ChartWrapper
+            title={
+              <div className="flex flex-row gap-4">
+                <CardTitle>Win Ratio</CardTitle>
+                <div
+                  className={cn(
+                    'text-md',
+                    calculateRatio(ratio.wins, ratio.games) >= 0.5
+                      ? 'text-green-500'
+                      : 'text-red-500',
+                  )}
+                >{`${calculatePercentage(ratio.wins, ratio.games)}%`}</div>
+              </div>
+            }
             description="Shows the win ratio for the selected time window."
           >
             <WinRatio
@@ -147,10 +170,10 @@ export default function LoadoutMetrics({
               timeWindow={customTime}
               syncId="performance"
             />
-          </ChartHeader>
+          </ChartWrapper>
         </div>
         <div className="flex flex-col gap-4 md:flex-row">
-          <ChartHeader
+          <ChartWrapper
             title="Map Performance"
             description="Shows the map performance for the selected time window."
           >
@@ -159,13 +182,13 @@ export default function LoadoutMetrics({
               timeWindow={customTime}
               syncId="map"
             />
-          </ChartHeader>
-          <ChartHeader
+          </ChartWrapper>
+          <ChartWrapper
             title="Map Count"
             description="Shows the number of games played for each map."
           >
             <MapCount data={mapData} timeWindow={customTime} syncId="map" />
-          </ChartHeader>
+          </ChartWrapper>
         </div>
       </div>
     </div>

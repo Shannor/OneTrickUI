@@ -10,7 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '~/components/ui/chart';
-import type { MapResult, CustomTimeWindow } from '~/lib/metrics';
+import type { CustomTimeWindow, MapResult } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 const chartConfig = {
@@ -20,7 +20,7 @@ const chartConfig = {
   },
   kda: {
     label: 'Efficiency',
-    color: 'var(--chart-secondary)',
+    color: 'var(--chart-3)',
   },
 } satisfies ChartConfig;
 
@@ -71,14 +71,14 @@ export function MapPerformance({ className, data, syncId }: Props) {
           type="monotone"
           radius={2}
           fill="var(--color-kd)"
-          barSize={10}
+          barSize={8}
         />
         <Bar
           dataKey="kda"
           type="monotone"
           radius={2}
           fill="var(--color-kda)"
-          barSize={10}
+          barSize={8}
         />
       </ComposedChart>
     </ChartContainer>

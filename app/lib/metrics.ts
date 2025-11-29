@@ -38,6 +38,7 @@ export interface KDAResult {
   kd: number;
   kda: number;
   winRatio: number;
+  wins: number;
   gameCount: number;
 }
 
@@ -214,6 +215,7 @@ export function generateKDAResultsForTimeWindow(
           kd: 1.0,
           kda: 1.0,
           winRatio: 0.5,
+          wins: 0,
           gameCount: 0,
         };
       }
@@ -226,6 +228,7 @@ export function generateKDAResultsForTimeWindow(
         kda: calculateRatio(value.kills + value.assists, value.deaths),
         winRatio: calculateRatio(value.wins, value.gameCount),
         gameCount: value.gameCount,
+        wins: value.wins,
       };
     })
     .filter(Boolean);

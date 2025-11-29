@@ -1,9 +1,9 @@
-import { isAfter, isBefore } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router';
 import type { Aggregate, Session } from '~/api';
-import { ChartHeader } from '~/charts/ChartHeader';
+import { calculateRatio } from '~/calculations/precision';
+import { ChartWrapper } from '~/charts/ChartWrapper';
 import { MapCount } from '~/charts/MapCount';
 import { MapPerformance } from '~/charts/MapPerformance';
 import { Empty } from '~/components/empty';
@@ -11,46 +11,10 @@ import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
 import { useWeaponsFromLoadout } from '~/hooks/use-loadout';
 import { useSessionData } from '~/hooks/use-route-loaders';
-import {
-  generateKDAResultsForTimeWindow,
-  generatePerformancePerMap,
-} from '~/lib/metrics';
-import { Performance, type StatItem } from '~/organisims/performance';
+import { generatePerformancePerMap } from '~/lib/metrics';
+import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
-
-function getLoadoutData(
-  periods: PeriodBoundaries | null,
-  groupedBySnapshot: GroupTuple[],
-  characterId: string,
-  aggregates: Aggregate[],
-) {
-  if (!periods) {
-    return;
-  }
-  const time = { start: periods.earliest, end: periods.latest };
-  return groupedBySnapshot.map(([snapshotId, aggs]) => {
-    // The problem is that this only works if the session is 1 day long
-    const result = generateKDAResultsForTimeWindow(
-      aggs ?? [],
-      time,
-      characterId,
-    );
-
-    const mapData = generatePerformancePerMap(
-      aggregates,
-      time,
-      characterId,
-      undefined,
-    );
-    return {
-      snapshotId,
-      performance: result.pop(),
-      mapData,
-      time,
-    };
-  });
-}
 
 export default function SessionMetrics({ params }: Route.ComponentProps) {
   const { aggregates, snapshots, session } = useSessionData();
@@ -83,38 +47,14 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
   );
   return (
     <div>
-      <title>{`${session?.name} Metrics`}</title>
+      <title>{`${session?.name} - Metrics`}</title>
       <meta property="og:title" content={`${session?.name} Metrics`} />
       <meta
         name="description"
         content="View per-loadout performance metrics for this session."
       />
-      {data?.map(({ snapshotId, performance, mapData, time }) => {
+      {data?.map(({ snapshotId, stats, mapData, time }) => {
         const snapshot = snapshots[snapshotId];
-        const skillStats: StatItem[] = performance
-          ? [
-              { label: 'K/D', value: performance.kd.toFixed(2) },
-              { label: 'Efficiency', value: performance.kda.toFixed(2) },
-            ]
-          : [];
-
-        const stats: StatItem[] = performance
-          ? [
-              {
-                label: 'Matches',
-                value: performance.gameCount.toString(),
-              },
-              {
-                label: 'Win Ratio',
-                value: performance.winRatio.toFixed(2),
-                valueClassName:
-                  performance.winRatio >= 0.5
-                    ? 'text-green-500'
-                    : 'text-red-500',
-              },
-            ]
-          : [];
-
         return (
           <div className="flex flex-col gap-4 p-4" key={snapshotId}>
             <div className="group flex flex-row gap-2">
@@ -136,29 +76,30 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
                 />
               ))}
             </div>
-            {performance ? (
-              <div className="flex flex-col gap-4 md:flex-row">
-                <Performance stats={stats} />
-                <Performance stats={skillStats} />
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground">
-                No Performance Data
-              </div>
-            )}
             <div className="flex flex-col gap-4 md:flex-row">
-              <ChartHeader
+              <Performance stats={stats} />
+            </div>
+            <div className="flex flex-col gap-4 md:flex-row">
+              <ChartWrapper
                 title="Map Performance"
                 description="Shows the map performance for the session with the loadout"
               >
-                <MapPerformance data={mapData} timeWindow={time} syncId="map" />
-              </ChartHeader>
-              <ChartHeader
+                <MapPerformance
+                  data={mapData}
+                  timeWindow={time}
+                  syncId={`map-${snapshotId}`}
+                />
+              </ChartWrapper>
+              <ChartWrapper
                 title="Map Count"
                 description="Shows the number of games played for each map with a given loadout."
               >
-                <MapCount data={mapData} timeWindow={time} syncId="map" />
-              </ChartHeader>
+                <MapCount
+                  data={mapData}
+                  timeWindow={time}
+                  syncId={`map-${snapshotId}`}
+                />
+              </ChartWrapper>
             </div>
           </div>
         );
@@ -178,17 +119,13 @@ function findPeriodBoundaries(
     };
   }
 
-  let earliest = aggregates[0].activityDetails.period;
-  let latest = aggregates[0].activityDetails.period;
-
-  for (const aggregate of aggregates) {
-    if (isBefore(new Date(aggregate.activityDetails.period), earliest)) {
-      earliest = aggregate.activityDetails.period;
-    }
-    if (isAfter(new Date(aggregate.activityDetails.period), latest)) {
-      latest = aggregate.activityDetails.period;
-    }
-  }
+  const sorted = [...aggregates].sort(
+    (a, b) =>
+      new Date(b.activityDetails.period).getTime() -
+      new Date(a.activityDetails.period).getTime(),
+  );
+  const latest = new Date(sorted[0].activityDetails.period);
+  const earliest = new Date(sorted[sorted.length - 1].activityDetails.period);
 
   return { earliest, latest };
 }
@@ -238,4 +175,63 @@ function groupAggregates(
     const bAggsLength = b[1].length;
     return bAggsLength - aAggsLength;
   });
+}
+
+function getLoadoutData(
+  periods: PeriodBoundaries | null,
+  groupedBySnapshot: GroupTuple[],
+  characterId: string,
+  aggregates: Aggregate[],
+) {
+  if (!periods) {
+    return;
+  }
+  const time = { start: periods.earliest, end: periods.latest };
+  return groupedBySnapshot.map(([snapshotId, aggs]) => {
+    const performances = getPerformances(aggs, characterId);
+    const { wins } = performances.reduce(
+      (state, p) => {
+        state.wins += p.playerStats.standing?.value === 0 ? 1 : 0;
+        return state;
+      },
+      {
+        wins: 0,
+      },
+    );
+
+    const winRatio = calculateRatio(wins, performances.length);
+    const stats = [];
+    if (performances.length > 1) {
+      stats.push({
+        label: 'Matches',
+        value: performances.length.toString(),
+      });
+      stats.push({
+        label: 'Win Ratio',
+        value: winRatio.toFixed(2),
+        valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
+      });
+    }
+    const mapData = generatePerformancePerMap(aggs, time, characterId);
+    return {
+      snapshotId,
+      stats,
+      mapData,
+      time,
+    };
+  });
+}
+function getPerformances(aggregates: Aggregate[], characterId: string) {
+  return aggregates
+    .map((agg) => {
+      const snapshot = agg.snapshotLinks[characterId];
+      if (
+        snapshot.confidenceLevel !== 'noMatch' &&
+        snapshot.confidenceLevel !== 'notFound'
+      ) {
+        return agg.performance[characterId];
+      }
+      return null;
+    })
+    .filter((x) => !!x);
 }
