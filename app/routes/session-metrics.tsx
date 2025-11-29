@@ -91,7 +91,7 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
                 />
               </ChartWrapper>
               <ChartWrapper
-                title="Map Count"
+                title="Map Distrubution"
                 description="Shows the number of games played for each map with a given loadout."
               >
                 <MapCount

@@ -184,7 +184,7 @@ export default function LoadoutMetrics({
             />
           </ChartWrapper>
           <ChartWrapper
-            title="Map Count"
+            title="Map Distrubtion"
             description="Shows the number of games played for each map."
           >
             <MapCount data={mapData} timeWindow={customTime} syncId="map" />
