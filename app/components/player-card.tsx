@@ -53,6 +53,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           <PlayerStatsGrid stats={stats} />
         </div>
 
+        {weapons.length > 0 && (
+          <div className="col-span-12 flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
+              {weapons.map((w) => (
+                <Weapon key={String(w.referenceId)} {...w} />
+              ))}
+            </div>
+          </div>
+        )}
         <div className="col-span-12 grid grid-cols-1 gap-4 md:grid-cols-2">
           <SubClassProvider snapshot={snapshot}>
             <div className="flex flex-col gap-4">
@@ -65,16 +74,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           <ArmorSet snapshot={snapshot} />
           <ClassStats data={values} />
         </div>
-
-        {weapons.length > 0 && (
-          <div className="col-span-12 flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {weapons.map((w) => (
-                <Weapon key={String(w.referenceId)} {...w} />
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

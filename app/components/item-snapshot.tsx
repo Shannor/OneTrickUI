@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const ItemSnapshot: React.FC<Props> = ({ item, children }) => {
-  const { baseInfo, stats } = item.details;
+  const { baseInfo } = item.details;
 
   return (
     <div className="flex flex-row items-center gap-2">

@@ -29,7 +29,6 @@ export const ArmorSet: React.FC<Props> = ({ snapshot, className }) => {
 
   if (items.length === 0) return null;
 
-  console.log(items);
   return (
     <div className={cn('grid grid-cols-1 gap-3', className)}>
       {items.map((item) => (

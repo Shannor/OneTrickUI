@@ -15,6 +15,7 @@ const SPECIAL_STATS: Record<number, string> = {
 const ORDER: Record<number, number> = {
   4284893193: 1, // RPM
   2961396640: 1, // Charge Time
+  3614673599: 2, // Blast Radius
   4043523819: 2, // Impact
   1240592695: 3, // Range
   155624089: 4, // Stability
@@ -24,7 +25,8 @@ const ORDER: Record<number, number> = {
   2714457168: 8, // AE
   3555269338: 9, // Zoom
   2715839340: 10, // Recoil
-  3871231066: 11, // Mag
+  1931675084: 11, // Ammo Generation
+  3871231066: 12, // Mag
 };
 
 enum StatEnum {
@@ -40,14 +42,16 @@ enum StatEnum {
   Zoom = 3555269338, // Zoom
   Recoil = 2715839340, // Recoil Direction
   Mag = 3871231066, // Magazine
+  AG = 1931675084, // Ammo Generation
+  BlastRadius = 3614673599, // Blast Radius
 }
 export const WeaponStats: React.FC<Props> = ({ stats }) => {
-  const barStats = Object.values(stats)
+  const gunStats = Object.values(stats)
     .filter((it) => SPECIAL_STATS[it.hash] === undefined && it.value <= 100)
     .sort((a, b) => ORDER[a.hash] - ORDER[b.hash]);
   return (
     <div className="flex flex-col">
-      {barStats.map((it) => (
+      {gunStats.map((it) => (
         <div key={it.hash} className="grid grid-cols-12 items-center gap-4">
           <div className="col-span-3">{updateNames(it)}</div>
           <div className="col-span-7">
@@ -70,6 +74,10 @@ function updateNames(stat: GunStat): string {
       return 'Reload';
     case StatEnum.AA:
       return 'A.A.';
+    case StatEnum.AG:
+      return 'A.G.';
+    case StatEnum.BlastRadius:
+      return 'Blast';
     default:
       return stat.name;
   }

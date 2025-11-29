@@ -6,7 +6,6 @@ import { ArmorSet } from '~/components/armor-set';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Weapon } from '~/components/weapon';
 import { useClassStats, useWeapons } from '~/hooks/use-loadout';
-import { cn } from '~/lib/utils';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/loadout-details';
@@ -45,32 +44,31 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
         name="description"
         content={`View armor stats and gear details for ${snapshot.name ?? 'this loadout'}.`}
       />
-      <SubClassProvider snapshot={snapshot}>
-        <div className="flex flex-col gap-4">
-          <Super />
-          <Abilities />
-          <Aspects />
-          <Fragments />
-        </div>
-      </SubClassProvider>
-      <div
-        className={cn('flex flex-col flex-wrap gap-10 xl:flex-row xl:gap-4')}
-      >
-        {data.map((item) => {
-          return (
+      <div className="flex flex-col gap-10 lg:flex-row">
+        <SubClassProvider snapshot={snapshot}>
+          <div className="flex flex-col gap-4">
+            <Super />
+            <Abilities />
+            <Aspects />
+            <Fragments />
+          </div>
+        </SubClassProvider>
+        <ClassStats data={values} />
+      </div>
+      <div className="col-span-12 flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
+          {data.map((item) => (
             <Weapon
               key={item.itemHash}
               referenceId={item.itemHash}
               properties={item.details}
               stats={item.stats}
-              className="xl:max-w-[400px]"
             />
-          );
-        })}
+          ))}
+        </div>
       </div>
-      <div className="flex flex-col gap-10 md:flex-row">
+      <div className="flex max-w-[400px] flex-col">
         <ArmorSet snapshot={snapshot} />
-        <ClassStats data={values} />
       </div>
     </div>
   );

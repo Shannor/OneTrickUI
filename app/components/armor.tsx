@@ -1,17 +1,11 @@
 import React from 'react';
-import type { ItemSnapshot, Socket } from '~/api';
+import type { ItemSnapshot as ItemSnapshotType, Socket } from '~/api';
 import { ArmorStats } from '~/components/armor-stats';
-import { Label } from '~/components/label';
+import { ItemSnapshot } from '~/components/item-snapshot';
 import { Sockets } from '~/components/sockets';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
 import { cn } from '~/lib/utils';
 
-interface Props extends ItemSnapshot {
+interface Props extends ItemSnapshotType {
   className?: string;
 }
 interface ArmorSockets {
@@ -29,10 +23,9 @@ const isOrnament = (itemTypeDisplayName: string): boolean =>
  * Armor: reusable renderer for an armor item's sockets.
  * - Accepts the sockets array like Weapon does, and renders them in a compact row using icon-only mode.
  */
-export const Armor: React.FC<Props> = ({
-  details: { baseInfo, sockets, perks, stats },
-  className,
-}) => {
+export const Armor: React.FC<Props> = (props) => {
+  const { details, className } = props;
+  const { baseInfo, sockets, perks, stats } = details;
   if (!sockets || sockets.length === 0) return null;
   const weaponSockets: ArmorSockets =
     sockets?.reduce(
@@ -62,23 +55,8 @@ export const Armor: React.FC<Props> = ({
     ) ?? {};
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <div className="flex flex-row items-center gap-2">
-        <Tooltip>
-          <TooltipContent className="flex flex-col gap-4">
-            <Label>{baseInfo.name}</Label>
-            <ArmorStats stats={stats} />
-          </TooltipContent>
-          <TooltipTrigger>
-            <Avatar className="h-10 w-10 rounded-sm">
-              <AvatarFallback className="rounded-sm">
-                {baseInfo.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-              <AvatarImage src={baseInfo.icon} alt={baseInfo.name} />
-            </Avatar>
-          </TooltipTrigger>
-        </Tooltip>
-        {!baseInfo.icon && <Label className="truncate">{baseInfo.name}</Label>}
-      </div>
+      <ItemSnapshot item={props} />
+      <ArmorStats stats={stats} />
       <Sockets
         sockets={weaponSockets.mod}
         displayMode="iconOnly"
