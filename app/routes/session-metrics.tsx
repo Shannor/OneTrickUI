@@ -1,8 +1,7 @@
-import { addMinutes, subMinutes } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router';
-import type { Aggregate, Session } from '~/api';
+import type { Aggregate } from '~/api';
 import { calculateRatio } from '~/calculations/precision';
 import { ChartWrapper } from '~/charts/ChartWrapper';
 import { MapCount } from '~/charts/MapCount';
@@ -21,8 +20,11 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
   const { aggregates, snapshots, session } = useSessionData();
   const { characterId, id } = params;
 
-  const periods = findPeriodBoundaries(aggregates ?? [], session);
   const groupedBySnapshot = groupAggregates(aggregates ?? [], characterId);
+  const data = getLoadoutData(groupedBySnapshot, characterId);
+  const fake = [['test', aggregates ?? []]] as GroupTuple[];
+  const [item] = getLoadoutData(fake, characterId);
+  const { stats, matchStats, rawStats } = item;
   if (!aggregates) {
     return (
       <Empty
@@ -39,103 +41,88 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
       />
     );
   }
-  const data = getLoadoutData(
-    periods,
-    groupedBySnapshot,
-    characterId,
-    aggregates,
-  );
   return (
-    <div>
+    <div className="mt-8 flex flex-col gap-16">
       <title>{`${session?.name} - Metrics`}</title>
       <meta property="og:title" content={`${session?.name} Metrics`} />
       <meta
         name="description"
         content="View per-loadout performance metrics for this session."
       />
-      {data?.map(({ snapshotId, stats, mapData, time }) => {
-        const snapshot = snapshots[snapshotId];
-        return (
-          <div className="flex flex-col gap-4 p-4" key={snapshotId}>
-            <div className="group flex flex-row gap-2">
-              <Link
-                to={`/profile/${id}/c/${characterId}/loadouts/${snapshotId}`}
-              >
-                <Label className="group-hover:text-blue-400 group-hover:underline">
-                  {snapshot?.name ?? 'Snapshot'}
-                </Label>
-              </Link>
-              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
-            </div>
-            <div className="flex flex-row gap-4">
-              {getWeapons(snapshot.loadout).map((weapon) => (
-                <WeaponHeader
-                  key={weapon.itemHash}
-                  properties={weapon.details}
-                  onlyIcon
-                />
-              ))}
-            </div>
-            <div className="flex flex-col gap-4 md:flex-row">
-              <Performance stats={stats} />
-            </div>
-            <div className="flex flex-col gap-4 md:flex-row">
-              <ChartWrapper
-                title="Map Performance"
-                description="Shows the map performance for the session with the loadout"
-              >
-                <MapPerformance
-                  data={mapData}
-                  timeWindow={time}
-                  syncId={`map-${snapshotId}`}
-                />
-              </ChartWrapper>
-              <ChartWrapper
-                title="Map Distrubution"
-                description="Shows the number of games played for each map with a given loadout."
-              >
-                <MapCount
-                  data={mapData}
-                  timeWindow={time}
-                  syncId={`map-${snapshotId}`}
-                />
-              </ChartWrapper>
-            </div>
-          </div>
-        );
-      })}
+      <div className="flex flex-col gap-6">
+        <h4 className="scroll-m-20 border-b pb-2 text-xl font-semibold tracking-tight">
+          Session Metrics
+        </h4>
+        <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
+          <Performance stats={stats} className="md:pr-2" />
+          <Performance stats={matchStats} className={'md:px-2'} />
+          <Performance stats={rawStats} className={'md:px-2'} />
+        </div>
+      </div>
+      <div className="flex flex-col gap-20">
+        {data?.map(
+          ({ snapshotId, stats, mapData, time, matchStats, rawStats }) => {
+            const snapshot = snapshots[snapshotId];
+            const weapons = getWeapons(snapshot.loadout);
+
+            return (
+              <div className="flex flex-col gap-4" key={snapshotId}>
+                <div className="group flex flex-row gap-2">
+                  <Link
+                    to={`/profile/${id}/c/${characterId}/loadouts/${snapshotId}`}
+                  >
+                    <Label className="group-hover:text-blue-400 group-hover:underline">
+                      {snapshot?.name ?? 'Snapshot'}
+                    </Label>
+                  </Link>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
+                </div>
+                <div className="flex flex-row gap-4">
+                  {weapons.map((weapon) => (
+                    <WeaponHeader
+                      key={weapon.itemHash}
+                      properties={weapon.details}
+                      onlyIcon
+                    />
+                  ))}
+                </div>
+                <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
+                  <Performance stats={stats} className="md:pr-2" />
+                  <Performance stats={matchStats} className={'md:px-2'} />
+                  <Performance stats={rawStats} className={'md:px-2'} />
+                </div>
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <ChartWrapper
+                    title="Map Performance"
+                    description="Shows the map performance for the session with the loadout"
+                  >
+                    <MapPerformance
+                      data={mapData}
+                      timeWindow={time}
+                      syncId={`map-${snapshotId}`}
+                    />
+                  </ChartWrapper>
+                  <ChartWrapper
+                    title="Map Distrubution"
+                    description="Shows the number of games played for each map with a given loadout."
+                  >
+                    <MapCount
+                      data={mapData}
+                      timeWindow={time}
+                      syncId={`map-${snapshotId}`}
+                    />
+                  </ChartWrapper>
+                </div>
+              </div>
+            );
+          },
+        )}
+      </div>
     </div>
   );
 }
 
-function findPeriodBoundaries(
-  aggregates: Aggregate[],
-  session: Session,
-): PeriodBoundaries | null {
-  if (!aggregates.length) {
-    return {
-      earliest: session.startedAt,
-      latest: new Date(),
-    };
-  }
-
-  const sorted = [...aggregates].sort(
-    (a, b) =>
-      new Date(b.activityDetails.period).getTime() -
-      new Date(a.activityDetails.period).getTime(),
-  );
-  const latest = new Date(sorted[0].activityDetails.period);
-  const earliest = new Date(sorted[sorted.length - 1].activityDetails.period);
-
-  return { earliest, latest };
-}
-
 type GroupTuple = [string, Aggregate[]];
-type PeriodBoundaries = {
-  earliest: Date;
-  latest: Date;
-};
-
 function groupAggregates(
   aggregates: Aggregate[],
   characterId: string,
@@ -177,22 +164,10 @@ function groupAggregates(
   });
 }
 
-function getLoadoutData(
-  periods: PeriodBoundaries | null,
-  groupedBySnapshot: GroupTuple[],
-  characterId: string,
-  aggregates: Aggregate[],
-) {
-  if (!periods) {
-    return;
-  }
-  const time = {
-    start: subMinutes(periods.earliest, 30),
-    end: addMinutes(periods.latest, 30),
-  };
+function getLoadoutData(groupedBySnapshot: GroupTuple[], characterId: string) {
   return groupedBySnapshot.map(([snapshotId, aggs]) => {
     const performances = getPerformances(aggs, characterId);
-    const customTime = timeWindowToCustom(time, aggs);
+    const customTime = timeWindowToCustom('all-time', aggs);
     const { wins, kills, deaths, assists } = performances.reduce(
       (state, p) => {
         state.kills += p.playerStats.kills?.value ?? 0;
@@ -212,6 +187,11 @@ function getLoadoutData(
     const winRatio = calculateRatio(wins, performances.length);
     const kd = calculateRatio(kills, deaths);
     const kda = calculateRatio(kills + assists, deaths);
+    const rawStats = [
+      { label: 'Kills', value: kills.toString() },
+      { label: 'Deaths', value: deaths.toString() },
+      { label: 'Assists', value: assists.toString() },
+    ];
     const stats = [];
     stats.push({
       label: 'K/D',
@@ -221,12 +201,13 @@ function getLoadoutData(
       label: 'Efficiency',
       value: kda.toFixed(2),
     });
-    if (performances.length > 1) {
-      stats.push({
+    const matchStats = [];
+    if (performances.length >= 1) {
+      matchStats.push({
         label: 'Matches',
         value: performances.length.toString(),
       });
-      stats.push({
+      matchStats.push({
         label: 'Win Ratio',
         value: winRatio.toFixed(2),
         valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
@@ -237,8 +218,10 @@ function getLoadoutData(
     return {
       snapshotId,
       stats,
+      rawStats,
+      matchStats,
       mapData,
-      time,
+      time: customTime,
     };
   });
 }

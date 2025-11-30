@@ -10,7 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '~/components/ui/chart';
-import type { MapResult, CustomTimeWindow } from '~/lib/metrics';
+import type { CustomTimeWindow, MapResult } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 const chartConfig = {
@@ -41,7 +41,7 @@ export function MapCount({ className, data, syncId }: Props) {
         barCategoryGap="20%"
         syncId={syncId}
       >
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={true} horizontal={false} />
         <ChartLegend content={<ChartLegendContent />} />
         <YAxis
           dataKey="location"

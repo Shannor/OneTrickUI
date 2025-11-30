@@ -45,7 +45,7 @@ export function MapPerformance({ className, data, syncId }: Props) {
         layout="vertical"
         barCategoryGap="10%"
       >
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={true} horizontal={false} />
         <YAxis
           type="category"
           dataKey="location"

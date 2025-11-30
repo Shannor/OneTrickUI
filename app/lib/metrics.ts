@@ -282,7 +282,6 @@ function sortAggregates(
   filterBy?: GameMode,
 ) {
   const { endDay, startDay } = getTimes(time);
-  console.log(time, startDay, endDay);
   return aggregates
     .filter((a) => {
       if (filterBy !== undefined && filterBy !== 'allGameModes') {
