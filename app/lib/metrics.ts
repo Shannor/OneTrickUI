@@ -1,4 +1,5 @@
 import {
+  addMinutes,
   differenceInDays,
   eachDayOfInterval,
   eachHourOfInterval,
@@ -16,6 +17,7 @@ import {
   startOfMonth,
   startOfToday,
   subHours,
+  subMinutes,
   subMonths,
   subWeeks,
 } from 'date-fns';
@@ -70,7 +72,6 @@ export type TimeWindow =
 export function timeWindowToCustom(
   time: TimeWindow | CustomTimeWindow,
   aggregates: Aggregate[],
-  allTimeStartDate?: Date,
 ): CustomTimeWindow {
   if (typeof time !== 'string') {
     return time;
@@ -93,13 +94,16 @@ export function timeWindowToCustom(
     case 'six-months':
       return { start: subMonths(startOfToday(), 6), end };
     case 'all-time': {
-      const last = [...aggregates].sort(
+      const items = [...aggregates].sort(
         (a, b) =>
           new Date(b.activityDetails.period).getTime() -
           new Date(a.activityDetails.period).getTime(),
-      )[0];
+      );
+      const last = items[0];
+      const first = items[items.length - 1];
       const endDate = last ? new Date(last.activityDetails.period) : end;
-      return { start: allTimeStartDate ?? new Date(0), end: endDate };
+      const start = new Date(first.activityDetails.period);
+      return { start: subMinutes(start, 30), end: addMinutes(endDate, 30) };
     }
   }
 }
@@ -155,7 +159,9 @@ export function generateKDAResultsForTimeWindow(
   filterBy?: GameMode,
 ): KDAResult[] {
   const { intervals, intervalRate } = getTimes(time);
+  console.log('in function', time, aggregates, intervalRate, intervals);
   const aggs = sortAggregates(time, aggregates, filterBy);
+  console.log(aggs, 'length', aggs.length);
   const values = aggs.reduce<Record<string, KDA>>((acc, agg) => {
     const p = agg.performance[characterId];
     if (!p) {
@@ -276,6 +282,7 @@ function sortAggregates(
   filterBy?: GameMode,
 ) {
   const { endDay, startDay } = getTimes(time);
+  console.log(time, startDay, endDay);
   return aggregates
     .filter((a) => {
       if (filterBy !== undefined && filterBy !== 'allGameModes') {

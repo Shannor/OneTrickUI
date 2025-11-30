@@ -54,10 +54,7 @@ export default function LoadoutMetrics({
   const [gameMode, setGameMode] = useState<GameMode>('allGameModes');
 
   const customTime = useMemo(() => {
-    const allTimeStartDate = snapshot
-      ? new Date(snapshot.createdAt)
-      : undefined;
-    return timeWindowToCustom(time, aggregates, allTimeStartDate);
+    return timeWindowToCustom(time, aggregates);
   }, [time, snapshot, aggregates]);
 
   const data = useMemo(() => {
