@@ -7,7 +7,7 @@ import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
-import { useWeaponsFromLoadout } from '~/hooks/use-loadout';
+import { getWeapons } from '~/hooks/use-loadout';
 import { useSessionData } from '~/hooks/use-route-loaders';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
@@ -143,7 +143,7 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                       hidden: !hasLoadout,
                     })}
                   >
-                    {useWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
+                    {getWeapons(snapshot.loadout).map((weapon) => (
                       <WeaponHeader
                         key={weapon.itemHash}
                         properties={weapon.details}

@@ -1,3 +1,4 @@
+import { addMinutes, subMinutes } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router';
@@ -9,9 +10,9 @@ import { MapPerformance } from '~/charts/MapPerformance';
 import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
-import { useWeaponsFromLoadout } from '~/hooks/use-loadout';
+import { getWeapons } from '~/hooks/use-loadout';
 import { useSessionData } from '~/hooks/use-route-loaders';
-import { generatePerformancePerMap } from '~/lib/metrics';
+import { generatePerformancePerMap, timeWindowToCustom } from '~/lib/metrics';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
@@ -22,7 +23,6 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
 
   const periods = findPeriodBoundaries(aggregates ?? [], session);
   const groupedBySnapshot = groupAggregates(aggregates ?? [], characterId);
-
   if (!aggregates) {
     return (
       <Empty
@@ -68,7 +68,7 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
               <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
             </div>
             <div className="flex flex-row gap-4">
-              {useWeaponsFromLoadout(snapshot.loadout).map((weapon) => (
+              {getWeapons(snapshot.loadout).map((weapon) => (
                 <WeaponHeader
                   key={weapon.itemHash}
                   properties={weapon.details}
@@ -186,21 +186,41 @@ function getLoadoutData(
   if (!periods) {
     return;
   }
-  const time = { start: periods.earliest, end: periods.latest };
+  const time = {
+    start: subMinutes(periods.earliest, 30),
+    end: addMinutes(periods.latest, 30),
+  };
   return groupedBySnapshot.map(([snapshotId, aggs]) => {
     const performances = getPerformances(aggs, characterId);
-    const { wins } = performances.reduce(
+    const customTime = timeWindowToCustom(time, aggs);
+    const { wins, kills, deaths, assists } = performances.reduce(
       (state, p) => {
+        state.kills += p.playerStats.kills?.value ?? 0;
+        state.deaths += p.playerStats.deaths?.value ?? 0;
+        state.assists += p.playerStats.assists?.value ?? 0;
         state.wins += p.playerStats.standing?.value === 0 ? 1 : 0;
         return state;
       },
       {
         wins: 0,
+        kills: 0,
+        deaths: 0,
+        assists: 0,
       },
     );
 
     const winRatio = calculateRatio(wins, performances.length);
+    const kd = calculateRatio(kills, deaths);
+    const kda = calculateRatio(kills + assists, deaths);
     const stats = [];
+    stats.push({
+      label: 'K/D',
+      value: kd.toFixed(2),
+    });
+    stats.push({
+      label: 'Efficiency',
+      value: kda.toFixed(2),
+    });
     if (performances.length > 1) {
       stats.push({
         label: 'Matches',
@@ -212,7 +232,8 @@ function getLoadoutData(
         valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
       });
     }
-    const mapData = generatePerformancePerMap(aggs, time, characterId);
+
+    const mapData = generatePerformancePerMap(aggs, customTime, characterId);
     return {
       snapshotId,
       stats,

@@ -17,7 +17,11 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { WeaponStats } from '~/components/weapon-stats';
-import { useClassStats, useExotic, useWeapons } from '~/hooks/use-loadout';
+import {
+  getDetailWeapons,
+  getExotic,
+  useClassStats,
+} from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
@@ -182,8 +186,8 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
       <div className="grid grid-cols-1 gap-4">
         {loadouts?.items?.map((snapshot) => {
           const classStats = useClassStats(snapshot);
-          const { armor } = useExotic(snapshot?.loadout);
-          const data = useWeapons(snapshot?.loadout);
+          const { armor } = getExotic(snapshot?.loadout);
+          const data = getDetailWeapons(snapshot?.loadout);
           const kd = loadouts.stats[snapshot.id]?.kd?.value ?? 0;
           const kda = loadouts.stats[snapshot.id]?.kda?.value ?? 0;
           const winRatio = loadouts.stats[snapshot.id]?.standing?.value ?? 0;

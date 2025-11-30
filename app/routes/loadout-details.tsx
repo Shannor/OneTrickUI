@@ -5,7 +5,7 @@ import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Weapon } from '~/components/weapon';
-import { useClassStats, useWeapons } from '~/hooks/use-loadout';
+import { getDetailWeapons, useClassStats } from '~/hooks/use-loadout';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/loadout-details';
@@ -31,7 +31,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
   const { snapshot } = loaderData;
   const values = useClassStats(snapshot);
-  const data = useWeapons(snapshot?.loadout);
+  const data = getDetailWeapons(snapshot?.loadout);
 
   return (
     <div className="flex flex-col gap-20">

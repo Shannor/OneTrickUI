@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import type {
   CharacterSnapshot,
   InstancePerformance,
@@ -26,128 +25,119 @@ interface Stats {
   kills: number;
 }
 
-export function useWeaponsFromLoadout(loadout?: Loadout): ItemSnapshot[] {
-  return useMemo(() => {
-    if (!loadout) {
-      return [];
-    }
-    const kinetic = loadout[Kinetic];
-    const energy = loadout[Energy];
-    const power = loadout[Power];
-    return [kinetic, energy, power].filter(Boolean) as ItemSnapshot[];
-  }, [loadout]);
+export function getWeapons(loadout?: Loadout): ItemSnapshot[] {
+  if (!loadout) {
+    return [];
+  }
+  const kinetic = loadout[Kinetic];
+  const energy = loadout[Energy];
+  const power = loadout[Power];
+  return [kinetic, energy, power].filter(Boolean) as ItemSnapshot[];
 }
 
-export function useExotic(loadout?: Loadout): {
+export function getExotic(loadout?: Loadout): {
   weapon?: ItemSnapshot;
   armor?: ItemSnapshot;
 } {
-  return useMemo(() => {
-    if (!loadout) {
-      return {};
-    }
-    // Get weapons
-    const kinetic = loadout[Kinetic];
-    const energy = loadout[Energy];
-    const power = loadout[Power];
+  if (!loadout) {
+    return {};
+  }
+  // Get weapons
+  const kinetic = loadout[Kinetic];
+  const energy = loadout[Energy];
+  const power = loadout[Power];
 
-    // Get armor
-    const helmet = loadout[HelmetArmor];
-    const gauntlets = loadout[GauntletsArmor];
-    const chest = loadout[ChestArmor];
-    const leg = loadout[LegArmor];
-    const classArmor = loadout[ClassArmor];
+  // Get armor
+  const helmet = loadout[HelmetArmor];
+  const gauntlets = loadout[GauntletsArmor];
+  const chest = loadout[ChestArmor];
+  const leg = loadout[LegArmor];
+  const classArmor = loadout[ClassArmor];
 
-    const weapons = [kinetic, energy, power];
-    const armor = [helmet, gauntlets, chest, leg, classArmor];
-    const exoticWeapon = weapons.find(
-      (item) =>
-        !!item && item.details.baseInfo.tierTypeName.toLowerCase() === 'exotic',
-    );
-    const exoticArmor = armor.find(
-      (item) =>
-        !!item && item.details.baseInfo.tierTypeName.toLowerCase() === 'exotic',
-    );
-    return { weapon: exoticWeapon, armor: exoticArmor };
-  }, [loadout]);
+  const weapons = [kinetic, energy, power];
+  const armor = [helmet, gauntlets, chest, leg, classArmor];
+  const exoticWeapon = weapons.find(
+    (item) =>
+      !!item && item.details.baseInfo.tierTypeName.toLowerCase() === 'exotic',
+  );
+  const exoticArmor = armor.find(
+    (item) =>
+      !!item && item.details.baseInfo.tierTypeName.toLowerCase() === 'exotic',
+  );
+  return { weapon: exoticWeapon, armor: exoticArmor };
 }
 
-export function useWeaponStats(performances?: InstancePerformance[]) {
-  return useMemo(() => {
-    if (!performances) {
-      return {};
-    }
-    return performances.reduce(
-      (state, currentValue) => {
-        Object.entries(currentValue.weapons).forEach(([key, weapon]) => {
-          if (!weapon.stats) {
-            return;
-          }
-          if (state[key]) {
-            state[key].kills += weapon.stats[UNIQUE_KILLS_KEY].basic.value ?? 0;
-            state[key].precisionKills +=
-              weapon.stats[PRECISION_KILLS_KEY].basic.value ?? 0;
-          } else {
-            state[key] = {
-              precisionKills:
-                weapon.stats[PRECISION_KILLS_KEY].basic.value ?? 0,
-              kills: weapon.stats[UNIQUE_KILLS_KEY].basic.value ?? 0,
-            };
-          }
-        });
-        return state;
-      },
-      {} as Record<string, Stats>,
-    );
-  }, [performances]);
+export function getWeaponStats(performances?: InstancePerformance[]) {
+  if (!performances) {
+    return {};
+  }
+  return performances.reduce(
+    (state, currentValue) => {
+      Object.entries(currentValue.weapons).forEach(([key, weapon]) => {
+        if (!weapon.stats) {
+          return;
+        }
+        if (state[key]) {
+          state[key].kills += weapon.stats[UNIQUE_KILLS_KEY].basic.value ?? 0;
+          state[key].precisionKills +=
+            weapon.stats[PRECISION_KILLS_KEY].basic.value ?? 0;
+        } else {
+          state[key] = {
+            precisionKills: weapon.stats[PRECISION_KILLS_KEY].basic.value ?? 0,
+            kills: weapon.stats[UNIQUE_KILLS_KEY].basic.value ?? 0,
+          };
+        }
+      });
+      return state;
+    },
+    {} as Record<string, Stats>,
+  );
 }
 
-export function useCreateStats(
+export function createStats(
   weaponStats: Record<string, Stats>,
   item: ItemSnapshot,
 ): Record<string, UniqueStatValue> | undefined {
-  return useMemo(() => {
-    if (!weaponStats[item.itemHash]) {
-      return;
-    }
-    const kills = weaponStats[item.itemHash]?.kills ?? 0;
-    const precision = weaponStats[item.itemHash]?.precisionKills ?? 0;
-    return {
-      uniqueWeaponKills: {
-        name: 'kills',
-        basic: {
-          value: kills,
-          displayValue: kills.toString(),
-        },
+  if (!weaponStats[item.itemHash]) {
+    return;
+  }
+  const kills = weaponStats[item.itemHash]?.kills ?? 0;
+  const precision = weaponStats[item.itemHash]?.precisionKills ?? 0;
+  return {
+    uniqueWeaponKills: {
+      name: 'kills',
+      basic: {
+        value: kills,
+        displayValue: kills.toString(),
       },
-      uniqueWeaponPrecisionKills: {
-        basic: {
-          value: precision,
-          displayValue: precision.toString(),
-        },
+    },
+    uniqueWeaponPrecisionKills: {
+      basic: {
+        value: precision,
+        displayValue: precision.toString(),
       },
-      uniqueWeaponKillsPrecisionKills: {
-        basic: {
-          value: calculatePercentage(precision, kills),
-          displayValue: `${calculatePercentage(precision, kills)}%`,
-        },
+    },
+    uniqueWeaponKillsPrecisionKills: {
+      basic: {
+        value: calculatePercentage(precision, kills),
+        displayValue: `${calculatePercentage(precision, kills)}%`,
       },
-    };
-  }, [weaponStats, item]);
+    },
+  };
 }
 
-export function useWeapons(
+export function getDetailWeapons(
   loadout?: Loadout,
   performances?: InstancePerformance[],
 ): (ItemSnapshot & { stats?: Record<string, UniqueStatValue> })[] {
   if (!loadout) return [];
 
-  const weaponStats = useWeaponStats(performances);
-  const ordered = useWeaponsFromLoadout(loadout);
+  const weaponStats = getWeaponStats(performances);
+  const ordered = getWeapons(loadout);
   return ordered.map((item) => {
     return {
       ...item,
-      stats: useCreateStats(weaponStats, item),
+      stats: createStats(weaponStats, item),
     };
   });
 }
