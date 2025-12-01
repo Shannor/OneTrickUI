@@ -104,6 +104,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
         (snapshot) => {
           const newData = snapshot.data() as ISession['data'];
           if (!newData) return;
+          if (!session.aggregateIds?.length) return;
           if (
             newData.status == 'complete' ||
             newData.aggregateIds.length !== session.aggregateIds?.length
