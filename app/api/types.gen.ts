@@ -327,6 +327,7 @@ export type BaseItemInfo = {
   itemTypeDisplayName: string;
   tierTypeName: string;
   tierType: number;
+  styleBasicInfo?: BaseItemInfo;
   damage?: DamageInfo;
 };
 

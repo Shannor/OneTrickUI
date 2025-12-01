@@ -106,7 +106,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
           if (!newData) return;
           if (
             newData.status == 'complete' ||
-            newData.aggregateIds.length !== session.aggregateIds.length
+            newData.aggregateIds.length !== session.aggregateIds?.length
           ) {
             revalidator
               .revalidate()
