@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Link } from 'react-router';
 import { CondensedLoadout } from '~/components/condensed-loadout';
 import { MergeLoadoutDialog } from '~/components/merge-loadout-dialog';
-import { useSessionData } from '~/hooks/use-route-loaders';
 import { Button } from '~/components/ui/button';
+import { useProfileData, useSessionData } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/session-loadouts';
 
 export default function SessionLoadouts({ params }: Route.ComponentProps) {
   const { snapshots } = useSessionData();
+  const { type } = useProfileData();
+  const isOwner = type === 'owner';
 
   if (!snapshots) {
     return <div>No snapshots</div>;
@@ -34,22 +36,26 @@ export default function SessionLoadouts({ params }: Route.ComponentProps) {
                 {snapshot.name}
               </h3>
             </Link>
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedSnapshot(snapshot)}
-            >
-              Merge Loadout
-            </Button>
+            {isOwner && (
+              <Button
+                variant="ghost"
+                onClick={() => setSelectedSnapshot(snapshot)}
+              >
+                Merge Loadout
+              </Button>
+            )}
             <CondensedLoadout snapshot={snapshot} />
           </div>
         ))}
       </div>
-      <MergeLoadoutDialog
-        isOpen={!!selectedSnapshot}
-        onOpenChange={(open) => !open && setSelectedSnapshot(null)}
-        baseSnapshot={selectedSnapshot}
-        availableSnapshots={allSnapshots}
-      />
+      {isOwner && (
+        <MergeLoadoutDialog
+          isOpen={!!selectedSnapshot}
+          onOpenChange={(open) => !open && setSelectedSnapshot(null)}
+          baseSnapshot={selectedSnapshot}
+          availableSnapshots={allSnapshots}
+        />
+      )}
     </div>
   );
 }
