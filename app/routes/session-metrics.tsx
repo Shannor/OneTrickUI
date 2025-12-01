@@ -50,14 +50,16 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
         content="View per-loadout performance metrics for this session."
       />
       <div className="flex flex-col gap-6">
-        <h4 className="scroll-m-20 border-b pb-2 text-xl font-semibold tracking-tight">
+        <h4 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight">
           Session Metrics
         </h4>
-        <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-          <Performance stats={stats} className="md:pr-2" />
-          <Performance stats={matchStats} className={'md:px-2'} />
-          <Performance stats={rawStats} className={'md:px-2'} />
-        </div>
+        {data.length > 1 && (
+          <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
+            <Performance stats={stats} className="md:pr-2" />
+            <Performance stats={matchStats} className={'md:px-2'} />
+            <Performance stats={rawStats} className={'md:px-2'} />
+          </div>
+        )}
       </div>
       <div className="flex flex-col gap-20">
         {data?.map(
