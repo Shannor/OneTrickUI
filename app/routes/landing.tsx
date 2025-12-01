@@ -220,7 +220,7 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
                           </div>
                           <Stat
                             label="Games Played"
-                            value={s.aggregateIds.length.toString()}
+                            value={s.aggregateIds?.length.toString()}
                           />
                         </CardContent>
                       </Card>
