@@ -9,7 +9,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '~/components/ui/card';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
 
@@ -26,7 +25,7 @@ export function meta({}: Route.MetaArgs) {
     { description },
     {
       keywords:
-        'Destiny 2, d2, tracker, stats, performance, loadouts, PvP, gaming, one trick',
+        'Destiny 2, d2, tracker, stats, performance, loadouts, PvP, gaming, one trick, min-max, min, max',
     },
     { tagName: 'link', rel: 'canonical', href: url },
     { name: 'robots', content: 'index,follow' },
@@ -115,9 +114,8 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex h-full flex-col justify-between">
-      <div className="container mx-auto px-4 py-20 text-center">
-        {/* Dual logo for light/dark */}
-        <Logo className="mx-auto mb-6 h-16 w-auto" alt="D2 One Trick logo" />
+      <div className="container mx-auto mb-8 flex flex-col gap-2 px-4 text-center">
+        <Logo className="mx-auto mb-4 h-16 w-auto" alt="D2 One Trick logo" />
         <h1 className="mx-auto max-w-3xl text-balance text-5xl font-extrabold uppercase tracking-wider text-foreground drop-shadow-sm md:text-6xl">
           <span className="text-primary"> 1</span> Trick
         </h1>
@@ -162,7 +160,7 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription className="uppercase tracking-wide">
-                Sessions Today
+                Last 24
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -190,47 +188,43 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
         </div>
 
         {/* Recent Sessions List */}
-        <Card className="mt-8">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Recent Sessions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recent.length === 0 ? (
-              <p className="text-muted-foreground">
-                No recent sessions yet. Be the first to start one!
-              </p>
-            ) : (
-              <ul className="grid gap-3 sm:grid-cols-3">
-                {recent.map((s) => (
-                  <li key={s.id} className="text-left">
-                    <Link
-                      to={`/profile/${s.userId}/c/${s.characterId}/sessions/${s.id}`}
-                    >
-                      <Card className="h-full">
-                        <CardContent className="flex flex-col gap-4 p-4">
-                          <div>
-                            <div className="font-medium text-foreground">
-                              {s.name ?? 'Session'}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {s.completedAt
-                                ? new Date(s.completedAt).toLocaleString()
-                                : 'Active'}
-                            </div>
+        <div className="mt-12 flex flex-col gap-4">
+          <h3 className="text-xl font-semibold">Recent Sessions</h3>
+          {recent.length === 0 ? (
+            <p className="text-muted-foreground">
+              No recent sessions yet. Be the first to start one!
+            </p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-3">
+              {recent.map((s) => (
+                <li key={s.id} className="text-left">
+                  <Link
+                    to={`/profile/${s.userId}/c/${s.characterId}/sessions/${s.id}`}
+                  >
+                    <Card className="h-full">
+                      <CardContent className="flex flex-col gap-4 p-4">
+                        <div>
+                          <div className="font-medium text-foreground">
+                            {s.name ?? 'Session'}
                           </div>
-                          <Stat
-                            label="Games Played"
-                            value={s.aggregateIds?.length.toString()}
-                          />
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+                          <div className="text-xs text-muted-foreground">
+                            {s.completedAt
+                              ? new Date(s.completedAt).toLocaleString()
+                              : 'Active'}
+                          </div>
+                        </div>
+                        <Stat
+                          label="Games Played"
+                          value={s.aggregateIds.length.toString()}
+                        />
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
       <span className="text-muted-foreground">
         skein circle by Alexander Skowalsky from{' '}
