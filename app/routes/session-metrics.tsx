@@ -4,8 +4,8 @@ import { Link } from 'react-router';
 import type { Aggregate } from '~/api';
 import { calculateRatio } from '~/calculations/precision';
 import { ChartWrapper } from '~/charts/ChartWrapper';
-import { MapCount } from '~/charts/MapCount';
 import { MapPerformance } from '~/charts/MapPerformance';
+import { MapWinRate } from '~/charts/MapWinRate';
 import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
@@ -105,10 +105,10 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
                     />
                   </ChartWrapper>
                   <ChartWrapper
-                    title="Map Distrubution"
-                    description="Shows the number of games played for each map with a given loadout."
+                    title="Map Win Rate"
+                    description="Shows the number wins and losses for each map with a given loadout."
                   >
-                    <MapCount
+                    <MapWinRate
                       data={mapData}
                       timeWindow={time}
                       syncId={`map-${snapshotId}`}

@@ -5,8 +5,8 @@ import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 import { AvgPerformance } from '~/charts/AvgPerformance';
 import { ChartWrapper } from '~/charts/ChartWrapper';
 import { KDPerformance } from '~/charts/KDPerformance';
-import { MapCount } from '~/charts/MapCount';
 import { MapPerformance } from '~/charts/MapPerformance';
+import { MapWinRate } from '~/charts/MapWinRate';
 import { WinRatio } from '~/charts/WinRatio';
 import { CardTitle } from '~/components/ui/card';
 import { DateRangePicker } from '~/components/ui/date-range-picker';
@@ -184,10 +184,10 @@ export default function LoadoutMetrics({
             />
           </ChartWrapper>
           <ChartWrapper
-            title="Map Distrubtion"
-            description="Shows the number of games played for each map."
+            title="Map Win Rate"
+            description="Shows the number of wins and loses for each map."
           >
-            <MapCount data={mapData} timeWindow={customTime} syncId="map" />
+            <MapWinRate data={mapData} timeWindow={customTime} syncId="map" />
           </ChartWrapper>
         </div>
       </div>

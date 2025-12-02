@@ -51,6 +51,9 @@ export interface MapResult {
   avgAssists: number;
   kd: number;
   kda: number;
+  wins: number;
+  winRatio: number;
+  loses: number;
   count: number;
 }
 
@@ -146,6 +149,8 @@ export function generatePerformancePerMap(
       avgAssists: calculateRatio(value.assists, value.gameCount),
       kd: calculateRatio(value.kills, value.deaths),
       kda: calculateRatio(value.kills + value.assists, value.deaths),
+      wins: value.wins,
+      loses: value.gameCount - value.wins,
       winRatio: calculateRatio(value.wins, value.gameCount),
       count: value.gameCount,
     };

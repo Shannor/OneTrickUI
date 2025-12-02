@@ -14,9 +14,13 @@ import type { CustomTimeWindow, MapResult } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 const chartConfig = {
-  count: {
-    label: 'Games Played',
-    color: 'var(--chart-1)',
+  loses: {
+    label: 'Loses',
+    color: 'var(--chart-error)',
+  },
+  wins: {
+    label: 'Wins',
+    color: 'var(--chart-primary)',
   },
 } satisfies ChartConfig;
 
@@ -26,7 +30,7 @@ interface Props {
   timeWindow?: CustomTimeWindow;
   syncId?: string;
 }
-export function MapCount({ className, data, syncId }: Props) {
+export function MapWinRate({ className, data, syncId }: Props) {
   const sorted = [...data].sort((a, b) => b.count - a.count);
   return (
     <ChartContainer
@@ -43,6 +47,7 @@ export function MapCount({ className, data, syncId }: Props) {
       >
         <CartesianGrid vertical={true} horizontal={false} />
         <ChartLegend content={<ChartLegendContent />} />
+
         <YAxis
           dataKey="location"
           interval={0}
@@ -57,7 +62,18 @@ export function MapCount({ className, data, syncId }: Props) {
           cursor={false}
           content={<ChartTooltipContent indicator="dashed" />}
         />
-        <Bar dataKey="count" fill="var(--color-count)" radius={2} />
+        <Bar
+          dataKey="loses"
+          stackId="a"
+          fill="var(--color-loses)"
+          radius={[0, 0, 0, 0]}
+        />
+        <Bar
+          dataKey="wins"
+          stackId="a"
+          fill="var(--color-wins)"
+          radius={[0, 4, 4, 0]}
+        />
       </ComposedChart>
     </ChartContainer>
   );
