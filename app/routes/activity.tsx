@@ -121,45 +121,57 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
         </div>
       </Card>
 
-      {/* Players (Stats + Weapons + Snapshot) */}
-      <div className="flex flex-col gap-4">
-        <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-          Players
-        </h3>
-        <div className="grid grid-cols-1 gap-4">
-          {allPerformances.map(([charId, perf]) => {
-            const link = aggregate?.snapshotLinks[charId];
-            return (
-              <div key={charId}>
-                {link && (
-                  <div className="flex flex-row gap-4">
-                    <Button asChild variant="ghost">
-                      <Link
-                        to={`/profile/${id}/c/${characterId}/sessions/${link.sessionId}`}
-                      >
-                        View Session
-                      </Link>
-                    </Button>
-                    <Button asChild variant="ghost">
-                      <Link
-                        to={`/profile/${id}/c/${characterId}/loadouts/${link.snapshotId}`}
-                      >
-                        View Loadout
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-                <PlayerCard
-                  key={charId}
-                  performance={perf}
-                  user={users[charId]}
-                  snapshot={snapshots[charId]}
-                />
-              </div>
-            );
-          })}
+      {allPerformances.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-4">
+          <p className="text-lg font-medium">
+            No performances found for this activity.
+          </p>
+          <Link to={`/profile/${id}/c/${characterId}/sessions`}>
+            <Button variant="outline">View Sessions</Button>
+          </Link>
         </div>
-      </div>
+      )}
+      {/* Players (Stats + Weapons + Snapshot) */}
+      {allPerformances.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
+            Players
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            {allPerformances.map(([charId, perf]) => {
+              const link = aggregate?.snapshotLinks[charId];
+              return (
+                <div key={charId}>
+                  {link && (
+                    <div className="flex flex-row gap-4">
+                      <Button asChild variant="ghost">
+                        <Link
+                          to={`/profile/${id}/c/${characterId}/sessions/${link.sessionId}`}
+                        >
+                          View Session
+                        </Link>
+                      </Button>
+                      <Button asChild variant="ghost">
+                        <Link
+                          to={`/profile/${id}/c/${characterId}/loadouts/${link.snapshotId}`}
+                        >
+                          View Loadout
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                  <PlayerCard
+                    key={charId}
+                    performance={perf}
+                    user={users[charId]}
+                    snapshot={snapshots[charId]}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

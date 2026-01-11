@@ -1,8 +1,8 @@
 import { format } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { calculateRatio } from '~/calculations/precision';
+import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import VerticalBanner from '~/components/vertical-banner';

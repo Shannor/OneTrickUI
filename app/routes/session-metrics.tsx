@@ -23,8 +23,9 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
   const groupedBySnapshot = groupAggregates(aggregates ?? [], characterId);
   const data = getLoadoutData(groupedBySnapshot, characterId);
   const fake = [['test', aggregates ?? []]] as GroupTuple[];
-  const [item] = getLoadoutData(fake, characterId);
+  const [item] = getLoadoutData(fake, characterId, true);
   const { stats, matchStats, rawStats } = item;
+
   if (!aggregates) {
     return (
       <Empty
@@ -33,6 +34,7 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
       />
     );
   }
+
   if (!snapshots) {
     return (
       <Empty
@@ -41,6 +43,7 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
       />
     );
   }
+
   return (
     <div className="mt-8 flex flex-col gap-16">
       <title>{`${session?.name} - Metrics`}</title>
@@ -53,13 +56,15 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
         <h4 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight">
           Session Metrics
         </h4>
-        {data.length > 1 && (
-          <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-            <Performance stats={stats} className="md:pr-2" />
-            <Performance stats={matchStats} className={'md:px-2'} />
-            <Performance stats={rawStats} className={'md:px-2'} />
-          </div>
-        )}
+        <h5 className="text-xl font-semibold tracking-tight">Overall</h5>
+        <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
+          <Performance stats={stats} className="md:pr-2" />
+          <Performance stats={matchStats} className={'md:px-2'} />
+          <Performance stats={rawStats} className={'md:px-2'} />
+        </div>
+        <div className="text-sm text-muted-foreground">
+          Stats for all games including ones where no snapshot was found.
+        </div>
       </div>
       <div className="flex flex-col gap-20">
         {data?.map(
@@ -166,9 +171,13 @@ function groupAggregates(
   });
 }
 
-function getLoadoutData(groupedBySnapshot: GroupTuple[], characterId: string) {
+function getLoadoutData(
+  groupedBySnapshot: GroupTuple[],
+  characterId: string,
+  allowAll: boolean = false,
+) {
   return groupedBySnapshot.map(([snapshotId, aggs]) => {
-    const performances = getPerformances(aggs, characterId);
+    const performances = getPerformances(aggs, characterId, allowAll);
     const customTime = timeWindowToCustom('all-time', aggs);
     const { wins, kills, deaths, assists } = performances.reduce(
       (state, p) => {
@@ -186,7 +195,9 @@ function getLoadoutData(groupedBySnapshot: GroupTuple[], characterId: string) {
       },
     );
 
-    const winRatio = calculateRatio(wins, performances.length);
+    const winRatio = calculateRatio(wins, performances.length, {
+      decimalPlaces: 3,
+    });
     const kd = calculateRatio(kills, deaths);
     const kda = calculateRatio(kills + assists, deaths);
     const rawStats = [
@@ -211,7 +222,7 @@ function getLoadoutData(groupedBySnapshot: GroupTuple[], characterId: string) {
       });
       matchStats.push({
         label: 'Win Ratio',
-        value: winRatio.toFixed(2),
+        value: winRatio.toString(),
         valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
       });
     }
@@ -227,10 +238,17 @@ function getLoadoutData(groupedBySnapshot: GroupTuple[], characterId: string) {
     };
   });
 }
-function getPerformances(aggregates: Aggregate[], characterId: string) {
+function getPerformances(
+  aggregates: Aggregate[],
+  characterId: string,
+  allowAll: boolean = false,
+) {
   return aggregates
     .map((agg) => {
       const snapshot = agg.snapshotLinks[characterId];
+      if (allowAll) {
+        return agg.performance[characterId];
+      }
       if (
         snapshot.confidenceLevel !== 'noMatch' &&
         snapshot.confidenceLevel !== 'notFound'

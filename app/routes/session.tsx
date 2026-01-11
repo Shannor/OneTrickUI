@@ -162,8 +162,8 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
 
   return (
     <div>
-      <title>{`${session.name} - Session`}</title>
-      <meta property="og:title" content={`${session.name} - Session`} />
+      <title>{`${session.name} - ${profile?.displayName} `}</title>
+      <meta property="og:title" content={`${session.name} - ${profile?.displayName} `} />
       <meta
         name="description"
         content={`View games, metrics, and details for ${profile?.displayName ?? ''}'s session ${session.name}.`}
