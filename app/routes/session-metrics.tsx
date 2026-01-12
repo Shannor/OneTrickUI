@@ -220,9 +220,13 @@ function getLoadoutData(
         label: 'Matches',
         value: performances.length.toString(),
       });
+
+      const formatter = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 3,
+      });
       matchStats.push({
         label: 'Win Ratio',
-        value: winRatio.toString(),
+        value: formatter.format(winRatio),
         valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
       });
     }

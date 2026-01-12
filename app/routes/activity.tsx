@@ -164,7 +164,7 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
                   <PlayerCard
                     key={charId}
                     performance={perf}
-                    user={users[charId]}
+                    user={user}
                     snapshot={snapshots[charId]}
                   />
                 </div>

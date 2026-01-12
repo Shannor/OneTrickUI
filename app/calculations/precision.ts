@@ -22,6 +22,7 @@ export function calculatePercentage(
   if (denominator === 0) {
     return numerator;
   }
+
   const amount = Math.pow(10, options.decimalPlaces ?? 2);
 
   if (options.round === false) {
