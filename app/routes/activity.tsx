@@ -140,20 +140,21 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
           <div className="grid grid-cols-1 gap-4">
             {allPerformances.map(([charId, perf]) => {
               const link = aggregate?.snapshotLinks[charId];
+              const user = users[charId];
               return (
                 <div key={charId}>
                   {link && (
                     <div className="flex flex-row gap-4">
                       <Button asChild variant="ghost">
                         <Link
-                          to={`/profile/${id}/c/${characterId}/sessions/${link.sessionId}`}
+                          to={`/profile/${user.id}/c/${charId}/sessions/${link.sessionId}`}
                         >
                           View Session
                         </Link>
                       </Button>
                       <Button asChild variant="ghost">
                         <Link
-                          to={`/profile/${id}/c/${characterId}/loadouts/${link.snapshotId}`}
+                          to={`/profile/${user.id}/c/${charId}/loadouts/${link.snapshotId}`}
                         >
                           View Loadout
                         </Link>
