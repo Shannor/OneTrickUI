@@ -1,33 +1,18 @@
-interface Options {
-  round?: boolean;
-  decimalPlaces?: number;
-}
-export function calculateRatio(
-  numerator: number,
-  denominator: number,
-  options: Options = { round: true, decimalPlaces: 2 },
-): number {
-  if (denominator === 0) {
+export function calculateRatio(numerator: number, denominator: number): number {
+  if (denominator === 0 || numerator === 0) {
     return numerator;
   }
-  const amount = Math.pow(10, options.decimalPlaces ?? 2);
-  return calculatePercentage(numerator, denominator, options) / amount;
+
+  return numerator / denominator;
 }
 
 export function calculatePercentage(
   numerator: number,
   denominator: number,
-  options: Options = { round: true, decimalPlaces: 2 },
 ): number {
-  if (denominator === 0) {
+  if (denominator === 0 || numerator === 0) {
     return numerator;
   }
-
-  const amount = Math.pow(10, options.decimalPlaces ?? 2);
-
-  if (options.round === false) {
-    return (numerator / denominator) * amount;
-  }
-
-  return Math.round((numerator / denominator) * amount);
+  const ratio = calculateRatio(numerator, denominator);
+  return ratio * 100;
 }

@@ -2,7 +2,7 @@ import { ExternalLink } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router';
 import type { Aggregate } from '~/api';
-import { calculateRatio } from '~/calculations/precision';
+import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 import { ChartWrapper } from '~/charts/ChartWrapper';
 import { MapPerformance } from '~/charts/MapPerformance';
 import { MapWinRate } from '~/charts/MapWinRate';
@@ -195,9 +195,7 @@ function getLoadoutData(
       },
     );
 
-    const winRatio = calculateRatio(wins, performances.length, {
-      decimalPlaces: 3,
-    });
+    const winPercentage = calculatePercentage(wins, performances.length);
     const kd = calculateRatio(kills, deaths);
     const kda = calculateRatio(kills + assists, deaths);
     const rawStats = [
@@ -221,13 +219,10 @@ function getLoadoutData(
         value: performances.length.toString(),
       });
 
-      const formatter = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 3,
-      });
       matchStats.push({
-        label: 'Win Ratio',
-        value: formatter.format(winRatio),
-        valueClassName: winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
+        label: 'Win %',
+        value: `${winPercentage.toFixed(0)}%`,
+        valueClassName: winPercentage >= 50 ? 'text-green-500' : 'text-red-500',
       });
     }
 

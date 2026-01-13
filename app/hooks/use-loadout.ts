@@ -120,7 +120,7 @@ export function createStats(
     uniqueWeaponKillsPrecisionKills: {
       basic: {
         value: calculatePercentage(precision, kills),
-        displayValue: `${calculatePercentage(precision, kills)}%`,
+        displayValue: `${calculatePercentage(precision, kills).toFixed(2)}%`,
       },
     },
   };

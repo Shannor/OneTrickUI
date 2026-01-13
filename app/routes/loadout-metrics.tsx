@@ -151,18 +151,18 @@ export default function LoadoutMetrics({
           <ChartWrapper
             title={
               <div className="flex flex-row gap-4">
-                <CardTitle>Win Ratio</CardTitle>
+                <CardTitle>Win Percentage</CardTitle>
                 <div
                   className={cn(
                     'text-md',
-                    calculateRatio(ratio.wins, ratio.games) >= 0.5
+                    calculatePercentage(ratio.wins, ratio.games) >= 50
                       ? 'text-green-500'
                       : 'text-red-500',
                   )}
-                >{`${calculatePercentage(ratio.wins, ratio.games)}%`}</div>
+                >{`${calculatePercentage(ratio.wins, ratio.games).toFixed(0)}%`}</div>
               </div>
             }
-            description="Shows the win ratio for the selected time window."
+            description="Shows the win percentage for the selected time window."
           >
             <WinRatio
               data={data}
