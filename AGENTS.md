@@ -3,7 +3,8 @@
 ## Technology Stack
 
 * **Language**: Typescript
-* **UI Framework**: React + Shadcn + Tailwind
+* **UI Framework**: React 
+* **Style Library**: Shadcn & Tailwind
 * **Build Tool**: npm
 * **Testing Framework**: Testing Library
 * **Architecture**: React Router Framework SSR with OpenAPI Generation.

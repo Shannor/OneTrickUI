@@ -6,6 +6,7 @@ import {
 } from '@hey-api/client-fetch';
 
 import {
+  completeSessionResponseTransformer,
   createSnapshotResponseTransformer,
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
@@ -30,11 +31,14 @@ import type {
   BackfillAllUsersCharacterIdsResponse,
   BackfillSnapshotInfoData,
   BackfillSnapshotInfoResponse,
+  CompleteSessionData,
+  CompleteSessionResponse,
   CreateSnapshotData,
   CreateSnapshotResponse,
   GetActivitiesData,
   GetActivitiesResponse,
   GetActivityData,
+  GetActivityError,
   GetActivityResponse,
   GetBestPerformingLoadoutsData,
   GetBestPerformingLoadoutsResponse,
@@ -361,7 +365,7 @@ export const getActivity = <ThrowOnError extends boolean = false>(
 ) => {
   return (options?.client ?? client).get<
     GetActivityResponse,
-    unknown,
+    GetActivityError,
     ThrowOnError
   >({
     ...options,
@@ -423,7 +427,7 @@ export const getSession = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Complete a session
+ * Update a session
  */
 export const updateSession = <ThrowOnError extends boolean = false>(
   options: Options<UpdateSessionData, ThrowOnError>,
@@ -440,6 +444,27 @@ export const updateSession = <ThrowOnError extends boolean = false>(
     },
     responseTransformer: updateSessionResponseTransformer,
     url: '/sessions/{sessionId}',
+  });
+};
+
+/**
+ * Complete a session
+ */
+export const completeSession = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteSessionData, ThrowOnError>,
+) => {
+  return (options?.client ?? client).put<
+    CompleteSessionResponse,
+    unknown,
+    ThrowOnError
+  >({
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    responseTransformer: completeSessionResponseTransformer,
+    url: '/sessions/{sessionId}/complete',
   });
 };
 

@@ -185,7 +185,6 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
       )}
       <div className="grid grid-cols-1 gap-4">
         {loadouts?.items?.map((snapshot) => {
-          const classStats = useClassStats(snapshot);
           const { armor } = getExotic(snapshot?.loadout);
           const data = getDetailWeapons(snapshot?.loadout);
           const kd = loadouts.stats[snapshot.id]?.kd?.value ?? 0;
@@ -196,8 +195,8 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
             { label: 'K/D', value: kd.toFixed(2) },
             { label: 'Efficiency', value: kda.toFixed(2) },
             {
-              label: 'Win Ratio',
-              value: winRatio.toFixed(2),
+              label: 'Win Percentage',
+              value: `${(winRatio * 100).toFixed(0)}%`,
               valueClassName:
                 winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
             },

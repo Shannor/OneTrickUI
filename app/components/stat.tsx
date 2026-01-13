@@ -7,6 +7,7 @@ interface Props {
   value: string;
   valueClassName?: string;
   labelClassName?: string;
+  className?: string;
 }
 
 export const Stat: React.FC<Props> = ({
@@ -14,9 +15,15 @@ export const Stat: React.FC<Props> = ({
   value,
   labelClassName,
   valueClassName,
+  className,
 }) => {
   return (
-    <div className="flex flex-col items-start gap-2 lg:items-center">
+    <div
+      className={cn(
+        'flex flex-col items-start gap-2 lg:items-center',
+        className,
+      )}
+    >
       <Label className={labelClassName}>{label}</Label>
       <h4
         className={cn('text-xl font-semibold tracking-tight', valueClassName)}

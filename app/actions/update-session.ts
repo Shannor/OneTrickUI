@@ -1,17 +1,14 @@
 import { getAuth, redirectBack } from '~/.server/auth';
 import { Logger } from '~/.server/logger';
-import { completeSession } from '~/api';
+import { completeSession, updateSession } from '~/api';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 
 export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
-  const characterId = formData.get('characterId');
   const sessionId = formData.get('sessionId');
-
-  if (!characterId) {
-    return { error: 'No character id' };
-  }
+  const name = formData.get('name');
+  const description = formData.get('description');
 
   const auth = await getAuth(request);
   if (!auth) {
@@ -22,13 +19,17 @@ export async function action({ request }: Route.ClientActionArgs) {
     return { error: 'No session id provided' };
   }
 
-  const { data, error } = await completeSession({
+  if (!name) {
+    return { error: 'Name required' };
+  }
+
+  const { data, error } = await updateSession({
     path: {
       sessionId: sessionId.toString(),
     },
     body: {
-      characterId: characterId.toString(),
-      completedAt: new Date().toISOString(),
+      name: name?.toString(),
+      description: description?.toString(),
     },
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,
@@ -37,7 +38,7 @@ export async function action({ request }: Route.ClientActionArgs) {
     },
   });
   if (error) {
-    Logger.error(error, 'failed to end session');
+    Logger.error(error, 'failed to update session');
     return { error: error };
   }
   if (!data) {

@@ -15,7 +15,9 @@ import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
+import { Textarea } from '~/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
@@ -44,7 +46,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   });
 
   const sharablePath = `profile/${id}/c/${characterId}/sessions/${sessionId}`;
-  let path = '';
+  let path: string;
   if (process.env.NODE_ENV === 'development') {
     path = `https://local.d2onetrick.ngrok.app/${sharablePath}`;
   } else {
@@ -72,7 +74,7 @@ type ISession = Awaited<ReturnType<typeof getSession>>;
 
 export default function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
-  const { session, error, aggregates, path } = loaderData;
+  const { session, error, path } = loaderData;
   const { characterId } = params;
   const isOwner = type === 'owner';
   const { state, Form } = useFetcher();
@@ -161,46 +163,65 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
   };
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <title>{`${session.name} - ${profile?.displayName} `}</title>
-      <meta property="og:title" content={`${session.name} - ${profile?.displayName} `} />
+      <meta
+        property="og:title"
+        content={`${session.name} - ${profile?.displayName} `}
+      />
       <meta
         name="description"
         content={`View games, metrics, and details for ${profile?.displayName ?? ''}'s session ${session.name}.`}
       />
-      <div className="flex flex-col items-start gap-4 p-4">
+      <div className="flex w-full flex-col items-start gap-4 p-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}
-        <div className="flex flex-row gap-4">
-          <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
-            {session.name}
-          </h2>
-          {isOwner && isCurrent && (
-            <div className="flex flex-row gap-4">
-              <Form method="post" action="/action/end-session">
-                <input type="hidden" name="characterId" value={characterId} />
-                <input type="hidden" name="sessionId" value={session.id} />
-                <LoadingButton
-                  type="submit"
-                  variant="outline"
-                  disabled={!characterId || isSubmitting}
-                  isLoading={isSubmitting}
-                  className={`${isSubmitting ? 'opacity-50' : ''}`}
-                >
-                  <StopCircleIcon className="h-4 w-4" />
-                  Stop Session
-                </LoadingButton>
-              </Form>
-            </div>
-          )}
-          <Tooltip open={Boolean(copyStatus)}>
-            <TooltipContent>{copyStatus}</TooltipContent>
-            <TooltipTrigger asChild>
-              <Button onClick={handleCopy} variant="outline">
-                <Share2 className="h-6 w-6" /> Share
-              </Button>
-            </TooltipTrigger>
-          </Tooltip>
+        <div className="flex w-full flex-row gap-4">
+          <Form
+            method="post"
+            action="/action/update-session"
+            className="flex w-full flex-col gap-4 lg:w-1/3"
+          >
+            <Input
+              name="name"
+              defaultValue={session.name ?? ''}
+              className="h-auto scroll-m-20 border-none bg-transparent px-1 py-2 text-3xl font-semibold tracking-tight shadow-none focus-visible:ring-0 md:text-3xl"
+            />
+            <input type="hidden" name="sessionId" value={session.id} />
+            <Textarea
+              name="description"
+              placeholder="Add a description..."
+              className="w-full"
+              defaultValue={session.description}
+            />
+            <LoadingButton type="submit">Save</LoadingButton>
+          </Form>
         </div>
+        {isOwner && isCurrent && (
+          <div className="flex flex-row gap-4">
+            <Form method="post" action="/action/end-session">
+              <input type="hidden" name="characterId" value={characterId} />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <LoadingButton
+                type="submit"
+                variant="outline"
+                disabled={!characterId || isSubmitting}
+                isLoading={isSubmitting}
+                className={`${isSubmitting ? 'opacity-50' : ''}`}
+              >
+                <StopCircleIcon className="h-4 w-4" />
+                Stop Session
+              </LoadingButton>
+            </Form>
+          </div>
+        )}
+        <Tooltip open={Boolean(copyStatus)}>
+          <TooltipContent>{copyStatus}</TooltipContent>
+          <TooltipTrigger asChild>
+            <Button onClick={handleCopy} variant="outline">
+              <Share2 className="h-6 w-6" /> Share
+            </Button>
+          </TooltipTrigger>
+        </Tooltip>
         <Tabs value={currentTab}>
           <TabsList>
             <TabsTrigger value="games" asChild>
