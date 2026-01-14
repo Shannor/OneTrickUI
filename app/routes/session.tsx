@@ -175,27 +175,40 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
       />
       <div className="flex w-full flex-col items-start gap-4 p-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}
-        <div className="flex w-full flex-row gap-4">
-          <Form
-            method="post"
-            action="/action/update-session"
-            className="flex w-full flex-col gap-4 lg:w-1/3"
-          >
-            <Input
-              name="name"
-              defaultValue={session.name ?? ''}
-              className="h-auto scroll-m-20 border-none bg-transparent px-1 py-2 text-3xl font-semibold tracking-tight shadow-none focus-visible:ring-0 md:text-3xl"
-            />
-            <input type="hidden" name="sessionId" value={session.id} />
-            <Textarea
-              name="description"
-              placeholder="Add a description..."
-              className="w-full"
-              defaultValue={session.description}
-            />
-            <LoadingButton type="submit">Save</LoadingButton>
-          </Form>
-        </div>
+        {isOwner ? (
+          <div className="flex w-full flex-row gap-4">
+            <Form
+              method="post"
+              action="/action/update-session"
+              className="flex w-full flex-col gap-4 lg:w-1/3"
+            >
+              <Input
+                name="name"
+                defaultValue={session.name ?? ''}
+                className="h-auto scroll-m-20 border-none bg-transparent px-1 py-2 text-3xl font-semibold tracking-tight shadow-none focus-visible:ring-0 md:text-3xl"
+              />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <Textarea
+                name="description"
+                placeholder="Add a description..."
+                className="w-full"
+                defaultValue={session.description}
+              />
+              <LoadingButton type="submit">Save</LoadingButton>
+            </Form>
+          </div>
+        ) : (
+          <div className="flex w-full flex-col gap-4">
+            <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+              {session.name ?? ''}
+            </h2>
+            {session.description && (
+              <div className="text-sm text-muted-foreground">
+                {session.description}
+              </div>
+            )}
+          </div>
+        )}
         {isOwner && isCurrent && (
           <div className="flex flex-row gap-4">
             <Form method="post" action="/action/end-session">
