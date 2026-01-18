@@ -146,7 +146,7 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                 </div>
               )}
               <div
-                className="flex w-full flex-row hover:bg-muted md:gap-8"
+                className="flex w-full flex-row p-2 hover:bg-muted md:gap-8"
                 onClick={() => {
                   navigate(
                     `/profile/${id}/c/${characterId}/activities/${activityDetails.instanceId}`,

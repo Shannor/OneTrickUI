@@ -215,36 +215,42 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
             )}
           </div>
         )}
-        {isOwner && isCurrent && (
-          <div className="flex flex-row gap-4">
-            <Form method="post" action="/action/end-session">
-              <input type="hidden" name="characterId" value={characterId} />
-              <input type="hidden" name="sessionId" value={session.id} />
-              <LoadingButton
-                type="submit"
-                variant="outline"
-                disabled={!characterId || isSubmitting}
-                isLoading={isSubmitting}
-                className={`${isSubmitting ? 'opacity-50' : ''}`}
+        <div className="flex w-full flex-col gap-4 md:flex-row">
+          {isOwner && isCurrent && (
+            <div className="flex w-full flex-row gap-4 lg:w-auto">
+              <Form
+                method="post"
+                action="/action/end-session"
+                className="w-full"
               >
-                <StopCircleIcon className="h-4 w-4" />
-                Stop Session
-              </LoadingButton>
-            </Form>
-          </div>
-        )}
-        <Tooltip open={Boolean(copyStatus)}>
-          <TooltipContent>{copyStatus}</TooltipContent>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleCopy}
-              variant="outline"
-              className="w-full lg:w-auto"
-            >
-              <Share2 className="h-6 w-6" /> Share
-            </Button>
-          </TooltipTrigger>
-        </Tooltip>
+                <input type="hidden" name="characterId" value={characterId} />
+                <input type="hidden" name="sessionId" value={session.id} />
+                <LoadingButton
+                  type="submit"
+                  variant="outline"
+                  disabled={!characterId || isSubmitting}
+                  className="w-full lg:w-auto"
+                  isLoading={isSubmitting}
+                >
+                  <StopCircleIcon className="h-4 w-4" />
+                  Stop Session
+                </LoadingButton>
+              </Form>
+            </div>
+          )}
+          <Tooltip open={Boolean(copyStatus)}>
+            <TooltipContent>{copyStatus}</TooltipContent>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleCopy}
+                variant="outline"
+                className="w-full lg:w-auto"
+              >
+                <Share2 className="h-6 w-6" /> Share
+              </Button>
+            </TooltipTrigger>
+          </Tooltip>
+        </div>
         <Tabs value={currentTab}>
           <TabsList>
             <TabsTrigger value="games" asChild>
