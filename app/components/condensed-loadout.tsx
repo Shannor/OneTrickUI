@@ -21,7 +21,7 @@ export function CondensedLoadout({ snapshot }: CondensedLoadoutProps) {
       <SubClassProvider snapshot={snapshot}>
         <Super />
       </SubClassProvider>
-      <div className={cn('flex flex-col flex-wrap gap-1')}>
+      <div className={cn('flex flex-row flex-wrap gap-4 md:flex-col md:gap-2')}>
         {data.map((item) => {
           return (
             <Weapon

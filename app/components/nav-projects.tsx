@@ -6,6 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '~/components/ui/sidebar';
 
 export function NavProjects({
@@ -19,6 +20,7 @@ export function NavProjects({
   }[];
   label?: string;
 }) {
+  const { isMobile, setOpenMobile } = useSidebar();
   return (
     <SidebarGroup>
       {label && projects.length > 0 && (
@@ -33,6 +35,11 @@ export function NavProjects({
               suppressHydrationWarning={true}
               title={item.name}
               tooltip={item.name}
+              onClick={() => {
+                if (isMobile) {
+                  setOpenMobile(false);
+                }
+              }}
             >
               <NavLink
                 to={item.url}

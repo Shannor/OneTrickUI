@@ -1,15 +1,17 @@
-import { defineConfig, defaultPlugins } from '@hey-api/openapi-ts';
+import { defaultPlugins, defineConfig } from '@hey-api/openapi-ts';
 
 export default defineConfig({
-  client: '@hey-api/client-fetch',
   input: 'http://localhost:8080/openapi',
-  experimentalParser: true,
   output: {
-    format: 'prettier',
+    postProcess: ['prettier'],
     path: './app/api',
   },
   plugins: [
     ...defaultPlugins,
+    {
+      name: '@hey-api/client-fetch',
+      baseUrl: false,
+    },
     {
       dates: true,
       name: '@hey-api/transformers',

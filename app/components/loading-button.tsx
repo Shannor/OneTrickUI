@@ -1,6 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 import { Button, type ButtonProps } from '~/components/ui/button';
+import { cn } from '~/lib/utils';
 
 interface LoadingButtonProps extends ButtonProps {
   isLoading?: boolean;
@@ -14,8 +15,13 @@ export function LoadingButton({
   children,
   ...props
 }: LoadingButtonProps) {
+  const { className, ...rest } = props;
   return (
-    <Button disabled={isLoading} {...props}>
+    <Button
+      disabled={isLoading}
+      className={cn({ 'opacity-50': isLoading }, className)}
+      {...rest}
+    >
       {isLoading ? (
         <div className="flex flex-row gap-2">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

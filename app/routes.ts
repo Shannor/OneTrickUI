@@ -54,4 +54,5 @@ export default [
   route('action/end-session', 'actions/end-session.ts'),
   route('action/merge-loadout', 'actions/merge-loadout.ts'),
   route('action/update-session', 'actions/update-session.ts'),
+  route('action/update-loadout', 'actions/update-loadout.ts'),
 ] satisfies RouteConfig;

@@ -19,7 +19,7 @@ export function Performance({ stats, className }: PerformanceProps) {
   }
 
   return (
-    <div className={cn('flex flex-row gap-4', className)}>
+    <div className={cn('flex flex-row flex-wrap gap-4', className)}>
       {stats.map((stat) => (
         <Stat
           key={stat.label}

@@ -173,14 +173,20 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
         name="description"
         content={`View games, metrics, and details for ${profile?.displayName ?? ''}'s session ${session.name}.`}
       />
-      <div className="flex w-full flex-col items-start gap-4 p-4">
+      <div className="flex w-full flex-col items-start gap-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}
+        <div className="text-sm text-muted-foreground">
+          {format(session.startedAt, 'MM/dd/yyyy - p')}
+          {session.completedAt
+            ? ` - ${format(session.completedAt, 'MM/dd/yyyy - p')}`
+            : ''}
+        </div>
         {isOwner ? (
           <div className="flex w-full flex-row gap-4">
             <Form
               method="post"
               action="/action/update-session"
-              className="flex w-full flex-col gap-4 lg:w-1/3"
+              className="flex w-full flex-col gap-4 lg:w-1/2"
             >
               <Input
                 name="name"
@@ -230,7 +236,11 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
         <Tooltip open={Boolean(copyStatus)}>
           <TooltipContent>{copyStatus}</TooltipContent>
           <TooltipTrigger asChild>
-            <Button onClick={handleCopy} variant="outline">
+            <Button
+              onClick={handleCopy}
+              variant="outline"
+              className="w-full lg:w-auto"
+            >
               <Share2 className="h-6 w-6" /> Share
             </Button>
           </TooltipTrigger>
@@ -250,12 +260,6 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <div className="text-sm text-muted-foreground">
-          {format(session.startedAt, 'MM/dd/yyyy - p')}
-          {session.completedAt
-            ? ` - ${format(session.completedAt, 'MM/dd/yyyy - p')}`
-            : ''}
-        </div>
       </div>
       <div className="w-full overflow-x-hidden">
         <Outlet />

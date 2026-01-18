@@ -1,9 +1,10 @@
 import { format } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router';
-import { calculatePercentage, calculateRatio } from '~/calculations/precision';
+import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
+import { HorizontalBanner } from '~/components/horizontal-banner';
 import { Label } from '~/components/label';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
@@ -38,7 +39,7 @@ export default function SessionGames({ params }: Route.ComponentProps) {
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-8 md:gap-6">
       <title>Session Games</title>
       <meta property="og:title" content="Session Games" />
       <meta
@@ -57,66 +58,57 @@ export default function SessionGames({ params }: Route.ComponentProps) {
             snapshotLinks,
             performance: performances,
           } = value;
+
           const link = snapshotLinks[characterId];
           const performance = performances[characterId];
           const snapshot = link.snapshotId
             ? snapshots[link.snapshotId]
             : undefined;
-          let title = '';
-          let titleClassName = '';
+
           let hasLoadout = false;
           switch (link?.confidenceLevel) {
             case 'high':
-              title = 'High Confidence';
-              titleClassName = 'bg-green-500 text-white';
               hasLoadout = true;
               break;
             case 'medium':
-              title = 'Medium Confidence';
-              titleClassName = 'bg-yellow-500 text-white';
               hasLoadout = true;
               break;
             case 'low':
-              title = 'Low Confidence';
-              titleClassName = 'bg-red-500 text-white';
               hasLoadout = true;
               break;
-            case 'noMatch':
-              title = 'No Match';
-              titleClassName = 'bg-gray-500 text-white';
-              break;
-            case 'notFound':
-              title = 'Not Found';
-              titleClassName = 'bg-gray-500 text-white';
-              break;
-            default:
-              title = 'Unknown';
-              titleClassName = 'bg-gray-500 text-white';
           }
+
           const previous = index > 0 ? arr[index - 1] : undefined;
           const showLoadout =
             !previous ||
             previous.snapshotLinks[characterId]?.snapshotId !== link.snapshotId;
           const won = performance?.playerStats?.standing?.value === 0;
 
-          let stats: StatItem[] = [];
+          const stats: StatItem[] = [];
+          const kdStats: StatItem[] = [];
           if (performance) {
             const kills = performance.playerStats.kills?.value ?? 0;
             const assists = performance.playerStats.assists?.value ?? 0;
             const deaths = performance.playerStats.deaths?.value ?? 0;
             const kd = calculateRatio(kills, deaths);
             const kda = calculateRatio(kills + assists, deaths);
-            stats = [
-              { label: 'Kills', value: kills.toString() },
-              { label: 'Assists', value: assists.toString() },
-              { label: 'Deaths', value: deaths.toString() },
-              { label: 'K/D', value: kd.toFixed(2) },
-              { label: 'Efficiency', value: kda.toFixed(2) },
-            ];
+            stats.push(
+              ...[
+                { label: 'Kills', value: kills.toString() },
+                { label: 'Assists', value: assists.toString() },
+                { label: 'Deaths', value: deaths.toString() },
+              ],
+            );
+            kdStats.push(
+              ...[
+                { label: 'K/D', value: kd.toFixed(2) },
+                { label: 'Efficiency', value: kda.toFixed(2) },
+              ],
+            );
           }
 
           return (
-            <div key={value.id} className={cn('flex flex-col gap-4 p-4')}>
+            <div key={value.id} className={cn('flex flex-col gap-4')}>
               {!hasLoadout && (
                 <div
                   className={cn(
@@ -127,7 +119,7 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                 </div>
               )}
               {snapshot && showLoadout && (
-                <div className={cn('flex flex-col gap-4 border-b-4 p-4')}>
+                <div className={cn('flex flex-col gap-4 border-b-4 py-4')}>
                   <div className="group flex flex-row gap-2">
                     <Link
                       to={`/profile/${id}/c/${characterId}/loadouts/${snapshot.id}`}
@@ -154,14 +146,14 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                 </div>
               )}
               <div
-                className="flex w-full flex-row gap-8 p-4 hover:bg-muted"
+                className="flex w-full flex-row hover:bg-muted md:gap-8"
                 onClick={() => {
                   navigate(
                     `/profile/${id}/c/${characterId}/activities/${activityDetails.instanceId}`,
                   );
                 }}
               >
-                <div className="flex flex-row gap-2">
+                <div className="hidden flex-row gap-2 md:flex">
                   {won ? (
                     <VerticalBanner
                       label="Victory"
@@ -175,18 +167,35 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                   )}
                   <img
                     src={activityDetails.imageUrl}
-                    className="h-auto w-36 rounded-lg object-cover"
+                    className="hidden h-auto w-36 rounded-lg object-cover md:block md:w-28"
                     alt="activity image"
                   />
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex w-full flex-col gap-4 md:w-auto">
+                  <div className="flex flex-col gap-4 md:hidden">
+                    {won ? (
+                      <HorizontalBanner
+                        label="Victory"
+                        className="h-5 bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
+                      />
+                    ) : (
+                      <HorizontalBanner
+                        label="Defeat"
+                        className="h-5 bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
+                      />
+                    )}
+                    <img
+                      src={activityDetails.imageUrl}
+                      className="h-28 w-full rounded-lg object-cover md:hidden"
+                      alt="activity image"
+                    />
+                  </div>
                   <div className="flex flex-row items-center gap-2">
                     <img
                       src={activityDetails.activityIcon}
                       className="h-12 w-12 rounded-lg bg-black/50 object-cover"
                       alt="activity image"
                     />
-
                     <div className="flex flex-col gap-2">
                       <Description
                         activity={activityDetails.activity}
@@ -201,7 +210,10 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                       </div>
                     </div>
                   </div>
-                  <Performance stats={stats} />
+                  <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
+                    <Performance stats={stats} className="md:pr-2" />
+                    <Performance stats={kdStats} className={'md:px-2'} />
+                  </div>
                 </div>
               </div>
             </div>

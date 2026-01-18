@@ -211,7 +211,15 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
               className="cursor-pointer"
               onClick={() => navigate(`${snapshot.id}`)}
             >
-              <CardHeader className="flex flex-col gap-4">
+              <CardHeader className="flex flex-col gap-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  {snapshot.name}
+                </h2>
+                {snapshot.description && (
+                  <div className="truncate text-sm text-muted-foreground">
+                    {snapshot.description}
+                  </div>
+                )}
                 <SubClassProvider snapshot={snapshot}>
                   <Super />
                 </SubClassProvider>

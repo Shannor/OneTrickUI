@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link } from 'react-router';
 import { CondensedLoadout } from '~/components/condensed-loadout';
@@ -23,22 +24,24 @@ export default function SessionLoadouts({ params }: Route.ComponentProps) {
 
   return (
     <div className="w-full">
-      <div className="flex flex-row divide-x-2 overflow-x-auto p-4">
+      <div className="flex flex-col flex-wrap gap-12 md:flex-row md:gap-6">
         {allSnapshots.map((snapshot) => (
           <div
             key={snapshot.id}
-            className="flex min-w-[300px] flex-col gap-4 px-4"
+            className="flex w-auto flex-col gap-4 md:min-w-[300px] lg:px-4"
           >
             <Link
               to={`/profile/${params?.id}/c/${params.characterId}/loadouts/${snapshot.id}`}
+              className="group flex cursor-pointer items-center gap-2 hover:text-blue-500 hover:underline"
             >
-              <h3 className="hover:text-blue-500 hover:underline">
+              <h3 className="group-hover:text-blue-500 group-hover:underline">
                 {snapshot.name}
               </h3>
+              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
             </Link>
             {isOwner && (
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={() => setSelectedSnapshot(snapshot)}
               >
                 Merge Loadout

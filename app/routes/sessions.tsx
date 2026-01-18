@@ -20,6 +20,7 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { useProfileData } from '~/hooks/use-route-loaders';
+import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/sessions';
 
@@ -33,8 +34,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       userId: id,
     },
     query: {
-      count: 10,
-      page: page,
+      count: BigInt(10),
+      page: BigInt(page),
       characterId,
       status: 'complete',
     },
@@ -44,8 +45,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       userId: id,
     },
     query: {
-      count: 1,
-      page: 0,
+      count: BigInt(1),
+      page: BigInt(0),
       characterId,
       status: 'pending',
     },
@@ -85,7 +86,7 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
         content={`Sessions - ${profile?.displayName ?? ''}  `}
       />
       <meta name="description" content="View and manage one trick sessions." />
-      <div className="flex flex-row justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 md:flex-row">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             Sessions
@@ -94,7 +95,11 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
         {isOwner && (
           <div className="flex flex-row gap-4">
             {!hasCurrentSession ? (
-              <Form method="post" action="/action/start-session">
+              <Form
+                method="post"
+                action="/action/start-session"
+                className="w-full"
+              >
                 <input type="hidden" name="characterId" value={characterId} />
                 <input type="hidden" name="userId" value={userId} />
                 <LoadingButton
@@ -102,14 +107,18 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
                   variant="default"
                   disabled={!characterId || isSubmitting}
                   isLoading={isSubmitting}
-                  className={`${isSubmitting ? 'opacity-50' : ''}`}
+                  className={cn('w-full lg:w-auto')}
                 >
                   <PlusIcon className="h-4 w-4" />
                   Start Session
                 </LoadingButton>
               </Form>
             ) : (
-              <Form method="post" action="/action/end-session">
+              <Form
+                method="post"
+                action="/action/end-session"
+                className="w-full"
+              >
                 <input type="hidden" name="characterId" value={characterId} />
                 <input type="hidden" name="sessionId" value={current?.id} />
                 <LoadingButton
@@ -117,7 +126,7 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
                   variant="outline"
                   disabled={!characterId || isSubmitting}
                   isLoading={isSubmitting}
-                  className={`${isSubmitting ? 'opacity-50' : ''}`}
+                  className={cn('w-full lg:w-auto')}
                 >
                   <StopCircleIcon className="h-4 w-4" />
                   Stop Session
