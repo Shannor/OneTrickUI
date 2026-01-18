@@ -186,7 +186,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
             <Form
               method="post"
               action="/action/update-session"
-              className="flex w-full flex-col gap-4 lg:w-1/3"
+              className="flex w-full flex-col gap-4 lg:w-1/2"
             >
               <Input
                 name="name"
