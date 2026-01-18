@@ -1,6 +1,6 @@
-import { ArrowUp10 } from 'lucide-react';
 import { redirect } from 'react-router';
 import { getAuth } from '~/.server/auth';
+import { Logo } from '~/components/logo';
 import { Button } from '~/components/ui/button';
 import { cn, isDev } from '~/lib/utils';
 
@@ -20,13 +20,17 @@ export default function Login() {
     <div className="grid min-h-svh lg:grid-cols-2">
       <title>Login - One Trick</title>
       <meta property="og:title" content="Login - One Trick" />
-      <meta name="description" content="Sign in to One Trick using Bungie SSO to view your Destiny 2 stats and sessions." />
+      <meta
+        name="description"
+        content="Sign in to One Trick using Bungie SSO to view your Destiny 2 stats and sessions."
+      />
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <div className="flex items-center gap-2 font-medium">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <ArrowUp10 className="size-4" />
-            </div>
+            <Logo
+              className="mx-auto mb-4 h-16 w-auto"
+              alt="D2 One Trick logo"
+            />
             One Trick
           </div>
         </div>

@@ -79,6 +79,24 @@ export async function loader({ request }: Route.LoaderArgs) {
 
     // Trim recent to 3 for UI
     const recentTop = recent.slice(0, 3);
+    const recentProfiles = await Promise.all(
+      recentTop.map(async (s) => {
+        const { data: profile, error } = await getUser({
+          path: { userId: s.userId },
+        });
+        if (error) {
+          return null;
+        }
+        return profile;
+      }),
+    ).then((res) =>
+      res.reduce<Record<string, Profile>>((state, current) => {
+        if (current) {
+          state[current.id] = current;
+        }
+        return state;
+      }, {}),
+    );
 
     return {
       activeCount,
@@ -86,6 +104,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       todayCount,
       weekCount,
       auth,
+      recentProfiles,
       profile,
     };
   } catch (e) {
@@ -97,20 +116,28 @@ export async function loader({ request }: Route.LoaderArgs) {
       weekCount: 0,
       auth,
       profile,
+      recentProfiles: {},
     };
   }
 }
 
 export default function Landing({ loaderData }: Route.ComponentProps) {
   const [isLoading] = useIsNavigating();
-  const { activeCount, recent, todayCount, weekCount, profile } =
-    loaderData ?? {
-      activeCount: 0,
-      recent: [],
-      todayCount: 0,
-      weekCount: 0,
-      auth: null,
-    };
+  const {
+    activeCount,
+    recent,
+    todayCount,
+    weekCount,
+    profile,
+    recentProfiles,
+  } = loaderData ?? {
+    activeCount: 0,
+    recent: [],
+    todayCount: 0,
+    weekCount: 0,
+    auth: null,
+    recentProfiles: {},
+  };
 
   return (
     <div className="flex h-full flex-col justify-between">
@@ -196,32 +223,40 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
             </p>
           ) : (
             <ul className="grid gap-3 sm:grid-cols-3">
-              {recent.map((s) => (
-                <li key={s.id} className="text-left">
-                  <Link
-                    to={`/profile/${s.userId}/c/${s.characterId}/sessions/${s.id}`}
-                  >
-                    <Card className="h-full">
-                      <CardContent className="flex flex-col gap-4 p-4">
-                        <div>
-                          <div className="font-medium text-foreground">
-                            {s.name ?? 'Session'}
+              {recent.map((s) => {
+                const profile = recentProfiles[s.userId];
+                return (
+                  <li key={s.id} className="text-left">
+                    <Link
+                      to={`/profile/${s.userId}/c/${s.characterId}/sessions/${s.id}`}
+                    >
+                      <Card className="h-full">
+                        <CardContent className="flex flex-col gap-4 p-4">
+                          <div>
+                            <div className="truncate font-medium text-foreground">
+                              {s.name ?? 'Session'}
+                            </div>
+                            {profile?.displayName && (
+                              <div className="truncate font-medium text-primary">
+                                {profile.displayName}
+                              </div>
+                            )}
+                            <div className="text-xs text-muted-foreground">
+                              {s.completedAt
+                                ? new Date(s.completedAt).toLocaleString()
+                                : 'Active'}
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {s.completedAt
-                              ? new Date(s.completedAt).toLocaleString()
-                              : 'Active'}
-                          </div>
-                        </div>
-                        <Stat
-                          label="Games Played"
-                          value={s.aggregateIds.length.toString()}
-                        />
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </li>
-              ))}
+                          <Stat
+                            label="Games Played"
+                            value={s.aggregateIds.length.toString()}
+                          />
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

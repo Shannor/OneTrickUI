@@ -14,8 +14,8 @@ export async function loader({ params }: Route.LoaderArgs) {
       userId: id,
     },
     query: {
-      count: 1,
-      page: 0,
+      count: BigInt(1),
+      page: BigInt(0),
       characterId,
     },
   });

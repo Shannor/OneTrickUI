@@ -24,7 +24,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     }
     return setAuth(request, data);
   } catch (e) {
-    l.error('Failed to set cookies', e);
+    l.error(e, 'Failed to set cookies');
     return { error: 'Failed to set cookies' };
   }
 }
@@ -36,7 +36,7 @@ export default function OAuth() {
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="font-bold text-2xl">Failed SignIn</div>
+          <div className="text-2xl font-bold">Failed SignIn</div>
           {error && (
             <p className="text-xl">
               There was an error during sign in. Please try again!
