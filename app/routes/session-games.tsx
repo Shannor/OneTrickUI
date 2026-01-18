@@ -167,7 +167,7 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                   )}
                   <img
                     src={activityDetails.imageUrl}
-                    className="hidden h-auto w-36 rounded-lg object-cover md:block md:w-28"
+                    className="hidden h-auto w-36 rounded-lg object-cover md:block md:w-28 lg:w-36 xl:w-44"
                     alt="activity image"
                   />
                 </div>
