@@ -14,7 +14,7 @@ import {
   useTheme,
 } from 'remix-themes';
 import { themeSessionResolver } from '~/.server/sessions';
-import { client } from '~/api';
+import { client } from '~/api/client.gen';
 import { isDev } from '~/lib/utils';
 
 import type { Route } from './+types/root';

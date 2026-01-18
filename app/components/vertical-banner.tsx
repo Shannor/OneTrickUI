@@ -5,7 +5,7 @@ interface Props {
   label: string;
   className?: string;
 }
-const VerticalBanner = ({ label, className }: Props) => {
+export const VerticalBanner = ({ label, className }: Props) => {
   return (
     <div
       className={cn(

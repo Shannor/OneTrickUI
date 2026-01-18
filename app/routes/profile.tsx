@@ -70,7 +70,7 @@ export default function Profile() {
             }}
           </CharacterPicker>
         </Form>
-        <div className="gap- flex w-full flex-col">
+        <div className="flex w-full flex-col gap-4">
           <div className="flex flex-row gap-4">
             <Link
               to={{

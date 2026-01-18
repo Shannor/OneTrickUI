@@ -32,7 +32,7 @@ export default function CharacterSelect({ loaderData }: Route.ComponentProps) {
         name="description"
         content="Select the Destiny 2 character to view sessions, snapshots, and metrics."
       />
-      <div className="flex w-1/3 flex-col items-center gap-4">
+      <div className="flex w-full flex-col items-center gap-4 px-6 md:w-1/2 md:px-4">
         <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
           {type === 'viewer'
             ? ' Which character do you want to view for'
