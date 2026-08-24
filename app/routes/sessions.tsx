@@ -143,7 +143,7 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
       <div>
         {data.length === 0 && (
           <Empty
-            title={`No ${current && 'Completed'} Sessions`}
+            title={current ? 'No Completed Sessions' : 'No Sessions'}
             description={
               current
                 ? 'Finish your current session to see your completed sessions here.'

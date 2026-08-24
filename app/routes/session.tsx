@@ -164,10 +164,10 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <title>{`${session.name} - ${profile?.displayName} `}</title>
+      <title>{`${session.name}${profile?.displayName ? ` - ${profile.displayName}` : ''}`}</title>
       <meta
         property="og:title"
-        content={`${session.name} - ${profile?.displayName} `}
+        content={`${session.name}${profile?.displayName ? ` - ${profile.displayName}` : ''}`}
       />
       <meta
         name="description"
