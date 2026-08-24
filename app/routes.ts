@@ -21,7 +21,31 @@ export default [
   route('/apple-touch-icon.png', 'routes/apple-touch-icon.png.ts'),
   route(
     '/apple-touch-icon-precomposed.png',
-    'routes/apple-touch-icon-precomposed.png.ts',
+    'routes/apple-touch-icon.png.ts',
+  ),
+  route(
+    '/apple-touch-icon-120x120.png',
+    'routes/apple-touch-icon.png.ts',
+  ),
+  route(
+    '/apple-touch-icon-120x120-precomposed.png',
+    'routes/apple-touch-icon.png.ts',
+  ),
+  route(
+    '/apple-touch-icon-152x152.png',
+    'routes/apple-touch-icon.png.ts',
+  ),
+  route(
+    '/apple-touch-icon-152x152-precomposed.png',
+    'routes/apple-touch-icon.png.ts',
+  ),
+  route(
+    '/apple-touch-icon-180x180.png',
+    'routes/apple-touch-icon.png.ts',
+  ),
+  route(
+    '/apple-touch-icon-180x180-precomposed.png',
+    'routes/apple-touch-icon.png.ts',
   ),
   // Public Routes
   route('profile/:id', 'routes/profile-state.tsx', [
