@@ -1,5 +1,4 @@
 import { ExternalLink } from 'lucide-react';
-import React from 'react';
 import { Link } from 'react-router';
 import type { Aggregate } from '~/api';
 import { calculatePercentage, calculateRatio } from '~/calculations/precision';
@@ -20,29 +19,29 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
   const { aggregates, snapshots, session } = useSessionData();
   const { characterId, id } = params;
 
-  const groupedBySnapshot = groupAggregates(aggregates ?? [], characterId);
+  if (!aggregates || aggregates.length === 0) {
+    return (
+      <Empty
+        title="Get in the Crucible!"
+        description="Play some games so we can get new information!"
+      />
+    );
+  }
+
+  if (!snapshots || Object.keys(snapshots).length === 0) {
+    return (
+      <Empty
+        title="Get in the Crucible!"
+        description="Play some games so we can get new information!"
+      />
+    );
+  }
+
+  const groupedBySnapshot = groupAggregates(aggregates, characterId);
   const data = getLoadoutData(groupedBySnapshot, characterId);
-  const fake = [['test', aggregates ?? []]] as GroupTuple[];
+  const fake = [['test', aggregates]] as GroupTuple[];
   const [item] = getLoadoutData(fake, characterId, true);
   const { stats, matchStats, rawStats } = item;
-
-  if (!aggregates) {
-    return (
-      <Empty
-        title="No Matches Found"
-        description="No matches found for this session."
-      />
-    );
-  }
-
-  if (!snapshots) {
-    return (
-      <Empty
-        title="No Loadouts Found"
-        description="No loadouts were found for this session."
-      />
-    );
-  }
 
   return (
     <div className="mt-8 flex flex-col gap-16">

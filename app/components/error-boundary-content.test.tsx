@@ -41,6 +41,9 @@ describe('ErrorBoundaryContent', () => {
     );
 
     expect(screen.getByText('Something Went Wrong')).toBeInTheDocument();
+    expect(
+      screen.getByText("Oops! Sorry Guardian, we're working on it!"),
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /go to home/i })).toHaveAttribute(
       'href',
       '/',

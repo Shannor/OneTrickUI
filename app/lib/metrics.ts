@@ -97,15 +97,22 @@ export function timeWindowToCustom(
     case 'six-months':
       return { start: subMonths(startOfToday(), 6), end };
     case 'all-time': {
+      if (!aggregates || aggregates.length === 0) {
+        return { start: subHours(end, 1), end };
+      }
       const items = [...aggregates].sort(
         (a, b) =>
-          new Date(b.activityDetails.period).getTime() -
-          new Date(a.activityDetails.period).getTime(),
+          new Date(b?.activityDetails?.period ?? 0).getTime() -
+          new Date(a?.activityDetails?.period ?? 0).getTime(),
       );
       const last = items[0];
       const first = items[items.length - 1];
-      const endDate = last ? new Date(last.activityDetails.period) : end;
-      const start = new Date(first.activityDetails.period);
+      const endDate = last?.activityDetails?.period
+        ? new Date(last.activityDetails.period)
+        : end;
+      const start = first?.activityDetails?.period
+        ? new Date(first.activityDetails.period)
+        : end;
       return { start: subMinutes(start, 30), end: addMinutes(endDate, 30) };
     }
   }
