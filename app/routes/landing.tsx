@@ -71,8 +71,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Fetch lightweight public stats for the landing page
   try {
     const [pendingRes, recentRes] = await Promise.all([
-      getSessions({ query: { count: 10, page: 0, status: 'pending' } }),
-      getSessions({ query: { count: 10, page: 0, status: 'complete' } }),
+      getSessions({ query: { count: 20, page: 0, status: 'pending' } }),
+      getSessions({ query: { count: 20, page: 0, status: 'complete' } }),
     ]);
 
     const activeSessions: Session[] = pendingRes.data ?? [];
@@ -81,19 +81,35 @@ export async function loader({ request }: Route.LoaderArgs) {
     const oneDayMs = 24 * 60 * 60 * 1000;
     const sevenDayMs = 7 * oneDayMs;
 
-    const todayCount = recent.filter((s) => {
+    const sortedActive = [...activeSessions].sort((a, b) => {
+      const timeA = new Date(a.startedAt).getTime();
+      const timeB = new Date(b.startedAt).getTime();
+      return timeB - timeA;
+    });
+
+    const sortedRecent = [...recent].sort((a, b) => {
+      const timeA = a.completedAt
+        ? new Date(a.completedAt).getTime()
+        : new Date(a.startedAt).getTime();
+      const timeB = b.completedAt
+        ? new Date(b.completedAt).getTime()
+        : new Date(b.startedAt).getTime();
+      return timeB - timeA;
+    });
+
+    const todayCount = sortedRecent.filter((s) => {
       const t = s.completedAt ? new Date(s.completedAt).getTime() : 0;
       return t > 0 && now - t <= oneDayMs;
     }).length;
 
-    const weekCount = recent.filter((s) => {
+    const weekCount = sortedRecent.filter((s) => {
       const t = s.completedAt ? new Date(s.completedAt).getTime() : 0;
       return t > 0 && now - t <= sevenDayMs;
     }).length;
 
     // Trim recent and active to top 6 for UI grid
-    const recentTop = recent.slice(0, 6);
-    const activeTop = activeSessions.slice(0, 6);
+    const recentTop = sortedRecent.slice(0, 6);
+    const activeTop = sortedActive.slice(0, 6);
 
     // Collect all user IDs from recent and active sessions to fetch profiles
     const userIds = Array.from(
