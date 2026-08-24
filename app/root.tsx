@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import LogRocket from 'logrocket';
 import {
   Links,
   Meta,
@@ -19,6 +20,10 @@ import { isDev } from '~/lib/utils';
 
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
+
+if (typeof window !== 'undefined') {
+  LogRocket.init('gruntt/d2-one-trick');
+}
 
 client.setConfig({
   baseUrl: isDev() ? 'http://localhost:8080' : 'https://api.d2onetrick.com',
