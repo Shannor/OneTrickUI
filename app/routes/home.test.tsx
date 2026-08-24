@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
+
 import Home from './home';
 
 vi.mock('~/hooks/use-route-loaders', () => ({
