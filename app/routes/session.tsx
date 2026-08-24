@@ -1,9 +1,8 @@
 import { doc, onSnapshot } from '@firebase/firestore';
 import { format } from 'date-fns';
-import { Share2, StopCircleIcon } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Radio, Share2, StopCircleIcon } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Form,
   NavLink,
   Outlet,
   useFetcher,
@@ -13,6 +12,7 @@ import {
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -174,7 +174,22 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
         content={`View games, metrics, and details for ${profile?.displayName ?? ''}'s session ${session.name}.`}
       />
       <div className="flex w-full flex-col items-start gap-4">
-        {isCurrent && <Badge className="animate-pulse">Active</Badge>}
+        {isCurrent && (
+          <>
+            <Badge className="animate-pulse">Active</Badge>
+            <Alert className="border-primary/50 bg-primary/10">
+              <Radio className="h-4 w-4 animate-pulse text-primary" />
+              <AlertTitle className="font-semibold text-foreground">
+                Session Active & Recording
+              </AlertTitle>
+              <AlertDescription className="text-xs text-muted-foreground">
+                Start playing Destiny 2 matches to automatically record your
+                gameplay and stats. Active tracking sessions automatically end
+                after 2 hours.
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
         <div className="text-sm text-muted-foreground">
           {format(session.startedAt, 'MM/dd/yyyy - p')}
           {session.completedAt
