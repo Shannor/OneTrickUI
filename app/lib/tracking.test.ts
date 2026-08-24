@@ -1,11 +1,13 @@
 import LogRocket from 'logrocket';
 import { describe, expect, it, vi } from 'vitest';
 
-import { trackUserSession } from './tracking';
+import { trackError, trackUserSession } from './tracking';
 
 vi.mock('logrocket', () => ({
   default: {
     identify: vi.fn(),
+    track: vi.fn(),
+    captureException: vi.fn(),
   },
 }));
 
@@ -41,5 +43,20 @@ describe('trackUserSession', () => {
     });
 
     expect(LogRocket.identify).toHaveBeenCalledWith('user-456', {});
+  });
+});
+
+describe('trackError', () => {
+  it('tracks 404 event and captures exception with LogRocket', () => {
+    const error404 = { status: 404 };
+    trackError(error404);
+
+    expect(LogRocket.track).toHaveBeenCalledWith(
+      '404_page_not_found',
+      expect.objectContaining({
+        pathname: expect.any(String),
+      }),
+    );
+    expect(LogRocket.captureException).toHaveBeenCalled();
   });
 });

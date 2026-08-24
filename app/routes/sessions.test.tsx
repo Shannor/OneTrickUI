@@ -49,7 +49,9 @@ describe('Sessions page component', () => {
     expect(screen.getByText('No Sessions')).toBeInTheDocument();
     expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
 
-    const startButton = screen.getByRole('button', { name: /start first session/i });
+    const startButton = screen.getByRole('button', {
+      name: /start first session/i,
+    });
     expect(startButton).toBeInTheDocument();
 
     const form = startButton.closest('form');

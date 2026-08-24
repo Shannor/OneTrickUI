@@ -7,7 +7,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  isRouteErrorResponse,
   useLoaderData,
 } from 'react-router';
 import {
@@ -19,6 +18,8 @@ import { getAuth } from '~/.server/auth';
 import { themeSessionResolver } from '~/.server/sessions';
 import { getUser } from '~/api';
 import { client } from '~/api/client.gen';
+import { ErrorBoundaryContent } from '~/components/error-boundary-content';
+import { ModeToggle } from '~/components/mode-toggle';
 import { trackUserSession } from '~/lib/tracking';
 import { isDev } from '~/lib/utils';
 
@@ -160,29 +161,32 @@ export function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = 'Oops!';
-  let details = 'An unexpected error occurred.';
-  let stack: string | undefined;
-
-  if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? '404' : 'Error';
-    details =
-      error.status === 404
-        ? 'The requested page could not be found.'
-        : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
-  }
   return (
-    <main className="container mx-auto p-4 pt-16">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full overflow-x-auto p-4">
-          <code>{stack}</code>
-        </pre>
-      )}
-    </main>
+    <ThemeProvider specifiedTheme={null} themeAction="/action/set-theme">
+      <ErrorBoundaryWithTheme error={error} />
+    </ThemeProvider>
+  );
+}
+
+function ErrorBoundaryWithTheme({ error }: { error: unknown }) {
+  const [theme] = useTheme();
+
+  return (
+    <html lang="en" className={clsx(theme)} suppressHydrationWarning={true}>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <Meta />
+        <PreventFlashOnWrongTheme ssrTheme={false} />
+        <Links />
+      </head>
+      <body className="relative min-h-screen bg-background font-sans text-foreground antialiased">
+        <div className="absolute right-4 top-4 z-50">
+          <ModeToggle />
+        </div>
+        <ErrorBoundaryContent error={error} />
+        <Scripts />
+      </body>
+    </html>
   );
 }

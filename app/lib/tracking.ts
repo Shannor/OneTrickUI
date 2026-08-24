@@ -1,4 +1,5 @@
 import LogRocket from 'logrocket';
+import { isRouteErrorResponse } from 'react-router';
 
 export interface UserTrackData {
   id: string;
@@ -30,4 +31,44 @@ export function trackUserSession(user: UserTrackData | null | undefined): void {
     traits.primaryMembershipId = user.primaryMembershipId;
   }
   LogRocket.identify(user.id, traits);
+}
+
+export function trackError(error: unknown): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  let is404 = false;
+  if (isRouteErrorResponse(error)) {
+    is404 = error.status === 404;
+  } else if (typeof error === 'object' && error !== null && 'status' in error) {
+    is404 = (error as { status: number }).status === 404;
+  }
+
+  const pathname = window.location.pathname;
+  const href = window.location.href;
+
+  if (is404) {
+    LogRocket.track('404_page_not_found', {
+      pathname,
+      href,
+      referrer: document.referrer,
+    });
+  }
+
+  if (error instanceof Error) {
+    LogRocket.captureException(error, {
+      extra: {
+        pathname,
+        is404,
+      },
+    });
+  } else if (typeof error === 'object' && error !== null) {
+    LogRocket.captureException(new Error(JSON.stringify(error)), {
+      extra: {
+        pathname,
+        is404,
+      },
+    });
+  }
 }
