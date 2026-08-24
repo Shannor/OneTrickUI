@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import LogRocket from 'logrocket';
+import { useEffect } from 'react';
 import {
   Links,
   Meta,
@@ -14,8 +15,11 @@ import {
   ThemeProvider,
   useTheme,
 } from 'remix-themes';
+import { getAuth } from '~/.server/auth';
 import { themeSessionResolver } from '~/.server/sessions';
+import { getUser } from '~/api';
 import { client } from '~/api/client.gen';
+import { trackUserSession } from '~/lib/tracking';
 import { isDev } from '~/lib/utils';
 
 import type { Route } from './+types/root';
@@ -74,9 +78,45 @@ export const links: Route.LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
 ];
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { getTheme } = await themeSessionResolver(request);
+  let theme = null;
+  try {
+    const { getTheme } = await themeSessionResolver(request);
+    theme = getTheme();
+  } catch {
+    theme = null;
+  }
+
+  let user = null;
+  try {
+    const auth = await getAuth(request);
+    if (auth?.id) {
+      user = {
+        id: auth.id,
+        membershipId: auth.membershipId,
+        primaryMembershipId: auth.primaryMembershipId,
+      };
+      try {
+        const { data: profile } = await getUser({ path: { userId: auth.id } });
+        if (profile?.displayName) {
+          user = {
+            ...user,
+            name: profile.displayName,
+            displayName: profile.displayName,
+            uniqueName: profile.uniqueName,
+          };
+        }
+      } catch {
+        // Fallback to basic session user if profile fetch throws
+      }
+    }
+  } catch {
+    // Treat as signed-out if auth session retrieval throws or is malformed
+    user = null;
+  }
+
   return {
-    theme: getTheme(),
+    theme,
+    user,
   };
 };
 
@@ -95,6 +135,10 @@ export default function AppWithProviders() {
 export function App() {
   const data = useLoaderData<typeof loader>();
   const [theme] = useTheme();
+
+  useEffect(() => {
+    trackUserSession(data.user);
+  }, [data.user]);
 
   return (
     // Needed for setting the theme on the website
