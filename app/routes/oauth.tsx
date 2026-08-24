@@ -3,18 +3,36 @@ import { setAuth } from '~/.server/auth';
 import { login } from '~/api';
 import { AuthRetryCard } from '~/components/auth-retry';
 import { Logger } from '~/lib/logger';
+import { extractRequestMeta, maskCode } from '~/lib/request-logger';
 
 import type { Route } from './+types/oauth';
 
 export async function loader({ request }: Route.LoaderArgs) {
+  const meta = extractRequestMeta(request);
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const oauthError = url.searchParams.get('error');
   const errorDescription = url.searchParams.get('error_description');
-  const l = Logger.child({ request: url });
+  const state = url.searchParams.get('state');
+
+  const maskedCode = maskCode(code);
+  const codeLength = code ? code.length : 0;
+
+  const l = Logger.child({
+    flow: 'oauth_callback',
+    ...meta,
+    codePrefix: maskedCode,
+    codeLength,
+    state,
+  });
+
+  l.info('OAuth callback loader received request');
 
   if (oauthError) {
-    l.error({ oauthError, errorDescription }, 'OAuth error from Bungie');
+    l.warn(
+      { oauthError, errorDescription },
+      'OAuth error parameter received from Bungie redirect',
+    );
     return {
       error:
         errorDescription ||
@@ -24,14 +42,27 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   if (!code) {
-    l.error('Missing Code');
+    l.warn('Missing authorization code in Bungie OAuth callback');
     return { error: 'Missing authorization code from Bungie.' };
   }
 
   try {
-    const { data, error: apiError } = await login({ body: { code } });
+    l.info(
+      { codePrefix: maskedCode },
+      'Sending authorization code to backend login endpoint',
+    );
+    const { data, error: apiError, response } = await login({ body: { code } });
+
     if (apiError || !data) {
-      l.error({ apiError }, 'Missing data from login or API error');
+      l.error(
+        {
+          apiError,
+          backendStatus: response?.status,
+          backendStatusText: response?.statusText,
+          codePrefix: maskedCode,
+        },
+        'Missing data from login or API error',
+      );
       const errorMessage =
         typeof apiError === 'object' &&
         apiError !== null &&
@@ -41,9 +72,17 @@ export async function loader({ request }: Route.LoaderArgs) {
           : 'Failed to authenticate with Bungie server. Please try again.';
       return { error: errorMessage };
     }
+
+    l.info(
+      { userId: data.id, codePrefix: maskedCode },
+      'Backend login succeeded, setting auth session',
+    );
     return setAuth(request, data);
   } catch (e) {
-    l.error(e, 'Failed to set cookies');
+    l.error(
+      { err: e, codePrefix: maskedCode },
+      'Unexpected error occurred while setting session during OAuth callback',
+    );
     return { error: 'An unexpected error occurred while saving your session.' };
   }
 }
