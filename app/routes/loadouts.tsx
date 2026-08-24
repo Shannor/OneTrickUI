@@ -179,8 +179,8 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
       </Form>
       {loadouts?.items?.length === 0 && (
         <Empty
-          title="No Loadouts Found"
-          description="Try starting a session and playing some games to see your loadouts here."
+          title="Get in the Crucible!"
+          description="Play some games so we can get new information!"
         />
       )}
       <div className="grid grid-cols-1 gap-4">

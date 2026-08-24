@@ -1,7 +1,8 @@
 import { ExternalLink } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { CondensedLoadout } from '~/components/condensed-loadout';
+import { Empty } from '~/components/empty';
 import { MergeLoadoutDialog } from '~/components/merge-loadout-dialog';
 import { Button } from '~/components/ui/button';
 import { useProfileData, useSessionData } from '~/hooks/use-route-loaders';
@@ -13,8 +14,13 @@ export default function SessionLoadouts({ params }: Route.ComponentProps) {
   const { type } = useProfileData();
   const isOwner = type === 'owner';
 
-  if (!snapshots) {
-    return <div>No snapshots</div>;
+  if (!snapshots || Object.values(snapshots).length === 0) {
+    return (
+      <Empty
+        title="Get in the Crucible!"
+        description="Play some games so we can get new information!"
+      />
+    );
   }
 
   const allSnapshots = Object.values(snapshots);
