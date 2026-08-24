@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-
 import { TooltipProvider } from '~/components/ui/tooltip';
 
 import Session from './session';
@@ -57,7 +56,41 @@ describe('Session Page Route Component', () => {
       screen.getByText(/start playing destiny 2 matches/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/automatically end after 2 hours/i),
+      screen.getByText(/after 2 hours of inactivity/i),
     ).toBeInTheDocument();
+  });
+
+  it('hides active recording banner when 3 or more games have been recorded', () => {
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-123',
+          name: 'Active Trial Session',
+          status: 'pending' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: ['game-1', 'game-2', 'game-3'],
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Session {...props} />,
+      },
+    ]);
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    expect(screen.queryByText('Session Active & Recording')).not.toBeInTheDocument();
   });
 });

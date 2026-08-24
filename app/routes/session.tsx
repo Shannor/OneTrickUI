@@ -1,6 +1,6 @@
 import { doc, onSnapshot } from '@firebase/firestore';
 import { format } from 'date-fns';
-import { Radio, Share2, StopCircleIcon } from 'lucide-react';
+import { Info, Share2, StopCircleIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   NavLink,
@@ -148,6 +148,8 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
   }
 
   const isCurrent = session.status === 'pending';
+  const gamesRecorded = session.aggregateIds?.length ?? 0;
+  const showActiveNotice = isCurrent && gamesRecorded < 3;
 
   const [copyStatus, setCopyStatus] = useState('');
 
@@ -174,21 +176,19 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
         content={`View games, metrics, and details for ${profile?.displayName ?? ''}'s session ${session.name}.`}
       />
       <div className="flex w-full flex-col items-start gap-4">
-        {isCurrent && (
-          <>
-            <Badge className="animate-pulse">Active</Badge>
-            <Alert className="border-primary/50 bg-primary/10">
-              <Radio className="h-4 w-4 animate-pulse text-primary" />
-              <AlertTitle className="font-semibold text-foreground">
-                Session Active & Recording
-              </AlertTitle>
-              <AlertDescription className="text-xs text-muted-foreground">
-                Start playing Destiny 2 matches to automatically record your
-                gameplay and stats. Active tracking sessions automatically end
-                after 2 hours.
-              </AlertDescription>
-            </Alert>
-          </>
+        {isCurrent && <Badge className="animate-pulse">Active</Badge>}
+        {showActiveNotice && (
+          <Alert className="border-blue-500/40 bg-blue-500/10 text-blue-950 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-100">
+            <Info className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+            <AlertTitle className="font-semibold">
+              Session Active & Recording
+            </AlertTitle>
+            <AlertDescription className="text-xs text-blue-900/80 dark:text-blue-200/80">
+              Start playing Destiny 2 matches to automatically record your
+              gameplay and stats. Tracking will automatically end after 2 hours
+              of inactivity.
+            </AlertDescription>
+          </Alert>
         )}
         <div className="text-sm text-muted-foreground">
           {format(session.startedAt, 'MM/dd/yyyy - p')}
