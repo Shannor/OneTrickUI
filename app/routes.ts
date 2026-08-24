@@ -16,6 +16,13 @@ export default [
   // SEO / Crawlers
   route('/robots.txt', 'routes/robots.txt.ts'),
   route('/sitemap.xml', 'routes/sitemap.xml.ts'),
+  // Favicon & Icons
+  route('/favicon.ico', 'routes/favicon.ico.ts'),
+  route('/apple-touch-icon.png', 'routes/apple-touch-icon.png.ts'),
+  route(
+    '/apple-touch-icon-precomposed.png',
+    'routes/apple-touch-icon-precomposed.png.ts',
+  ),
   // Public Routes
   route('profile/:id', 'routes/profile-state.tsx', [
     index('routes/character-select.tsx'),

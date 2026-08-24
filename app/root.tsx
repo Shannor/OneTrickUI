@@ -66,6 +66,10 @@ export const links: Route.LinksFunction = () => [
     href: '/logo-white.ico',
     media: '(prefers-color-scheme: dark)',
   },
+  {
+    rel: 'apple-touch-icon',
+    href: '/apple-touch-icon.png',
+  },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
