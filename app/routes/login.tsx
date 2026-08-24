@@ -63,7 +63,7 @@ export default function Login() {
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-xs">
+          <div className="w-full max-w-sm">
             <div className={cn('flex flex-col gap-6')}>
               <div className="flex flex-col items-center gap-2 text-center">
                 <Logo
@@ -79,9 +79,11 @@ export default function Login() {
               </div>
 
               {error && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="break-words">
                   <AlertTitle>Sign In Failed</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription className="break-words text-xs">
+                    {error}
+                  </AlertDescription>
                 </Alert>
               )}
 
@@ -91,7 +93,7 @@ export default function Login() {
                   reloadDocument
                   className={cn(
                     buttonVariants({ variant: 'default' }),
-                    'w-full',
+                    'h-auto min-h-[2.5rem] w-full justify-center whitespace-normal px-4 py-2 text-center',
                   )}
                 >
                   {error ? 'Retry Sign In with Bungie' : 'Login with Bungie'}
@@ -101,10 +103,10 @@ export default function Login() {
                   to="/"
                   className={cn(
                     buttonVariants({ variant: 'outline' }),
-                    'w-full gap-2 text-muted-foreground hover:text-foreground',
+                    'h-auto min-h-[2.5rem] w-full justify-center gap-2 whitespace-normal px-4 py-2 text-center text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4 shrink-0" />
                   <span>Back to Home</span>
                 </Link>
               </div>

@@ -54,7 +54,7 @@ export function CharacterPicker({
               readOnly
               hidden
               name="light"
-              value={it.light}
+              value={it.light?.toString()}
             />
             <input
               className="pointer-events-none absolute h-0 w-0 opacity-0"

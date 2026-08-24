@@ -18,7 +18,7 @@ describe('AuthRetryCard', () => {
       screen.getByText('There was an error during sign in. Please try again.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Retry Sign In')).toBeInTheDocument();
-    expect(screen.getByText('Back to Login')).toBeInTheDocument();
+    expect(screen.getByText('Back to Home')).toBeInTheDocument();
   });
 
   it('renders custom error message when error prop is provided', () => {

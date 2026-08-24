@@ -139,12 +139,12 @@ export default function Sidebar({ params }: Route.ComponentProps) {
               </div>
             ) : null}
             <div className="flex flex-col gap-12">
-              <div className="flex w-full flex-col justify-stretch gap-6 lg:flex-row lg:gap-4">
+              <div className="grid w-full grid-cols-1 gap-3 xl:grid-cols-3">
                 {characters?.map((character) => (
                   <Link
                     key={character.id}
                     to={`/profile/${profile.id}/c/${character.id}`}
-                    className="w-full"
+                    className="block w-full min-w-0"
                   >
                     <CharacterItem
                       character={character}

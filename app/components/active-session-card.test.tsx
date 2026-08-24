@@ -45,4 +45,36 @@ describe('ActiveSessionCard', () => {
       '/profile/user-456/c/char-789/sessions/sess-123',
     );
   });
+
+  it('renders character class below session name and display name + title on emblem banner', () => {
+    const profileWithCharacter: Profile = {
+      ...mockProfile,
+      characters: [
+        {
+          id: 'char-789',
+          class: 'Hunter',
+          race: 'Human',
+          light: 2010n,
+          emblemURL: '/logo.svg',
+          emblemBackgroundURL: '/hero-landing.svg',
+          currentTitle: 'Flawless',
+          emblemColor: { red: 0, green: 0, blue: 0, alpha: 1 },
+        },
+      ],
+    };
+
+    render(
+      <MemoryRouter>
+        <ActiveSessionCard
+          session={mockSession}
+          profile={profileWithCharacter}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('FireteamLeader')).toBeInTheDocument();
+    expect(screen.getByText('Flawless')).toBeInTheDocument();
+    expect(screen.getByText('Hunter')).toBeInTheDocument();
+    expect(screen.getByText('2010')).toBeInTheDocument();
+  });
 });

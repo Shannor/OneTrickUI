@@ -1,4 +1,4 @@
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { buttonVariants } from '~/components/ui/button';
@@ -35,10 +35,12 @@ export function AuthRetryCard({ error, className }: AuthRetryCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+        <Alert variant="destructive" className="break-words">
+          <AlertCircle className="h-4 w-4 shrink-0" />
           <AlertTitle>Authentication Error</AlertTitle>
-          <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertDescription className="break-words text-xs">
+            {errorMessage}
+          </AlertDescription>
         </Alert>
       </CardContent>
       <CardFooter className="flex flex-col gap-2 sm:flex-row">
@@ -47,20 +49,21 @@ export function AuthRetryCard({ error, className }: AuthRetryCardProps) {
           reloadDocument
           className={cn(
             buttonVariants({ variant: 'default' }),
-            'flex w-full flex-1 items-center justify-center gap-2',
+            'flex h-auto min-h-[2.5rem] w-full flex-1 items-center justify-center gap-2 whitespace-normal px-4 py-2 text-center',
           )}
         >
-          <RefreshCw className="h-4 w-4" />
-          Retry Sign In
+          <RefreshCw className="h-4 w-4 shrink-0" />
+          <span>Retry Sign In</span>
         </Link>
         <Link
-          to="/login"
+          to="/"
           className={cn(
             buttonVariants({ variant: 'outline' }),
-            'flex w-full flex-1 items-center justify-center',
+            'flex h-auto min-h-[2.5rem] w-full flex-1 items-center justify-center gap-2 whitespace-normal px-4 py-2 text-center',
           )}
         >
-          Back to Login
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          <span>Back to Home</span>
         </Link>
       </CardFooter>
     </Card>

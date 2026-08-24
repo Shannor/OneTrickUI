@@ -74,7 +74,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 }
 
-export default function ActiveSessionsPage() {
+export function ActiveSessionsPage() {
   const { activeSessions, profiles } = useLoaderData<typeof loader>();
 
   return (
@@ -97,7 +97,7 @@ export default function ActiveSessionsPage() {
             'shrink-0 text-sm font-semibold',
           )}
         >
-          Sign In to Track
+          Start a Session
         </Link>
       </div>
 
@@ -116,7 +116,7 @@ export default function ActiveSessionsPage() {
               'mt-6 font-medium',
             )}
           >
-            Sign In Now
+            Start a Session
           </Link>
         </div>
       ) : (
@@ -133,3 +133,5 @@ export default function ActiveSessionsPage() {
     </div>
   );
 }
+
+export default ActiveSessionsPage;

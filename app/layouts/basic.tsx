@@ -3,7 +3,7 @@ import { Logo } from '~/components/logo';
 import { ModeToggle } from '~/components/mode-toggle';
 import { TooltipProvider } from '~/components/ui/tooltip';
 
-export default function Basic() {
+export function Basic() {
   return (
     <div className="flex min-h-screen flex-col">
       <TooltipProvider>
@@ -12,10 +12,10 @@ export default function Basic() {
             <div className="flex items-center gap-4">
               <Link to="/" className="flex items-center gap-2">
                 <Logo className="h-8 w-auto" />
+                <span className="font-medium uppercase tracking-wider">
+                  <span className="text-primary">1</span> Trick
+                </span>
               </Link>
-              <span className="font-medium uppercase tracking-wider">
-                <span className="text-primary">1</span> Trick
-              </span>
             </div>
             <div className="flex items-center gap-2">
               <ModeToggle />
@@ -31,3 +31,5 @@ export default function Basic() {
     </div>
   );
 }
+
+export default Basic;
