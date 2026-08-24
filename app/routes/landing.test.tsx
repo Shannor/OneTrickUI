@@ -71,4 +71,32 @@ describe('Landing Component', () => {
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/profile/123');
   });
+
+  it('renders primary CTA as a direct anchor element without a parent button wrapper', () => {
+    const props = {
+      loaderData: {
+        activeCount: 0,
+        activeSessions: [],
+        recent: [],
+        todayCount: 0,
+        weekCount: 0,
+        auth: undefined,
+        profile: null,
+        recentProfiles: {},
+      },
+    } as unknown as ComponentProps<typeof Landing>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Landing {...props} />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    const link = screen.getAllByRole('link', { name: /start a session/i })[0];
+    expect(link.tagName).toBe('A');
+    expect(link.closest('button')).toBeNull();
+  });
 });

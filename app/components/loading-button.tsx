@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
 import { Button, type ButtonProps } from '~/components/ui/button';
 import { cn } from '~/lib/utils';
 
@@ -19,14 +19,14 @@ export function LoadingButton({
   return (
     <Button
       disabled={isLoading}
-      className={cn({ 'opacity-50': isLoading }, className)}
+      className={cn({ 'pointer-events-none opacity-50': isLoading }, className)}
       {...rest}
     >
       {isLoading ? (
-        <div className="flex flex-row gap-2">
+        <span className="flex flex-row items-center gap-2">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           {loadingText}
-        </div>
+        </span>
       ) : (
         children
       )}

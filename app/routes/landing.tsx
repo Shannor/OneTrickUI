@@ -187,24 +187,17 @@ export function Landing({ loaderData }: Route.ComponentProps) {
 
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <LoadingButton
+            asChild
             isLoading={isLoading}
             size="lg"
             className="w-full justify-center sm:w-60"
           >
             {profile ? (
-              <Link
-                to={`/profile/${profile.id}`}
-                className="flex h-full w-full items-center justify-center"
-              >
+              <Link to={`/profile/${profile.id}`}>
                 Continue to {profile.displayName}
               </Link>
             ) : (
-              <Link
-                to="/login"
-                className="flex h-full w-full items-center justify-center"
-              >
-                Start a Session
-              </Link>
+              <Link to="/login">Start a Session</Link>
             )}
           </LoadingButton>
 
