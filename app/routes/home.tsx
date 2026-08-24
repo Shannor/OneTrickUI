@@ -38,7 +38,7 @@ export async function loader({ params }: Route.LoaderArgs) {
           userId: id,
           gameMode: 'allGameModes',
           count: 3,
-          minimumGames: 1,
+          minimumGames: 10,
         },
       }),
     ]);
@@ -162,7 +162,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                   const weapons = getDetailWeapons(snapshot?.loadout);
                   const kd = statsRecord[snapshot.id]?.kd?.value ?? 0;
                   const kda = statsRecord[snapshot.id]?.kda?.value ?? 0;
-                  const winRatio = statsRecord[snapshot.id]?.standing?.value ?? 0;
+                  const winRatio =
+                    statsRecord[snapshot.id]?.standing?.value ?? 0;
 
                   const stats: StatItem[] = [
                     { label: 'K/D', value: kd.toFixed(2) },
