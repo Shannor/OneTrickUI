@@ -1,6 +1,5 @@
 import { format } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
-import React from 'react';
 import { Link, useNavigate } from 'react-router';
 import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
