@@ -23,8 +23,8 @@ export default function SessionGames({ params }: Route.ComponentProps) {
   if (!aggregates || aggregates?.length === 0) {
     return (
       <Empty
-        title="No Games Found"
-        description="No games were found for this session."
+        title="Get in the Crucible!"
+        description="Play some games so we can get new information!"
       />
     );
   }
@@ -32,8 +32,8 @@ export default function SessionGames({ params }: Route.ComponentProps) {
   if (!snapshots) {
     return (
       <Empty
-        title="No Games Found"
-        description="No games were found for this session."
+        title="Get in the Crucible!"
+        description="Play some games so we can get new information!"
       />
     );
   }
