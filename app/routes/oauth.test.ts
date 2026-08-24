@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { setAuth } from '~/.server/auth';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getAuth, setAuth } from '~/.server/auth';
 import { login } from '~/api';
 
 import type { Route } from './+types/oauth';
@@ -10,6 +10,7 @@ vi.mock('~/api', () => ({
 }));
 
 vi.mock('~/.server/auth', () => ({
+  getAuth: vi.fn().mockResolvedValue(undefined),
   setAuth: vi.fn((_req: Request, data: { id: string }) => {
     return new Response(null, {
       status: 302,
@@ -19,6 +20,9 @@ vi.mock('~/.server/auth', () => ({
 }));
 
 describe('oauth loader', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('returns error when Bungie returns an OAuth error param', async () => {
     const request = new Request(
       'http://d2onetrick.com/oauth?error=access_denied&error_description=User+cancelled',
@@ -82,10 +86,14 @@ describe('oauth loader', () => {
   it('sets auth cookie and redirects on successful login', async () => {
     const mockAuthResponse = {
       id: '12345',
-      token: 'jwt-token',
+      accessToken: 'jwt-token',
+      tokenType: 'Bearer',
       expiresIn: 3600,
-      timestamp: new Date().toISOString(),
       refreshToken: 'refresh-token',
+      refreshExpiresIn: 7776000,
+      membershipId: '12345',
+      primaryMembershipId: '12345',
+      timestamp: new Date(),
     };
 
     vi.mocked(login).mockResolvedValueOnce({
@@ -105,5 +113,33 @@ describe('oauth loader', () => {
     } as unknown as Route.LoaderArgs);
 
     expect(setAuth).toHaveBeenCalledWith(request, mockAuthResponse);
+  });
+
+  it('redirects immediately if user is already authenticated', async () => {
+    vi.mocked(getAuth).mockResolvedValueOnce({
+      id: '999',
+      accessToken: 'jwt-token',
+      tokenType: 'Bearer',
+      expiresIn: 3600,
+      refreshToken: 'refresh-token',
+      refreshExpiresIn: 7776000,
+      membershipId: '999',
+      primaryMembershipId: '999',
+      timestamp: new Date(),
+    });
+
+    const request = new Request(
+      'http://d2onetrick.com/oauth?code=d5439663e6f6f1ff025d49d92534ed88',
+    );
+
+    const res = (await loader({
+      request,
+      params: {},
+      context: {},
+    } as unknown as Route.LoaderArgs)) as Response;
+
+    expect(res.status).toBe(302);
+    expect(res.headers.get('Location')).toBe('/profile/999');
+    expect(login).not.toHaveBeenCalled();
   });
 });

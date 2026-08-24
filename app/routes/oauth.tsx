@@ -1,5 +1,5 @@
-import { useLoaderData } from 'react-router';
-import { setAuth } from '~/.server/auth';
+import { redirect, useLoaderData } from 'react-router';
+import { getAuth, setAuth } from '~/.server/auth';
 import { login } from '~/api';
 import { AuthRetryCard } from '~/components/auth-retry';
 import { Logger } from '~/lib/logger';
@@ -27,6 +27,15 @@ export async function loader({ request }: Route.LoaderArgs) {
   });
 
   l.info('OAuth callback loader received request');
+
+  const existingAuth = await getAuth(request);
+  if (existingAuth) {
+    l.info(
+      { userId: existingAuth.id },
+      'User is already authenticated during OAuth callback, redirecting to profile',
+    );
+    return redirect(`/profile/${existingAuth.id}`);
+  }
 
   if (oauthError) {
     l.warn(
@@ -63,6 +72,16 @@ export async function loader({ request }: Route.LoaderArgs) {
         },
         'Missing data from login or API error',
       );
+
+      const fallbackAuth = await getAuth(request);
+      if (fallbackAuth) {
+        l.info(
+          { userId: fallbackAuth.id },
+          'Auth session found despite login API error, redirecting to profile',
+        );
+        return redirect(`/profile/${fallbackAuth.id}`);
+      }
+
       const errorMessage =
         typeof apiError === 'object' &&
         apiError !== null &&
