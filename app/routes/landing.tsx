@@ -160,9 +160,6 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
               <Link to="/login">Sign In</Link>
             )}
           </LoadingButton>
-          <LoadingButton variant="outline" isLoading={isLoading}>
-            <Link to="/search">Search Players</Link>
-          </LoadingButton>
         </div>
       </div>
       {/* Stats Preview */}
