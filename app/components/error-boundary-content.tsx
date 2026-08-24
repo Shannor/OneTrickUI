@@ -20,9 +20,13 @@ export function ErrorBoundaryContent({ error }: ErrorBoundaryContentProps) {
       ? (error as { status: number }).status === 404
       : false;
 
-  const errorMessage = is404
+  let errorMessage = is404
     ? "The page, session, or Guardian profile you are looking for doesn't exist or has been moved."
     : "Oops! Sorry Guardian, we're working on it!";
+
+  if (import.meta.env.DEV && error && error instanceof Error) {
+    errorMessage = error.message;
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] w-full flex-col items-center justify-center p-4 text-center sm:p-8">

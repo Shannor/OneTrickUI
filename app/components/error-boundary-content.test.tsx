@@ -33,10 +33,10 @@ describe('ErrorBoundaryContent', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders general error recovery page when error is not 404', () => {
+  it('renders general error recovery page with friendly message for non-Error objects', () => {
     render(
       <MemoryRouter>
-        <ErrorBoundaryContent error={new Error('Server Error')} />
+        <ErrorBoundaryContent error={{ status: 500 }} />
       </MemoryRouter>,
     );
 
@@ -48,5 +48,16 @@ describe('ErrorBoundaryContent', () => {
       'href',
       '/',
     );
+  });
+
+  it('renders error message in dev mode when error is an Error instance', () => {
+    render(
+      <MemoryRouter>
+        <ErrorBoundaryContent error={new Error('Server Error')} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Something Went Wrong')).toBeInTheDocument();
+    expect(screen.getByText('Server Error')).toBeInTheDocument();
   });
 });
