@@ -48,6 +48,13 @@ describe('Sessions page component', () => {
 
     expect(screen.getByText('No Sessions')).toBeInTheDocument();
     expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
+
+    const startButton = screen.getByRole('button', { name: /start first session/i });
+    expect(startButton).toBeInTheDocument();
+
+    const form = startButton.closest('form');
+    expect(form).toHaveAttribute('action', '/action/start-session');
+    expect(form).toHaveAttribute('method', 'post');
   });
 
   it('renders "No Completed Sessions" when an active session exists but no completed sessions exist', () => {

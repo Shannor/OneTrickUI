@@ -5,7 +5,6 @@ import {
   PlusIcon,
   StopCircleIcon,
 } from 'lucide-react';
-import React from 'react';
 import { Link, useFetcher, useNavigate } from 'react-router';
 import { type Session, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
@@ -151,12 +150,23 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
             }
           >
             {!current && isOwner && (
-              <Form method="post">
+              <Form
+                method="post"
+                action="/action/start-session"
+                className="w-full"
+              >
                 <input type="hidden" name="characterId" value={characterId} />
-                <Button type="submit" className="mt-8 w-full">
+                <input type="hidden" name="userId" value={userId} />
+                <LoadingButton
+                  type="submit"
+                  variant="default"
+                  disabled={!characterId || isSubmitting}
+                  isLoading={isSubmitting}
+                  className="mt-8 w-full"
+                >
                   <PlusIcon className="h-4 w-4" />
                   Start First Session
-                </Button>
+                </LoadingButton>
               </Form>
             )}
           </Empty>
