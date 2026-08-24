@@ -17,35 +17,36 @@ export default [
   route('/robots.txt', 'routes/robots.txt.ts'),
   route('/sitemap.xml', 'routes/sitemap.xml.ts'),
   // Favicon & Icons
-  route('/favicon.ico', 'routes/favicon.ico.ts'),
-  route('/apple-touch-icon.png', 'routes/apple-touch-icon.png.ts'),
-  route(
-    '/apple-touch-icon-precomposed.png',
-    'routes/apple-touch-icon.png.ts',
-  ),
-  route(
-    '/apple-touch-icon-120x120.png',
-    'routes/apple-touch-icon.png.ts',
-  ),
+  route('/favicon.ico', 'routes/favicon.ico.ts', { id: 'favicon-ico' }),
+  route('/apple-touch-icon.png', 'routes/apple-touch-icon.png.ts', {
+    id: 'apple-touch-icon',
+  }),
+  route('/apple-touch-icon-precomposed.png', 'routes/apple-touch-icon.png.ts', {
+    id: 'apple-touch-icon-precomposed',
+  }),
+  route('/apple-touch-icon-120x120.png', 'routes/apple-touch-icon.png.ts', {
+    id: 'apple-touch-icon-120x120',
+  }),
   route(
     '/apple-touch-icon-120x120-precomposed.png',
     'routes/apple-touch-icon.png.ts',
+    { id: 'apple-touch-icon-120x120-precomposed' },
   ),
-  route(
-    '/apple-touch-icon-152x152.png',
-    'routes/apple-touch-icon.png.ts',
-  ),
+  route('/apple-touch-icon-152x152.png', 'routes/apple-touch-icon.png.ts', {
+    id: 'apple-touch-icon-152x152',
+  }),
   route(
     '/apple-touch-icon-152x152-precomposed.png',
     'routes/apple-touch-icon.png.ts',
+    { id: 'apple-touch-icon-152x152-precomposed' },
   ),
-  route(
-    '/apple-touch-icon-180x180.png',
-    'routes/apple-touch-icon.png.ts',
-  ),
+  route('/apple-touch-icon-180x180.png', 'routes/apple-touch-icon.png.ts', {
+    id: 'apple-touch-icon-180x180',
+  }),
   route(
     '/apple-touch-icon-180x180-precomposed.png',
     'routes/apple-touch-icon.png.ts',
+    { id: 'apple-touch-icon-180x180-precomposed' },
   ),
   // Public Routes
   route('profile/:id', 'routes/profile-state.tsx', [
