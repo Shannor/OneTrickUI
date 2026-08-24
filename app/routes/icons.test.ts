@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { loader as appleTouchPrecomposedLoader } from './apple-touch-icon-precomposed.png';
 import { loader as appleTouchLoader } from './apple-touch-icon.png';
 import { loader as faviconLoader } from './favicon.ico';

@@ -91,6 +91,8 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(screen.queryByText('Session Active & Recording')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Session Active & Recording'),
+    ).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+
 import type { Route } from './+types/apple-touch-icon.png';
 
 export async function loader({}: Route.LoaderArgs) {
