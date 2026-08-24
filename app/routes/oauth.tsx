@@ -1,55 +1,63 @@
-import { Link, useLoaderData } from 'react-router';
+import { useLoaderData } from 'react-router';
 import { setAuth } from '~/.server/auth';
-import { Logger } from '~/.server/logger';
 import { login } from '~/api';
-import { Button } from '~/components/ui/button';
+import { AuthRetryCard } from '~/components/auth-retry';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/oauth';
 
-export async function loader({ request, params }: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  // TODO: Add support for state values
-  const state = url.searchParams.get('state');
+  const oauthError = url.searchParams.get('error');
+  const errorDescription = url.searchParams.get('error_description');
   const l = Logger.child({ request: url });
+
+  if (oauthError) {
+    l.error({ oauthError, errorDescription }, 'OAuth error from Bungie');
+    return {
+      error:
+        errorDescription ||
+        oauthError ||
+        'Authentication was cancelled or failed with Bungie.',
+    };
+  }
+
   if (!code) {
     l.error('Missing Code');
-    return { error: 'Missing Code' };
+    return { error: 'Missing authorization code from Bungie.' };
   }
+
   try {
-    const { data } = await login({ body: { code } });
-    if (!data) {
-      l.error('Missing data from login');
-      return { error: 'Missing data from login' };
+    const { data, error: apiError } = await login({ body: { code } });
+    if (apiError || !data) {
+      l.error({ apiError }, 'Missing data from login or API error');
+      const errorMessage =
+        typeof apiError === 'object' &&
+        apiError !== null &&
+        'message' in apiError &&
+        typeof (apiError as { message?: unknown }).message === 'string'
+          ? (apiError as { message: string }).message
+          : 'Failed to authenticate with Bungie server. Please try again.';
+      return { error: errorMessage };
     }
     return setAuth(request, data);
   } catch (e) {
     l.error(e, 'Failed to set cookies');
-    return { error: 'Failed to set cookies' };
+    return { error: 'An unexpected error occurred while saving your session.' };
   }
 }
 
 export default function OAuth() {
-  const { error } = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  const error = loaderData?.error;
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center gap-6 text-center">
-          <div className="text-2xl font-bold">Failed SignIn</div>
-          {error && (
-            <p className="text-xl">
-              There was an error during sign in. Please try again!
-            </p>
-          )}
-          <Button
-            asChild
-            className="w-full border-red-500 text-red-500"
-            variant="outline"
-          >
-            <Link to="/login">Try Again</Link>
-          </Button>
-        </div>
+      <title>Sign In Status — One Trick</title>
+      <meta name="description" content="Sign in status page for One Trick." />
+      <div className="w-full max-w-md">
+        <AuthRetryCard error={error} />
       </div>
     </div>
   );

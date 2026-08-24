@@ -38,8 +38,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
           userId,
         },
         query: {
-          count: 1,
-          page: 0,
+          count: BigInt(1),
+          page: BigInt(0),
           characterId,
         },
       });

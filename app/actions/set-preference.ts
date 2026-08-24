@@ -30,7 +30,7 @@ export async function action({ request }: Route.ClientActionArgs) {
     character: {
       id: characterId.toString(),
       emblemURL: emblemURL?.toString() ?? '',
-      light: l,
+      light: BigInt(l),
       class: className?.toString() ?? '',
       currentTitle: currentTitle?.toString() ?? '',
       race: race?.toString() ?? '',

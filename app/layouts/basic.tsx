@@ -23,7 +23,7 @@ export default function Basic() {
           </div>
         </header>
         <main className="flex-1">
-          <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-1 flex-col items-center justify-center overflow-y-auto p-6 2xl:p-6">
+          <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1440px] flex-1 flex-col items-center justify-start p-6 2xl:p-6">
             <Outlet />
           </div>
         </main>

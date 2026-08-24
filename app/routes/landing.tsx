@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { type Profile, type Session, getSessions, getUser } from '~/api';
+import { ActiveSessionCard } from '~/components/active-session-card';
 import { LoadingButton } from '~/components/loading-button';
 import { Logo } from '~/components/logo';
 import { Stat } from '~/components/stat';
@@ -11,6 +12,7 @@ import {
   CardHeader,
 } from '~/components/ui/card';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/landing';
 
@@ -44,6 +46,7 @@ export function meta({}: Route.MetaArgs) {
     { name: 'twitter:image', content: '/twitter-image.svg' },
   ];
 }
+
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
   let profile: Profile | null = null;
@@ -60,8 +63,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       getSessions({ query: { count: 10, page: 0, status: 'complete' } }),
     ]);
 
-    // TODO: Add error handling for these requests
-    const activeCount = pendingRes.data?.length ?? 0;
+    const activeSessions: Session[] = pendingRes.data ?? [];
     const recent: Session[] = recentRes.data ?? [];
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
@@ -79,38 +81,52 @@ export async function loader({ request }: Route.LoaderArgs) {
 
     // Trim recent to 3 for UI
     const recentTop = recent.slice(0, 3);
-    const recentProfiles = await Promise.all(
-      recentTop.map(async (s) => {
-        const { data: profile, error } = await getUser({
-          path: { userId: s.userId },
+
+    // Collect all user IDs from recent and active sessions to fetch profiles
+    const userIds = Array.from(
+      new Set([
+        ...recentTop.map((s) => s.userId),
+        ...activeSessions.map((s) => s.userId),
+      ]),
+    );
+
+    const profilesList = await Promise.all(
+      userIds.map(async (userId) => {
+        const { data: userProfile, error } = await getUser({
+          path: { userId },
         });
         if (error) {
           return null;
         }
-        return profile;
+        return userProfile;
       }),
-    ).then((res) =>
-      res.reduce<Record<string, Profile>>((state, current) => {
+    );
+
+    const sessionProfiles = profilesList.reduce<Record<string, Profile>>(
+      (state, current) => {
         if (current) {
           state[current.id] = current;
         }
         return state;
-      }, {}),
+      },
+      {},
     );
 
     return {
-      activeCount,
+      activeCount: activeSessions.length,
+      activeSessions: activeSessions.slice(0, 3),
       recent: recentTop,
       todayCount,
       weekCount,
       auth,
-      recentProfiles,
+      recentProfiles: sessionProfiles,
       profile,
     };
   } catch (e) {
-    console.error(e);
+    Logger.error(e, 'Failed to load landing stats');
     return {
       activeCount: 0,
+      activeSessions: [] as Session[],
       recent: [] as Session[],
       todayCount: 0,
       weekCount: 0,
@@ -125,6 +141,7 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
   const [isLoading] = useIsNavigating();
   const {
     activeCount,
+    activeSessions,
     recent,
     todayCount,
     weekCount,
@@ -132,6 +149,7 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
     recentProfiles,
   } = loaderData ?? {
     activeCount: 0,
+    activeSessions: [],
     recent: [],
     todayCount: 0,
     weekCount: 0,
@@ -165,20 +183,25 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
       {/* Stats Preview */}
       <section className="container mx-auto px-4 pb-24">
         <div className="grid gap-6 sm:grid-cols-3">
-          {/* Active */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="uppercase tracking-wide">
-                Active Sessions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">{activeCount}</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Currently being tracked
-              </p>
-            </CardContent>
-          </Card>
+          {/* Active Sessions Stat Card - links to /active-sessions */}
+          <Link to="/active-sessions" className="block">
+            <Card className="h-full cursor-pointer transition-colors hover:border-primary">
+              <CardHeader className="pb-2">
+                <CardDescription className="uppercase tracking-wide">
+                  Active Sessions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold">{activeCount}</div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Currently being tracked
+                </p>
+                <div className="mt-2 text-xs font-medium text-primary">
+                  View all active sessions
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
 
           {/* Today */}
           <Card>
@@ -211,6 +234,31 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
           </Card>
         </div>
 
+        {/* Active Sessions Preview List */}
+        {activeSessions.length > 0 && (
+          <div className="mt-12 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-semibold">Active Sessions</h3>
+              <Link
+                to="/active-sessions"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                View all active sessions
+              </Link>
+            </div>
+            <ul className="grid gap-3 sm:grid-cols-3">
+              {activeSessions.map((s) => (
+                <li key={s.id} className="text-left">
+                  <ActiveSessionCard
+                    session={s}
+                    profile={recentProfiles[s.userId]}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Recent Sessions List */}
         <div className="mt-12 flex flex-col gap-4">
           <h3 className="text-xl font-semibold">Recent Sessions</h3>
@@ -221,21 +269,21 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
           ) : (
             <ul className="grid gap-3 sm:grid-cols-3">
               {recent.map((s) => {
-                const profile = recentProfiles[s.userId];
+                const userProfile = recentProfiles[s.userId];
                 return (
                   <li key={s.id} className="text-left">
                     <Link
                       to={`/profile/${s.userId}/c/${s.characterId}/sessions/${s.id}`}
                     >
-                      <Card className="h-full">
+                      <Card className="h-full cursor-pointer transition-all hover:border-primary hover:shadow-md">
                         <CardContent className="flex flex-col gap-4 p-4">
                           <div>
                             <div className="truncate font-medium text-foreground">
                               {s.name ?? 'Session'}
                             </div>
-                            {profile?.displayName && (
+                            {userProfile?.displayName && (
                               <div className="truncate font-medium text-primary">
-                                {profile.displayName}
+                                {userProfile.displayName}
                               </div>
                             )}
                             <div className="text-xs text-muted-foreground">
@@ -260,14 +308,15 @@ export default function Landing({ loaderData }: Route.ComponentProps) {
       </section>
       <span className="text-muted-foreground">
         skein circle by Alexander Skowalsky from{' '}
-        <a
-          href="https://thenounproject.com/browse/icons/term/skein-circle/"
-          className="hover:text-blue-400"
+        <Link
+          to="https://thenounproject.com/browse/icons/term/skein-circle/"
+          reloadDocument
           target="_blank"
+          className="hover:text-blue-400"
           title="skein circle Icons"
         >
           Noun Project
-        </a>{' '}
+        </Link>{' '}
         (CC BY 3.0)
       </span>
     </div>

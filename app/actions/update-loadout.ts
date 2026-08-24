@@ -1,6 +1,6 @@
 import { getAuth, redirectBack } from '~/.server/auth';
-import { Logger } from '~/.server/logger';
-import { completeSession, updateSession, updateSnapshot } from '~/api';
+import { updateSnapshot } from '~/api';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 

@@ -7,7 +7,6 @@ import {
   SquareLibrary,
   UsersRound,
 } from 'lucide-react';
-import React from 'react';
 import { Link, Outlet, useFetcher, useNavigate } from 'react-router';
 import { AppSidebar } from '~/components/app-sidebar';
 import { CharacterItem } from '~/components/character-item';
@@ -20,6 +19,7 @@ import {
   SidebarTrigger,
 } from '~/components/ui/sidebar';
 import { useIsNavigating, useProfileData } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/sidebar';
 
@@ -115,7 +115,7 @@ export default function Sidebar({ params }: Route.ComponentProps) {
                   submit(null, {
                     method: 'post',
                     action: '/action/logout',
-                  }).catch(console.error)
+                  }).catch((err) => Logger.error(err, 'Logout failed'))
                 }
               />
             )
@@ -161,6 +161,6 @@ export default function Sidebar({ params }: Route.ComponentProps) {
       </SidebarProvider>
     );
   }
-  console.error('Unknown response type:', response);
+  Logger.error({ response }, 'Unknown response type');
   return <Outlet />;
 }

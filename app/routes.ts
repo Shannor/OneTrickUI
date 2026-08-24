@@ -9,6 +9,7 @@ export default [
   layout('layouts/basic.tsx', [
     index('routes/landing.tsx'),
     route('search', 'routes/search.tsx'),
+    route('active-sessions', 'routes/active-sessions.tsx'),
   ]),
   route('/login', 'routes/login.tsx'),
   route('/oauth', 'routes/oauth.tsx'),

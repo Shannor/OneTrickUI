@@ -18,7 +18,13 @@ export function SessionCard(props: {
 }) {
   const { session, classname, onClick } = props;
   return (
-    <Card className={cn('cursor-pointer', classname)} onClick={onClick}>
+    <Card
+      className={cn(
+        'cursor-pointer transition-all hover:border-primary hover:shadow-md',
+        classname,
+      )}
+      onClick={onClick}
+    >
       <CardHeader className="flex flex-col gap-4 space-y-0">
         <CardTitle className="flex flex-row items-center gap-4 text-xl">
           {session.status === 'pending' && (

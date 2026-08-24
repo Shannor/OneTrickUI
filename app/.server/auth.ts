@@ -9,6 +9,8 @@ type SessionFlashData = {
   error: string;
 };
 
+const isProd = process.env.NODE_ENV === 'production';
+
 const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<SessionData, SessionFlashData>({
     // a Cookie from `createCookie` or the CookieOptions to create one
@@ -18,9 +20,10 @@ const { getSession, commitSession, destroySession } =
       path: '/',
       sameSite: 'lax',
       secrets: ['s3cret1'],
-      secure: true,
+      secure: isProd,
     },
   });
+
 async function getAuth(request: Request): Promise<AuthResponse | undefined> {
   const session = await getSession(request.headers.get('Cookie'));
   const auth = session.get('jwt');
@@ -46,15 +49,22 @@ async function refreshHeaders(request: Request, auth: AuthResponse) {
   session.set('jwt', auth);
   return {
     headers: {
-      'Set-Cookie': await commitSession(session),
+      'Set-Cookie': await commitSession(session, {
+        secure: isProd,
+        sameSite: 'lax',
+      }),
     },
   };
 }
+
 async function logout(request: Request) {
   const session = await getSession(request.headers.get('Cookie'));
   return redirect('/', {
     headers: {
-      'Set-Cookie': await destroySession(session),
+      'Set-Cookie': await destroySession(session, {
+        secure: isProd,
+        sameSite: 'lax',
+      }),
     },
   });
 }
@@ -62,17 +72,17 @@ async function logout(request: Request) {
 async function setAuth(request: Request, auth: AuthResponse) {
   const session = await getSession(request.headers.get('Cookie'));
   session.set('jwt', auth);
-  return redirect('/', {
+  return redirect(`/profile/${auth.id}`, {
     headers: {
       'Set-Cookie': await commitSession(session, {
-        secure: true,
+        secure: isProd,
         sameSite: 'lax',
       }),
     },
   });
 }
 
-async function redirectBack(
+function redirectBack(
   request: Request,
   { fallback, response }: { fallback: string; response?: ResponseInit },
 ) {
