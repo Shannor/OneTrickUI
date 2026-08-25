@@ -106,10 +106,11 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
         (snapshot) => {
           const newData = snapshot.data() as ISession['data'];
           if (!newData) return;
-          if (!session.aggregateIds?.length) return;
+          const currentCount = session.aggregateIds?.length ?? 0;
+          const newCount = newData.aggregateIds?.length ?? 0;
           if (
             newData.status == 'complete' ||
-            newData.aggregateIds.length !== session.aggregateIds?.length
+            newCount !== currentCount
           ) {
             revalidator
               .revalidate()
@@ -122,7 +123,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
       };
     }
     // Clean up the listener when the component unmounts
-  }, [revalidator]);
+  }, [session, revalidator]);
 
   if (!session) {
     return (

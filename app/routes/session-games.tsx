@@ -15,11 +15,21 @@ import { Performance, type StatItem } from '~/organisims/performance';
 import type { Route } from './+types/session-games';
 
 export default function SessionGames({ params }: Route.ComponentProps) {
-  const { aggregates, snapshots } = useSessionData();
+  const { session, aggregates, snapshots } = useSessionData();
   const { characterId, id } = params;
   const navigate = useNavigate();
 
+  const totalRecordedGames = session?.aggregateIds?.length ?? 0;
+
   if (!aggregates || aggregates?.length === 0) {
+    if (totalRecordedGames > 0) {
+      return (
+        <Empty
+          title="Processing Match Data"
+          description="Your game was recorded! Stats and match details are currently processing."
+        />
+      );
+    }
     return (
       <Empty
         title="Get in the Crucible!"
