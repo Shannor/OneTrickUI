@@ -28,25 +28,16 @@ import {
 } from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
+import type { RootUser } from '~/root';
 
 function getUserDisplayName(
-  signedInUser: unknown,
+  signedInUser: RootUser | null | undefined,
   profileResponse: ReturnType<typeof useOptionalProfileData>,
 ): string {
-  if (
-    signedInUser &&
-    typeof signedInUser === 'object' &&
-    'displayName' in signedInUser &&
-    typeof signedInUser.displayName === 'string'
-  ) {
+  if (signedInUser?.displayName) {
     return signedInUser.displayName;
   }
-  if (
-    signedInUser &&
-    typeof signedInUser === 'object' &&
-    'name' in signedInUser &&
-    typeof signedInUser.name === 'string'
-  ) {
+  if (signedInUser?.name) {
     return signedInUser.name;
   }
   if (profileResponse?.profile?.displayName) {
@@ -56,16 +47,11 @@ function getUserDisplayName(
 }
 
 function getUserCharacters(
-  signedInUser: unknown,
+  signedInUser: RootUser | null | undefined,
   profileResponse: ReturnType<typeof useOptionalProfileData>,
 ): Array<{ id: string }> {
-  if (
-    signedInUser &&
-    typeof signedInUser === 'object' &&
-    'characters' in signedInUser &&
-    Array.isArray(signedInUser.characters)
-  ) {
-    return signedInUser.characters as Array<{ id: string }>;
+  if (signedInUser?.characters && signedInUser.characters.length > 0) {
+    return signedInUser.characters;
   }
   return profileResponse?.profile?.characters ?? [];
 }

@@ -1,5 +1,5 @@
 import { useNavigation, useParams, useRouteLoaderData } from 'react-router';
-import type { loader as rootLoader } from '~/root';
+import type { RootLoaderData } from '~/root';
 import type { loader as snapshotLoader } from '~/routes/loadout';
 import type { loader as profileStateLoader } from '~/routes/profile-state';
 import type { loader as sessionLoader } from '~/routes/session';
@@ -10,8 +10,8 @@ export function useIsNavigating(): [boolean] {
   return [isNavigating];
 }
 
-export function useRootData() {
-  return useRouteLoaderData<typeof rootLoader>('root');
+export function useRootData(): RootLoaderData | undefined {
+  return useRouteLoaderData<RootLoaderData>('root');
 }
 
 export function useOptionalProfileData() {

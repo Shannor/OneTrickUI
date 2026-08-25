@@ -11,12 +11,13 @@ import {
 } from 'react-router';
 import {
   PreventFlashOnWrongTheme,
+  type Theme,
   ThemeProvider,
   useTheme,
 } from 'remix-themes';
 import { getAuth } from '~/.server/auth';
 import { themeSessionResolver } from '~/.server/sessions';
-import { getUser } from '~/api';
+import { type Character, getUser } from '~/api';
 import { client } from '~/api/client.gen';
 import { ErrorBoundaryContent } from '~/components/error-boundary-content';
 import { ModeToggle } from '~/components/mode-toggle';
@@ -82,8 +83,25 @@ export const links: Route.LinksFunction = () => [
   },
   { rel: 'stylesheet', href: stylesheet },
 ];
-export const loader = async ({ request }: Route.LoaderArgs) => {
-  let theme = null;
+export type RootUser = {
+  id: string;
+  membershipId: string;
+  primaryMembershipId: string;
+  name?: string;
+  displayName?: string;
+  uniqueName?: string;
+  characters?: Character[];
+};
+
+export type RootLoaderData = {
+  theme: Theme | null;
+  user: RootUser | null;
+};
+
+export const loader = async ({
+  request,
+}: Route.LoaderArgs): Promise<RootLoaderData> => {
+  let theme: Theme | null = null;
   try {
     const { getTheme } = await themeSessionResolver(request);
     theme = getTheme();
@@ -91,7 +109,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     theme = null;
   }
 
-  let user = null;
+  let user: RootUser | null = null;
   try {
     const auth = await getAuth(request);
     if (auth?.id) {
