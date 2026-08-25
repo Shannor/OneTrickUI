@@ -37,6 +37,14 @@ vi.mock('~/api', () => ({
   getUser: vi.fn(),
 }));
 
+vi.mock('~/lib/logger', () => ({
+  Logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
+
 describe('root loader', () => {
   it('returns user as null when signed out', async () => {
     vi.mocked(getAuth).mockResolvedValueOnce(undefined);

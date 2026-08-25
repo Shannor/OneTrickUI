@@ -21,6 +21,7 @@ import { type Character, getUser } from '~/api';
 import { client } from '~/api/client.gen';
 import { ErrorBoundaryContent } from '~/components/error-boundary-content';
 import { ModeToggle } from '~/components/mode-toggle';
+import { Logger } from '~/lib/logger';
 import { trackUserSession } from '~/lib/tracking';
 import { isDev } from '~/lib/utils';
 
@@ -105,7 +106,8 @@ export const loader = async ({
   try {
     const { getTheme } = await themeSessionResolver(request);
     theme = getTheme();
-  } catch {
+  } catch (e) {
+    Logger.error(e, 'Failed to resolve theme session in root loader');
     theme = null;
   }
 
@@ -129,11 +131,13 @@ export const loader = async ({
             characters: profile.characters ?? [],
           };
         }
-      } catch {
+      } catch (e) {
+        Logger.error(e, 'Failed to fetch user profile in root loader');
         // Fallback to basic session user if profile fetch throws
       }
     }
-  } catch {
+  } catch (e) {
+    Logger.error(e, 'Failed to resolve auth session in root loader');
     // Treat as signed-out if auth session retrieval throws or is malformed
     user = null;
   }
