@@ -11,6 +11,7 @@ const PINO_LEVEL_TO_SEVERITY: Record<number, string> = {
 
 export const Logger = pino({
   messageKey: 'message',
+  timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
   formatters: {
     level(_label, numericLevel) {
       return {
