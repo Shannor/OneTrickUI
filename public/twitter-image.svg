@@ -28,12 +28,6 @@
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect width="1200" height="630" fill="url(#glow)"/>
 
-  <!-- Subtle Tactical Grid -->
-  <g opacity="0.08" stroke="#ffffff" stroke-width="1">
-    <path d="M0 100 H1200 M0 200 H1200 M0 300 H1200 M0 400 H1200 M0 500 H1200"/>
-    <path d="M150 0 V630 M300 0 V630 M450 0 V630 M600 0 V630 M750 0 V630 M900 0 V630 M1050 0 V630"/>
-  </g>
-
   <!-- Main Content Container -->
   <g transform="translate(100, 120)">
     
@@ -58,7 +52,7 @@
 
     <!-- Subtitle / Tagline -->
     <text x="0" y="240" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="28" font-weight="500" fill="#cbd5e1" width="800">
-      Track live active sessions, analyze loadouts, and uncover deep PvP insights.
+      Record your gameplay to perfect your cheese
     </text>
 
     <!-- Feature Pill Badges -->
