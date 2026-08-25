@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from '~/components/ui/tooltip';
 import { useIsMobile } from '~/hooks/use-mobile';
+import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state';
@@ -98,12 +99,16 @@ const SidebarProvider = React.forwardRef<
     // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
-        if (
-          event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-          (event.metaKey || event.ctrlKey)
-        ) {
-          event.preventDefault();
-          toggleSidebar();
+        try {
+          if (
+            event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+            (event.metaKey || event.ctrlKey)
+          ) {
+            event.preventDefault();
+            toggleSidebar();
+          }
+        } catch (err) {
+          Logger.error(err, 'Failed to handle sidebar keyboard shortcut');
         }
       };
 

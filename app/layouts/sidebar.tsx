@@ -85,8 +85,8 @@ export function Sidebar() {
             characterId,
           );
           setCachedCharId(characterId);
-        } catch {
-          // ignore
+        } catch (err) {
+          Logger.error(err, 'Failed to save active character in localStorage');
         }
       } else {
         try {
@@ -96,8 +96,8 @@ export function Sidebar() {
           if (stored) {
             setCachedCharId(stored);
           }
-        } catch {
-          // ignore
+        } catch (err) {
+          Logger.error(err, 'Failed to get active character from localStorage');
         }
       }
     }
