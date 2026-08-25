@@ -1,166 +1,317 @@
 import {
+  Activity,
   ArrowLeftFromLine,
+  Gamepad2,
   Home,
   Hourglass,
   Loader2,
-  SearchIcon,
+  LogIn,
   SquareLibrary,
   UsersRound,
 } from 'lucide-react';
-import { Link, Outlet, useFetcher, useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, Outlet, useFetcher, useNavigate, useParams } from 'react-router';
 import { AppSidebar } from '~/components/app-sidebar';
-import { CharacterItem } from '~/components/character-item';
 import { Logo } from '~/components/logo';
 import { ModeToggle } from '~/components/mode-toggle';
 import { NavUser } from '~/components/nav-user';
+import { buttonVariants } from '~/components/ui/button';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '~/components/ui/sidebar';
-import { useIsNavigating, useProfileData } from '~/hooks/use-route-loaders';
+import {
+  useIsNavigating,
+  useOptionalProfileData,
+  useRootData,
+} from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
+import { cn } from '~/lib/utils';
 
-import type { Route } from './+types/sidebar';
+function getUserDisplayName(
+  signedInUser: unknown,
+  profileResponse: ReturnType<typeof useOptionalProfileData>,
+): string {
+  if (
+    signedInUser &&
+    typeof signedInUser === 'object' &&
+    'displayName' in signedInUser &&
+    typeof signedInUser.displayName === 'string'
+  ) {
+    return signedInUser.displayName;
+  }
+  if (
+    signedInUser &&
+    typeof signedInUser === 'object' &&
+    'name' in signedInUser &&
+    typeof signedInUser.name === 'string'
+  ) {
+    return signedInUser.name;
+  }
+  if (profileResponse?.profile?.displayName) {
+    return profileResponse.profile.displayName;
+  }
+  return 'Guardian';
+}
 
-export default function Sidebar({ params }: Route.ComponentProps) {
+export function Sidebar() {
   const { submit } = useFetcher();
+  const params = useParams();
   const { characterId } = params;
-  const response = useProfileData();
+  const profileResponse = useOptionalProfileData();
+  const rootData = useRootData();
   const navigate = useNavigate();
   const [isNavigating] = useIsNavigating();
 
-  if (response.type === 'error') {
-    return <Outlet />;
+  const signedInUser = rootData?.user;
+  const isSignedIn = Boolean(
+    signedInUser || (profileResponse && profileResponse.isSignedIn),
+  );
+
+  const signedInUserId =
+    signedInUser?.id ||
+    (profileResponse?.auth ? profileResponse.auth.id : undefined);
+
+  // Active character state cached in localStorage for returning from home/public views
+  const [cachedCharId, setCachedCharId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (signedInUserId) {
+      if (characterId && profileResponse?.type === 'owner') {
+        try {
+          localStorage.setItem(
+            `onetrick_active_char_${signedInUserId}`,
+            characterId,
+          );
+          setCachedCharId(characterId);
+        } catch {
+          // ignore
+        }
+      } else {
+        try {
+          const stored = localStorage.getItem(
+            `onetrick_active_char_${signedInUserId}`,
+          );
+          if (stored) {
+            setCachedCharId(stored);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, [characterId, signedInUserId, profileResponse?.type]);
+
+  // Determine user characters
+  const userCharacters =
+    signedInUser &&
+    'characters' in signedInUser &&
+    Array.isArray(signedInUser.characters)
+      ? (signedInUser.characters as Array<{ id: string }>)
+      : (profileResponse?.profile?.characters ?? []);
+
+  const defaultCharacterId = userCharacters[0]?.id;
+
+  // Active character ID for signed-in user's own profile routes
+  const activeUserCharacterId =
+    (profileResponse?.type === 'owner' && characterId) ||
+    cachedCharId ||
+    defaultCharacterId;
+
+  const userDisplayName = getUserDisplayName(signedInUser, profileResponse);
+
+  const baseNav = [
+    {
+      name: 'Home',
+      title: 'Home',
+      url: '/',
+      icon: Home,
+    },
+    {
+      name: 'Active Sessions',
+      title: 'Active Sessions',
+      url: '/active-sessions',
+      icon: Activity,
+    },
+  ];
+
+  let projectsNav: Array<{
+    name: string;
+    title: string;
+    url: string;
+    icon: typeof Home;
+  }> = [];
+
+  let friendsNav: Array<{
+    name: string;
+    title: string;
+    url: string;
+    icon: typeof Home;
+  }> = [];
+
+  const isInspectingOther =
+    profileResponse &&
+    profileResponse.type === 'viewer' &&
+    signedInUserId &&
+    profileResponse.profile.id !== signedInUserId;
+
+  if (isInspectingOther && characterId) {
+    // Viewing another player's profile
+    const { profile } = profileResponse;
+    projectsNav = [
+      {
+        name: `${profile.displayName}'s Overview`,
+        title: `${profile.displayName}'s Overview`,
+        url: `/profile/${profile.id}/c/${characterId}`,
+        icon: Gamepad2,
+      },
+      {
+        name: 'Sessions',
+        title: 'Sessions',
+        url: `/profile/${profile.id}/c/${characterId}/sessions`,
+        icon: Hourglass,
+      },
+      {
+        name: 'Loadouts',
+        title: 'Loadouts',
+        url: `/profile/${profile.id}/c/${characterId}/loadouts`,
+        icon: SquareLibrary,
+      },
+    ];
+
+    if (signedInUserId) {
+      const returnUrl = activeUserCharacterId
+        ? `/profile/${signedInUserId}/c/${activeUserCharacterId}`
+        : `/profile/${signedInUserId}`;
+      friendsNav = [
+        {
+          name: 'Return to My Profile',
+          title: 'Return to My Profile',
+          url: returnUrl,
+          icon: ArrowLeftFromLine,
+        },
+      ];
+    }
+  } else if (signedInUserId) {
+    // Signed-in user view (on public page OR own profile)
+    const baseUrl = activeUserCharacterId
+      ? `/profile/${signedInUserId}/c/${activeUserCharacterId}`
+      : `/profile/${signedInUserId}`;
+
+    projectsNav = [
+      {
+        name: 'Overview',
+        title: 'Overview',
+        url: baseUrl,
+        icon: Gamepad2,
+      },
+      {
+        name: 'Sessions',
+        title: 'Sessions',
+        url: activeUserCharacterId
+          ? `${baseUrl}/sessions`
+          : `/profile/${signedInUserId}`,
+        icon: Hourglass,
+      },
+      {
+        name: 'Loadouts',
+        title: 'Loadouts',
+        url: activeUserCharacterId
+          ? `${baseUrl}/loadouts`
+          : `/profile/${signedInUserId}`,
+        icon: SquareLibrary,
+      },
+    ];
+
+    friendsNav = [
+      {
+        name: 'Fireteam',
+        title: 'Fireteam',
+        url: activeUserCharacterId
+          ? `${baseUrl}/fireteam`
+          : `/profile/${signedInUserId}`,
+        icon: UsersRound,
+      },
+    ];
   }
-  if (response.type === 'owner' || response.type === 'viewer') {
-    const { profile, isSignedIn, type, auth } = response;
-    const isOwner = type === 'owner';
-    const canReturnBack = isSignedIn && auth.id !== profile.id;
-    const characters = profile.characters;
-    const data = {
-      base: [
-        {
-          name: isOwner ? 'Home' : `${profile.displayName}'s Home`,
-          title: isOwner ? 'Home' : `${profile.displayName}'s Home`,
-          url: `/profile/${profile.id}/c/${characterId}`,
-          icon: Home,
-        },
-        canReturnBack
-          ? {
-              name: 'Return to My Profile',
-              title: 'Return to My Profile',
-              url: `/profile/${auth.id}`,
-              icon: ArrowLeftFromLine,
-            }
-          : undefined,
-      ].filter((x) => !!x),
-      projects: [
-        {
-          name: 'Sessions',
-          title: 'Sessions',
-          url: `/profile/${profile.id}/c/${characterId}/sessions`,
-          icon: Hourglass,
-        },
-        {
-          name: 'Loadouts',
-          title: 'Loadouts',
-          url: `/profile/${profile.id}/c/${characterId}/loadouts`,
-          icon: SquareLibrary,
-        },
-      ],
-      friends: isOwner
-        ? [
-            {
-              title: 'Search',
-              name: 'Search',
-              url: `/profile/${profile.id}/c/${characterId}/search`,
-              icon: SearchIcon,
-            },
-            {
-              name: 'Fireteam',
-              title: 'Fireteam',
-              url: `/profile/${profile.id}/c/${characterId}/fireteam`,
-              icon: UsersRound,
-            },
-          ]
-        : [],
-    };
 
-    return (
-      <SidebarProvider>
-        <AppSidebar
-          navigationData={data}
-          headerProps={{
-            onClick: () => navigate(`/`),
-          }}
-          header={
-            <div className="flex w-full flex-row items-center gap-4">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <Logo className="h-10 w-auto" alt="D2 One Trick logo" />
-              </div>
-              <div className="grid flex-1 text-left leading-tight">
-                <span className="truncate text-lg font-bold">
-                  <span className="text-primary">1</span>
-                  Trick
-                </span>
-              </div>
-            </div>
-          }
-          footer={
-            isOwner && (
-              <NavUser
-                displayName="Settings"
-                onLogout={() =>
-                  submit(null, {
-                    method: 'post',
-                    action: '/action/logout',
-                  }).catch((err) => Logger.error(err, 'Logout failed'))
-                }
-              />
-            )
-          }
-        />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-            </div>
-            <ModeToggle />
-          </header>
-          <div className="relative flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
-            {/* Overlay shown during route navigation */}
-            {isNavigating ? (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-                <div className="flex items-center gap-3 rounded-md border bg-background/80 px-4 py-3 shadow-sm">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="text-sm">Loading…</span>
-                </div>
-              </div>
-            ) : null}
-            <div className="flex flex-col gap-12">
-              <div className="grid w-full grid-cols-1 gap-3 xl:grid-cols-3">
-                {characters?.map((character) => (
-                  <Link
-                    key={character.id}
-                    to={`/profile/${profile.id}/c/${character.id}`}
-                    className="block w-full min-w-0"
-                  >
-                    <CharacterItem
-                      character={character}
-                      isChecked={characterId === character.id}
-                    />
-                  </Link>
-                ))}
-              </div>
+  const navigationData = {
+    base: baseNav,
+    projects: projectsNav,
+    friends: friendsNav,
+  };
 
-              <Outlet />
+  return (
+    <SidebarProvider>
+      <AppSidebar
+        navigationData={navigationData}
+        headerProps={{
+          onClick: () => navigate(`/`),
+        }}
+        header={
+          <div className="flex w-full flex-row items-center gap-4">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <Logo className="h-10 w-auto" alt="D2 One Trick logo" />
+            </div>
+            <div className="grid flex-1 text-left leading-tight">
+              <span className="truncate text-lg font-bold">
+                <span className="text-primary">1</span>
+                Trick
+              </span>
             </div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
-    );
-  }
-  Logger.error({ response }, 'Unknown response type');
-  return <Outlet />;
+        }
+        footer={
+          isSignedIn ? (
+            <NavUser
+              displayName={userDisplayName}
+              onLogout={() =>
+                submit(null, {
+                  method: 'post',
+                  action: '/action/logout',
+                }).catch((err) => Logger.error(err, 'Logout failed'))
+              }
+            />
+          ) : (
+            <div className="p-2">
+              <Link
+                to="/login"
+                className={cn(
+                  buttonVariants({ variant: 'default', size: 'sm' }),
+                  'w-full justify-center gap-2 font-semibold',
+                )}
+              >
+                <LogIn className="h-4 w-4" />
+                <span>Sign In</span>
+              </Link>
+            </div>
+          )
+        }
+      />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+          </div>
+          <div className="px-4">
+            <ModeToggle />
+          </div>
+        </header>
+        <div className="relative flex w-full flex-1 flex-col overflow-y-auto px-6 pb-4 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
+          {isNavigating ? (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+              <div className="flex items-center gap-3 rounded-md border bg-background/80 px-4 py-3 shadow-sm">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm">Loading…</span>
+              </div>
+            </div>
+          ) : null}
+          <Outlet />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }
+
+export default Sidebar;

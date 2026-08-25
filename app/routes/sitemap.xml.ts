@@ -10,21 +10,25 @@ function escapeXml(str: string) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const url = new URL(request.url);
-  const origin = `${url.protocol}//${url.host}`;
+  let origin = 'https://d2onetrick.com';
+  try {
+    const url = new URL(request.url);
+    origin = `${url.protocol}//${url.host}`;
+  } catch {
+    // Fallback to default origin
+  }
 
-  const urls = [
-    '/',
-    '/search',
-  ];
+  const urls = ['/', '/active-sessions'];
 
   const lastmod = new Date().toISOString();
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  const xml =
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
     urls
-      .map((path) =>
-        `\n  <url>\n    <loc>${escapeXml(origin + path)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>${path === '/' ? '1.0' : '0.7'}</priority>\n  </url>`,
+      .map(
+        (path) =>
+          `\n  <url>\n    <loc>${escapeXml(origin + path)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>${path === '/' ? '1.0' : '0.7'}</priority>\n  </url>`,
       )
       .join('') +
     `\n</urlset>\n`;

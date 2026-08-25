@@ -18,7 +18,7 @@ vi.mock('react-router', async (importOriginal) => {
 });
 
 describe('ActiveSessionsPage', () => {
-  it('renders "Start a Session" buttons when signed out', () => {
+  it('renders "Sign In to Track" buttons when signed out', () => {
     const router = createMemoryRouter(
       [
         {
@@ -32,7 +32,7 @@ describe('ActiveSessionsPage', () => {
     render(<RouterProvider router={router} />);
 
     expect(screen.getByText('Active Sessions')).toBeInTheDocument();
-    const links = screen.getAllByRole('link', { name: /start a session/i });
+    const links = screen.getAllByRole('link', { name: /sign in to track/i });
     expect(links.length).toBeGreaterThan(0);
     expect(links[0]).toHaveAttribute('href', '/login');
   });

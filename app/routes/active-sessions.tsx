@@ -28,6 +28,15 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
+  let userProfile: Profile | null = null;
+  if (auth?.id) {
+    try {
+      const { data } = await getUser({ path: { userId: auth.id } });
+      userProfile = data ?? null;
+    } catch {
+      userProfile = null;
+    }
+  }
 
   try {
     const pendingRes = await getSessions({
@@ -35,17 +44,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     });
     const activeSessions: Session[] = pendingRes.data ?? [];
 
+    const userActiveSession = activeSessions.find((s) => s.userId === auth?.id);
+    const userCharacterId =
+      userActiveSession?.characterId || userProfile?.characters?.[0]?.id;
+
     const userIds = Array.from(new Set(activeSessions.map((s) => s.userId)));
 
     const profilesList = await Promise.all(
       userIds.map(async (userId) => {
-        const { data: userProfile, error } = await getUser({
+        const { data: profile, error } = await getUser({
           path: { userId },
         });
         if (error) {
           return null;
         }
-        return userProfile;
+        return profile;
       }),
     );
 
@@ -63,6 +76,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       activeSessions,
       profiles,
       auth,
+      userActiveSession,
+      userCharacterId,
     };
   } catch (e) {
     Logger.error(e, 'Failed to fetch active sessions');
@@ -70,12 +85,63 @@ export async function loader({ request }: Route.LoaderArgs) {
       activeSessions: [] as Session[],
       profiles: {},
       auth,
+      userActiveSession: undefined,
+      userCharacterId: undefined,
     };
   }
 }
 
+function getActionTarget({
+  auth,
+  userActiveSession,
+  userCharacterId,
+}: {
+  auth?: { id: string } | null;
+  userActiveSession?: Session;
+  userCharacterId?: string;
+}): string {
+  if (!auth) {
+    return '/login';
+  }
+  if (userActiveSession) {
+    return `/profile/${auth.id}/c/${userActiveSession.characterId}/sessions/${userActiveSession.id}`;
+  }
+  if (userCharacterId) {
+    return `/profile/${auth.id}/c/${userCharacterId}/sessions`;
+  }
+  return `/profile/${auth.id}`;
+}
+
+function getActionLabel({
+  auth,
+  userActiveSession,
+}: {
+  auth?: { id: string } | null;
+  userActiveSession?: Session;
+}): string {
+  if (!auth) {
+    return 'Sign In to Track';
+  }
+  if (userActiveSession) {
+    return 'View My Active Session';
+  }
+  return 'Go to My Sessions';
+}
+
 export function ActiveSessionsPage() {
-  const { activeSessions, profiles } = useLoaderData<typeof loader>();
+  const { activeSessions, profiles, auth, userActiveSession, userCharacterId } =
+    useLoaderData<typeof loader>();
+
+  const actionUrl = getActionTarget({
+    auth,
+    userActiveSession,
+    userCharacterId,
+  });
+
+  const actionLabel = getActionLabel({
+    auth,
+    userActiveSession,
+  });
 
   return (
     <div className="flex w-full flex-1 flex-col justify-start gap-8">
@@ -91,13 +157,13 @@ export function ActiveSessionsPage() {
         </div>
 
         <Link
-          to="/login"
+          to={actionUrl}
           className={cn(
             buttonVariants({ variant: 'default' }),
             'shrink-0 text-sm font-semibold',
           )}
         >
-          Start a Session
+          {actionLabel}
         </Link>
       </div>
 
@@ -106,17 +172,18 @@ export function ActiveSessionsPage() {
           <Activity className="mb-4 h-12 w-12 text-muted-foreground/50" />
           <h3 className="text-xl font-semibold">No Active Sessions</h3>
           <p className="mt-2 max-w-md text-balance text-sm text-muted-foreground">
-            There are currently no active sessions being tracked. Sign in to
-            start your own tracking session!
+            {auth
+              ? 'There are currently no active community sessions. Head over to your sessions page to start tracking!'
+              : 'There are currently no active sessions being tracked. Sign in to start your own tracking session!'}
           </p>
           <Link
-            to="/login"
+            to={actionUrl}
             className={cn(
               buttonVariants({ variant: 'default' }),
               'mt-6 font-medium',
             )}
           >
-            Start a Session
+            {actionLabel}
           </Link>
         </div>
       ) : (

@@ -6,10 +6,35 @@ import {
 } from '@react-router/dev/routes';
 
 export default [
-  layout('layouts/basic.tsx', [
+  layout('layouts/sidebar.tsx', [
     index('routes/landing.tsx'),
-    route('search', 'routes/search.tsx'),
     route('active-sessions', 'routes/active-sessions.tsx'),
+    // Public Routes
+    route('profile/:id', 'routes/profile-state.tsx', [
+      index('routes/character-select.tsx'),
+      route('c/:characterId', 'layouts/character-layout.tsx', [
+        index('routes/home.tsx'),
+        route(`activities/:instanceId`, 'routes/activity.tsx'),
+        route('sessions', 'routes/sessions.tsx'),
+        route('sessions/:sessionId', 'routes/session.tsx', [
+          index('routes/session-games.tsx', { id: 'session-games' }),
+          route('metrics', 'routes/session-metrics.tsx', {
+            id: 'session-metrics',
+          }),
+          route('loadouts', 'routes/session-loadouts.tsx', {
+            id: 'session-loadout',
+          }),
+        ]),
+        route('loadouts', 'routes/loadouts.tsx'),
+        route('loadouts/:snapshotId', 'routes/loadout.tsx', [
+          index('routes/loadout-details.tsx', { id: 'loadout-details' }),
+          route('metrics', 'routes/loadout-metrics.tsx', {
+            id: 'loadout-metrics',
+          }),
+        ]),
+        route('fireteam', 'routes/fireteam.tsx'),
+      ]),
+    ]),
   ]),
   route('/login', 'routes/login.tsx'),
   route('/oauth', 'routes/oauth.tsx'),
@@ -48,36 +73,6 @@ export default [
     'routes/apple-touch-icon.png.ts',
     { id: 'apple-touch-icon-180x180-precomposed' },
   ),
-  // Public Routes
-  route('profile/:id', 'routes/profile-state.tsx', [
-    index('routes/character-select.tsx'),
-    // In the future there may be a view to see all characters at once. It would need to go here
-    route('c/:characterId', 'layouts/sidebar.tsx', [
-      index('routes/home.tsx'),
-      route(`activities/:instanceId`, 'routes/activity.tsx'),
-      route('sessions', 'routes/sessions.tsx'),
-      route('sessions/:sessionId', 'routes/session.tsx', [
-        index('routes/session-games.tsx', { id: 'session-games' }),
-        route('metrics', 'routes/session-metrics.tsx', {
-          id: 'session-metrics',
-        }),
-        route('loadouts', 'routes/session-loadouts.tsx', {
-          id: 'session-loadout',
-        }),
-      ]),
-      route('loadouts', 'routes/loadouts.tsx'),
-      route('loadouts/:snapshotId', 'routes/loadout.tsx', [
-        index('routes/loadout-details.tsx', { id: 'loadout-details' }),
-        route('metrics', 'routes/loadout-metrics.tsx', {
-          id: 'loadout-metrics',
-        }),
-      ]),
-      route('fireteam', 'routes/fireteam.tsx'),
-      layout('layouts/favorites.tsx', [
-        route('search', 'routes/search.tsx', { id: 'sign-search' }),
-      ]),
-    ]),
-  ]),
   // User Actions
   route('action/set-theme', 'actions/set-theme.ts'),
   route('action/set-preference', 'actions/set-preference.ts'),

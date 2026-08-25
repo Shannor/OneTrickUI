@@ -108,6 +108,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
             name: profile.displayName,
             displayName: profile.displayName,
             uniqueName: profile.uniqueName,
+            characters: profile.characters ?? [],
           };
         }
       } catch {

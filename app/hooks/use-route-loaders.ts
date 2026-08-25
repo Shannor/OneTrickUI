@@ -1,4 +1,5 @@
 import { useNavigation, useParams, useRouteLoaderData } from 'react-router';
+import type { loader as rootLoader } from '~/root';
 import type { loader as snapshotLoader } from '~/routes/loadout';
 import type { loader as profileStateLoader } from '~/routes/profile-state';
 import type { loader as sessionLoader } from '~/routes/session';
@@ -7,6 +8,22 @@ export function useIsNavigating(): [boolean] {
   const navigation = useNavigation();
   const isNavigating = Boolean(navigation.location);
   return [isNavigating];
+}
+
+export function useRootData() {
+  return useRouteLoaderData<typeof rootLoader>('root');
+}
+
+export function useOptionalProfileData() {
+  const data = useRouteLoaderData<typeof profileStateLoader>(
+    'routes/profile-state',
+  );
+  const { characterId } = useParams();
+  if (!data || data.type === 'error') {
+    return null;
+  }
+  const character = data.profile?.characters?.find((c) => c.id === characterId);
+  return { ...data, character };
 }
 
 export function useProfileData() {
@@ -19,7 +36,7 @@ export function useProfileData() {
       'useProfileData must be used within profile state parent route',
     );
   }
-  const character = data.profile?.characters.find((c) => c.id === characterId);
+  const character = data.profile?.characters?.find((c) => c.id === characterId);
   return { ...data, character };
 }
 

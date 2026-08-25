@@ -95,6 +95,7 @@ describe('root loader', () => {
         name: 'Guardian#1234',
         displayName: 'Guardian#1234',
         uniqueName: 'Guardian#1234',
+        characters: [],
       },
     });
   });

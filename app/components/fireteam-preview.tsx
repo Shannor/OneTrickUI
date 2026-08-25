@@ -3,12 +3,36 @@ import { Label } from '~/components/label';
 import { Avatar, AvatarImage } from '~/components/ui/avatar';
 import { cn } from '~/lib/utils';
 
-import type { Route } from '../../.react-router/types/app/layouts/+types/sidebar';
+type CharacterData = {
+  id: string;
+  emblemURL: string;
+  emblemColor: { red: number; green: number; blue: number; alpha: number };
+};
+
+type UserCharacters = {
+  membershipId: string;
+  characters: CharacterData[];
+};
+
+type FireteamMember = {
+  id: string;
+  membershipId: string;
+  displayName: string;
+};
+
+type FireteamResult =
+  | { status: 'error'; error: string }
+  | {
+      status: 'success';
+      fireteam: FireteamMember[];
+      selectedCharacters?: Record<string, string>;
+      charactersPromise: Promise<UserCharacters[]>;
+    };
 
 export function FireteamPreview({
   fireteamPromise,
 }: {
-  fireteamPromise: Route.ComponentProps['loaderData']['fireteam'];
+  fireteamPromise: Promise<FireteamResult>;
 }) {
   const response = React.use(fireteamPromise);
   if (response.status === 'error') {
@@ -16,11 +40,10 @@ export function FireteamPreview({
   }
 
   const { fireteam, selectedCharacters, charactersPromise } = response;
-
   const characters = React.use(charactersPromise);
 
   const membershipToCharacters = characters.reduce<
-    Record<string, (typeof characters)[0]>
+    Record<string, UserCharacters>
   >((state, current) => {
     state[current.membershipId] = current;
     return state;
