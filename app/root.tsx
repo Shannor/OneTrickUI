@@ -195,7 +195,10 @@ export function App() {
           content="Track your Destiny 2 PvP performance across game modes, analyze real-time sessions, and inspect community loadout snapshots."
         />
         <meta property="og:url" content="https://d2onetrick.com/" />
-        <meta property="og:image" content="https://d2onetrick.com/og-image.svg" />
+        <meta
+          property="og:image"
+          content="https://d2onetrick.com/og-image.svg"
+        />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         {/* Twitter Card */}
@@ -208,7 +211,10 @@ export function App() {
           name="twitter:description"
           content="Track your Destiny 2 PvP performance across game modes, analyze real-time sessions, and inspect community loadout snapshots."
         />
-        <meta name="twitter:image" content="https://d2onetrick.com/twitter-image.svg" />
+        <meta
+          name="twitter:image"
+          content="https://d2onetrick.com/twitter-image.svg"
+        />
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
@@ -238,6 +244,35 @@ function ErrorBoundaryWithTheme({ error }: { error: unknown }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Error — One Trick</title>
+        <meta
+          name="description"
+          content="An error occurred while loading this page on One Trick."
+        />
+        <meta name="robots" content="noindex, follow" />
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="One Trick" />
+        <meta property="og:title" content="Error — One Trick" />
+        <meta
+          property="og:description"
+          content="An error occurred while loading this page on One Trick."
+        />
+        <meta
+          property="og:image"
+          content="https://d2onetrick.com/og-image.svg"
+        />
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Error — One Trick" />
+        <meta
+          name="twitter:description"
+          content="An error occurred while loading this page on One Trick."
+        />
+        <meta
+          name="twitter:image"
+          content="https://d2onetrick.com/twitter-image.svg"
+        />
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={false} />
         <Links />
