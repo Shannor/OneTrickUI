@@ -108,10 +108,7 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
           if (!newData) return;
           const currentCount = session.aggregateIds?.length ?? 0;
           const newCount = newData.aggregateIds?.length ?? 0;
-          if (
-            newData.status == 'complete' ||
-            newCount !== currentCount
-          ) {
+          if (newData.status == 'complete' || newCount !== currentCount) {
             revalidator
               .revalidate()
               .then(() => console.log('firestore updated'));
