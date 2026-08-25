@@ -8,6 +8,7 @@ import { KDPerformance } from '~/charts/KDPerformance';
 import { MapPerformance } from '~/charts/MapPerformance';
 import { MapWinRate } from '~/charts/MapWinRate';
 import { WinRatio } from '~/charts/WinRatio';
+import { SeoMeta } from '~/components/seo-meta';
 import { CardTitle } from '~/components/ui/card';
 import { DateRangePicker } from '~/components/ui/date-range-picker';
 import { FormLabel } from '~/components/ui/label';
@@ -85,11 +86,10 @@ export default function LoadoutMetrics({
   );
   return (
     <div className="flex flex-col gap-4">
-      <title>Snapshot Metrics</title>
-      <meta property="og:title" content="Snapshot Metrics" />
-      <meta
-        name="description"
-        content="Analyze your Destiny 2 performance over time and by map/mode."
+      <SeoMeta
+        title={`${snapshot?.name ?? 'Loadout'} Metrics — One Trick`}
+        description="Analyze your Destiny 2 performance over time and by map/mode."
+        url={`/profile/${characterId}/c/${characterId}/loadouts/${params.snapshotId}/metrics`}
       />
       <div className="flex flex-col gap-4">
         <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">

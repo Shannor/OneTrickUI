@@ -5,6 +5,7 @@ import { ArmorStats } from '~/components/armor-stats';
 import { Empty } from '~/components/empty';
 import { ItemSnapshot } from '~/components/item-snapshot';
 import { Label } from '~/components/label';
+import { SeoMeta } from '~/components/seo-meta';
 import { Super } from '~/components/sub-class';
 import { Card, CardContent, CardHeader } from '~/components/ui/card';
 import { FormLabel } from '~/components/ui/label';
@@ -83,14 +84,10 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <title>{`${profile?.displayName ?? ''}'s Top ${count} Loadouts`}</title>
-      <meta
-        property="og:title"
-        content={`${profile?.displayName ?? ''}'s Top ${count} Loadouts`}
-      />
-      <meta
-        name="description"
-        content={`Explore ${profile?.displayName ?? ''}'s  top ${count} performing loadouts with filters for mode and minimum games.`}
+      <SeoMeta
+        title={`Top ${count} Loadouts — ${profile?.displayName ?? 'Guardian'} | One Trick`}
+        description={`Explore ${profile?.displayName ?? 'Guardian'}'s top ${count} performing loadouts with filters for mode and minimum games.`}
+        url={pathname}
       />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">

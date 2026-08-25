@@ -9,6 +9,7 @@ import { Link, useFetcher, useNavigate } from 'react-router';
 import { type Session, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
+import { SeoMeta } from '~/components/seo-meta';
 import { SessionCard } from '~/components/session-card';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -79,12 +80,11 @@ export default function Sessions({ params, loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <title>{`Sessions - ${profile?.displayName ?? ''}`}</title>
-      <meta
-        property="og:title"
-        content={`Sessions - ${profile?.displayName ?? ''}  `}
+      <SeoMeta
+        title={`Sessions — ${profile?.displayName ?? 'Guardian'} | One Trick`}
+        description={`View recorded Destiny 2 PvP sessions, performance trends, and match history for ${profile?.displayName ?? 'this Guardian'}.`}
+        url={`/profile/${userId}/c/${characterId}/sessions`}
       />
-      <meta name="description" content="View and manage one trick sessions." />
       <div className="flex flex-col justify-between gap-4 md:flex-row">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">

@@ -14,6 +14,7 @@ import { type Profile, type Session, getSessions, getUser } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
 import { LoadingButton } from '~/components/loading-button';
 import { Logo } from '~/components/logo';
+import { SeoMeta } from '~/components/seo-meta';
 import { buttonVariants } from '~/components/ui/button';
 import {
   Card,
@@ -27,37 +28,6 @@ import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/landing';
-
-export function meta({}: Route.MetaArgs) {
-  const title = 'One Trick — Destiny 2 Performance Tracker';
-  const description =
-    'Track your Destiny 2 performance with your favorite loadouts. Analyze stats and improve your game with One Trick by tracking performance across different game modes.';
-  const url = 'https://d2onetrick.com/';
-  const image = '/og-image.svg';
-  return [
-    { title },
-    { description },
-    {
-      keywords:
-        'Destiny 2, d2, tracker, stats, performance, loadouts, PvP, gaming, one trick, min-max, min, max',
-    },
-    { tagName: 'link', rel: 'canonical', href: url },
-    { name: 'robots', content: 'index,follow' },
-    // Open Graph
-    { property: 'og:type', content: 'website' },
-    { property: 'og:title', content: title },
-    { property: 'og:description', content: description },
-    { property: 'og:url', content: url },
-    { property: 'og:image', content: image },
-    { property: 'og:image:width', content: '1200' },
-    { property: 'og:image:height', content: '630' },
-    // Twitter
-    { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: title },
-    { name: 'twitter:description', content: description },
-    { name: 'twitter:image', content: '/twitter-image.svg' },
-  ];
-}
 
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
@@ -188,6 +158,12 @@ export function Landing({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex h-full flex-col justify-between gap-12">
+      <SeoMeta
+        title="One Trick — Destiny 2 Performance Tracker"
+        description="Track your Destiny 2 performance with your favorite loadouts. Analyze stats and improve your game with One Trick by tracking performance across different game modes."
+        url="/"
+        image="/og-image.svg"
+      />
       {/* Hero Section */}
       <div className="container mx-auto flex flex-col gap-4 px-4 pt-4 text-center">
         <Logo className="mx-auto mb-2 h-16 w-auto" alt="D2 One Trick logo" />

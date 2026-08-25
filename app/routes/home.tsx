@@ -4,6 +4,7 @@ import { ArmorStats } from '~/components/armor-stats';
 import { Empty } from '~/components/empty';
 import { ItemSnapshot } from '~/components/item-snapshot';
 import { Label } from '~/components/label';
+import { SeoMeta } from '~/components/seo-meta';
 import { SessionCard } from '~/components/session-card';
 import { Super } from '~/components/sub-class';
 import { Button } from '~/components/ui/button';
@@ -87,14 +88,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
     return (
       <div>
-        <title>{`${profile.displayName} - ${character?.class ?? 'Home'}`}</title>
-        <meta
-          property="og:title"
-          content={`${profile.displayName} - ${character?.class ?? 'Home'}`}
-        />
-        <meta
-          name="description"
-          content={`Home page for ${profile.displayName}`}
+        <SeoMeta
+          title={`${profile.displayName}${character?.class ? ` (${character.class})` : ''} — One Trick`}
+          description={`View Destiny 2 PvP sessions, top loadouts, and performance stats for ${profile.displayName}.`}
+          url={`/profile/${profile.id}/c/${character?.id}`}
         />
         <div className="flex flex-col gap-8">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">

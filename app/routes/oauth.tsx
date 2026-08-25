@@ -2,6 +2,7 @@ import { redirect, useLoaderData } from 'react-router';
 import { getAuth, setAuth } from '~/.server/auth';
 import { login } from '~/api';
 import { AuthRetryCard } from '~/components/auth-retry';
+import { SeoMeta } from '~/components/seo-meta';
 import { Logger } from '~/lib/logger';
 import { extractRequestMeta, maskCode } from '~/lib/request-logger';
 
@@ -112,8 +113,12 @@ export default function OAuth() {
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-      <title>Sign In Status — One Trick</title>
-      <meta name="description" content="Sign in status page for One Trick." />
+      <SeoMeta
+        title="Sign In Status — One Trick"
+        description="Sign in status page for One Trick."
+        url="/oauth"
+        noindex
+      />
       <div className="w-full max-w-md">
         <AuthRetryCard error={error} />
       </div>

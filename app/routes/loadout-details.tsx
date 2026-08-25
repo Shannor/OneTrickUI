@@ -3,6 +3,7 @@ import { data } from 'react-router';
 import { getSnapshot } from '~/api';
 import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
+import { SeoMeta } from '~/components/seo-meta';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Weapon } from '~/components/weapon';
 import { getDetailWeapons, useClassStats } from '~/hooks/use-loadout';
@@ -35,14 +36,10 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-20">
-      <title>{`${snapshot.name ?? 'Loadout'} - Details`}</title>
-      <meta
-        property="og:title"
-        content={`${snapshot.name ?? 'Loadout'} - Details`}
-      />
-      <meta
-        name="description"
-        content={`View armor stats and gear details for ${snapshot.name ?? 'this loadout'}.`}
+      <SeoMeta
+        title={`${snapshot.name ?? 'Loadout'} Details — One Trick`}
+        description={`View armor stats and gear details for ${snapshot.name ?? 'this loadout'}.`}
+        url={`/profile/${snapshot.userId}/c/${snapshot.characterId}/loadouts/${snapshot.id}`}
       />
       <div className="flex flex-col gap-10 lg:flex-row">
         <SubClassProvider snapshot={snapshot}>

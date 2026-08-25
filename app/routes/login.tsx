@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Link, redirect, useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { Logo } from '~/components/logo';
+import { SeoMeta } from '~/components/seo-meta';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { buttonVariants } from '~/components/ui/button';
 import { getBungieAuthUrl } from '~/lib/auth-utils';
@@ -47,11 +48,10 @@ export default function Login() {
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      <title>Login - One Trick</title>
-      <meta property="og:title" content="Login - One Trick" />
-      <meta
-        name="description"
-        content="Sign in to One Trick using Bungie SSO to view your Destiny 2 stats and sessions."
+      <SeoMeta
+        title="Sign In — One Trick"
+        description="Sign in to One Trick using Bungie SSO to view your Destiny 2 stats and sessions."
+        url="/login"
       />
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">

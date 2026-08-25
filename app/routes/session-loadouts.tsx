@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { CondensedLoadout } from '~/components/condensed-loadout';
 import { Empty } from '~/components/empty';
 import { MergeLoadoutDialog } from '~/components/merge-loadout-dialog';
+import { SeoMeta } from '~/components/seo-meta';
 import { Button } from '~/components/ui/button';
 import { useProfileData, useSessionData } from '~/hooks/use-route-loaders';
 
@@ -30,6 +31,11 @@ export default function SessionLoadouts({ params }: Route.ComponentProps) {
 
   return (
     <div className="w-full">
+      <SeoMeta
+        title="Session Loadouts — One Trick"
+        description="View loadouts used during this session."
+        url={`/profile/${params?.id}/c/${params?.characterId}/sessions`}
+      />
       <div className="flex flex-col flex-wrap gap-12 md:flex-row md:gap-6">
         {allSnapshots.map((snapshot) => (
           <div

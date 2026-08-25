@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React from 'react';
+import type React from 'react';
 import {
   Form,
   Link,
@@ -10,6 +10,7 @@ import {
 import { type SearchUserResult, search } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
 import { NavLoading } from '~/components/nav-loading';
+import { SeoMeta } from '~/components/seo-meta';
 import { Button } from '~/components/ui/button';
 import {
   Card,
@@ -51,14 +52,10 @@ export default function Search() {
 
   return (
     <div className="flex w-full max-w-[1080px] flex-col gap-8">
-      <title>{`Search${query ? `: ${query}` : ''}`}</title>
-      <meta
-        property="og:title"
-        content={`Search${query ? `: ${query}` : ''}`}
-      />
-      <meta
-        name="description"
-        content={`Search One Trick for Destiny 2 players${query ? ` matching "${query}"` : ''}.`}
+      <SeoMeta
+        title={`Search${query ? `: ${query}` : ''} — One Trick`}
+        description={`Search One Trick for Destiny 2 players${query ? ` matching "${query}"` : ''}.`}
+        url="/search"
       />
       <div className="flex flex-col justify-between gap-4">
         <div className="flex flex-col">

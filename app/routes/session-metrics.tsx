@@ -7,6 +7,7 @@ import { MapPerformance } from '~/charts/MapPerformance';
 import { MapWinRate } from '~/charts/MapWinRate';
 import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
+import { SeoMeta } from '~/components/seo-meta';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
 import { useSessionData } from '~/hooks/use-route-loaders';
@@ -45,11 +46,10 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
 
   return (
     <div className="mt-8 flex flex-col gap-16">
-      <title>{`${session?.name} - Metrics`}</title>
-      <meta property="og:title" content={`${session?.name} Metrics`} />
-      <meta
-        name="description"
-        content="View per-loadout performance metrics for this session."
+      <SeoMeta
+        title={`Session Metrics — ${session?.name ?? 'Session'} | One Trick`}
+        description={`View per-loadout performance metrics for session ${session?.name ?? ''}.`}
+        url={`/profile/${id}/c/${characterId}/sessions/${session?.id}/metrics`}
       />
       <div className="flex flex-col gap-6">
         <h4 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight">

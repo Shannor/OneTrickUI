@@ -7,12 +7,13 @@ import { CharacterPicker } from '~/components/character-picker';
 import { ClientFallback } from '~/components/client-fallback';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
+import { SeoMeta } from '~/components/seo-meta';
 import { Skeleton } from '~/components/ui/skeleton';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/fireteam';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
   const response = await getFireteamData(request);
   if (response.status === 'error') {
     throw new Error(response.error);
@@ -75,7 +76,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 // Can end the session for someone else? I'm thinking nah
 // Double dipping with multiple snapshots when in a fireteam by each memeber.
 
-export default function Fireteam({ loaderData }: Route.ComponentProps) {
+export default function Fireteam({ loaderData, params }: Route.ComponentProps) {
   const { members, sessionPromise, fireteamMemWithCharacters } = loaderData;
 
   if (members.length === 0) {
@@ -89,11 +90,10 @@ export default function Fireteam({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex w-full flex-row flex-wrap gap-4">
-      <title>Fireteam</title>
-      <meta property="og:title" content="Fireteam" />
-      <meta
-        name="description"
-        content="View your current fireteam and manage character selections."
+      <SeoMeta
+        title="Fireteam — One Trick"
+        description="View your current fireteam and manage character selections."
+        url={`/profile/${params?.id}/c/${params?.characterId}/fireteam`}
       />
       {members.map((m) => {
         return (

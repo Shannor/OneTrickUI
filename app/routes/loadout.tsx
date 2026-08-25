@@ -3,6 +3,7 @@ import React from 'react';
 import { Form, NavLink, Outlet, data, useLocation } from 'react-router';
 import { getSnapshot } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
+import { SeoMeta } from '~/components/seo-meta';
 import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { Textarea } from '~/components/ui/textarea';
@@ -48,17 +49,13 @@ export default function Loadout({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-10">
-      <title>{`${snapshot.name ?? 'Snapshot'} - Loadout & Metrics`}</title>
-      <meta
-        property="og:title"
-        content={`${snapshot.name ?? 'Snapshot'} - Loadout & Metrics`}
-      />
-      <meta
-        name="description"
-        content={
+      <SeoMeta
+        title={`${snapshot.name ?? 'Snapshot'} — Loadout & Metrics | One Trick`}
+        description={
           snapshot.description ??
           `View the loadout and performance metrics for ${snapshot.name ?? 'this snapshot'}.`
         }
+        url={`/profile/${profile?.id}/c/${snapshot.characterId}/loadouts/${snapshot.id}`}
       />
       <div className="flex w-full flex-row justify-between gap-4">
         <div className="flex w-full flex-col gap-2">

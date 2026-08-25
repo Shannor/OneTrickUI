@@ -22,6 +22,7 @@ import { client } from '~/api/client.gen';
 import { ErrorBoundaryContent } from '~/components/error-boundary-content';
 import { ModeToggle } from '~/components/mode-toggle';
 import { Logger } from '~/lib/logger';
+import { buildMeta } from '~/lib/seo';
 import { trackUserSession } from '~/lib/tracking';
 import { isDev } from '~/lib/utils';
 
@@ -36,24 +37,7 @@ client.setConfig({
   baseUrl: isDev() ? 'http://localhost:8080' : 'https://api.d2onetrick.com',
 });
 
-export const meta = () => [
-  {
-    title: 'One Trick',
-  },
-  {
-    description:
-      'A PvP tracker for Destiny 2 centered around activities and loadouts.',
-  },
-  {
-    keywords:
-      'destiny, destiny 2, one trick, tracker, destiny pvp, pvp, loadouts',
-  },
-  {
-    tagName: 'link',
-    rel: 'canonical',
-    href: 'https://d2onetrick.com/',
-  },
-];
+export const meta = () => buildMeta();
 export const links: Route.LinksFunction = () => [
   // Favicon and app icons
   {
@@ -172,49 +156,6 @@ export function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>One Trick — Destiny 2 PvP Loadout & Session Tracker</title>
-        <meta
-          name="description"
-          content="Track your Destiny 2 PvP performance across game modes, analyze real-time sessions, and inspect community loadout snapshots."
-        />
-        <meta
-          name="keywords"
-          content="destiny, destiny 2, d2, one trick, tracker, destiny pvp, pvp, loadouts, sessions, stats, min-max"
-        />
-        <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://d2onetrick.com/" />
-        {/* Open Graph */}
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="One Trick" />
-        <meta
-          property="og:title"
-          content="One Trick — Destiny 2 PvP Loadout & Session Tracker"
-        />
-        <meta
-          property="og:description"
-          content="Track your Destiny 2 PvP performance across game modes, analyze real-time sessions, and inspect community loadout snapshots."
-        />
-        <meta property="og:url" content="https://d2onetrick.com/" />
-        <meta
-          property="og:image"
-          content="https://d2onetrick.com/og-image.svg"
-        />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta
-          name="twitter:title"
-          content="One Trick — Destiny 2 PvP Loadout & Session Tracker"
-        />
-        <meta
-          name="twitter:description"
-          content="Track your Destiny 2 PvP performance across game modes, analyze real-time sessions, and inspect community loadout snapshots."
-        />
-        <meta
-          name="twitter:image"
-          content="https://d2onetrick.com/twitter-image.svg"
-        />
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />

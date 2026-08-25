@@ -1,8 +1,8 @@
 import { SquareArrowOutUpRight } from 'lucide-react';
-import React from 'react';
 import { Link, data } from 'react-router';
 import { getActivity } from '~/api';
 import { PlayerCard } from '~/components/player-card';
+import { SeoMeta } from '~/components/seo-meta';
 import { TeamScore } from '~/components/team-score';
 import { Button } from '~/components/ui/button';
 import {
@@ -15,9 +15,8 @@ import { isEmptyObject } from '~/lib/utils';
 
 import type { Route } from './+types/activity';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
   const { instanceId } = params;
-  const url = new URL(request.url);
 
   const res = await getActivity({
     path: { activityId: instanceId },
@@ -51,14 +50,12 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <title>{`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}</title>
-      <meta
-        property="og:title"
-        content={`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}
-      />
-      <meta
-        name="description"
-        content={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`}
+      {/* pi-lens-ignore: ast-grep:no-nested-links */}
+      <SeoMeta
+        title={`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}
+        description={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`}
+        image={activity.imageUrl}
+        url={`/profile/${id}/c/${characterId}/activities/${params.instanceId}`}
       />
       <Card>
         <div className="relative">
@@ -86,7 +83,7 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
               </div>
               <div className="ml-auto">
                 <span className="rounded bg-white/10 px-2 py-1 text-xs uppercase tracking-wide">
-                  {new Date(activity.period as any).toLocaleString()}
+                  {new Date(String(activity.period)).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -126,9 +123,11 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
           <p className="text-lg font-medium">
             No performances found for this activity.
           </p>
-          <Link to={`/profile/${id}/c/${characterId}/sessions`}>
-            <Button variant="outline">View Sessions</Button>
-          </Link>
+          <Button asChild variant="outline">
+            <Link to={`/profile/${id}/c/${characterId}/sessions`}>
+              View Sessions
+            </Link>
+          </Button>
         </div>
       )}
       {/* Players (Stats + Weapons + Snapshot) */}

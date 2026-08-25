@@ -12,6 +12,7 @@ import {
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
+import { SeoMeta } from '~/components/seo-meta';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -75,7 +76,7 @@ type ISession = Awaited<ReturnType<typeof getSession>>;
 export default function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
   const { session, error, path } = loaderData;
-  const { characterId } = params;
+  const { characterId, id } = params;
   const isOwner = type === 'owner';
   const { state, Form } = useFetcher();
   const isSubmitting = state === 'submitting';
@@ -164,14 +165,10 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <title>{`${session.name}${profile?.displayName ? ` - ${profile.displayName}` : ''}`}</title>
-      <meta
-        property="og:title"
-        content={`${session.name}${profile?.displayName ? ` - ${profile.displayName}` : ''}`}
-      />
-      <meta
-        name="description"
-        content={`View games, metrics, and details for ${profile?.displayName ?? ''}'s session ${session.name}.`}
+      <SeoMeta
+        title={`${session.name}${profile?.displayName ? ` — ${profile.displayName}` : ''} | One Trick`}
+        description={`View games, metrics, and details for ${profile?.displayName ?? 'this Guardian'}'s session ${session.name}.`}
+        url={`/profile/${id}/c/${characterId}/sessions/${session.id}`}
       />
       <div className="flex w-full flex-col items-start gap-4">
         {isCurrent && <Badge className="animate-pulse">Active</Badge>}

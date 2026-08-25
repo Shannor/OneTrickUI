@@ -5,6 +5,7 @@ import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { HorizontalBanner } from '~/components/horizontal-banner';
 import { Label } from '~/components/label';
+import { SeoMeta } from '~/components/seo-meta';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
@@ -49,11 +50,10 @@ export default function SessionGames({ params }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-8 md:gap-6">
-      <title>Session Games</title>
-      <meta property="og:title" content="Session Games" />
-      <meta
-        name="description"
-        content="Browse games from this session, loadouts, and performance details."
+      <SeoMeta
+        title={`Session Games — ${session?.name ?? 'Session'} | One Trick`}
+        description="Browse games from this session, loadouts, and performance details."
+        url={`/profile/${id}/c/${characterId}/sessions/${session?.id}`}
       />
       {aggregates
         .sort(

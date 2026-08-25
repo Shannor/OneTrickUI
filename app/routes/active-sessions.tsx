@@ -3,28 +3,12 @@ import { Link, useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { type Profile, type Session, getSessions, getUser } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
+import { SeoMeta } from '~/components/seo-meta';
 import { buttonVariants } from '~/components/ui/button';
 import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/active-sessions';
-
-export function meta({}: Route.MetaArgs) {
-  const title = 'Active Sessions — One Trick';
-  const description =
-    'Browse active Destiny 2 tracking sessions. View live player stats, loadouts, and performance in progress.';
-  const url = 'https://d2onetrick.com/active-sessions';
-
-  return [
-    { title },
-    { description },
-    { tagName: 'link', rel: 'canonical', href: url },
-    { property: 'og:type', content: 'website' },
-    { property: 'og:title', content: title },
-    { property: 'og:description', content: description },
-    { property: 'og:url', content: url },
-  ];
-}
 
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
@@ -145,6 +129,11 @@ export function ActiveSessionsPage() {
 
   return (
     <div className="flex w-full flex-1 flex-col justify-start gap-8">
+      <SeoMeta
+        title="Active Sessions — One Trick"
+        description="Browse active Destiny 2 tracking sessions. View live player stats, loadouts, and performance in progress."
+        url="/active-sessions"
+      />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight md:text-4xl">
