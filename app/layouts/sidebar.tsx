@@ -55,6 +55,21 @@ function getUserDisplayName(
   return 'Guardian';
 }
 
+function getUserCharacters(
+  signedInUser: unknown,
+  profileResponse: ReturnType<typeof useOptionalProfileData>,
+): Array<{ id: string }> {
+  if (
+    signedInUser &&
+    typeof signedInUser === 'object' &&
+    'characters' in signedInUser &&
+    Array.isArray(signedInUser.characters)
+  ) {
+    return signedInUser.characters as Array<{ id: string }>;
+  }
+  return profileResponse?.profile?.characters ?? [];
+}
+
 export function Sidebar() {
   const { submit } = useFetcher();
   const params = useParams();
@@ -104,12 +119,7 @@ export function Sidebar() {
   }, [characterId, signedInUserId, profileResponse?.type]);
 
   // Determine user characters
-  const userCharacters =
-    signedInUser &&
-    'characters' in signedInUser &&
-    Array.isArray(signedInUser.characters)
-      ? (signedInUser.characters as Array<{ id: string }>)
-      : (profileResponse?.profile?.characters ?? []);
+  const userCharacters = getUserCharacters(signedInUser, profileResponse);
 
   const defaultCharacterId = userCharacters[0]?.id;
 
