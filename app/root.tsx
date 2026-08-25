@@ -195,6 +195,9 @@ export function App() {
           content="Track your Destiny 2 PvP performance across game modes, analyze real-time sessions, and inspect community loadout snapshots."
         />
         <meta property="og:url" content="https://d2onetrick.com/" />
+        <meta property="og:image" content="https://d2onetrick.com/og-image.svg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
@@ -205,6 +208,7 @@ export function App() {
           name="twitter:description"
           content="Track your Destiny 2 PvP performance across game modes, analyze real-time sessions, and inspect community loadout snapshots."
         />
+        <meta name="twitter:image" content="https://d2onetrick.com/twitter-image.svg" />
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
