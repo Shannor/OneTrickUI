@@ -129,12 +129,7 @@ export const Weapon: React.FC<Props> = ({
   const itemType = properties?.baseInfo?.itemTypeDisplayName;
 
   return (
-    <div
-      className={cn(
-        'flex w-full max-w-[360px] flex-col gap-2.5 py-1',
-        className,
-      )}
-    >
+    <div className={cn('flex w-full flex-col gap-2.5 py-1', className)}>
       {/* Integrated Header Banner (Avatar Icon + Weapon Name + Type + Kills metrics) */}
       <div className="flex items-center gap-3">
         <Avatar className="h-12 w-12 shrink-0 rounded-md border bg-black/40 object-cover p-0.5">
