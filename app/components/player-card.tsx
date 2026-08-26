@@ -155,7 +155,7 @@ export function PlayerCard({
               to={`/profile/${targetUserId}/c/${charId}/loadouts/${snapshotId}`}
             >
               <SquareLibrary className="mr-1.5 h-3.5 w-3.5 text-primary" />
-              View Loadout
+              View Detailed Loadout
             </Link>
           </Button>
         )}
@@ -185,7 +185,7 @@ export function PlayerCard({
       )}
 
       {weapons.length > 0 && (
-        <div className="col-span-12 flex flex-col gap-4">
+        <div className="col-span-12 flex flex-col gap-4 pt-4">
           <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
             {weapons.map((w) => (
               <Weapon
@@ -198,12 +198,9 @@ export function PlayerCard({
         </div>
       )}
 
-      {snapshot && (
-        <div className="col-span-12 grid grid-cols-1 gap-6 border-t pt-4 md:grid-cols-2">
-          <ArmorSet snapshot={snapshot} />
-          <ClassStats data={values} />
-        </div>
-      )}
+      <div className="col-span-12 grid grid-cols-1 pt-4 md:grid-cols-2">
+        <ClassStats data={values} />
+      </div>
     </>
   );
 

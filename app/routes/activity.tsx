@@ -96,11 +96,9 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
               </div>
             </div>
 
-            <div className="border-t border-white/15 pt-4">
-              <TeamScore teams={teams} />
-            </div>
+            <TeamScore teams={teams} />
 
-            <div className="flex flex-col gap-2.5 border-t border-white/15 pt-4 sm:flex-row sm:items-center sm:gap-3">
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
               <a
                 href={`${destinyTrackerUrl}/${activity.instanceId}`}
                 target="_blank"

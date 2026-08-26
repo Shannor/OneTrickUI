@@ -15,17 +15,6 @@ import {
 } from '~/components/ui/chart';
 import { cn } from '~/lib/utils';
 
-export const description = 'A radar chart';
-
-const chartData = [
-  { month: 'January', desktop: 186 },
-  { month: 'February', desktop: 305 },
-  { month: 'March', desktop: 237 },
-  { month: 'April', desktop: 273 },
-  { month: 'May', desktop: 209 },
-  { month: 'June', desktop: 214 },
-];
-
 const chartConfig = {
   desktop: {
     label: 'Stats',
@@ -47,7 +36,7 @@ export function ClassStats({ className, data }: Props) {
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn('max-h-[400px] min-h-[50px]', className)}
+      className={cn('max-h-[500px] min-h-[50px]', className)}
     >
       <RadarChart data={data}>
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
