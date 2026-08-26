@@ -122,7 +122,7 @@ export function PlayerCard({
     <>
       {weapons.length > 0 && (
         <div className="col-span-12 flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-6 md:gap-8 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-10 xl:gap-12 xl:grid-cols-3">
             {weapons.map((w) => (
               <Weapon
                 key={String(w.referenceId)}
