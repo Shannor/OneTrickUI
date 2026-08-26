@@ -74,7 +74,7 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
                 {activity.activityIcon && (
                   <img
                     src={activity.activityIcon}
-                    className="h-12 w-12 shrink-0 rounded-lg bg-black/60 p-1 object-contain ring-1 ring-white/20"
+                    className="h-12 w-12 shrink-0 rounded-lg bg-black/60 object-contain p-1 ring-1 ring-white/20"
                     alt="mode icon"
                   />
                 )}
@@ -92,7 +92,7 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
               <div className="self-start sm:self-auto">
                 <FormattedDate
                   date={activity.period as any}
-                  className="inline-block rounded-md bg-black/50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-200 backdrop-blur-sm ring-1 ring-white/20"
+                  className="inline-block rounded-md bg-black/50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-200 ring-1 ring-white/20 backdrop-blur-sm"
                 />
               </div>
             </div>
@@ -110,7 +110,7 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
                 rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-black/40 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/20 sm:w-auto"
               >
-                <span>Destiny Tracker</span>
+                <span>View on Destiny Tracker</span>
                 <SquareArrowOutUpRight className="h-3.5 w-3.5 text-blue-300" />
               </a>
 
@@ -120,7 +120,7 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
                 rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-black/40 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/20 sm:w-auto"
               >
-                <span>Crucible Report</span>
+                <span>View on Crucible Report</span>
                 <SquareArrowOutUpRight className="h-3.5 w-3.5 text-blue-300" />
               </a>
             </div>
