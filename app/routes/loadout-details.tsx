@@ -1,4 +1,3 @@
-import React from 'react';
 import { data } from 'react-router';
 import { getSnapshot } from '~/api';
 import { ClassStats } from '~/charts/ClassStats';
@@ -57,7 +56,7 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
         <ClassStats data={values} />
       </div>
       <div className="col-span-12 flex flex-col gap-4">
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:gap-8 xl:grid-cols-3">
           {data.map((item) => (
             <Weapon
               key={item.itemHash}
