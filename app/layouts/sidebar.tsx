@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useFetcher, useNavigate, useParams } from 'react-router';
 import { AppSidebar } from '~/components/app-sidebar';
+import { ChangelogModal } from '~/components/changelog-modal';
 import { Logo } from '~/components/logo';
 import { ModeToggle } from '~/components/mode-toggle';
 import { NavUser } from '~/components/nav-user';
@@ -290,7 +291,8 @@ export function Sidebar() {
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
           </div>
-          <div className="px-4">
+          <div className="flex items-center gap-2 px-4">
+            <ChangelogModal />
             <ModeToggle />
           </div>
         </header>
