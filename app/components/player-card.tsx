@@ -128,9 +128,14 @@ export function PlayerCard({
         </h4>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         {targetUserId && charId && sessionId && (
-          <Button asChild variant="outline" size="sm">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="w-full justify-center sm:w-auto"
+          >
             <Link
               to={`/profile/${targetUserId}/c/${charId}/sessions/${sessionId}`}
             >
@@ -140,7 +145,12 @@ export function PlayerCard({
           </Button>
         )}
         {targetUserId && charId && snapshotId && (
-          <Button asChild variant="outline" size="sm">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="w-full justify-center sm:w-auto"
+          >
             <Link
               to={`/profile/${targetUserId}/c/${charId}/loadouts/${snapshotId}`}
             >
@@ -165,7 +175,7 @@ export function PlayerCard({
             />
 
             {showClassDetails && (
-              <div className="mt-3 flex flex-col gap-4 border-t pt-3">
+              <div className="mt-3 flex flex-col gap-4 pt-3">
                 <Abilities />
                 <Aspects />
                 <Fragments />
