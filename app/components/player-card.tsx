@@ -19,6 +19,7 @@ export interface PlayerCardProps {
   characterId?: string;
   sessionId?: string;
   snapshotId?: string;
+  showWeaponTitles?: boolean;
 }
 
 export function PlayerCard({
@@ -28,6 +29,7 @@ export function PlayerCard({
   characterId,
   sessionId,
   snapshotId,
+  showWeaponTitles = true,
 }: PlayerCardProps) {
   const weapons = Object.values(performance.weapons ?? {}).filter(
     (it) => !!it?.properties?.baseInfo?.name,
@@ -114,7 +116,11 @@ export function PlayerCard({
           <div className="col-span-12 flex flex-col gap-4">
             <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
               {weapons.map((w) => (
-                <Weapon key={String(w.referenceId)} {...w} />
+                <Weapon
+                  key={String(w.referenceId)}
+                  {...w}
+                  showTitle={showWeaponTitles}
+                />
               ))}
             </div>
           </div>

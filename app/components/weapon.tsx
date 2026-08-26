@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import type { Socket, WeaponInstanceMetrics } from '~/api';
 import { Label } from '~/components/label';
 import { Sockets } from '~/components/sockets';
@@ -50,6 +50,7 @@ const isMemento = (itemTypeDisplayName: string): boolean =>
 
 interface Props extends WeaponInstanceMetrics {
   hideStats?: boolean;
+  showTitle?: boolean;
   layout?: 'horizontal' | 'vertical';
   className?: string;
 }
@@ -58,6 +59,7 @@ export const Weapon: React.FC<Props> = ({
   stats,
   display,
   hideStats,
+  showTitle,
   className,
 }) => {
   const weaponSockets: WeaponSockets = properties?.sockets?.reduce(
@@ -132,7 +134,19 @@ export const Weapon: React.FC<Props> = ({
   const icon = setBungieUrl(display?.icon ?? properties?.baseInfo?.icon);
   const name = properties?.baseInfo?.name ?? display?.name ?? 'Unkown';
   return (
-    <div className={cn('flex max-w-[350px] flex-col gap-4', className)}>
+    <div className={cn('flex max-w-[350px] flex-col gap-2', className)}>
+      {showTitle && name && (
+        <Label
+          className={cn(
+            'truncate text-sm font-semibold',
+            properties?.baseInfo?.tierTypeName === 'Exotic'
+              ? 'text-yellow-500'
+              : 'text-purple-500',
+          )}
+        >
+          {name}
+        </Label>
+      )}
       <Tooltip>
         <TooltipContent className="flex flex-col gap-4">
           <Label>{name}</Label>

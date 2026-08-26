@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { User } from '~/api';
+
 import { PlayerCard } from './player-card';
 
 // Polyfill ResizeObserver for Recharts ClassStats component in JSDOM environment
