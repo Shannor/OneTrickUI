@@ -37,7 +37,10 @@ function getChangeBadge(type: ChangeType) {
       );
     case 'fix':
       return (
-        <Badge variant="outline" className="text-[10px] font-semibold">
+        <Badge
+          variant="outline"
+          className="border-amber-500/40 bg-amber-500/15 text-[10px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300"
+        >
           Fix
         </Badge>
       );
@@ -116,7 +119,7 @@ export function ChangelogModal({
         <DialogHeader className="shrink-0 border-b pb-3">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Sparkles className="h-5 w-5 text-primary" />
-            What's New in One Trick
+            What's New in 1 Trick
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             Release updates, feature improvements, and recent bug fixes.

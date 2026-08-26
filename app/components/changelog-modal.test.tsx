@@ -14,7 +14,7 @@ describe('ChangelogModal', () => {
 
   it('renders modal content when controlled open is true', () => {
     render(<ChangelogModal open={true} />);
-    expect(screen.getByText("What's New in One Trick")).toBeInTheDocument();
+    expect(screen.getByText("What's New in 1 Trick")).toBeInTheDocument();
     expect(
       screen.getByText('Community Sessions & Modernized Date Formatting'),
     ).toBeInTheDocument();
