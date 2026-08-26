@@ -1,7 +1,7 @@
 import { ChevronDown, Hourglass, SquareLibrary } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import type { CharacterSnapshot, InstancePerformance, User } from '~/api';
+import type { CharacterSnapshot, InstancePerformance, User, WeaponInstanceMetrics } from '~/api';
 import { calculateRatio } from '~/calculations/precision';
 import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
@@ -31,6 +31,23 @@ export interface PlayerCardProps {
   defaultOpen?: boolean;
 }
 
+const BUCKET_ORDER: Record<number, number> = {
+  1498876634: 1, // Kinetic / Primary
+  2465295065: 2, // Energy / Secondary
+  953998645: 3, // Power / Heavy
+  953926928: 3, // Power alternative
+};
+
+function getWeaponKillsCount(w: WeaponInstanceMetrics): number {
+  const killsStat = w.stats?.uniqueWeaponKills;
+  return Number(killsStat?.basic?.value ?? 0);
+}
+
+function getWeaponSlotOrder(w: WeaponInstanceMetrics): number {
+  const bucketHash = Number(w.properties?.baseInfo?.bucketHash ?? 0);
+  return BUCKET_ORDER[bucketHash] ?? 99;
+}
+
 export function PlayerCard({
   user,
   performance,
@@ -44,9 +61,16 @@ export function PlayerCard({
 }: PlayerCardProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  const weapons = Object.values(performance.weapons ?? {}).filter(
-    (it) => !!it?.properties?.baseInfo?.name,
-  );
+  const weapons = Object.values(performance.weapons ?? {})
+    .filter((it) => !!it?.properties?.baseInfo?.name)
+    .sort((a, b) => {
+      const slotA = getWeaponSlotOrder(a);
+      const slotB = getWeaponSlotOrder(b);
+      if (slotA !== slotB) {
+        return slotA - slotB;
+      }
+      return getWeaponKillsCount(b) - getWeaponKillsCount(a);
+    });
 
   const kills = performance.playerStats.kills?.value ?? 0;
   const assists = performance.playerStats.assists?.value ?? 0;
@@ -122,7 +146,7 @@ export function PlayerCard({
     <>
       {weapons.length > 0 && (
         <div className="col-span-12 flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-10 xl:gap-12 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
             {weapons.map((w) => (
               <Weapon
                 key={String(w.referenceId)}
