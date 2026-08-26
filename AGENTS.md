@@ -29,6 +29,7 @@ To set up and build the project, run the following commands in the terminal:
 - **Only** used named exports instead of default exports for all components and functions.
 - The brand is "1 Trick", never "One Trick".
 - Do not add unnecessary or useless code comments.
+- Do not add comments to separate inline component sections in JSX. If a component section requires a comment to separate it, extract it into a separate composable component instead. The goal is always composability.
 
 ## Specific Instructions for this Project
 

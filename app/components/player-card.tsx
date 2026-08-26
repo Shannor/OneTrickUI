@@ -165,7 +165,6 @@ export function PlayerCard({
 
   const detailedContent = (
     <>
-      {/* Subclass Super Header (Above Weapons) */}
       {snapshot && (
         <div className="col-span-12">
           <SubClassProvider snapshot={snapshot}>
@@ -185,7 +184,6 @@ export function PlayerCard({
         </div>
       )}
 
-      {/* Weapons Grid */}
       {weapons.length > 0 && (
         <div className="col-span-12 flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
@@ -200,7 +198,6 @@ export function PlayerCard({
         </div>
       )}
 
-      {/* Armor & Class Stats (Below Weapons) */}
       {snapshot && (
         <div className="col-span-12 grid grid-cols-1 gap-6 border-t pt-4 md:grid-cols-2">
           <ArmorSet snapshot={snapshot} />
@@ -215,7 +212,6 @@ export function PlayerCard({
       <CardContent className="grid grid-cols-12 gap-6 p-4 md:p-6">
         {cardHeaderContent}
 
-        {/* Stats */}
         <div className="col-span-12 flex flex-row items-start justify-between gap-4">
           <Performance stats={stats} />
         </div>
@@ -226,7 +222,6 @@ export function PlayerCard({
               {detailedContent}
             </CollapsibleContent>
 
-            {/* Bottom Expand / Collapse Bar */}
             <div className="col-span-12 border-t pt-3">
               <CollapsibleTrigger asChild>
                 <Button

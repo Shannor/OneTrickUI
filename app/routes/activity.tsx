@@ -68,7 +68,6 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/40" />
           <CardHeader className="relative z-10 flex flex-col gap-6 p-5 text-white md:p-6">
-            {/* Top row: Title/Icon & Date */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-start gap-3.5">
                 {activity.activityIcon && (
@@ -97,12 +96,10 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
               </div>
             </div>
 
-            {/* Team Score */}
             <div className="border-t border-white/15 pt-4">
               <TeamScore teams={teams} />
             </div>
 
-            {/* External PGCR Report Buttons (Stacked on mobile, side-by-side on desktop) */}
             <div className="flex flex-col gap-2.5 border-t border-white/15 pt-4 sm:flex-row sm:items-center sm:gap-3">
               <a
                 href={`${destinyTrackerUrl}/${activity.instanceId}`}
