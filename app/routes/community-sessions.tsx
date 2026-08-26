@@ -310,33 +310,33 @@ export function CommunitySessionsPage() {
       {/* Pagination controls */}
       {(page > 1 || hasNextPage) && (
         <div className="flex items-center justify-between border-t pt-4">
-          <Button asChild disabled={page <= 1} variant="outline" size="sm">
-            {page <= 1 ? (
-              <span>
-                <ChevronLeft className="mr-1 h-4 w-4" /> Previous Page
-              </span>
-            ) : (
+          {page <= 1 ? (
+            <Button disabled variant="outline" size="sm">
+              <ChevronLeft className="mr-1 h-4 w-4" /> Previous Page
+            </Button>
+          ) : (
+            <Button asChild variant="outline" size="sm">
               <Link to={buildPageUrl(page - 1)}>
                 <ChevronLeft className="mr-1 h-4 w-4" /> Previous Page
               </Link>
-            )}
-          </Button>
+            </Button>
+          )}
 
           <span className="text-xs font-semibold text-muted-foreground">
             Page {page}
           </span>
 
-          <Button asChild disabled={!hasNextPage} variant="outline" size="sm">
-            {!hasNextPage ? (
-              <span>
-                Next Page <ChevronRight className="ml-1 h-4 w-4" />
-              </span>
-            ) : (
+          {!hasNextPage ? (
+            <Button disabled variant="outline" size="sm">
+              Next Page <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button asChild variant="outline" size="sm">
               <Link to={buildPageUrl(page + 1)}>
                 Next Page <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
-            )}
-          </Button>
+            </Button>
+          )}
         </div>
       )}
     </div>

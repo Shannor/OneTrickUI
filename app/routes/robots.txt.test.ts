@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { loader } from './robots.txt';
 
 describe('robots.txt loader', () => {

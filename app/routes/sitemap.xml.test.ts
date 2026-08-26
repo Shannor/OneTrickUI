@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { loader } from './sitemap.xml';
 
 describe('sitemap.xml loader', () => {

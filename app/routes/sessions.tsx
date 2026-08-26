@@ -192,20 +192,32 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
           ))}
       </div>
       <div className="flex flex-row justify-between gap-4 self-end">
-        <Button disabled={page <= 1} variant="outline">
-          <ChevronLeft />
-          {page <= 1 ? (
-            <span>Previous Page</span>
-          ) : (
+        {page <= 1 ? (
+          <Button disabled variant="outline">
+            <ChevronLeft />
+            Previous Page
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
             <Link to={page - 1 === 1 ? '?' : `?page=${page - 1}`}>
+              <ChevronLeft />
               Previous Page
             </Link>
-          )}
-        </Button>
-        <Button disabled={data.length !== 10} variant="outline">
-          <Link to={`?page=${page + 1}`}>Next Page</Link>
-          <ChevronRight />
-        </Button>
+          </Button>
+        )}
+        {data.length !== 10 ? (
+          <Button disabled variant="outline">
+            Next Page
+            <ChevronRight />
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link to={`?page=${page + 1}`}>
+              Next Page
+              <ChevronRight />
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );
