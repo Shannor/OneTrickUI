@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CharacterSnapshot } from '~/api';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import { SubClassProvider } from '~/providers/sub-class-provider';
+
 import { SubClassHeader } from './header';
 
 describe('SubClassHeader', () => {

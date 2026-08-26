@@ -11,7 +11,12 @@ import { calculateRatio } from '~/calculations/precision';
 import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
 import { Label } from '~/components/label';
-import { Abilities, Aspects, Fragments, SubClassHeader } from '~/components/sub-class';
+import {
+  Abilities,
+  Aspects,
+  Fragments,
+  SubClassHeader,
+} from '~/components/sub-class';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import {
@@ -150,8 +155,9 @@ export function PlayerCard({
 
   const detailedContent = (
     <>
+      {/* Subclass Super Header (Above Weapons) */}
       {snapshot && (
-        <div className="col-span-12 flex flex-col gap-3">
+        <div className="col-span-12">
           <SubClassProvider snapshot={snapshot}>
             <SubClassHeader
               showMore={showClassDetails}
@@ -159,22 +165,17 @@ export function PlayerCard({
             />
 
             {showClassDetails && (
-              <div className="col-span-12 grid grid-cols-1 gap-6 pt-2 border-t md:grid-cols-2">
-                <div className="flex flex-col gap-4">
-                  <Abilities />
-                  <Aspects />
-                  <Fragments />
-                </div>
-                <div className="flex flex-col gap-4">
-                  <ArmorSet snapshot={snapshot} />
-                  <ClassStats data={values} />
-                </div>
+              <div className="mt-3 flex flex-col gap-4 border-t pt-3">
+                <Abilities />
+                <Aspects />
+                <Fragments />
               </div>
             )}
           </SubClassProvider>
         </div>
       )}
 
+      {/* Weapons Grid */}
       {weapons.length > 0 && (
         <div className="col-span-12 flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
@@ -186,6 +187,14 @@ export function PlayerCard({
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Armor & Class Stats (Below Weapons) */}
+      {snapshot && (
+        <div className="col-span-12 grid grid-cols-1 gap-6 border-t pt-4 md:grid-cols-2">
+          <ArmorSet snapshot={snapshot} />
+          <ClassStats data={values} />
         </div>
       )}
     </>
