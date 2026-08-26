@@ -1,7 +1,7 @@
 import { SquareArrowOutUpRight } from 'lucide-react';
-import React from 'react';
 import { Link, data } from 'react-router';
 import { getActivity } from '~/api';
+import { FormattedDate } from '~/components/formatted-date';
 import { PlayerCard } from '~/components/player-card';
 import { TeamScore } from '~/components/team-score';
 import { Button } from '~/components/ui/button';
@@ -15,9 +15,8 @@ import { isEmptyObject } from '~/lib/utils';
 
 import type { Route } from './+types/activity';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
   const { instanceId } = params;
-  const url = new URL(request.url);
 
   const res = await getActivity({
     path: { activityId: instanceId },
@@ -32,7 +31,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
 const crucibleReportUrl = 'https://crucible.report/pgcr';
 
-export default function Activity({ loaderData, params }: Route.ComponentProps) {
+export function Activity({ loaderData, params }: Route.ComponentProps) {
   const {
     activityDetails: { activity, aggregate, teams, snapshots, users },
   } = loaderData;
@@ -85,9 +84,10 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
                 </CardDescription>
               </div>
               <div className="ml-auto">
-                <span className="rounded bg-white/10 px-2 py-1 text-xs uppercase tracking-wide">
-                  {new Date(activity.period as any).toLocaleString()}
-                </span>
+                <FormattedDate
+                  date={activity.period as any}
+                  className="rounded bg-white/10 px-2 py-1 text-xs uppercase tracking-wide"
+                />
               </div>
             </div>
             <div className="mt-3">
@@ -126,9 +126,11 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
           <p className="text-lg font-medium">
             No performances found for this activity.
           </p>
-          <Link to={`/profile/${id}/c/${characterId}/sessions`}>
-            <Button variant="outline">View Sessions</Button>
-          </Link>
+          <Button asChild variant="outline">
+            <Link to={`/profile/${id}/c/${characterId}/sessions`}>
+              View Sessions
+            </Link>
+          </Button>
         </div>
       )}
       {/* Players (Stats + Weapons + Snapshot) */}
@@ -176,3 +178,5 @@ export default function Activity({ loaderData, params }: Route.ComponentProps) {
     </div>
   );
 }
+
+export default Activity;

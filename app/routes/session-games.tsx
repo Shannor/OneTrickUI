@@ -1,8 +1,8 @@
-import { format } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
+import { FormattedDate } from '~/components/formatted-date';
 import { HorizontalBanner } from '~/components/horizontal-banner';
 import { Label } from '~/components/label';
 import VerticalBanner from '~/components/vertical-banner';
@@ -14,7 +14,7 @@ import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/session-games';
 
-export default function SessionGames({ params }: Route.ComponentProps) {
+export function SessionGames({ params }: Route.ComponentProps) {
   const { session, aggregates, snapshots } = useSessionData();
   const { characterId, id } = params;
   const navigate = useNavigate();
@@ -214,9 +214,12 @@ export default function SessionGames({ params }: Route.ComponentProps) {
                         {activityDetails.location}
                       </div>
 
-                      <div className="text-muted-foreground">
-                        {format(new Date(activityDetails.period), 'p')}
-                      </div>
+                      <FormattedDate
+                        date={activityDetails.period}
+                        formatStr="p"
+                        fallbackFormatStr="HH:mm"
+                        className="text-muted-foreground"
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
@@ -270,3 +273,5 @@ function Description({ activity, mode }: { activity: string; mode?: string }) {
     </div>
   );
 }
+
+export default SessionGames;

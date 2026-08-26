@@ -1,5 +1,4 @@
 import { doc, onSnapshot } from '@firebase/firestore';
-import { format } from 'date-fns';
 import { Info, Share2, StopCircleIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -11,6 +10,7 @@ import {
 } from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
+import { FormattedDate } from '~/components/formatted-date';
 import { LoadingButton } from '~/components/loading-button';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
@@ -72,7 +72,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 type ISession = Awaited<ReturnType<typeof getSession>>;
 
-export default function Session({ loaderData, params }: Route.ComponentProps) {
+export function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
   const { session, error, path } = loaderData;
   const { characterId } = params;
@@ -189,10 +189,13 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
           </Alert>
         )}
         <div className="text-sm text-muted-foreground">
-          {format(session.startedAt, 'MM/dd/yyyy - p')}
-          {session.completedAt
-            ? ` - ${format(session.completedAt, 'MM/dd/yyyy - p')}`
-            : ''}
+          <FormattedDate date={session.startedAt} />
+          {session.completedAt && (
+            <>
+              {' - '}
+              <FormattedDate date={session.completedAt} />
+            </>
+          )}
         </div>
         {isOwner ? (
           <div className="flex w-full flex-row gap-4">
@@ -286,3 +289,5 @@ export default function Session({ loaderData, params }: Route.ComponentProps) {
     </div>
   );
 }
+
+export default Session;

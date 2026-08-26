@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,6 +7,7 @@ import {
 import { Link, useFetcher, useNavigate } from 'react-router';
 import { type Session, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
+import { FormattedDate } from '~/components/formatted-date';
 import { LoadingButton } from '~/components/loading-button';
 import { SessionCard } from '~/components/session-card';
 import { Badge } from '~/components/ui/badge';
@@ -67,7 +67,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   };
 }
 
-export default function Sessions({ params, loaderData }: Route.ComponentProps) {
+export function Sessions({ params, loaderData }: Route.ComponentProps) {
   const { type, profile } = useProfileData();
   const { characterId, id: userId } = params;
   const { data, current, page } = loaderData;
@@ -220,9 +220,11 @@ function CurrentSession({
           {data.name}
         </CardTitle>
         <CardDescription className="flex flex-row items-center gap-4 text-lg">
-          {format(new Date(data.startedAt), 'MM/dd/yyyy - p')}
+          <FormattedDate date={data.startedAt} />
         </CardDescription>
       </CardHeader>
     </Card>
   );
 }
+
+export default Sessions;

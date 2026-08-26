@@ -1,5 +1,5 @@
-import { format } from 'date-fns';
 import type { ActivityHistory } from '~/api';
+import { FormattedDate } from '~/components/formatted-date';
 
 export function ActivityCard({
   activity,
@@ -35,7 +35,7 @@ export function ActivityCard({
             <div className="text-xl font-bold">{activity.location}</div>
           </div>
         </div>
-        <div>{format(activity.period, 'MM/dd/yyyy - p')}</div>
+        <FormattedDate date={activity.period} />
       </div>
     </div>
   );

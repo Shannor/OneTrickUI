@@ -1,7 +1,7 @@
-import { format } from 'date-fns';
 import { ChevronsDown } from 'lucide-react';
 import { useState } from 'react';
 import type { Aggregate } from '~/api';
+import { FormattedDate } from '~/components/formatted-date';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Button } from '~/components/ui/button';
 import {
@@ -53,9 +53,10 @@ export function CollapsibleMaps({ aggregates, onActivityClick }: MapProps) {
                 </Avatar>
                 <div className="flex flex-col gap-1">
                   <div>{location}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(period, 'MM/dd/yyyy - p')}
-                  </div>
+                  <FormattedDate
+                    date={period}
+                    className="text-sm text-muted-foreground"
+                  />
                 </div>
               </div>
             );

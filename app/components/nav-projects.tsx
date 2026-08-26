@@ -1,4 +1,4 @@
-import { type LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
 import {
   SidebarGroup,
@@ -29,10 +29,8 @@ export function NavProjects({
       <SidebarMenu>
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
-            {/* Find a way in the future to not need this */}
             <SidebarMenuButton
               asChild
-              suppressHydrationWarning={true}
               title={item.name}
               tooltip={item.name}
               onClick={() => {

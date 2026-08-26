@@ -1,4 +1,4 @@
-import { formatDistance } from 'date-fns';
+import { format, formatDistance } from 'date-fns';
 import {
   Activity,
   ArrowRight,
@@ -22,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
+import { useHydrated } from '~/hooks/use-hydrated';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
@@ -167,6 +168,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function Landing({ loaderData }: Route.ComponentProps) {
+  const isHydrated = useHydrated();
   const [isLoading] = useIsNavigating();
   const {
     activeCount,
@@ -493,9 +495,11 @@ export function Landing({ loaderData }: Route.ComponentProps) {
                             {completedTime && (
                               <div className="text-muted-foreground">
                                 Completed{' '}
-                                {formatDistance(completedTime, new Date(), {
-                                  addSuffix: true,
-                                })}
+                                {isHydrated
+                                  ? formatDistance(completedTime, new Date(), {
+                                      addSuffix: true,
+                                    })
+                                  : format(completedTime, 'MMM d, yyyy')}
                               </div>
                             )}
 

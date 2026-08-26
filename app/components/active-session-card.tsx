@@ -1,9 +1,10 @@
-import { formatDistance } from 'date-fns';
+import { format, formatDistance } from 'date-fns';
 import { ArrowRight, Gamepad2, Radio } from 'lucide-react';
 import { Link } from 'react-router';
 import type { Profile, Session } from '~/api';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
+import { useHydrated } from '~/hooks/use-hydrated';
 
 export interface ActiveSessionCardProps {
   session: Session;
@@ -14,6 +15,7 @@ export function ActiveSessionCard({
   session,
   profile,
 }: ActiveSessionCardProps) {
+  const isHydrated = useHydrated();
   const startTime = session.startedAt ? new Date(session.startedAt) : null;
   const character = profile?.characters?.find(
     (c) => c.id === session.characterId,
@@ -99,9 +101,11 @@ export function ActiveSessionCard({
             {startTime && (
               <div className="text-muted-foreground">
                 Started{' '}
-                {formatDistance(startTime, new Date(), {
-                  addSuffix: true,
-                })}
+                {isHydrated
+                  ? formatDistance(startTime, new Date(), {
+                      addSuffix: true,
+                    })
+                  : format(startTime, 'MMM d, yyyy')}
               </div>
             )}
 
