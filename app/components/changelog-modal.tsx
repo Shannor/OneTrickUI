@@ -1,7 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import {
   Dialog,
@@ -11,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '~/components/ui/dialog';
-import { CHANGELOG, type ChangeType } from '~/data/changelog';
+import { CHANGELOG } from '~/data/changelog';
 
 const LAST_SEEN_KEY = 'onetrick_last_seen_changelog';
 
@@ -19,32 +18,6 @@ export interface ChangelogModalProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   trigger?: React.ReactNode;
-}
-
-function getChangeBadge(type: ChangeType) {
-  switch (type) {
-    case 'feature':
-      return (
-        <Badge className="bg-primary text-[10px] font-semibold text-primary-foreground">
-          Feature
-        </Badge>
-      );
-    case 'improvement':
-      return (
-        <Badge variant="secondary" className="text-[10px] font-semibold">
-          Improvement
-        </Badge>
-      );
-    case 'fix':
-      return (
-        <Badge
-          variant="outline"
-          className="border-amber-500/40 bg-amber-500/15 text-[10px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300"
-        >
-          Fix
-        </Badge>
-      );
-  }
 }
 
 export function ChangelogModal({
@@ -127,38 +100,76 @@ export function ChangelogModal({
         </DialogHeader>
 
         <div className="flex max-h-[65vh] flex-1 flex-col gap-6 divide-y overflow-y-auto pr-2">
-          {CHANGELOG.map((release) => (
-            <div
-              key={release.id}
-              className="flex flex-col gap-3 pt-4 first:pt-0"
-            >
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="text-base font-bold text-foreground">
-                  {release.title}
-                </h3>
-                <span className="text-xs font-semibold text-primary">
-                  {release.date}
-                </span>
-              </div>
+          {CHANGELOG.map((release) => {
+            const features = release.changes.filter((c) => c.type === 'feature');
+            const improvements = release.changes.filter(
+              (c) => c.type === 'improvement',
+            );
+            const fixes = release.changes.filter((c) => c.type === 'fix');
 
-              {release.summary && (
-                <p className="text-xs text-muted-foreground">
-                  {release.summary}
-                </p>
-              )}
+            return (
+              <div
+                key={release.id}
+                className="flex flex-col gap-4 pt-4 first:pt-0"
+              >
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="text-base font-bold text-foreground">
+                    {release.title}
+                  </h3>
+                  <span className="text-xs font-semibold text-primary">
+                    {release.date}
+                  </span>
+                </div>
 
-              <ul className="flex flex-col gap-2 pt-1">
-                {release.changes.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5 text-xs">
-                    <div className="mt-0.5 shrink-0">
-                      {getChangeBadge(item.type)}
+                {release.summary && (
+                  <p className="text-xs text-muted-foreground">
+                    {release.summary}
+                  </p>
+                )}
+
+                <div className="flex flex-col gap-4 pt-1">
+                  {features.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-primary">
+                        Features
+                      </h4>
+                      <ul className="flex flex-col gap-1.5 pl-4 list-disc text-xs text-foreground/90">
+                        {features.map((item, idx) => (
+                          <li key={idx}>{item.text}</li>
+                        ))}
+                      </ul>
                     </div>
-                    <span className="text-foreground/90">{item.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                  )}
+
+                  {improvements.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Improvements
+                      </h4>
+                      <ul className="flex flex-col gap-1.5 pl-4 list-disc text-xs text-foreground/90">
+                        {improvements.map((item, idx) => (
+                          <li key={idx}>{item.text}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {fixes.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400">
+                        Fixes
+                      </h4>
+                      <ul className="flex flex-col gap-1.5 pl-4 list-disc text-xs text-foreground/90">
+                        {fixes.map((item, idx) => (
+                          <li key={idx}>{item.text}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </DialogContent>
     </Dialog>

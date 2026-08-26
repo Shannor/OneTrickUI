@@ -3,7 +3,7 @@
 ## Technology Stack
 
 * **Language**: Typescript
-* **UI Framework**: React 
+* **UI Framework**: React
 * **Style Library**: Shadcn & Tailwind
 * **Build Tool**: npm
 * **Testing Framework**: Testing Library
@@ -23,26 +23,27 @@ To set up and build the project, run the following commands in the terminal:
 
 ## General Instructions
 
-- Prirotize Mobile design with useful breakpoints all the way up to 4k displays as well.
-- All new custom UI Components, hooks and functions **must** include matching tests.
-- Prioritize code readability, maintainability and composibiltiy of components.
-- **Only** used named exports instead of default exports for all components and functions.
+* Prirotize Mobile design with useful breakpoints all the way up to 4k displays as well.
+* All new custom UI Components, hooks and functions **must** include matching tests.
+* Prioritize code readability, maintainability and composibiltiy of components.
+* **Only** used named exports instead of default exports for all components and functions.
+* The brand is "1 Trick", never "One Trick".
 
 ## Specific Instructions for this Project
 
-- Project has a custom setup for tailwind. Check `tailwind.config.ts`
-- All components and functions should be named exports and not default exports.
-- Add useful meta tags to all route tsx files/components.
-- This project uses generated endpoints for OpenAPI to gap data. It can be found in the `api` folder.
+* Project has a custom setup for tailwind. Check `tailwind.config.ts`
+* All components and functions should be named exports and not default exports.
+* Add useful meta tags to all route tsx files/components.
+* This project uses generated endpoints for OpenAPI to gap data. It can be found in the `api` folder.
 
-## Styling 
+## Styling
 
-- Use tailwind and breakpoints for mobile friendly designs.
+* Use tailwind and breakpoints for mobile friendly designs.
 
 ## Notable Libraries Used
 
-- React
-- Typescript
-- Shadcn/Tailwind
-- Testing-Library
-- Vite
+* React
+* Typescript
+* Shadcn/Tailwind
+* Testing-Library
+* Vite
