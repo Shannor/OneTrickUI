@@ -180,7 +180,7 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
       {loadouts?.items?.length === 0 && (
         <Empty
           title="Get in the Crucible!"
-          description="Play some games so we can get new information!"
+          description="Play more games so your top loadouts will start showing up!"
         />
       )}
       <div className="grid grid-cols-1 gap-4">

@@ -9,23 +9,6 @@ import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/community-sessions';
 
-export function meta({}: Route.MetaArgs) {
-  const title = 'Sessions — One Trick';
-  const description =
-    'Browse Destiny 2 PvP tracking sessions. View live player stats, loadouts, and game logs.';
-  const url = 'https://d2onetrick.com/sessions';
-
-  return [
-    { title },
-    { description },
-    { tagName: 'link', rel: 'canonical', href: url },
-    { property: 'og:type', content: 'website' },
-    { property: 'og:title', content: title },
-    { property: 'og:description', content: description },
-    { property: 'og:url', content: url },
-  ];
-}
-
 const PAGE_SIZE = 12;
 
 export async function loader({ request }: Route.LoaderArgs) {
