@@ -1,4 +1,5 @@
-import { Hourglass, SquareLibrary } from 'lucide-react';
+import { ChevronDown, Hourglass, SquareLibrary } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import type { CharacterSnapshot, InstancePerformance, User } from '~/api';
 import { calculateRatio } from '~/calculations/precision';
@@ -8,6 +9,11 @@ import { Label } from '~/components/label';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '~/components/ui/collapsible';
 import { Weapon } from '~/components/weapon';
 import { Performance, type StatItem } from '~/organisims/performance';
 import { SubClassProvider } from '~/providers/sub-class-provider';
@@ -20,6 +26,8 @@ export interface PlayerCardProps {
   sessionId?: string;
   snapshotId?: string;
   showWeaponTitles?: boolean;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
 }
 
 export function PlayerCard({
@@ -30,7 +38,11 @@ export function PlayerCard({
   sessionId,
   snapshotId,
   showWeaponTitles = true,
+  collapsible = false,
+  defaultOpen = false,
 }: PlayerCardProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
   const weapons = Object.values(performance.weapons ?? {}).filter(
     (it) => !!it?.properties?.baseInfo?.name,
   );
@@ -59,86 +71,128 @@ export function PlayerCard({
   const charId = characterId || snapshot?.characterId;
   const targetUserId = user?.id || snapshot?.userId;
 
-  return (
-    <Card>
-      <CardContent className="grid grid-cols-12 gap-6 p-4 md:p-6">
-        {/* Header (Player info & Action buttons) */}
-        <div className="col-span-12 flex flex-col justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
-          <div className="flex flex-col gap-0.5">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-              Player
-            </Label>
-            <h4 className="text-xl font-bold tracking-tight">
-              {targetUserId ? (
-                <Link
-                  to={`/profile/${targetUserId}`}
-                  className="transition-colors hover:text-primary"
-                  viewTransition
-                >
-                  {user?.displayName ?? 'Unknown Player'}
-                </Link>
-              ) : (
-                <span>{user?.displayName ?? 'Unknown Player'}</span>
-              )}
-            </h4>
-          </div>
+  const cardHeaderContent = (
+    <div className="col-span-12 flex flex-col justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-0.5">
+        <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+          Player
+        </Label>
+        <h4 className="text-xl font-bold tracking-tight">
+          {targetUserId ? (
+            <Link
+              to={`/profile/${targetUserId}`}
+              className="transition-colors hover:text-primary"
+              viewTransition
+            >
+              {user?.displayName ?? 'Unknown Player'}
+            </Link>
+          ) : (
+            <span>{user?.displayName ?? 'Unknown Player'}</span>
+          )}
+        </h4>
+      </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {targetUserId && charId && sessionId && (
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  to={`/profile/${targetUserId}/c/${charId}/sessions/${sessionId}`}
-                >
-                  <Hourglass className="mr-1.5 h-3.5 w-3.5 text-primary" />
-                  View Session
-                </Link>
-              </Button>
-            )}
-            {targetUserId && charId && snapshotId && (
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  to={`/profile/${targetUserId}/c/${charId}/loadouts/${snapshotId}`}
-                >
-                  <SquareLibrary className="mr-1.5 h-3.5 w-3.5 text-primary" />
-                  View Loadout
-                </Link>
-              </Button>
-            )}
+      <div className="flex flex-wrap items-center gap-2">
+        {targetUserId && charId && sessionId && (
+          <Button asChild variant="outline" size="sm">
+            <Link
+              to={`/profile/${targetUserId}/c/${charId}/sessions/${sessionId}`}
+            >
+              <Hourglass className="mr-1.5 h-3.5 w-3.5 text-primary" />
+              View Session
+            </Link>
+          </Button>
+        )}
+        {targetUserId && charId && snapshotId && (
+          <Button asChild variant="outline" size="sm">
+            <Link
+              to={`/profile/${targetUserId}/c/${charId}/loadouts/${snapshotId}`}
+            >
+              <SquareLibrary className="mr-1.5 h-3.5 w-3.5 text-primary" />
+              View Loadout
+            </Link>
+          </Button>
+        )}
+        {collapsible && (
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              aria-label="Toggle loadout details"
+            >
+              <span>{isOpen ? 'Collapse' : 'Expand Loadout'}</span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  isOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </Button>
+          </CollapsibleTrigger>
+        )}
+      </div>
+    </div>
+  );
+
+  const detailedContent = (
+    <>
+      {weapons.length > 0 && (
+        <div className="col-span-12 flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
+            {weapons.map((w) => (
+              <Weapon
+                key={String(w.referenceId)}
+                {...w}
+                showTitle={showWeaponTitles}
+              />
+            ))}
           </div>
         </div>
+      )}
+
+      <div className="col-span-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <SubClassProvider snapshot={snapshot}>
+          <div className="flex flex-col gap-4">
+            <Super />
+            <Abilities />
+            <Aspects />
+            <Fragments />
+          </div>
+        </SubClassProvider>
+        <ArmorSet snapshot={snapshot} />
+        <ClassStats data={values} />
+      </div>
+    </>
+  );
+
+  const mainCard = (
+    <Card>
+      <CardContent className="grid grid-cols-12 gap-6 p-4 md:p-6">
+        {cardHeaderContent}
 
         {/* Stats */}
         <div className="col-span-12 flex flex-row items-start justify-between gap-4">
           <Performance stats={stats} />
         </div>
 
-        {weapons.length > 0 && (
-          <div className="col-span-12 flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-              {weapons.map((w) => (
-                <Weapon
-                  key={String(w.referenceId)}
-                  {...w}
-                  showTitle={showWeaponTitles}
-                />
-              ))}
-            </div>
-          </div>
+        {collapsible ? (
+          <CollapsibleContent className="col-span-12 grid grid-cols-12 gap-6 pt-2 transition-all">
+            {detailedContent}
+          </CollapsibleContent>
+        ) : (
+          detailedContent
         )}
-
-        <div className="col-span-12 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <SubClassProvider snapshot={snapshot}>
-            <div className="flex flex-col gap-4">
-              <Super />
-              <Abilities />
-              <Aspects />
-              <Fragments />
-            </div>
-          </SubClassProvider>
-          <ArmorSet snapshot={snapshot} />
-          <ClassStats data={values} />
-        </div>
       </CardContent>
     </Card>
   );
+
+  if (collapsible) {
+    return (
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        {mainCard}
+      </Collapsible>
+    );
+  }
+
+  return mainCard;
 }

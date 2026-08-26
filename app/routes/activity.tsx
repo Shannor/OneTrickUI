@@ -143,11 +143,19 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
       {/* Players (Stats + Weapons + Snapshot) */}
       {allPerformances.length > 0 && (
         <div className="flex flex-col gap-4">
-          <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-            Players
-          </h3>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
+              Players ({allPerformances.length})
+            </h3>
+            {allPerformances.length > 1 && (
+              <p className="text-xs text-muted-foreground">
+                Click Expand Loadout on any player card to view weapons and
+                gear breakdown.
+              </p>
+            )}
+          </div>
           <div className="grid grid-cols-1 gap-6">
-            {allPerformances.map(([charId, perf]) => {
+            {allPerformances.map(([charId, perf], idx) => {
               const link = aggregate?.snapshotLinks[charId];
               const user = users[charId];
               return (
@@ -159,6 +167,8 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
                   characterId={charId}
                   sessionId={link?.sessionId}
                   snapshotId={link?.snapshotId}
+                  collapsible={true}
+                  defaultOpen={idx === 0}
                 />
               );
             })}
