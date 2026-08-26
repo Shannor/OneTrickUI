@@ -9,12 +9,6 @@ export default [
   layout('layouts/sidebar.tsx', [
     index('routes/landing.tsx'),
     route('sessions', 'routes/community-sessions.tsx'),
-    route('community-sessions', 'routes/community-sessions.tsx', {
-      id: 'community-sessions-alias',
-    }),
-    route('active-sessions', 'routes/community-sessions.tsx', {
-      id: 'active-sessions-alias',
-    }),
     // Public Routes
     route('profile/:id', 'routes/profile-state.tsx', [
       index('routes/character-select.tsx'),

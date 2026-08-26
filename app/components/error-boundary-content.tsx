@@ -60,14 +60,14 @@ export function ErrorBoundaryContent({ error }: ErrorBoundaryContentProps) {
           </Link>
 
           <Link
-            to="/active-sessions"
+            to="/sessions"
             className={cn(
               buttonVariants({ variant: 'outline', size: 'lg' }),
               'w-full justify-center gap-2 font-medium sm:w-auto sm:min-w-[140px]',
             )}
           >
             <Activity className="h-4 w-4 text-primary" />
-            <span>Active Feeds</span>
+            <span>Browse Sessions</span>
           </Link>
         </div>
 

@@ -20,15 +20,15 @@ vi.mock('react-router', async (importOriginal) => {
 });
 
 describe('CommunitySessionsPage', () => {
-  it('renders Community Sessions header and filter controls', () => {
+  it('renders Sessions header and filter controls', () => {
     const router = createMemoryRouter(
       [
         {
-          path: '/community-sessions',
+          path: '/sessions',
           element: <CommunitySessionsPage />,
         },
       ],
-      { initialEntries: ['/community-sessions'] },
+      { initialEntries: ['/sessions'] },
     );
 
     render(<RouterProvider router={router} />);
