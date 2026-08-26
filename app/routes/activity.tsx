@@ -149,8 +149,8 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
             </h3>
             {allPerformances.length > 1 && (
               <p className="text-xs text-muted-foreground">
-                Click Expand Loadout on any player card to view weapons and
-                gear breakdown.
+                Click Expand Loadout on any player card to view weapons and gear
+                breakdown.
               </p>
             )}
           </div>

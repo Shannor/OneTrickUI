@@ -15,6 +15,7 @@ import {
   CollapsibleTrigger,
 } from '~/components/ui/collapsible';
 import { Weapon } from '~/components/weapon';
+import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
@@ -113,23 +114,6 @@ export function PlayerCard({
             </Link>
           </Button>
         )}
-        {collapsible && (
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-xs"
-              aria-label="Toggle loadout details"
-            >
-              <span>{isOpen ? 'Collapse' : 'Expand Loadout'}</span>
-              <ChevronDown
-                className={`h-4 w-4 transition-transform duration-200 ${
-                  isOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </Button>
-          </CollapsibleTrigger>
-        )}
       </div>
     </div>
   );
@@ -176,9 +160,33 @@ export function PlayerCard({
         </div>
 
         {collapsible ? (
-          <CollapsibleContent className="col-span-12 grid grid-cols-12 gap-6 pt-2 transition-all">
-            {detailedContent}
-          </CollapsibleContent>
+          <>
+            <CollapsibleContent className="col-span-12 grid grid-cols-12 gap-6 pt-2 transition-all">
+              {detailedContent}
+            </CollapsibleContent>
+
+            {/* Bottom Expand / Collapse Bar */}
+            <div className="col-span-12 border-t pt-3">
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-center gap-2 text-xs font-semibold text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  aria-label="Toggle loadout details"
+                >
+                  <span>
+                    {isOpen ? 'Hide Loadout Details' : 'Expand Loadout Details'}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 transition-transform duration-200',
+                      isOpen && 'rotate-180',
+                    )}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+          </>
         ) : (
           detailedContent
         )}
