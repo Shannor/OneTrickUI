@@ -1,12 +1,17 @@
 import { ChevronDown, Hourglass, SquareLibrary } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import type { CharacterSnapshot, InstancePerformance, User, WeaponInstanceMetrics } from '~/api';
+import type {
+  CharacterSnapshot,
+  InstancePerformance,
+  User,
+  WeaponInstanceMetrics,
+} from '~/api';
 import { calculateRatio } from '~/calculations/precision';
 import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
 import { Label } from '~/components/label';
-import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
+import { Abilities, Aspects, Fragments, SubClassHeader } from '~/components/sub-class';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import {
@@ -60,6 +65,7 @@ export function PlayerCard({
   defaultOpen = false,
 }: PlayerCardProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [showClassDetails, setShowClassDetails] = useState(false);
 
   const weapons = Object.values(performance.weapons ?? {})
     .filter((it) => !!it?.properties?.baseInfo?.name)
@@ -144,6 +150,31 @@ export function PlayerCard({
 
   const detailedContent = (
     <>
+      {snapshot && (
+        <div className="col-span-12 flex flex-col gap-3">
+          <SubClassProvider snapshot={snapshot}>
+            <SubClassHeader
+              showMore={showClassDetails}
+              onToggleShowMore={() => setShowClassDetails((prev) => !prev)}
+            />
+
+            {showClassDetails && (
+              <div className="col-span-12 grid grid-cols-1 gap-6 pt-2 border-t md:grid-cols-2">
+                <div className="flex flex-col gap-4">
+                  <Abilities />
+                  <Aspects />
+                  <Fragments />
+                </div>
+                <div className="flex flex-col gap-4">
+                  <ArmorSet snapshot={snapshot} />
+                  <ClassStats data={values} />
+                </div>
+              </div>
+            )}
+          </SubClassProvider>
+        </div>
+      )}
+
       {weapons.length > 0 && (
         <div className="col-span-12 flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
@@ -157,19 +188,6 @@ export function PlayerCard({
           </div>
         </div>
       )}
-
-      <div className="col-span-12 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <SubClassProvider snapshot={snapshot}>
-          <div className="flex flex-col gap-4">
-            <Super />
-            <Abilities />
-            <Aspects />
-            <Fragments />
-          </div>
-        </SubClassProvider>
-        <ArmorSet snapshot={snapshot} />
-        <ClassStats data={values} />
-      </div>
     </>
   );
 

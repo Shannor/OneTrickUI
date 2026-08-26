@@ -56,7 +56,7 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
         <ClassStats data={values} />
       </div>
       <div className="col-span-12 flex flex-col gap-4">
-        <div className="grid grid-cols-1 gap-10 xl:gap-12 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
           {data.map((item) => (
             <Weapon
               key={item.itemHash}
