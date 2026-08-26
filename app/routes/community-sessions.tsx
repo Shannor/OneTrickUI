@@ -198,6 +198,19 @@ export function CommunitySessionsPage() {
 
   return (
     <div className="flex w-full flex-1 flex-col justify-start gap-8">
+      <title>Sessions — One Trick</title>
+      <meta
+        name="description"
+        content="Browse Destiny 2 PvP tracking sessions. View live player stats, loadouts, and game logs."
+      />
+      <meta property="og:title" content="Sessions — One Trick" />
+      <meta
+        property="og:description"
+        content="Browse Destiny 2 PvP tracking sessions. View live player stats, loadouts, and game logs."
+      />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="https://d2onetrick.com/sessions" />
+      <link rel="canonical" href="https://d2onetrick.com/sessions" />
       {/* Header section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
