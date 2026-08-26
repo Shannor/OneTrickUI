@@ -1,4 +1,4 @@
-import React from 'react';
+import { Hourglass, SquareLibrary } from 'lucide-react';
 import { Link } from 'react-router';
 import type { CharacterSnapshot, InstancePerformance, User } from '~/api';
 import { calculateRatio } from '~/calculations/precision';
@@ -6,22 +6,29 @@ import { ClassStats } from '~/charts/ClassStats';
 import { ArmorSet } from '~/components/armor-set';
 import { Label } from '~/components/label';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
+import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { Weapon } from '~/components/weapon';
 import { Performance, type StatItem } from '~/organisims/performance';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
-export type PlayerCardProps = {
+export interface PlayerCardProps {
   user?: User;
   performance: InstancePerformance;
   snapshot?: CharacterSnapshot;
-};
+  characterId?: string;
+  sessionId?: string;
+  snapshotId?: string;
+}
 
-export const PlayerCard: React.FC<PlayerCardProps> = ({
+export function PlayerCard({
   user,
   performance,
   snapshot,
-}) => {
+  characterId,
+  sessionId,
+  snapshotId,
+}: PlayerCardProps) {
   const weapons = Object.values(performance.weapons ?? {}).filter(
     (it) => !!it?.properties?.baseInfo?.name,
   );
@@ -46,23 +53,59 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       value: stat.value,
     }))
     .filter((it) => it.stat !== 'Power');
+
+  const charId = characterId || snapshot?.characterId;
+  const targetUserId = user?.id || snapshot?.userId;
+
   return (
     <Card>
-      <CardContent className="grid grid-cols-12 gap-12 p-4">
-        {/* Header (kept minimal, spans full width) */}
-        <div className="col-span-12 flex flex-row items-start justify-between gap-4">
-          <div className="flex flex-col">
-            <Label>Player</Label>
-            {/*TODO: Make a big font and header*/}
-            <h4 className="scroll-m-20 text-xl font-semibold tracking-tight hover:text-blue-500">
-              <Link to={`/profile/${user?.id}`} viewTransition>
-                {user?.displayName ?? 'Unknown Player'}
-              </Link>
+      <CardContent className="grid grid-cols-12 gap-6 p-4 md:p-6">
+        {/* Header (Player info & Action buttons) */}
+        <div className="col-span-12 flex flex-col justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-0.5">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              Player
+            </Label>
+            <h4 className="text-xl font-bold tracking-tight">
+              {targetUserId ? (
+                <Link
+                  to={`/profile/${targetUserId}`}
+                  className="transition-colors hover:text-primary"
+                  viewTransition
+                >
+                  {user?.displayName ?? 'Unknown Player'}
+                </Link>
+              ) : (
+                <span>{user?.displayName ?? 'Unknown Player'}</span>
+              )}
             </h4>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {targetUserId && charId && sessionId && (
+              <Button asChild variant="outline" size="sm">
+                <Link
+                  to={`/profile/${targetUserId}/c/${charId}/sessions/${sessionId}`}
+                >
+                  <Hourglass className="mr-1.5 h-3.5 w-3.5 text-primary" />
+                  View Session
+                </Link>
+              </Button>
+            )}
+            {targetUserId && charId && snapshotId && (
+              <Button asChild variant="outline" size="sm">
+                <Link
+                  to={`/profile/${targetUserId}/c/${charId}/loadouts/${snapshotId}`}
+                >
+                  <SquareLibrary className="mr-1.5 h-3.5 w-3.5 text-primary" />
+                  View Loadout
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Stats (Top, full width) */}
+        {/* Stats */}
         <div className="col-span-12 flex flex-row items-start justify-between gap-4">
           <Performance stats={stats} />
         </div>
@@ -76,7 +119,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             </div>
           </div>
         )}
-        <div className="col-span-12 grid grid-cols-1 gap-4 md:grid-cols-2">
+
+        <div className="col-span-12 grid grid-cols-1 gap-6 md:grid-cols-2">
           <SubClassProvider snapshot={snapshot}>
             <div className="flex flex-col gap-4">
               <Super />
@@ -91,4 +135,4 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       </CardContent>
     </Card>
   );
-};
+}

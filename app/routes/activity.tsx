@@ -93,29 +93,26 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
             <div className="mt-3">
               <TeamScore teams={teams} />
             </div>
-            <div className="mt-2 flex flex-row gap-4">
-              <div className="flex flex-row items-center gap-2 align-middle">
-                <a
-                  className="text-blue-300 underline-offset-2 hover:underline"
-                  href={`${destinyTrackerUrl}/${activity.instanceId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Destiny Tracker
-                </a>
-                <SquareArrowOutUpRight className="h-4 w-4" />
-              </div>
-              <div className="flex flex-row items-center gap-2">
-                <a
-                  className="text-blue-300 underline-offset-2 hover:underline"
-                  href={`${crucibleReportUrl}/${activity.instanceId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Crucible Report
-                </a>
-                <SquareArrowOutUpRight className="h-4 w-4" />
-              </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <a
+                href={`${destinyTrackerUrl}/${activity.instanceId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+              >
+                <span>Destiny Tracker</span>
+                <SquareArrowOutUpRight className="h-3.5 w-3.5" />
+              </a>
+
+              <a
+                href={`${crucibleReportUrl}/${activity.instanceId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+              >
+                <span>Crucible Report</span>
+                <SquareArrowOutUpRight className="h-3.5 w-3.5" />
+              </a>
             </div>
           </CardHeader>
         </div>
@@ -139,37 +136,20 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
           <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
             Players
           </h3>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-6">
             {allPerformances.map(([charId, perf]) => {
               const link = aggregate?.snapshotLinks[charId];
               const user = users[charId];
               return (
-                <div key={charId}>
-                  {link && (
-                    <div className="flex flex-row gap-4">
-                      <Button asChild variant="ghost">
-                        <Link
-                          to={`/profile/${user.id}/c/${charId}/sessions/${link.sessionId}`}
-                        >
-                          View Session
-                        </Link>
-                      </Button>
-                      <Button asChild variant="ghost">
-                        <Link
-                          to={`/profile/${user.id}/c/${charId}/loadouts/${link.snapshotId}`}
-                        >
-                          View Loadout
-                        </Link>
-                      </Button>
-                    </div>
-                  )}
-                  <PlayerCard
-                    key={charId}
-                    performance={perf}
-                    user={user}
-                    snapshot={snapshots[charId]}
-                  />
-                </div>
+                <PlayerCard
+                  key={charId}
+                  performance={perf}
+                  user={user}
+                  snapshot={snapshots[charId]}
+                  characterId={charId}
+                  sessionId={link?.sessionId}
+                  snapshotId={link?.snapshotId}
+                />
               );
             })}
           </div>
