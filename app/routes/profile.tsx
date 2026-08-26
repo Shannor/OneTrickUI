@@ -5,6 +5,7 @@ import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { NavLoading } from '~/components/nav-loading';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 
@@ -21,7 +22,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       return { error: 'no account found' };
     }
   } catch (e) {
-    console.error(e);
+    Logger.error(e, 'Failed to fetch user in profile loader');
     return { error: 'unexpected error' };
   }
 }

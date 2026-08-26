@@ -101,7 +101,9 @@ export function ChangelogModal({
 
         <div className="flex max-h-[65vh] flex-1 flex-col gap-6 divide-y overflow-y-auto pr-2">
           {CHANGELOG.map((release) => {
-            const features = release.changes.filter((c) => c.type === 'feature');
+            const features = release.changes.filter(
+              (c) => c.type === 'feature',
+            );
             const improvements = release.changes.filter(
               (c) => c.type === 'improvement',
             );
@@ -133,7 +135,7 @@ export function ChangelogModal({
                       <h4 className="text-xs font-bold uppercase tracking-wider text-primary">
                         Features
                       </h4>
-                      <ul className="flex flex-col gap-1.5 pl-4 list-disc text-xs text-foreground/90">
+                      <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs text-foreground/90">
                         {features.map((item, idx) => (
                           <li key={idx}>{item.text}</li>
                         ))}
@@ -146,7 +148,7 @@ export function ChangelogModal({
                       <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         Improvements
                       </h4>
-                      <ul className="flex flex-col gap-1.5 pl-4 list-disc text-xs text-foreground/90">
+                      <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs text-foreground/90">
                         {improvements.map((item, idx) => (
                           <li key={idx}>{item.text}</li>
                         ))}
@@ -159,7 +161,7 @@ export function ChangelogModal({
                       <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400">
                         Fixes
                       </h4>
-                      <ul className="flex flex-col gap-1.5 pl-4 list-disc text-xs text-foreground/90">
+                      <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs text-foreground/90">
                         {fixes.map((item, idx) => (
                           <li key={idx}>{item.text}</li>
                         ))}

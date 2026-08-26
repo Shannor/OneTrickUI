@@ -6,6 +6,7 @@ import { ArmorSet } from '~/components/armor-set';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Weapon } from '~/components/weapon';
 import { getDetailWeapons, useClassStats } from '~/hooks/use-loadout';
+import { Logger } from '~/lib/logger';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/loadout-details';
@@ -16,7 +17,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     path: { snapshotId },
   });
   if (error) {
-    console.error(error);
+    Logger.error(error, 'Failed to fetch snapshot in loadout details loader');
     throw data('Unexpected Error', { status: 500 });
   }
   if (!snapshot) {

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { Form, useLocation, useNavigate } from 'react-router';
 import { type GameMode, getBestPerformingLoadouts } from '~/api';
 import { ArmorStats } from '~/components/armor-stats';
@@ -20,11 +20,11 @@ import { WeaponStats } from '~/components/weapon-stats';
 import {
   getDetailWeapons,
   getExotic,
-  useClassStats,
 } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
+import { Logger } from '~/lib/logger';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/loadouts';
@@ -54,7 +54,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
   });
   if (error) {
-    console.error(error);
+    Logger.error(error, 'Failed to fetch best performing loadouts');
     return {
       loadouts: {
         items: [],

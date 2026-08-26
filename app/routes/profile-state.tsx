@@ -1,6 +1,7 @@
 import { Outlet, data } from 'react-router';
 import { getAuth, refreshHeaders } from '~/.server/auth';
 import { getUser } from '~/api';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/character-select';
 
@@ -12,7 +13,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
   });
   if (error) {
-    console.error(error);
+    Logger.error(error, 'Failed to fetch user profile in profile-state loader');
     return {
       type: 'error',
       error: error.message,

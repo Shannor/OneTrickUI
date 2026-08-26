@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { data } from 'react-router';
 import { type GameMode, getSnapshotAggregates } from '~/api';
-import { calculatePercentage, calculateRatio } from '~/calculations/precision';
+import { calculatePercentage } from '~/calculations/precision';
 import { AvgPerformance } from '~/charts/AvgPerformance';
 import { ChartWrapper } from '~/charts/ChartWrapper';
 import { KDPerformance } from '~/charts/KDPerformance';
@@ -21,6 +21,7 @@ import {
   timeWindowToCustom,
 } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/loadout-metrics';
 
@@ -30,7 +31,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     path: { snapshotId },
   });
   if (error) {
-    console.error(error);
+    Logger.error(error, 'Failed to fetch snapshot aggregates');
     throw data(undefined, { status: 404 });
   }
   if (!aggregates) {
