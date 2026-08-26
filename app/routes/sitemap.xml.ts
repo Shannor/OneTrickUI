@@ -18,7 +18,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Fallback to default origin
   }
 
-  const urls = ['/', '/active-sessions'];
+  const urls = ['/', '/community-sessions', '/active-sessions'];
 
   const lastmod = new Date().toISOString();
 

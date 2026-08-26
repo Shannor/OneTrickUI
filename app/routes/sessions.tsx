@@ -77,18 +77,22 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
   const isSubmitting = state === 'submitting';
   const hasCurrentSession = Boolean(current?.id);
 
+  const pageTitle = isOwner
+    ? 'My Sessions'
+    : `${profile?.displayName ?? 'Guardian'}'s Sessions`;
+
   return (
     <div className="flex flex-col gap-8">
-      <title>{`Sessions - ${profile?.displayName ?? ''}`}</title>
+      <title>{`${pageTitle} - One Trick`}</title>
       <meta
         property="og:title"
-        content={`Sessions - ${profile?.displayName ?? ''}  `}
+        content={`${pageTitle} - One Trick`}
       />
       <meta name="description" content="View and manage one trick sessions." />
       <div className="flex flex-col justify-between gap-4 md:flex-row">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-            Sessions
+            {pageTitle}
           </h2>
         </div>
         {isOwner && (

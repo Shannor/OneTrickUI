@@ -220,14 +220,14 @@ export function Landing({ loaderData }: Route.ComponentProps) {
           </LoadingButton>
 
           <Link
-            to="/active-sessions"
+            to="/sessions"
             className={cn(
               buttonVariants({ variant: 'outline', size: 'lg' }),
               'w-full justify-center gap-2 font-medium sm:w-60',
             )}
           >
             <Activity className="h-4 w-4 text-primary" />
-            <span>Browse Active Feeds</span>
+            <span>Browse Sessions</span>
           </Link>
         </div>
       </div>
@@ -292,7 +292,7 @@ export function Landing({ loaderData }: Route.ComponentProps) {
       <section className="container mx-auto space-y-12 px-4 pb-16">
         {/* Quick Metrics Cards */}
         <div className="grid gap-6 sm:grid-cols-3">
-          <Link to="/active-sessions" className="group block">
+          <Link to="/sessions" className="group block">
             <Card className="h-full cursor-pointer transition-all group-hover:border-primary group-hover:shadow-md">
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center justify-between uppercase tracking-wide">
@@ -356,7 +356,7 @@ export function Landing({ loaderData }: Route.ComponentProps) {
               </p>
             </div>
             <Link
-              to="/active-sessions"
+              to="/sessions"
               className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
             >
               <span>View all ({activeCount})</span>

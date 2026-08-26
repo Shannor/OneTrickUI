@@ -125,9 +125,9 @@ export function Sidebar() {
       icon: Home,
     },
     {
-      name: 'Active Sessions',
-      title: 'Active Sessions',
-      url: '/active-sessions',
+      name: 'Sessions',
+      title: 'Sessions',
+      url: '/sessions',
       icon: Activity,
     },
   ];
@@ -203,8 +203,8 @@ export function Sidebar() {
         icon: Gamepad2,
       },
       {
-        name: 'Sessions',
-        title: 'Sessions',
+        name: 'My Sessions',
+        title: 'My Sessions',
         url: activeUserCharacterId
           ? `${baseUrl}/sessions`
           : `/profile/${signedInUserId}`,
