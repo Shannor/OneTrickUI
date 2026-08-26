@@ -24,10 +24,9 @@ describe('ErrorBoundaryContent', () => {
       'href',
       '/',
     );
-    expect(screen.getByRole('link', { name: /browse sessions/i })).toHaveAttribute(
-      'href',
-      '/sessions',
-    );
+    expect(
+      screen.getByRole('link', { name: /browse sessions/i }),
+    ).toHaveAttribute('href', '/sessions');
     expect(
       screen.getByRole('button', { name: /go back to previous page/i }),
     ).toBeInTheDocument();
