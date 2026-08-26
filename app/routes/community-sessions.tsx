@@ -30,7 +30,9 @@ const PAGE_SIZE = 12;
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
-  const page = Math.max(0, Number(url.searchParams.get('page') || '0'));
+  const rawPage = Number(url.searchParams.get('page') || '1');
+  const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage);
+  const apiPage = page - 1;
   const statusParam = url.searchParams.get('status') || 'all';
 
   const statusFilter =
@@ -53,7 +55,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     const sessionsRes = await getSessions({
       query: {
         count: PAGE_SIZE,
-        page,
+        page: apiPage,
         ...(statusFilter ? { status: statusFilter } : {}),
       },
     });
@@ -184,7 +186,7 @@ export function CommunitySessionsPage() {
 
   const buildPageUrl = (newPage: number) => {
     const params = new URLSearchParams();
-    if (newPage > 0) {
+    if (newPage > 1) {
       params.set('page', newPage.toString());
     }
     if (status !== 'all') {
@@ -259,7 +261,7 @@ export function CommunitySessionsPage() {
         </div>
 
         <span className="text-xs font-medium text-muted-foreground">
-          Page {page + 1}
+          Page {page}
         </span>
       </div>
 
@@ -269,7 +271,7 @@ export function CommunitySessionsPage() {
           <Users className="mb-4 h-12 w-12 text-muted-foreground/50" />
           <h3 className="text-xl font-semibold">No Sessions Found</h3>
           <p className="mt-2 max-w-md text-balance text-sm text-muted-foreground">
-            {page > 0
+            {page > 1
               ? 'No sessions found on this page. Try navigating back to earlier pages.'
               : auth
                 ? 'No community sessions found matching your filter. Head over to your sessions page to start tracking!'
@@ -277,9 +279,9 @@ export function CommunitySessionsPage() {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            {page > 0 && (
+            {page > 1 && (
               <Button asChild variant="outline">
-                <Link to={buildPageUrl(0)}>Back to First Page</Link>
+                <Link to={buildPageUrl(1)}>Back to Page 1</Link>
               </Button>
             )}
             <Link
@@ -306,10 +308,10 @@ export function CommunitySessionsPage() {
       )}
 
       {/* Pagination controls */}
-      {(page > 0 || hasNextPage) && (
+      {(page > 1 || hasNextPage) && (
         <div className="flex items-center justify-between border-t pt-4">
-          <Button asChild disabled={page === 0} variant="outline" size="sm">
-            {page === 0 ? (
+          <Button asChild disabled={page <= 1} variant="outline" size="sm">
+            {page <= 1 ? (
               <span>
                 <ChevronLeft className="mr-1 h-4 w-4" /> Previous Page
               </span>
@@ -321,7 +323,7 @@ export function CommunitySessionsPage() {
           </Button>
 
           <span className="text-xs font-semibold text-muted-foreground">
-            Page {page + 1}
+            Page {page}
           </span>
 
           <Button asChild disabled={!hasNextPage} variant="outline" size="sm">

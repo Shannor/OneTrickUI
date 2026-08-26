@@ -25,7 +25,9 @@ import type { Route } from './+types/sessions';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
-  const page = Number(url.searchParams.get('page') || '0');
+  const rawPage = Number(url.searchParams.get('page') || '1');
+  const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage);
+  const apiPage = BigInt(page - 1);
   const { characterId, id } = params;
 
   const res = await getUserSessions({
@@ -34,7 +36,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
     query: {
       count: BigInt(10),
-      page: BigInt(page),
+      page: apiPage,
       characterId,
       status: 'complete',
     },
@@ -84,10 +86,7 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
   return (
     <div className="flex flex-col gap-8">
       <title>{`${pageTitle} - One Trick`}</title>
-      <meta
-        property="og:title"
-        content={`${pageTitle} - One Trick`}
-      />
+      <meta property="og:title" content={`${pageTitle} - One Trick`} />
       <meta name="description" content="View and manage one trick sessions." />
       <div className="flex flex-col justify-between gap-4 md:flex-row">
         <div className="flex flex-col">
@@ -193,9 +192,15 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
           ))}
       </div>
       <div className="flex flex-row justify-between gap-4 self-end">
-        <Button disabled={page === 0} variant="outline">
+        <Button disabled={page <= 1} variant="outline">
           <ChevronLeft />
-          <Link to={`?page=${page - 1}`}>Previous Page</Link>
+          {page <= 1 ? (
+            <span>Previous Page</span>
+          ) : (
+            <Link to={page - 1 === 1 ? '?' : `?page=${page - 1}`}>
+              Previous Page
+            </Link>
+          )}
         </Button>
         <Button disabled={data.length !== 10} variant="outline">
           <Link to={`?page=${page + 1}`}>Next Page</Link>

@@ -13,7 +13,7 @@ vi.mock('react-router', async (importOriginal) => {
       sessions: [],
       profiles: {},
       auth: null,
-      page: 0,
+      page: 1,
       status: 'all',
     }),
   };
@@ -33,7 +33,9 @@ describe('CommunitySessionsPage', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(screen.getByRole('heading', { level: 1, name: /sessions/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: /sessions/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText('All Sessions')).toBeInTheDocument();
     expect(screen.getByText('Active Only')).toBeInTheDocument();
     expect(screen.getByText('Completed Only')).toBeInTheDocument();
