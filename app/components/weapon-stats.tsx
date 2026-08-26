@@ -110,9 +110,7 @@ export function WeaponStats({ stats, compact = true }: WeaponStatsProps) {
           <div className="col-span-7">
             <Bar value={Number(it.value)} max={100} />
           </div>
-          <div className="col-span-2 font-bold text-foreground">
-            {it.value}
-          </div>
+          <div className="col-span-2 font-bold text-foreground">{it.value}</div>
         </div>
       ))}
     </div>

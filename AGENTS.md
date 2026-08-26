@@ -39,6 +39,7 @@ To set up and build the project, run the following commands in the terminal:
 ## Styling
 
 - Use tailwind and breakpoints for mobile friendly designs.
+- Never use cards inside of cards in design.
 
 ## Notable Libraries Used
 

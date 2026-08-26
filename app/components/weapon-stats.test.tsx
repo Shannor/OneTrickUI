@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { Stats } from '~/api';
+
 import { WeaponStats } from './weapon-stats';
 
 describe('WeaponStats', () => {

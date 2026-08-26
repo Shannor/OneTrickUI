@@ -131,20 +131,20 @@ export const Weapon: React.FC<Props> = ({
   return (
     <div
       className={cn(
-        'flex w-full max-w-[360px] flex-col gap-3 rounded-lg border bg-card/50 p-3 shadow-sm',
+        'flex w-full max-w-[360px] flex-col gap-2.5 py-1',
         className,
       )}
     >
       {/* Integrated Header Banner (Avatar Icon + Weapon Name + Type + Kills metrics) */}
       <div className="flex items-center gap-3">
-        <Avatar className="h-12 w-12 shrink-0 rounded-md border bg-black/40 p-0.5 object-cover">
+        <Avatar className="h-12 w-12 shrink-0 rounded-md border bg-black/40 object-cover p-0.5">
           <AvatarImage src={icon} alt={`${name} image`} />
           <AvatarFallback className="rounded-md text-xs font-bold">
             {name?.charAt(0).toUpperCase() ?? '?'}
           </AvatarFallback>
         </Avatar>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1 justify-center">
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
           {showTitle && (
             <div className="flex items-center justify-between gap-2">
               <h5
