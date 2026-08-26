@@ -27,7 +27,6 @@ export async function loader({ params }: Route.LoaderArgs) {
   };
 }
 
-// TODO: Join this component with the player-card.tsx
 export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
   const { snapshot } = loaderData;
   const values = useClassStats(snapshot);

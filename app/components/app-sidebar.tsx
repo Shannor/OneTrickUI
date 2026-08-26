@@ -12,9 +12,6 @@ import {
   SidebarRail,
 } from '~/components/ui/sidebar';
 
-// Navigation item type
-
-// Navigation item type
 type NavigationItem = {
   name: string;
   url: string;
@@ -23,7 +20,6 @@ type NavigationItem = {
   title: string;
 };
 
-// Navigation data type
 type NavigationData = {
   base: NavigationItem[];
   projects: NavigationItem[];
