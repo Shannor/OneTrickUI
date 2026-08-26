@@ -27,7 +27,7 @@ export const CHANGELOG: ReleaseNote[] = [
       },
       {
         type: 'improvement',
-        text: 'Updated Top Loadouts empty states to encourage playing more Crucible games to unlock insights.',
+        text: 'Updated Top Loadouts empty states to explain actions to the user',
       },
       {
         type: 'improvement',

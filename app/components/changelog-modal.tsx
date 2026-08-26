@@ -1,7 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { CHANGELOG, type ChangeType } from '~/data/changelog';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import {
@@ -12,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '~/components/ui/dialog';
+import { CHANGELOG, type ChangeType } from '~/data/changelog';
 
 const LAST_SEEN_KEY = 'onetrick_last_seen_changelog';
 
@@ -112,8 +112,8 @@ export function ChangelogModal({
         </DialogTrigger>
       )}
 
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-4 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b pb-3">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Sparkles className="h-5 w-5 text-primary" />
             What's New in One Trick
@@ -123,7 +123,7 @@ export function ChangelogModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 flex flex-col gap-6 divide-y">
+        <div className="flex max-h-[65vh] flex-1 flex-col gap-6 divide-y overflow-y-auto pr-2">
           {CHANGELOG.map((release) => (
             <div
               key={release.id}
