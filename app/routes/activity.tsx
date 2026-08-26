@@ -59,59 +59,69 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
         name="description"
         content={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`}
       />
-      <Card>
-        <div className="relative">
+      <Card className="overflow-hidden border">
+        <div className="relative min-h-[14rem] w-full">
           <img
             src={activity.imageUrl}
             alt="activity background"
-            className="h-40 w-full rounded-t-lg object-cover"
+            className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-black/70 to-black/20" />
-          <CardHeader className="relative z-10 rounded-lg text-white">
-            <div className="flex items-center gap-4">
-              {activity.activityIcon && (
-                <img
-                  src={activity.activityIcon}
-                  className="h-12 w-12 rounded-lg bg-black/50 object-cover"
-                  alt="mode icon"
-                />
-              )}
-              <div className="flex flex-col">
-                <CardTitle className="text-2xl">{activity.location}</CardTitle>
-                <CardDescription className="text-neutral-200">
-                  {activity.activity}
-                  {activity.mode ? ` • ${activity.mode}` : ''}
-                </CardDescription>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/40" />
+          <CardHeader className="relative z-10 flex flex-col gap-6 p-5 text-white md:p-6">
+            {/* Top row: Title/Icon & Date */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-3.5">
+                {activity.activityIcon && (
+                  <img
+                    src={activity.activityIcon}
+                    className="h-12 w-12 shrink-0 rounded-lg bg-black/60 p-1 object-contain ring-1 ring-white/20"
+                    alt="mode icon"
+                  />
+                )}
+                <div className="flex min-w-0 flex-col gap-1">
+                  <CardTitle className="text-2xl font-black tracking-tight drop-shadow-md sm:text-3xl">
+                    {activity.location}
+                  </CardTitle>
+                  <CardDescription className="text-sm font-medium text-neutral-200 drop-shadow">
+                    {activity.activity}
+                    {activity.mode ? ` • ${activity.mode}` : ''}
+                  </CardDescription>
+                </div>
               </div>
-              <div className="ml-auto">
+
+              <div className="self-start sm:self-auto">
                 <FormattedDate
                   date={activity.period as any}
-                  className="rounded bg-white/10 px-2 py-1 text-xs uppercase tracking-wide"
+                  className="inline-block rounded-md bg-black/50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-200 backdrop-blur-sm ring-1 ring-white/20"
                 />
               </div>
             </div>
-            <div className="mt-3">
+
+            {/* Team Score */}
+            <div className="border-t border-white/15 pt-4">
               <TeamScore teams={teams} />
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+
+            {/* External PGCR Report Buttons (Stacked on mobile, side-by-side on desktop) */}
+            <div className="flex flex-col gap-2.5 border-t border-white/15 pt-4 sm:flex-row sm:items-center sm:gap-3">
               <a
                 href={`${destinyTrackerUrl}/${activity.instanceId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-black/40 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/20 sm:w-auto"
               >
                 <span>Destiny Tracker</span>
-                <SquareArrowOutUpRight className="h-3.5 w-3.5" />
+                <SquareArrowOutUpRight className="h-3.5 w-3.5 text-blue-300" />
               </a>
 
               <a
                 href={`${crucibleReportUrl}/${activity.instanceId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-black/40 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/20 sm:w-auto"
               >
                 <span>Crucible Report</span>
-                <SquareArrowOutUpRight className="h-3.5 w-3.5" />
+                <SquareArrowOutUpRight className="h-3.5 w-3.5 text-blue-300" />
               </a>
             </div>
           </CardHeader>
