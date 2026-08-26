@@ -1,13 +1,7 @@
 import type React from 'react';
 import type { Socket, WeaponInstanceMetrics } from '~/api';
-import { Label } from '~/components/label';
 import { Sockets } from '~/components/sockets';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
 import { WeaponKills } from '~/components/weapon-kills';
 import { WeaponStats } from '~/components/weapon-stats';
 import { cn, setBungieUrl } from '~/lib/utils';
@@ -23,7 +17,6 @@ interface WeaponSockets {
   memento: Socket | null;
 }
 
-// Functions to check weapon socket types by itemTypeDisplayName using substring matching
 const isIntrinsic = (itemTypeDisplayName: string): boolean =>
   itemTypeDisplayName.toLowerCase().includes('intrinsic');
 
@@ -54,12 +47,13 @@ interface Props extends WeaponInstanceMetrics {
   layout?: 'horizontal' | 'vertical';
   className?: string;
 }
+
 export const Weapon: React.FC<Props> = ({
   properties,
   stats,
   display,
   hideStats,
-  showTitle,
+  showTitle = true,
   className,
 }) => {
   const weaponSockets: WeaponSockets = properties?.sockets?.reduce(
@@ -80,8 +74,6 @@ export const Weapon: React.FC<Props> = ({
         acc.barrel = socket;
       } else if (isMagazine(displayName)) {
         acc.magazine = socket;
-        // This order matter since we're doing string comps
-        // Origin Trait has "trait" in it so it could include other stuff
       } else if (isOriginTrait(displayName)) {
         acc.originTrait = socket;
       } else if (isTrait(displayName)) {
@@ -132,91 +124,75 @@ export const Weapon: React.FC<Props> = ({
   ].filter(Boolean) as Socket[];
 
   const icon = setBungieUrl(display?.icon ?? properties?.baseInfo?.icon);
-  const name = properties?.baseInfo?.name ?? display?.name ?? 'Unkown';
-  return (
-    <div className={cn('flex max-w-[350px] flex-col gap-2', className)}>
-      {showTitle && name && (
-        <Label
-          className={cn(
-            'truncate text-sm font-semibold',
-            properties?.baseInfo?.tierTypeName === 'Exotic'
-              ? 'text-yellow-500'
-              : 'text-purple-500',
-          )}
-        >
-          {name}
-        </Label>
-      )}
-      <Tooltip>
-        <TooltipContent className="flex flex-col gap-4">
-          <Label>{name}</Label>
-          {hideStats && (
-            <div className="flex flex-col gap-2">
-              {properties?.stats && <WeaponStats stats={properties.stats} />}
-              {properties?.sockets && (
-                <div className="flex flex-col gap-2">
-                  {/* Row 1: Intrinsic, Mod, Shader */}
-                  <Sockets
-                    sockets={row1}
-                    displayMode="iconOnly"
-                    className="flex-row flex-wrap items-center"
-                  />
+  const name = properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun';
+  const isExotic = properties?.baseInfo?.tierTypeName === 'Exotic';
+  const itemType = properties?.baseInfo?.itemTypeDisplayName;
 
-                  {/* Row 2: Barrel, Magazine, Traits..., Origin Trait */}
-                  <Sockets
-                    sockets={row2}
-                    displayMode="iconOnly"
-                    className="flex-row flex-wrap items-center"
-                  />
-                </div>
+  return (
+    <div
+      className={cn(
+        'flex w-full max-w-[360px] flex-col gap-3 rounded-lg border bg-card/50 p-3 shadow-sm',
+        className,
+      )}
+    >
+      {/* Integrated Header Banner (Avatar Icon + Weapon Name + Type + Kills metrics) */}
+      <div className="flex items-center gap-3">
+        <Avatar className="h-12 w-12 shrink-0 rounded-md border bg-black/40 p-0.5 object-cover">
+          <AvatarImage src={icon} alt={`${name} image`} />
+          <AvatarFallback className="rounded-md text-xs font-bold">
+            {name?.charAt(0).toUpperCase() ?? '?'}
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex min-w-0 flex-1 flex-col gap-1 justify-center">
+          {showTitle && (
+            <div className="flex items-center justify-between gap-2">
+              <h5
+                className={cn(
+                  'truncate text-sm font-bold tracking-tight',
+                  isExotic ? 'text-yellow-500' : 'text-purple-400',
+                )}
+              >
+                {name}
+              </h5>
+              {itemType && (
+                <span className="shrink-0 rounded bg-muted/80 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {itemType}
+                </span>
               )}
             </div>
           )}
-        </TooltipContent>
-        <TooltipTrigger>
-          <Avatar className="h-10 w-10 rounded-sm object-cover">
-            <AvatarImage src={icon} alt={`${name} image`} />
-            <AvatarFallback className="rounded-sm">
-              {name?.charAt(0).toUpperCase() ?? '?'}
-            </AvatarFallback>
-          </Avatar>
-        </TooltipTrigger>
-      </Tooltip>
-      {!icon && (
-        <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
-          {properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun'}
-        </h3>
+
+          {stats && <WeaponKills stats={stats} />}
+        </div>
+      </div>
+
+      {/* Perks / Sockets */}
+      {properties?.sockets && (row1.length > 0 || row2.length > 0) && (
+        <div className="flex flex-col gap-1.5 border-t pt-2">
+          {row1.length > 0 && (
+            <Sockets
+              sockets={row1}
+              displayMode="iconOnly"
+              className="flex-row flex-wrap items-center gap-1"
+            />
+          )}
+          {row2.length > 0 && (
+            <Sockets
+              sockets={row2}
+              displayMode="iconOnly"
+              className="flex-row flex-wrap items-center gap-1"
+            />
+          )}
+        </div>
       )}
 
-      <div className="flex w-full flex-col gap-8">
-        {stats && (
-          <div className="flex flex-col self-center">
-            <WeaponKills stats={stats} />
-          </div>
-        )}
-        {!hideStats && (
-          <div className="flex w-full flex-grow flex-col gap-4">
-            {properties?.stats && <WeaponStats stats={properties.stats} />}
-            {properties?.sockets && (
-              <div className="flex flex-col gap-2">
-                {/* Row 1: Intrinsic, Mod, Shader */}
-                <Sockets
-                  sockets={row1}
-                  displayMode="iconOnly"
-                  className="flex-row flex-wrap items-center"
-                />
-
-                {/* Row 2: Barrel, Magazine, Traits..., Origin Trait */}
-                <Sockets
-                  sockets={row2}
-                  displayMode="iconOnly"
-                  className="flex-row flex-wrap items-center"
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Compact Weapon Stats */}
+      {!hideStats && properties?.stats && (
+        <div className="border-t pt-1.5">
+          <WeaponStats stats={properties.stats} compact={true} />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,10 +1,11 @@
-import React from 'react';
 import type { GunStat, Stats } from '~/api';
 import { Bar } from '~/components/ui/bar';
 
-interface Props {
+export interface WeaponStatsProps {
   stats: Stats;
+  compact?: boolean;
 }
+
 const SPECIAL_STATS: Record<number, string> = {
   3871231066: 'Magazine',
   2715839340: 'Recoil Direction',
@@ -45,27 +46,10 @@ enum StatEnum {
   AG = 1931675084, // Ammo Generation
   BlastRadius = 3614673599, // Blast Radius
 }
-export const WeaponStats: React.FC<Props> = ({ stats }) => {
-  const gunStats = Object.values(stats)
-    .filter((it) => SPECIAL_STATS[it.hash] === undefined && it.value <= 100)
-    .sort((a, b) => ORDER[a.hash] - ORDER[b.hash]);
-  return (
-    <div className="flex flex-col">
-      {gunStats.map((it) => (
-        <div key={it.hash} className="grid grid-cols-12 items-center gap-4">
-          <div className="col-span-3">{updateNames(it)}</div>
-          <div className="col-span-7">
-            <Bar value={it.value} max={100} />
-          </div>
-          <div className="col-span-2">{it.value}</div>
-        </div>
-      ))}
-    </div>
-  );
-};
 
 function updateNames(stat: GunStat): string {
-  switch (stat.hash) {
+  const hashNum = Number(stat.hash);
+  switch (hashNum) {
     case StatEnum.RPM:
       return 'RPM';
     case StatEnum.AE:
@@ -81,4 +65,56 @@ function updateNames(stat: GunStat): string {
     default:
       return stat.name;
   }
+}
+
+export function WeaponStats({ stats, compact = true }: WeaponStatsProps) {
+  const gunStats = Object.values(stats)
+    .filter((it) => {
+      const hashNum = Number(it.hash);
+      return SPECIAL_STATS[hashNum] === undefined && it.value <= 100;
+    })
+    .sort((a, b) => {
+      const orderA = ORDER[Number(a.hash)] ?? 99;
+      const orderB = ORDER[Number(b.hash)] ?? 99;
+      return orderA - orderB;
+    });
+
+  if (gunStats.length === 0) return null;
+
+  if (compact) {
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+        {gunStats.map((it) => (
+          <div
+            key={String(it.hash)}
+            className="flex items-center gap-1 rounded bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium"
+          >
+            <span className="text-muted-foreground">{updateNames(it)}</span>
+            <span className="font-bold text-foreground">{it.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      {gunStats.map((it) => (
+        <div
+          key={String(it.hash)}
+          className="grid grid-cols-12 items-center gap-4 text-xs"
+        >
+          <div className="col-span-3 font-medium text-muted-foreground">
+            {updateNames(it)}
+          </div>
+          <div className="col-span-7">
+            <Bar value={Number(it.value)} max={100} />
+          </div>
+          <div className="col-span-2 font-bold text-foreground">
+            {it.value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
