@@ -10,8 +10,8 @@ import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
 import { useSessionData } from '~/hooks/use-route-loaders';
-import { generatePerformancePerMap, timeWindowToCustom } from '~/lib/metrics';
 import { Logger } from '~/lib/logger';
+import { generatePerformancePerMap, timeWindowToCustom } from '~/lib/metrics';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';

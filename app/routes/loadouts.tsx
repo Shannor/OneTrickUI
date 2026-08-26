@@ -17,14 +17,11 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { WeaponStats } from '~/components/weapon-stats';
-import {
-  getDetailWeapons,
-  getExotic,
-} from '~/hooks/use-loadout';
+import { getDetailWeapons, getExotic } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
-import { Logger } from '~/lib/logger';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/loadouts';

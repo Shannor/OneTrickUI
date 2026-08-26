@@ -13,6 +13,7 @@ import { DateRangePicker } from '~/components/ui/date-range-picker';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import { useLoadoutData } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 import {
   type CustomTimeWindow,
   type TimeWindow,
@@ -21,7 +22,6 @@ import {
   timeWindowToCustom,
 } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/loadout-metrics';
 

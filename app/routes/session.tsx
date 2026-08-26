@@ -12,7 +12,6 @@ import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
 import { FormattedDate } from '~/components/formatted-date';
 import { LoadingButton } from '~/components/loading-button';
-import { Logger } from '~/lib/logger';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -26,6 +25,7 @@ import {
 } from '~/components/ui/tooltip';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { db } from '~/lib/firebaseConfig';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/session';
 
