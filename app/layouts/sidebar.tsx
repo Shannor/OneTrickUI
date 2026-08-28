@@ -1,5 +1,6 @@
 import {
   Activity,
+  ArrowLeft,
   ArrowLeftFromLine,
   Gamepad2,
   Home,
@@ -10,13 +11,21 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, Outlet, useFetcher, useNavigate, useParams } from 'react-router';
+import {
+  Link,
+  Outlet,
+  useFetcher,
+  useLocation,
+  useNavigate,
+  useParams,
+} from 'react-router';
 import { AppSidebar } from '~/components/app-sidebar';
+import { AppBreadcrumbs } from '~/components/breadcrumbs';
 import { ChangelogModal } from '~/components/changelog-modal';
 import { Logo } from '~/components/logo';
 import { ModeToggle } from '~/components/mode-toggle';
 import { NavUser } from '~/components/nav-user';
-import { buttonVariants } from '~/components/ui/button';
+import { Button, buttonVariants } from '~/components/ui/button';
 import {
   SidebarInset,
   SidebarProvider,
@@ -28,6 +37,7 @@ import {
   useRootData,
 } from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
+import { handleBackNavigation } from '~/lib/navigation';
 import { cn } from '~/lib/utils';
 import type { RootUser } from '~/root';
 
@@ -64,7 +74,10 @@ export function Sidebar() {
   const profileResponse = useOptionalProfileData();
   const rootData = useRootData();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isNavigating] = useIsNavigating();
+
+  const canGoBack = location.pathname !== '/';
 
   const signedInUser = rootData?.user;
   const isSignedIn = Boolean(
@@ -290,6 +303,21 @@ export function Sidebar() {
         <header className="flex h-14 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 md:h-16">
           <div className="flex items-center gap-2 px-2.5 sm:px-4">
             <SidebarTrigger className="-ml-1" />
+            {canGoBack && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 md:hidden"
+                onClick={() =>
+                  handleBackNavigation(navigate, location.pathname, params)
+                }
+                aria-label="Go back"
+                title="Go back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <AppBreadcrumbs />
           </div>
           <div className="flex items-center gap-2 px-2.5 sm:px-4">
             <ChangelogModal />
