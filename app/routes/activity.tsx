@@ -150,7 +150,7 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
             )}
           </div>
           <div className="grid grid-cols-1 gap-6">
-            {allPerformances.map(([charId, perf], idx) => {
+            {allPerformances.map(([charId, perf]) => {
               const link = aggregate?.snapshotLinks[charId];
               const user = users[charId];
               return (
@@ -163,7 +163,7 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
                   sessionId={link?.sessionId}
                   snapshotId={link?.snapshotId}
                   collapsible={true}
-                  defaultOpen={idx === 0}
+                  defaultOpen={false}
                 />
               );
             })}

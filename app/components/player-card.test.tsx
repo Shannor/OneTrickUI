@@ -6,17 +6,6 @@ import type { User } from '~/api';
 
 import { PlayerCard } from './player-card';
 
-// Polyfill ResizeObserver for Recharts ClassStats component in JSDOM environment
-if (typeof window !== 'undefined' && !window.ResizeObserver) {
-  class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  }
-  window.ResizeObserver = ResizeObserver;
-  global.ResizeObserver = ResizeObserver;
-}
-
 describe('PlayerCard', () => {
   const mockUser: User = {
     id: 'user-123',
@@ -73,7 +62,9 @@ describe('PlayerCard', () => {
       '/profile/user-123/c/char-1/sessions/sess-1',
     );
 
-    const loadoutLink = screen.getByRole('link', { name: /view loadout/i });
+    const loadoutLink = screen.getByRole('link', {
+      name: /view detailed loadout/i,
+    });
     expect(loadoutLink).toBeInTheDocument();
     expect(loadoutLink).toHaveAttribute(
       'href',

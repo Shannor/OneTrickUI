@@ -9,7 +9,6 @@ import type {
 } from '~/api';
 import { calculateRatio } from '~/calculations/precision';
 import { ClassStats } from '~/charts/ClassStats';
-import { ArmorSet } from '~/components/armor-set';
 import { Label } from '~/components/label';
 import {
   Abilities,
@@ -181,6 +180,12 @@ export function PlayerCard({
               </div>
             )}
           </SubClassProvider>
+
+          {values.length > 0 && (
+            <div className="col-span-12 pt-4">
+              <ClassStats data={values} />
+            </div>
+          )}
         </div>
       )}
 
@@ -197,10 +202,6 @@ export function PlayerCard({
           </div>
         </div>
       )}
-
-      <div className="col-span-12 grid grid-cols-1 pt-4 md:grid-cols-2">
-        <ClassStats data={values} />
-      </div>
     </>
   );
 

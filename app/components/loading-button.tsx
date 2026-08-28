@@ -13,12 +13,14 @@ export function LoadingButton({
   isLoading = false,
   loadingText = 'Loading...',
   children,
+  disabled,
   ...props
 }: LoadingButtonProps) {
   const { className, ...rest } = props;
+  const isDisabled = isLoading || disabled;
   return (
     <Button
-      disabled={isLoading}
+      disabled={isDisabled}
       className={cn({ 'pointer-events-none opacity-50': isLoading }, className)}
       {...rest}
     >

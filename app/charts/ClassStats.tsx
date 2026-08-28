@@ -1,87 +1,57 @@
-'use client';
-
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-} from 'recharts';
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '~/components/ui/chart';
 import { cn } from '~/lib/utils';
 
-const chartConfig = {
-  desktop: {
-    label: 'Stats',
-    color: 'var(--chart-1)',
-  },
-} satisfies ChartConfig;
-type Data = {
+export type ClassStatData = {
   stat: string;
   value: number;
 };
-interface Props {
+
+export interface ClassStatsProps {
   className?: string;
-  data: Data[];
-  maxValue?: number;
+  data?: ClassStatData[];
+  compact?: boolean;
 }
-export function ClassStats({ className, data }: Props) {
-  if (!data) return null;
-  const isNew = Boolean(data.find((it) => it.stat.toLowerCase() === 'super'));
+
+export function ClassStats({
+  className,
+  data,
+  compact = true,
+}: ClassStatsProps) {
+  if (!data || data.length === 0) return null;
+
+  if (compact) {
+    return (
+      <div
+        className={cn(
+          'grid grid-cols-3 gap-1.5 pt-1 sm:grid-cols-6',
+          className,
+        )}
+      >
+        {data.map((it) => (
+          <div
+            key={it.stat}
+            className="flex items-center justify-center gap-1 rounded bg-muted/70 px-1.5 py-1 text-[11px] font-medium"
+          >
+            <span className="truncate text-muted-foreground">{it.stat}</span>
+            <span className="font-bold text-foreground">{it.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <ChartContainer
-      config={chartConfig}
-      className={cn('max-h-[500px] min-h-[50px]', className)}
+    <div
+      className={cn('grid grid-cols-3 gap-2 pt-1 sm:grid-cols-6', className)}
     >
-      <RadarChart data={data}>
-        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-        <PolarRadiusAxis
-          angle={30}
-          domain={[0, isNew ? 200 : 100]}
-          tickLine={false}
-          axisLine={false}
-          tick={false}
-        />
-        <PolarAngleAxis
-          dataKey="stat"
-          tick={({ x, y, textAnchor, value, index, ...props }) => {
-            const d = data[index];
-            return (
-              <text
-                x={x}
-                y={index === 0 ? y - 10 : y}
-                textAnchor={textAnchor}
-                fontSize={13}
-                fontWeight={500}
-                {...props}
-              >
-                <tspan className="fill-black dark:fill-white">{d.value}</tspan>
-                &nbsp;
-                <tspan className="fill-black dark:fill-white">/</tspan>
-                &nbsp;
-                <tspan className="fill-black dark:fill-white">
-                  {isNew ? 200 : 100}
-                </tspan>
-                <tspan
-                  x={x}
-                  dy={'1rem'}
-                  fontSize={12}
-                  className="fill-muted-foreground"
-                >
-                  {d.stat}
-                </tspan>
-              </text>
-            );
-          }}
-        />
-        <PolarGrid />
-        <Radar dataKey="value" fill="var(--color-desktop)" fillOpacity={0.6} />
-      </RadarChart>
-    </ChartContainer>
+      {data.map((it) => (
+        <div
+          key={it.stat}
+          className="flex items-center justify-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs font-medium shadow-sm"
+        >
+          <span className="truncate text-muted-foreground">{it.stat}</span>
+          <span className="font-bold text-foreground">{it.value}</span>
+        </div>
+      ))}
+    </div>
   );
 }

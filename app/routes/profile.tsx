@@ -58,7 +58,7 @@ export default function Profile() {
           >
             {(current, previous) => {
               const isDisabled =
-                Boolean(current) && Boolean(previous) && current === previous;
+                !current || (Boolean(previous) && current === previous);
               return (
                 <LoadingButton
                   type="submit"

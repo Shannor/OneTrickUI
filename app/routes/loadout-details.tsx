@@ -1,6 +1,6 @@
 import { data } from 'react-router';
 import { getSnapshot } from '~/api';
-import { ClassStats } from '~/charts/ClassStats';
+import { ClassStatsRadar } from '~/charts/ClassStatsRadar';
 import { ArmorSet } from '~/components/armor-set';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Weapon } from '~/components/weapon';
@@ -52,7 +52,7 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
             <Fragments />
           </div>
         </SubClassProvider>
-        <ClassStats data={values} />
+        <ClassStatsRadar data={values} />
       </div>
       <div className="col-span-12 flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
