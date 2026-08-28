@@ -252,9 +252,7 @@ export function Landing({ loaderData }: Route.ComponentProps) {
             className="w-full justify-center sm:w-60"
           >
             {profile ? (
-              <Link to={continueUrl}>
-                Continue to {profile.displayName}
-              </Link>
+              <Link to={continueUrl}>Continue to {profile.displayName}</Link>
             ) : (
               <Link to="/login">Start a Session</Link>
             )}
