@@ -17,33 +17,53 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-08-28',
     date: 'August 28, 2026',
-    title: 'Condensed Loadouts, Expandable Weapon Perks & Class Stats',
+    title: 'Activity Breakdown, Condensed Loadouts & Performance Logging',
     summary:
-      'Easily compare and merge loadouts with condensed previews, expandable weapon perks, responsive class stats, and clear activity CTA buttons.',
+      'Collapsible activity player cards, Destiny 2 weapon slot sorting, expandable loadout perks, responsive class stats, SEO meta tags, and GCP structured logging.',
     changes: [
       {
         type: 'feature',
-        text: 'Added expandable weapon perks in condensed view for fast loadout scanning and merging.',
+        text: 'Added collapsible player loadout breakdown to Activity view supporting up to 12 player cards cleanly.',
       },
       {
         type: 'feature',
-        text: 'Extracted ClassStatsRadar for detailed loadout screens while keeping player cards lightweight.',
+        text: 'Added expandable weapon perks in condensed loadouts for fast loadout comparison and merging.',
+      },
+      {
+        type: 'feature',
+        text: 'Extracted ClassStatsRadar for detailed loadout screens while maintaining lightweight stat pills for cards.',
+      },
+      {
+        type: 'feature',
+        text: 'Integrated structured Pino Logger across client and server loaders for GCP JSON log ingestion.',
       },
       {
         type: 'improvement',
-        text: 'Redesigned ClassStats with a responsive layout (3 per line on mobile, inline flex on desktop).',
+        text: 'Sorted weapons in PlayerCard automatically by Destiny 2 equipment slots (Kinetic → Energy → Power) and kills.',
       },
       {
         type: 'improvement',
-        text: 'Added prominent "View Game Details" CTA buttons to session game lists for clearer navigation.',
+        text: 'Added compact SubClassHeader above weapon grids with expandable subclass abilities.',
       },
       {
         type: 'improvement',
-        text: 'Promoted "Expand Loadout Details" actions on player cards for better discoverability.',
+        text: 'Redesigned ClassStats to render 3 stats per row on mobile and flex pills on desktop.',
+      },
+      {
+        type: 'improvement',
+        text: 'Added prominent "View Game Details" CTA buttons to session games list for clearer navigation.',
+      },
+      {
+        type: 'improvement',
+        text: 'Added SEO meta tags, OpenGraph titles, and canonical resource routes across profile and activity pages.',
       },
       {
         type: 'fix',
         text: 'Fixed Activity page player cards so loadout details start collapsed by default.',
+      },
+      {
+        type: 'fix',
+        text: 'Fixed weapon card width constraints to allow full-width grid column alignment across screen breakpoints.',
       },
     ],
   },
