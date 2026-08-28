@@ -22,14 +22,14 @@ export function ClassStats({
     return (
       <div
         className={cn(
-          'grid grid-cols-3 gap-1.5 pt-1 sm:grid-cols-6',
+          'grid grid-cols-3 gap-1.5 pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-1.5',
           className,
         )}
       >
         {data.map((it) => (
           <div
             key={it.stat}
-            className="flex items-center justify-center gap-1 rounded bg-muted/70 px-1.5 py-1 text-[11px] font-medium"
+            className="flex items-center justify-center gap-1 rounded bg-muted/70 px-2 py-0.5 text-[11px] font-medium sm:justify-start"
           >
             <span className="truncate text-muted-foreground">{it.stat}</span>
             <span className="font-bold text-foreground">{it.value}</span>
@@ -41,12 +41,15 @@ export function ClassStats({
 
   return (
     <div
-      className={cn('grid grid-cols-3 gap-2 pt-1 sm:grid-cols-6', className)}
+      className={cn(
+        'grid grid-cols-3 gap-2 pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2',
+        className,
+      )}
     >
       {data.map((it) => (
         <div
           key={it.stat}
-          className="flex items-center justify-center gap-1.5 rounded-md border bg-muted/50 px-2 py-1 text-xs font-medium shadow-sm"
+          className="flex items-center justify-center gap-1.5 rounded-md border bg-muted/50 px-2.5 py-1 text-xs font-medium shadow-sm sm:justify-start"
         >
           <span className="truncate text-muted-foreground">{it.stat}</span>
           <span className="font-bold text-foreground">{it.value}</span>

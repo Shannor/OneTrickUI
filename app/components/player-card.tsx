@@ -224,8 +224,7 @@ export function PlayerCard({
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="w-full justify-center gap-2 text-xs font-semibold text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  className="w-full justify-center gap-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 hover:text-primary"
                   aria-label="Toggle loadout details"
                 >
                   <span>

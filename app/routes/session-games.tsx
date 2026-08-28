@@ -1,10 +1,11 @@
-import { ExternalLink } from 'lucide-react';
+import { ChevronRight, ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { FormattedDate } from '~/components/formatted-date';
 import { HorizontalBanner } from '~/components/horizontal-banner';
 import { Label } from '~/components/label';
+import { Button } from '~/components/ui/button';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
@@ -102,17 +103,13 @@ export function SessionGames({ params }: Route.ComponentProps) {
             const kd = calculateRatio(kills, deaths);
             const kda = calculateRatio(kills + assists, deaths);
             stats.push(
-              ...[
-                { label: 'Kills', value: kills.toString() },
-                { label: 'Assists', value: assists.toString() },
-                { label: 'Deaths', value: deaths.toString() },
-              ],
+              { label: 'Kills', value: kills.toString() },
+              { label: 'Assists', value: assists.toString() },
+              { label: 'Deaths', value: deaths.toString() },
             );
             kdStats.push(
-              ...[
-                { label: 'K/D', value: kd.toFixed(2) },
-                { label: 'Efficiency', value: kda.toFixed(2) },
-              ],
+              { label: 'K/D', value: kd.toFixed(2) },
+              { label: 'Efficiency', value: kda.toFixed(2) },
             );
           }
 
@@ -155,7 +152,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
                 </div>
               )}
               <div
-                className="flex w-full flex-row p-2 hover:bg-muted md:gap-8"
+                className="group flex w-full flex-col gap-4 rounded-lg border p-3 transition-colors hover:cursor-pointer hover:bg-muted/50 md:flex-row md:items-center md:gap-6 md:p-4"
                 onClick={() => {
                   navigate(
                     `/profile/${id}/c/${characterId}/activities/${activityDetails.instanceId}`,
@@ -180,7 +177,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
                     alt="activity image"
                   />
                 </div>
-                <div className="flex w-full flex-col gap-4 md:w-auto">
+                <div className="flex flex-1 flex-col gap-4">
                   <div className="flex flex-col gap-4 md:hidden">
                     {won ? (
                       <HorizontalBanner
@@ -205,7 +202,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
                       className="h-12 w-12 rounded-lg bg-black/50 object-cover"
                       alt="activity image"
                     />
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1">
                       <Description
                         activity={activityDetails.activity}
                         mode={activityDetails.mode}
@@ -218,7 +215,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
                         date={activityDetails.period}
                         formatStr="p"
                         fallbackFormatStr="HH:mm"
-                        className="text-muted-foreground"
+                        className="text-xs text-muted-foreground"
                       />
                     </div>
                   </div>
@@ -226,6 +223,16 @@ export function SessionGames({ params }: Route.ComponentProps) {
                     <Performance stats={stats} className="md:pr-2" />
                     <Performance stats={kdStats} className={'md:px-2'} />
                   </div>
+                </div>
+                <div className="flex shrink-0 items-center justify-end pt-2 md:pt-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between gap-2 group-hover:border-primary group-hover:text-primary md:w-auto md:justify-center"
+                  >
+                    <span>View Game Details</span>
+                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Button>
                 </div>
               </div>
             </div>

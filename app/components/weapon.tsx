@@ -1,7 +1,10 @@
+import { ChevronDown } from 'lucide-react';
 import type React from 'react';
+import { useState } from 'react';
 import type { Socket, WeaponInstanceMetrics } from '~/api';
 import { Sockets } from '~/components/sockets';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { Button } from '~/components/ui/button';
 import { WeaponKills } from '~/components/weapon-kills';
 import { WeaponStats } from '~/components/weapon-stats';
 import { cn, setBungieUrl } from '~/lib/utils';
@@ -46,6 +49,9 @@ interface Props extends WeaponInstanceMetrics {
   showTitle?: boolean;
   layout?: 'horizontal' | 'vertical';
   className?: string;
+  compact?: boolean;
+  expandableSockets?: boolean;
+  defaultSocketsOpen?: boolean;
 }
 
 export const Weapon: React.FC<Props> = ({
@@ -55,7 +61,11 @@ export const Weapon: React.FC<Props> = ({
   hideStats,
   showTitle = true,
   className,
+  compact = false,
+  expandableSockets = true,
+  defaultSocketsOpen = false,
 }) => {
+  const [socketsOpen, setSocketsOpen] = useState(defaultSocketsOpen);
   const weaponSockets: WeaponSockets = properties?.sockets?.reduce(
     (acc, socket) => {
       if (
@@ -127,6 +137,66 @@ export const Weapon: React.FC<Props> = ({
   const name = properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun';
   const isExotic = properties?.baseInfo?.tierTypeName === 'Exotic';
   const itemType = properties?.baseInfo?.itemTypeDisplayName;
+
+  if (compact) {
+    const allSockets = [...row1, ...row2];
+    const hasSockets = Boolean(properties?.sockets && allSockets.length > 0);
+
+    return (
+      <div className={cn('flex flex-col gap-1 py-0.5', className)}>
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8 shrink-0 rounded border bg-black/40 p-0.5">
+            <AvatarImage src={icon} alt={`${name} image`} />
+            <AvatarFallback className="rounded text-[10px] font-bold">
+              {name?.charAt(0).toUpperCase() ?? '?'}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-1.5">
+            <h5
+              className={cn(
+                'truncate text-xs font-bold tracking-tight',
+                isExotic ? 'text-yellow-500' : 'text-purple-400',
+              )}
+            >
+              {name}
+            </h5>
+            <div className="flex shrink-0 items-center gap-1">
+              {itemType && (
+                <span className="rounded bg-muted/80 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {itemType}
+                </span>
+              )}
+              {hasSockets && expandableSockets && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSocketsOpen((prev) => !prev)}
+                  aria-label="Toggle weapon perks"
+                >
+                  <ChevronDown
+                    className={cn(
+                      'h-3.5 w-3.5 transition-transform duration-200',
+                      socketsOpen && 'rotate-180',
+                    )}
+                  />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {hasSockets && socketsOpen && (
+          <Sockets
+            sockets={allSockets}
+            displayMode="iconOnly"
+            className="flex-row flex-wrap items-center gap-1 pl-10 pt-1"
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn('flex w-full flex-col gap-2.5 py-1', className)}>
