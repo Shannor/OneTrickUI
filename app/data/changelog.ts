@@ -17,10 +17,22 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-08-28',
     date: 'August 28, 2026',
-    title: 'Activity Breakdown, Condensed Loadouts & Performance Logging',
+    title: 'Navigation Suite, Condensed Loadouts & Activity Breakdown',
     summary:
-      'Collapsible activity player cards, Destiny 2 weapon slot sorting, expandable loadout perks, responsive class stats, SEO meta tags, and GCP structured logging.',
+      'Mobile back button with safe history fallbacks, dynamic breadcrumbs featuring real Session and Loadout names, exact sidebar route highlighting, and condensed loadout views.',
     changes: [
+      {
+        type: 'feature',
+        text: 'Added a mobile back button with safe history fallback handling so users can navigate backwards without leaving the app.',
+      },
+      {
+        type: 'feature',
+        text: 'Introduced dynamic breadcrumbs displaying actual Session, Loadout, Activity, and Profile names.',
+      },
+      {
+        type: 'improvement',
+        text: 'Added exact route matching and visual active state highlighting to the sidebar navigation.',
+      },
       {
         type: 'improvement',
         text: 'Directly navigate signed-in users with a selected character to their Overview page from the home landing CTA.',
