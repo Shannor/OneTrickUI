@@ -8,8 +8,10 @@ import {
   Swords,
   Users,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { getAuth } from '~/.server/auth';
+import { getPreferences } from '~/.server/preferences';
 import { type Profile, type Session, getSessions, getUser } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
 import { LoadingButton } from '~/components/loading-button';
@@ -62,11 +64,19 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const auth = await getAuth(request);
+  const preferences = await getPreferences(request);
   let profile: Profile | null = null;
+  let selectedCharacterId: string | null = null;
+
   if (auth) {
     const response = await getUser({ path: { userId: auth.id } });
     if (response.data) {
       profile = response.data;
+      const prefCharId = preferences.character?.id;
+      const isValid = profile.characters?.some((c) => c.id === prefCharId);
+      if (isValid && prefCharId) {
+        selectedCharacterId = prefCharId;
+      }
     }
   }
   // Fetch lightweight public stats for the landing page
@@ -151,6 +161,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       auth,
       recentProfiles: sessionProfiles,
       profile,
+      selectedCharacterId,
     };
   } catch (e) {
     Logger.error(e, 'Failed to load landing stats');
@@ -162,6 +173,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       weekCount: 0,
       auth,
       profile,
+      selectedCharacterId: null,
       recentProfiles: {},
     };
   }
@@ -178,6 +190,7 @@ export function Landing({ loaderData }: Route.ComponentProps) {
     weekCount,
     profile,
     recentProfiles,
+    selectedCharacterId,
   } = loaderData ?? {
     activeCount: 0,
     activeSessions: [],
@@ -186,7 +199,35 @@ export function Landing({ loaderData }: Route.ComponentProps) {
     weekCount: 0,
     auth: null,
     recentProfiles: {},
+    selectedCharacterId: null,
   };
+
+  const [activeCharId, setActiveCharId] = useState<string | null>(
+    selectedCharacterId ?? null,
+  );
+
+  useEffect(() => {
+    if (profile?.id) {
+      try {
+        const stored = localStorage.getItem(
+          `onetrick_active_char_${profile.id}`,
+        );
+        if (stored && profile.characters?.some((c) => c.id === stored)) {
+          setActiveCharId(stored);
+        }
+      } catch {
+        // Ignore storage errors
+      }
+    }
+  }, [profile]);
+
+  const targetCharacterId =
+    activeCharId || (profile?.characters?.[0]?.id ?? null);
+  const continueUrl = profile
+    ? targetCharacterId
+      ? `/profile/${profile.id}/c/${targetCharacterId}`
+      : `/profile/${profile.id}`
+    : '/login';
 
   return (
     <div className="flex h-full flex-col justify-between gap-12">
@@ -211,7 +252,7 @@ export function Landing({ loaderData }: Route.ComponentProps) {
             className="w-full justify-center sm:w-60"
           >
             {profile ? (
-              <Link to={`/profile/${profile.id}`}>
+              <Link to={continueUrl}>
                 Continue to {profile.displayName}
               </Link>
             ) : (

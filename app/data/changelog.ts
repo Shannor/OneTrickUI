@@ -22,44 +22,20 @@ export const CHANGELOG: ReleaseNote[] = [
       'Collapsible activity player cards, Destiny 2 weapon slot sorting, expandable loadout perks, responsive class stats, SEO meta tags, and GCP structured logging.',
     changes: [
       {
-        type: 'feature',
-        text: 'Added collapsible player loadout breakdown to Activity view supporting up to 12 player cards cleanly.',
+        type: 'improvement',
+        text: 'Directly navigate signed-in users with a selected character to their Overview page from the home landing CTA.',
       },
       {
-        type: 'feature',
-        text: 'Added expandable weapon perks in condensed loadouts for fast loadout comparison and merging.',
+        type: 'improvement',
+        text: 'Improved the Activity page layout and design. Showing more information the user in a more digestible format.',
       },
       {
-        type: 'feature',
-        text: 'Extracted ClassStatsRadar for detailed loadout screens while maintaining lightweight stat pills for cards.',
-      },
-      {
-        type: 'feature',
-        text: 'Integrated structured Pino Logger across client and server loaders for GCP JSON log ingestion.',
+        type: 'improvement',
+        text: 'Renamed categories to make them clearer as to what they lead to.',
       },
       {
         type: 'improvement',
         text: 'Sorted weapons in PlayerCard automatically by Destiny 2 equipment slots (Kinetic → Energy → Power) and kills.',
-      },
-      {
-        type: 'improvement',
-        text: 'Added compact SubClassHeader above weapon grids with expandable subclass abilities.',
-      },
-      {
-        type: 'improvement',
-        text: 'Redesigned ClassStats to render 3 stats per row on mobile and flex pills on desktop.',
-      },
-      {
-        type: 'improvement',
-        text: 'Added prominent "View Game Details" CTA buttons to session games list for clearer navigation.',
-      },
-      {
-        type: 'improvement',
-        text: 'Added SEO meta tags, OpenGraph titles, and canonical resource routes across profile and activity pages.',
-      },
-      {
-        type: 'fix',
-        text: 'Fixed Activity page player cards so loadout details start collapsed by default.',
       },
       {
         type: 'fix',
