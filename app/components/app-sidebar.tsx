@@ -1,5 +1,5 @@
-import { type LucideIcon } from 'lucide-react';
-import * as React from 'react';
+import type { LucideIcon } from 'lucide-react';
+import type * as React from 'react';
 import { NavProjects } from '~/components/nav-projects';
 import {
   Sidebar,
@@ -12,9 +12,6 @@ import {
   SidebarRail,
 } from '~/components/ui/sidebar';
 
-// Navigation item type
-
-// Navigation item type
 type NavigationItem = {
   name: string;
   url: string;
@@ -23,7 +20,6 @@ type NavigationItem = {
   title: string;
 };
 
-// Navigation data type
 type NavigationData = {
   base: NavigationItem[];
   projects: NavigationItem[];
@@ -60,7 +56,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavProjects projects={navigationData.base} />
-        <NavProjects projects={navigationData.projects} label="Tracking" />
+        <NavProjects projects={navigationData.projects} label="Profile" />
         <NavProjects projects={navigationData.friends} label="Guardians" />
       </SidebarContent>
       <SidebarFooter>{props.footer}</SidebarFooter>

@@ -98,11 +98,12 @@ export function createStats(
   weaponStats: Record<string, Stats>,
   item: ItemSnapshot,
 ): Record<string, UniqueStatValue> | undefined {
-  if (!weaponStats[item.itemHash]) {
+  const hashKey = String(item.itemHash);
+  if (!weaponStats[hashKey]) {
     return;
   }
-  const kills = weaponStats[item.itemHash]?.kills ?? 0;
-  const precision = weaponStats[item.itemHash]?.precisionKills ?? 0;
+  const kills = weaponStats[hashKey]?.kills ?? 0;
+  const precision = weaponStats[hashKey]?.precisionKills ?? 0;
   return {
     uniqueWeaponKills: {
       name: 'kills',

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { Form, useLocation, useNavigate } from 'react-router';
 import { type GameMode, getBestPerformingLoadouts } from '~/api';
 import { ArmorStats } from '~/components/armor-stats';
@@ -17,12 +17,9 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { WeaponStats } from '~/components/weapon-stats';
-import {
-  getDetailWeapons,
-  getExotic,
-  useClassStats,
-} from '~/hooks/use-loadout';
+import { getDetailWeapons, getExotic } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
 import { SubClassProvider } from '~/providers/sub-class-provider';
@@ -54,7 +51,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
   });
   if (error) {
-    console.error(error);
+    Logger.error(error, 'Failed to fetch best performing loadouts');
     return {
       loadouts: {
         items: [],
@@ -180,7 +177,7 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
       {loadouts?.items?.length === 0 && (
         <Empty
           title="Get in the Crucible!"
-          description="Play some games so we can get new information!"
+          description="Play more games so your top loadouts will start showing up!"
         />
       )}
       <div className="grid grid-cols-1 gap-4">

@@ -1,13 +1,10 @@
-import React from 'react';
+import { ChevronDown } from 'lucide-react';
+import type React from 'react';
+import { useState } from 'react';
 import type { Socket, WeaponInstanceMetrics } from '~/api';
-import { Label } from '~/components/label';
 import { Sockets } from '~/components/sockets';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
+import { Button } from '~/components/ui/button';
 import { WeaponKills } from '~/components/weapon-kills';
 import { WeaponStats } from '~/components/weapon-stats';
 import { cn, setBungieUrl } from '~/lib/utils';
@@ -23,7 +20,6 @@ interface WeaponSockets {
   memento: Socket | null;
 }
 
-// Functions to check weapon socket types by itemTypeDisplayName using substring matching
 const isIntrinsic = (itemTypeDisplayName: string): boolean =>
   itemTypeDisplayName.toLowerCase().includes('intrinsic');
 
@@ -50,16 +46,26 @@ const isMemento = (itemTypeDisplayName: string): boolean =>
 
 interface Props extends WeaponInstanceMetrics {
   hideStats?: boolean;
+  showTitle?: boolean;
   layout?: 'horizontal' | 'vertical';
   className?: string;
+  compact?: boolean;
+  expandableSockets?: boolean;
+  defaultSocketsOpen?: boolean;
 }
+
 export const Weapon: React.FC<Props> = ({
   properties,
   stats,
   display,
   hideStats,
+  showTitle = true,
   className,
+  compact = false,
+  expandableSockets = true,
+  defaultSocketsOpen = false,
 }) => {
+  const [socketsOpen, setSocketsOpen] = useState(defaultSocketsOpen);
   const weaponSockets: WeaponSockets = properties?.sockets?.reduce(
     (acc, socket) => {
       if (
@@ -78,8 +84,6 @@ export const Weapon: React.FC<Props> = ({
         acc.barrel = socket;
       } else if (isMagazine(displayName)) {
         acc.magazine = socket;
-        // This order matter since we're doing string comps
-        // Origin Trait has "trait" in it so it could include other stuff
       } else if (isOriginTrait(displayName)) {
         acc.originTrait = socket;
       } else if (isTrait(displayName)) {
@@ -130,79 +134,130 @@ export const Weapon: React.FC<Props> = ({
   ].filter(Boolean) as Socket[];
 
   const icon = setBungieUrl(display?.icon ?? properties?.baseInfo?.icon);
-  const name = properties?.baseInfo?.name ?? display?.name ?? 'Unkown';
-  return (
-    <div className={cn('flex max-w-[350px] flex-col gap-4', className)}>
-      <Tooltip>
-        <TooltipContent className="flex flex-col gap-4">
-          <Label>{name}</Label>
-          {hideStats && (
-            <div className="flex flex-col gap-2">
-              {properties?.stats && <WeaponStats stats={properties.stats} />}
-              {properties?.sockets && (
-                <div className="flex flex-col gap-2">
-                  {/* Row 1: Intrinsic, Mod, Shader */}
-                  <Sockets
-                    sockets={row1}
-                    displayMode="iconOnly"
-                    className="flex-row flex-wrap items-center"
-                  />
+  const name = properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun';
+  const isExotic = properties?.baseInfo?.tierTypeName === 'Exotic';
+  const itemType = properties?.baseInfo?.itemTypeDisplayName;
 
-                  {/* Row 2: Barrel, Magazine, Traits..., Origin Trait */}
-                  <Sockets
-                    sockets={row2}
-                    displayMode="iconOnly"
-                    className="flex-row flex-wrap items-center"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </TooltipContent>
-        <TooltipTrigger>
-          <Avatar className="h-10 w-10 rounded-sm object-cover">
+  if (compact) {
+    const allSockets = [...row1, ...row2];
+    const hasSockets = Boolean(properties?.sockets && allSockets.length > 0);
+
+    return (
+      <div className={cn('flex flex-col gap-1 py-0.5', className)}>
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8 shrink-0 rounded border bg-black/40 p-0.5">
             <AvatarImage src={icon} alt={`${name} image`} />
-            <AvatarFallback className="rounded-sm">
+            <AvatarFallback className="rounded text-[10px] font-bold">
               {name?.charAt(0).toUpperCase() ?? '?'}
             </AvatarFallback>
           </Avatar>
-        </TooltipTrigger>
-      </Tooltip>
-      {!icon && (
-        <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">
-          {properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun'}
-        </h3>
-      )}
 
-      <div className="flex w-full flex-col gap-8">
-        {stats && (
-          <div className="flex flex-col self-center">
-            <WeaponKills stats={stats} />
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-1.5">
+            <h5
+              className={cn(
+                'truncate text-xs font-bold tracking-tight',
+                isExotic ? 'text-yellow-500' : 'text-purple-400',
+              )}
+            >
+              {name}
+            </h5>
+            <div className="flex shrink-0 items-center gap-1">
+              {itemType && (
+                <span className="rounded bg-muted/80 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {itemType}
+                </span>
+              )}
+              {hasSockets && expandableSockets && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSocketsOpen((prev) => !prev)}
+                  aria-label="Toggle weapon perks"
+                >
+                  <ChevronDown
+                    className={cn(
+                      'h-3.5 w-3.5 transition-transform duration-200',
+                      socketsOpen && 'rotate-180',
+                    )}
+                  />
+                </Button>
+              )}
+            </div>
           </div>
-        )}
-        {!hideStats && (
-          <div className="flex w-full flex-grow flex-col gap-4">
-            {properties?.stats && <WeaponStats stats={properties.stats} />}
-            {properties?.sockets && (
-              <div className="flex flex-col gap-2">
-                {/* Row 1: Intrinsic, Mod, Shader */}
-                <Sockets
-                  sockets={row1}
-                  displayMode="iconOnly"
-                  className="flex-row flex-wrap items-center"
-                />
+        </div>
 
-                {/* Row 2: Barrel, Magazine, Traits..., Origin Trait */}
-                <Sockets
-                  sockets={row2}
-                  displayMode="iconOnly"
-                  className="flex-row flex-wrap items-center"
-                />
-              </div>
-            )}
-          </div>
+        {hasSockets && socketsOpen && (
+          <Sockets
+            sockets={allSockets}
+            displayMode="iconOnly"
+            className="flex-row flex-wrap items-center gap-1 pl-10 pt-1"
+          />
         )}
       </div>
+    );
+  }
+
+  return (
+    <div className={cn('flex w-full flex-col gap-2.5 py-1', className)}>
+      {/* Integrated Header Banner (Avatar Icon + Weapon Name + Type + Kills metrics) */}
+      <div className="flex items-center gap-3">
+        <Avatar className="h-12 w-12 shrink-0 rounded-md border bg-black/40 object-cover p-0.5">
+          <AvatarImage src={icon} alt={`${name} image`} />
+          <AvatarFallback className="rounded-md text-xs font-bold">
+            {name?.charAt(0).toUpperCase() ?? '?'}
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+          {showTitle && (
+            <div className="flex items-center justify-between gap-2">
+              <h5
+                className={cn(
+                  'truncate text-sm font-bold tracking-tight',
+                  isExotic ? 'text-yellow-500' : 'text-purple-400',
+                )}
+              >
+                {name}
+              </h5>
+              {itemType && (
+                <span className="shrink-0 rounded bg-muted/80 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {itemType}
+                </span>
+              )}
+            </div>
+          )}
+
+          {stats && <WeaponKills stats={stats} />}
+        </div>
+      </div>
+
+      {/* Perks / Sockets */}
+      {properties?.sockets && (row1.length > 0 || row2.length > 0) && (
+        <div className="flex flex-col gap-1.5 border-t pt-2">
+          {row1.length > 0 && (
+            <Sockets
+              sockets={row1}
+              displayMode="iconOnly"
+              className="flex-row flex-wrap items-center gap-1"
+            />
+          )}
+          {row2.length > 0 && (
+            <Sockets
+              sockets={row2}
+              displayMode="iconOnly"
+              className="flex-row flex-wrap items-center gap-1"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Compact Weapon Stats */}
+      {!hideStats && properties?.stats && (
+        <div className="border-t pt-1.5">
+          <WeaponStats stats={properties.stats} compact={true} />
+        </div>
+      )}
     </div>
   );
 };

@@ -2,24 +2,24 @@
 
 ## Technology Stack
 
-* **Language**: Typescript
-* **UI Framework**: React 
-* **Style Library**: Shadcn & Tailwind
-* **Build Tool**: npm
-* **Testing Framework**: Testing Library
-* **Architecture**: React Router Framework SSR with OpenAPI Generation.
+- **Language**: Typescript
+- **UI Framework**: React
+- **Style Library**: Shadcn & Tailwind
+- **Build Tool**: npm
+- **Testing Framework**: Testing Library
+- **Architecture**: React Router Framework SSR with OpenAPI Generation.
 
 ## Setup and Build Commands
 
 To set up and build the project, run the following commands in the terminal:
 
-* **Install dependencies**: `npm run install`
-* **Run tests**: `npm run test`
-* **Format code**: Prettier
-* **Lint code**: `npm run lint`
-* **Generate Theme**: `npm run theme`
-* **Generate API**: `npm run generate`
-* **Run Dev**: `npm run start`
+- **Install dependencies**: `npm run install`
+- **Run tests**: `npm run test`
+- **Format code**: Prettier
+- **Lint code**: `npm run lint`
+- **Generate Theme**: `npm run theme`
+- **Generate API**: `npm run generate`
+- **Run Dev**: `npm run start`
 
 ## General Instructions
 
@@ -27,6 +27,9 @@ To set up and build the project, run the following commands in the terminal:
 - All new custom UI Components, hooks and functions **must** include matching tests.
 - Prioritize code readability, maintainability and composibiltiy of components.
 - **Only** used named exports instead of default exports for all components and functions.
+- The brand is "1 Trick", never "One Trick".
+- Do not add unnecessary or useless code comments.
+- Do not add comments to separate inline component sections in JSX. If a component section requires a comment to separate it, extract it into a separate composable component instead. The goal is always composability.
 
 ## Specific Instructions for this Project
 
@@ -35,9 +38,10 @@ To set up and build the project, run the following commands in the terminal:
 - Add useful meta tags to all route tsx files/components.
 - This project uses generated endpoints for OpenAPI to gap data. It can be found in the `api` folder.
 
-## Styling 
+## Styling
 
 - Use tailwind and breakpoints for mobile friendly designs.
+- Never use cards inside of cards in design.
 
 ## Notable Libraries Used
 

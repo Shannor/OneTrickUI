@@ -245,11 +245,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               </div>
             ) : (
               <Empty
-                title="No Top Loadouts Found"
-                description="Play games during tracking sessions to record loadout performance data!"
+                title="Get in the Crucible!"
+                description="Play more games so your top loadouts will start showing up!"
               >
                 <Button asChild>
-                  <Link to="loadouts">Explore Loadouts</Link>
+                  <Link to="sessions">Start Session</Link>
                 </Button>
               </Empty>
             )}

@@ -51,7 +51,7 @@ describe('Home Page Route Component', () => {
     expect(screen.getByText(/welcome testguardian/i)).toBeInTheDocument();
     expect(screen.getByText('Recent Sessions')).toBeInTheDocument();
     expect(screen.getByText('Trials Run 1')).toBeInTheDocument();
-    expect(screen.getByText('No Top Loadouts Found')).toBeInTheDocument();
+    expect(screen.getByText('Get in the Crucible!')).toBeInTheDocument();
   });
 
   it('renders empty sessions state when sessions list is empty', () => {
@@ -73,6 +73,6 @@ describe('Home Page Route Component', () => {
     render(<RouterProvider router={router} />);
 
     expect(screen.getByText('No Sessions Recorded')).toBeInTheDocument();
-    expect(screen.getByText('No Top Loadouts Found')).toBeInTheDocument();
+    expect(screen.getByText('Get in the Crucible!')).toBeInTheDocument();
   });
 });

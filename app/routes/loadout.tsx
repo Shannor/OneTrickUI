@@ -7,6 +7,7 @@ import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { Textarea } from '~/components/ui/textarea';
 import { useProfileData } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/loadout';
 
@@ -16,7 +17,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     path: { snapshotId },
   });
   if (error) {
-    console.error(error);
+    Logger.error(error, 'Failed to fetch snapshot in loadout loader');
     throw data('Unexpected Error', { status: 500 });
   }
   if (!snapshot) {

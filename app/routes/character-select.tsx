@@ -4,9 +4,7 @@ import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { useIsNavigating, useProfileData } from '~/hooks/use-route-loaders';
 
-import type { Route } from './+types/character-select';
-
-export function CharacterSelect({}: Route.ComponentProps) {
+export function CharacterSelect() {
   const data = useProfileData();
   const [isNavigating] = useIsNavigating();
 
@@ -40,9 +38,18 @@ export function CharacterSelect({}: Route.ComponentProps) {
         </h2>
         <CharacterPicker characters={characters}>
           {(current) => {
+            const isDisabled = !current;
             return (
-              <LoadingButton asChild isLoading={isNavigating}>
-                <Link to={`c/${current}`}>Pick Guardian</Link>
+              <LoadingButton
+                asChild={!isDisabled}
+                disabled={isDisabled}
+                isLoading={isNavigating}
+              >
+                {isDisabled ? (
+                  'Pick Guardian'
+                ) : (
+                  <Link to={`c/${current}`}>Pick Guardian</Link>
+                )}
               </LoadingButton>
             );
           }}

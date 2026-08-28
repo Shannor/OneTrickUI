@@ -9,7 +9,7 @@ function escapeXml(str: string) {
     .replace(/'/g, '&apos;');
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export function loader({ request }: Route.LoaderArgs) {
   let origin = 'https://d2onetrick.com';
   try {
     const url = new URL(request.url);
@@ -18,7 +18,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Fallback to default origin
   }
 
-  const urls = ['/', '/active-sessions'];
+  const urls = ['/', '/sessions'];
 
   const lastmod = new Date().toISOString();
 
@@ -40,9 +40,4 @@ export async function loader({ request }: Route.LoaderArgs) {
       'Cache-Control': 'public, max-age=3600',
     },
   });
-}
-
-export default function SitemapXml() {
-  // resource route; no UI
-  return null;
 }

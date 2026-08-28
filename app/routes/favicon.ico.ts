@@ -18,7 +18,3 @@ export async function loader({}: Route.LoaderArgs) {
     return new Response(null, { status: 404 });
   }
 }
-
-export default function FaviconIco() {
-  return null;
-}

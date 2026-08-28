@@ -25,6 +25,7 @@ import {
 } from '~/components/ui/tooltip';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { db } from '~/lib/firebaseConfig';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/session';
 
@@ -111,7 +112,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           if (newData.status == 'complete' || newCount !== currentCount) {
             revalidator
               .revalidate()
-              .then(() => console.log('firestore updated'));
+              .then(() => Logger.info('firestore updated'));
           }
         },
       );
@@ -134,7 +135,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   }
 
   if (error) {
-    console.error(error);
+    Logger.error({ error }, 'Session loader error');
     return (
       <div>
         <Empty
@@ -157,7 +158,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
       setCopyStatus('Copied!');
     } catch (err) {
       setCopyStatus('Failed to copy!');
-      console.error('Failed to copy text: ', err);
+      Logger.error(err, 'Failed to copy text');
     }
     setTimeout(() => setCopyStatus(''), 2000);
   };

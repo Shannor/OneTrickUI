@@ -4,12 +4,9 @@ import { FormattedDate } from '~/components/formatted-date';
 export function ActivityCard({
   activity,
   onClick,
-  // TODO: Think about how I should show something is mapped or not. Show vs Tell(reading)
-  characterMapping,
 }: {
   activity: ActivityHistory;
   onClick: () => void;
-  characterMapping?: any;
 }) {
   return (
     <div

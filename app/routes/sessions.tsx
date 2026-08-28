@@ -25,7 +25,9 @@ import type { Route } from './+types/sessions';
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const url = new URL(request.url); // Parse the request URL
-  const page = Number(url.searchParams.get('page') || '0');
+  const rawPage = Number(url.searchParams.get('page') || '1');
+  const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage);
+  const apiPage = BigInt(page - 1);
   const { characterId, id } = params;
 
   const res = await getUserSessions({
@@ -34,7 +36,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
     query: {
       count: BigInt(10),
-      page: BigInt(page),
+      page: apiPage,
       characterId,
       status: 'complete',
     },
@@ -77,18 +79,19 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
   const isSubmitting = state === 'submitting';
   const hasCurrentSession = Boolean(current?.id);
 
+  const pageTitle = isOwner
+    ? 'My Sessions'
+    : `${profile?.displayName ?? 'Guardian'}'s Sessions`;
+
   return (
     <div className="flex flex-col gap-8">
-      <title>{`Sessions - ${profile?.displayName ?? ''}`}</title>
-      <meta
-        property="og:title"
-        content={`Sessions - ${profile?.displayName ?? ''}  `}
-      />
+      <title>{`${pageTitle} - One Trick`}</title>
+      <meta property="og:title" content={`${pageTitle} - One Trick`} />
       <meta name="description" content="View and manage one trick sessions." />
       <div className="flex flex-col justify-between gap-4 md:flex-row">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-            Sessions
+            {pageTitle}
           </h2>
         </div>
         {isOwner && (
@@ -189,14 +192,32 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
           ))}
       </div>
       <div className="flex flex-row justify-between gap-4 self-end">
-        <Button disabled={page === 0} variant="outline">
-          <ChevronLeft />
-          <Link to={`?page=${page - 1}`}>Previous Page</Link>
-        </Button>
-        <Button disabled={data.length !== 10} variant="outline">
-          <Link to={`?page=${page + 1}`}>Next Page</Link>
-          <ChevronRight />
-        </Button>
+        {page <= 1 ? (
+          <Button disabled variant="outline">
+            <ChevronLeft />
+            Previous Page
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link to={page - 1 === 1 ? '?' : `?page=${page - 1}`}>
+              <ChevronLeft />
+              Previous Page
+            </Link>
+          </Button>
+        )}
+        {data.length !== 10 ? (
+          <Button disabled variant="outline">
+            Next Page
+            <ChevronRight />
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link to={`?page=${page + 1}`}>
+              Next Page
+              <ChevronRight />
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );

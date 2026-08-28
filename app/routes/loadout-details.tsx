@@ -1,11 +1,11 @@
-import React from 'react';
 import { data } from 'react-router';
 import { getSnapshot } from '~/api';
-import { ClassStats } from '~/charts/ClassStats';
+import { ClassStatsRadar } from '~/charts/ClassStatsRadar';
 import { ArmorSet } from '~/components/armor-set';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Weapon } from '~/components/weapon';
 import { getDetailWeapons, useClassStats } from '~/hooks/use-loadout';
+import { Logger } from '~/lib/logger';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/loadout-details';
@@ -16,7 +16,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     path: { snapshotId },
   });
   if (error) {
-    console.error(error);
+    Logger.error(error, 'Failed to fetch snapshot in loadout details loader');
     throw data('Unexpected Error', { status: 500 });
   }
   if (!snapshot) {
@@ -27,7 +27,6 @@ export async function loader({ params }: Route.LoaderArgs) {
   };
 }
 
-// TODO: Join this component with the player-card.tsx
 export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
   const { snapshot } = loaderData;
   const values = useClassStats(snapshot);
@@ -53,10 +52,10 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
             <Fragments />
           </div>
         </SubClassProvider>
-        <ClassStats data={values} />
+        <ClassStatsRadar data={values} />
       </div>
       <div className="col-span-12 flex flex-col gap-4">
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
           {data.map((item) => (
             <Weapon
               key={item.itemHash}

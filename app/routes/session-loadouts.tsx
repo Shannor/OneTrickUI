@@ -30,29 +30,30 @@ export default function SessionLoadouts({ params }: Route.ComponentProps) {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col flex-wrap gap-12 md:flex-row md:gap-6">
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {allSnapshots.map((snapshot) => (
-          <div
-            key={snapshot.id}
-            className="flex w-auto flex-col gap-4 md:min-w-[300px] lg:px-4"
-          >
-            <Link
-              to={`/profile/${params?.id}/c/${params.characterId}/loadouts/${snapshot.id}`}
-              className="group flex cursor-pointer items-center gap-2 hover:text-blue-500 hover:underline"
-            >
-              <h3 className="group-hover:text-blue-500 group-hover:underline">
-                {snapshot.name}
-              </h3>
-              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
-            </Link>
-            {isOwner && (
-              <Button
-                variant="outline"
-                onClick={() => setSelectedSnapshot(snapshot)}
+          <div key={snapshot.id} className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              <Link
+                to={`/profile/${params?.id}/c/${params.characterId}/loadouts/${snapshot.id}`}
+                className="group flex items-center gap-1.5 hover:text-primary"
               >
-                Merge Loadout
-              </Button>
-            )}
+                <h3 className="truncate text-base font-bold group-hover:underline">
+                  {snapshot.name ?? 'Loadout'}
+                </h3>
+                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
+              </Link>
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedSnapshot(snapshot)}
+                  className="w-full justify-center"
+                >
+                  Merge Loadout
+                </Button>
+              )}
+            </div>
             <CondensedLoadout snapshot={snapshot} />
           </div>
         ))}

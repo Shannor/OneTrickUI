@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { data } from 'react-router';
 import { type GameMode, getSnapshotAggregates } from '~/api';
-import { calculatePercentage, calculateRatio } from '~/calculations/precision';
+import { calculatePercentage } from '~/calculations/precision';
 import { AvgPerformance } from '~/charts/AvgPerformance';
 import { ChartWrapper } from '~/charts/ChartWrapper';
 import { KDPerformance } from '~/charts/KDPerformance';
@@ -13,6 +13,7 @@ import { DateRangePicker } from '~/components/ui/date-range-picker';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import { useLoadoutData } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 import {
   type CustomTimeWindow,
   type TimeWindow,
@@ -30,7 +31,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     path: { snapshotId },
   });
   if (error) {
-    console.error(error);
+    Logger.error(error, 'Failed to fetch snapshot aggregates');
     throw data(undefined, { status: 404 });
   }
   if (!aggregates) {

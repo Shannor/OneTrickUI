@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { ErrorBoundaryContent } from './error-boundary-content';
 
 describe('ErrorBoundaryContent', () => {
-  it('renders 404 recovery page with Home, Active Feeds, and Go Back buttons', () => {
+  it('renders 404 recovery page with Home, Browse Sessions, and Go Back buttons', () => {
     const error404 = {
       status: 404,
       statusText: 'Not Found',
@@ -24,10 +24,9 @@ describe('ErrorBoundaryContent', () => {
       'href',
       '/',
     );
-    expect(screen.getByRole('link', { name: /active feeds/i })).toHaveAttribute(
-      'href',
-      '/active-sessions',
-    );
+    expect(
+      screen.getByRole('link', { name: /browse sessions/i }),
+    ).toHaveAttribute('href', '/sessions');
     expect(
       screen.getByRole('button', { name: /go back to previous page/i }),
     ).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import { format, formatDistance } from 'date-fns';
-import { ArrowRight, Gamepad2, Radio } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Gamepad2, Radio } from 'lucide-react';
 import { Link } from 'react-router';
 import type { Profile, Session } from '~/api';
 import { Badge } from '~/components/ui/badge';
@@ -16,7 +16,11 @@ export function ActiveSessionCard({
   profile,
 }: ActiveSessionCardProps) {
   const isHydrated = useHydrated();
+  const isPending = session.status === 'pending';
   const startTime = session.startedAt ? new Date(session.startedAt) : null;
+  const completedTime = session.completedAt
+    ? new Date(session.completedAt)
+    : null;
   const character = profile?.characters?.find(
     (c) => c.id === session.characterId,
   );
@@ -62,7 +66,8 @@ export function ActiveSessionCard({
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <h4 className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                  {session.name || 'Active Session'}
+                  {session.name ||
+                    (isPending ? 'Active Session' : 'Completed Session')}
                 </h4>
                 {character?.class ? (
                   <p className="truncate text-xs font-semibold uppercase tracking-wider text-primary">
@@ -74,10 +79,17 @@ export function ActiveSessionCard({
                   </p>
                 ) : null}
               </div>
-              <Badge className="shrink-0 animate-pulse gap-1 bg-primary text-primary-foreground">
-                <Radio className="h-3 w-3" />
-                Active
-              </Badge>
+              {isPending ? (
+                <Badge className="shrink-0 animate-pulse gap-1 bg-primary text-primary-foreground">
+                  <Radio className="h-3 w-3" />
+                  Active
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="shrink-0 gap-1">
+                  <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
+                  Completed
+                </Badge>
+              )}
             </div>
 
             {session.description && (
@@ -98,7 +110,29 @@ export function ActiveSessionCard({
               </span>
             </div>
 
-            {startTime && (
+            {isPending && startTime && (
+              <div className="text-muted-foreground">
+                Started{' '}
+                {isHydrated
+                  ? formatDistance(startTime, new Date(), {
+                      addSuffix: true,
+                    })
+                  : format(startTime, 'MMM d, yyyy')}
+              </div>
+            )}
+
+            {!isPending && completedTime && (
+              <div className="text-muted-foreground">
+                Completed{' '}
+                {isHydrated
+                  ? formatDistance(completedTime, new Date(), {
+                      addSuffix: true,
+                    })
+                  : format(completedTime, 'MMM d, yyyy')}
+              </div>
+            )}
+
+            {!isPending && !completedTime && startTime && (
               <div className="text-muted-foreground">
                 Started{' '}
                 {isHydrated
@@ -110,7 +144,7 @@ export function ActiveSessionCard({
             )}
 
             <div className="flex items-center justify-end gap-1 font-medium text-primary opacity-90 transition-opacity group-hover:underline group-hover:opacity-100">
-              <span>View Active Session</span>
+              <span>{isPending ? 'View Active Session' : 'View Session'}</span>
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </div>

@@ -72,6 +72,44 @@ describe('Landing Component', () => {
     expect(link).toHaveAttribute('href', '/profile/123');
   });
 
+  it('renders "Continue to {displayName}" link directly to Overview when character is selected', () => {
+    const props = {
+      loaderData: {
+        activeCount: 0,
+        activeSessions: [],
+        recent: [],
+        todayCount: 0,
+        weekCount: 0,
+        auth: { id: '123' },
+        profile: {
+          id: '123',
+          displayName: 'Guardian#1234',
+          uniqueName: 'Guardian#1234',
+          characters: [{ id: 'char-456' }],
+          membershipId: '456',
+          membershipType: 3,
+        },
+        selectedCharacterId: 'char-456',
+        recentProfiles: {},
+      },
+    } as unknown as ComponentProps<typeof Landing>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Landing {...props} />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    const link = screen.getByRole('link', {
+      name: /continue to guardian#1234/i,
+    });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/profile/123/c/char-456');
+  });
+
   it('renders primary CTA as a direct anchor element without a parent button wrapper', () => {
     const props = {
       loaderData: {

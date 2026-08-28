@@ -59,63 +59,65 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
         name="description"
         content={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`}
       />
-      <Card>
-        <div className="relative">
+      <Card className="overflow-hidden border">
+        <div className="relative min-h-[14rem] w-full">
           <img
             src={activity.imageUrl}
             alt="activity background"
-            className="h-40 w-full rounded-t-lg object-cover"
+            className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-black/70 to-black/20" />
-          <CardHeader className="relative z-10 rounded-lg text-white">
-            <div className="flex items-center gap-4">
-              {activity.activityIcon && (
-                <img
-                  src={activity.activityIcon}
-                  className="h-12 w-12 rounded-lg bg-black/50 object-cover"
-                  alt="mode icon"
-                />
-              )}
-              <div className="flex flex-col">
-                <CardTitle className="text-2xl">{activity.location}</CardTitle>
-                <CardDescription className="text-neutral-200">
-                  {activity.activity}
-                  {activity.mode ? ` • ${activity.mode}` : ''}
-                </CardDescription>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/40" />
+          <CardHeader className="relative z-10 flex flex-col gap-6 p-5 text-white md:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-3.5">
+                {activity.activityIcon && (
+                  <img
+                    src={activity.activityIcon}
+                    className="h-12 w-12 shrink-0 rounded-lg bg-black/60 object-contain p-1 ring-1 ring-white/20"
+                    alt="mode icon"
+                  />
+                )}
+                <div className="flex min-w-0 flex-col gap-1">
+                  <CardTitle className="text-2xl font-black tracking-tight drop-shadow-md sm:text-3xl">
+                    {activity.location}
+                  </CardTitle>
+                  <CardDescription className="text-sm font-medium text-neutral-200 drop-shadow">
+                    {activity.activity}
+                    {activity.mode ? ` • ${activity.mode}` : ''}
+                  </CardDescription>
+                </div>
               </div>
-              <div className="ml-auto">
+
+              <div className="self-start sm:self-auto">
                 <FormattedDate
                   date={activity.period as any}
-                  className="rounded bg-white/10 px-2 py-1 text-xs uppercase tracking-wide"
+                  className="inline-block rounded-md bg-black/50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-200 ring-1 ring-white/20 backdrop-blur-sm"
                 />
               </div>
             </div>
-            <div className="mt-3">
-              <TeamScore teams={teams} />
-            </div>
-            <div className="mt-2 flex flex-row gap-4">
-              <div className="flex flex-row items-center gap-2 align-middle">
-                <a
-                  className="text-blue-300 underline-offset-2 hover:underline"
-                  href={`${destinyTrackerUrl}/${activity.instanceId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Destiny Tracker
-                </a>
-                <SquareArrowOutUpRight className="h-4 w-4" />
-              </div>
-              <div className="flex flex-row items-center gap-2">
-                <a
-                  className="text-blue-300 underline-offset-2 hover:underline"
-                  href={`${crucibleReportUrl}/${activity.instanceId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Crucible Report
-                </a>
-                <SquareArrowOutUpRight className="h-4 w-4" />
-              </div>
+
+            <TeamScore teams={teams} />
+
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+              <a
+                href={`${destinyTrackerUrl}/${activity.instanceId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-black/40 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/20 sm:w-auto"
+              >
+                <span>View on Destiny Tracker</span>
+                <SquareArrowOutUpRight className="h-3.5 w-3.5 text-blue-300" />
+              </a>
+
+              <a
+                href={`${crucibleReportUrl}/${activity.instanceId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-black/40 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/20 sm:w-auto"
+              >
+                <span>View on Crucible Report</span>
+                <SquareArrowOutUpRight className="h-3.5 w-3.5 text-blue-300" />
+              </a>
             </div>
           </CardHeader>
         </div>
@@ -136,40 +138,33 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
       {/* Players (Stats + Weapons + Snapshot) */}
       {allPerformances.length > 0 && (
         <div className="flex flex-col gap-4">
-          <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-            Players
-          </h3>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
+              Players ({allPerformances.length})
+            </h3>
+            {allPerformances.length > 1 && (
+              <p className="text-xs text-muted-foreground">
+                Click Expand Loadout on any player card to view weapons and gear
+                breakdown.
+              </p>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-6">
             {allPerformances.map(([charId, perf]) => {
               const link = aggregate?.snapshotLinks[charId];
               const user = users[charId];
               return (
-                <div key={charId}>
-                  {link && (
-                    <div className="flex flex-row gap-4">
-                      <Button asChild variant="ghost">
-                        <Link
-                          to={`/profile/${user.id}/c/${charId}/sessions/${link.sessionId}`}
-                        >
-                          View Session
-                        </Link>
-                      </Button>
-                      <Button asChild variant="ghost">
-                        <Link
-                          to={`/profile/${user.id}/c/${charId}/loadouts/${link.snapshotId}`}
-                        >
-                          View Loadout
-                        </Link>
-                      </Button>
-                    </div>
-                  )}
-                  <PlayerCard
-                    key={charId}
-                    performance={perf}
-                    user={user}
-                    snapshot={snapshots[charId]}
-                  />
-                </div>
+                <PlayerCard
+                  key={charId}
+                  performance={perf}
+                  user={user}
+                  snapshot={snapshots[charId]}
+                  characterId={charId}
+                  sessionId={link?.sessionId}
+                  snapshotId={link?.snapshotId}
+                  collapsible={true}
+                  defaultOpen={false}
+                />
               );
             })}
           </div>

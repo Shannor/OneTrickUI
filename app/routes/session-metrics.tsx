@@ -10,6 +10,7 @@ import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
 import { useSessionData } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 import { generatePerformancePerMap, timeWindowToCustom } from '~/lib/metrics';
 import { Performance } from '~/organisims/performance';
 
@@ -151,7 +152,7 @@ function groupAggregates(
               state[link.snapshotId] = [current];
             }
           } else {
-            console.warn(
+            Logger.warn(
               "Applied confidence level to aggregate but didn't have a snapshotId",
             );
           }

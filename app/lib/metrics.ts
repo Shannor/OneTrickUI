@@ -171,9 +171,7 @@ export function generateKDAResultsForTimeWindow(
   filterBy?: GameMode,
 ): KDAResult[] {
   const { intervals, intervalRate } = getTimes(time);
-  console.log('in function', time, aggregates, intervalRate, intervals);
   const aggs = sortAggregates(time, aggregates, filterBy);
-  console.log(aggs, 'length', aggs.length);
   const values = aggs.reduce<Record<string, KDA>>((acc, agg) => {
     const p = agg.performance[characterId];
     if (!p) {

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { getAuth } from '~/.server/auth';
 import { mergeSnapshots } from '~/api';
+import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/merge-loadout';
 
@@ -21,7 +22,7 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (!submission.success) {
     return { error: 'Invalid submission' };
   }
-  console.log('Merging loadouts:', submission.data);
+  Logger.info({ data: submission.data }, 'Merging loadouts');
   await mergeSnapshots({
     path: {
       snapshotId: submission.data.baseLoadoutId,
