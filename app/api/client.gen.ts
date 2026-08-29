@@ -19,4 +19,24 @@ export type CreateClientConfig<T extends ClientOptions = ClientOptions2> = (
   override?: Config<ClientOptions & T>,
 ) => Config<Required<ClientOptions> & T>;
 
-export const client = createClient(createConfig<ClientOptions2>());
+const getDefaultBaseUrl = () => {
+  if (typeof process !== 'undefined' && process.env?.API_URL) {
+    return process.env.API_URL;
+  }
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (
+    typeof import.meta !== 'undefined' &&
+    import.meta.env?.MODE === 'development'
+  ) {
+    return 'http://localhost:8080';
+  }
+  return 'https://api.d2onetrick.com';
+};
+
+export const client = createClient(
+  createConfig<ClientOptions2>({
+    baseUrl: getDefaultBaseUrl(),
+  }),
+);

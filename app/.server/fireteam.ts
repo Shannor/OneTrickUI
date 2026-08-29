@@ -1,13 +1,6 @@
 import { getAuth } from '~/.server/auth';
 import { getPreferences } from '~/.server/preferences';
-import { type Character, type FireteamMember, getFireteam } from '~/api';
-
-// Create properly tagged union types
-interface MembershipCharacters {
-  membershipId: string;
-  userId: string;
-  characters: Character[];
-}
+import { type FireteamMember, getFireteam } from '~/api';
 
 // The failure response
 interface FailureResponse {
@@ -27,24 +20,46 @@ interface SuccessResponse {
 }
 
 type Response = SuccessResponse | FailureResponse;
+
 export async function getFireteamData(request: Request): Promise<Response> {
   const auth = await getAuth(request);
   if (!auth) {
-    throw new Error('Not authenticated');
-  }
-  const { data: fireteam, error } = await getFireteam({
-    headers: {
-      Authorization: `Bearer ${auth.accessToken}`,
-      'X-Membership-ID': auth.membershipId,
-      'X-User-ID': auth.id,
-    },
-  });
-  if (error) {
     return {
       status: 'error',
-      error: error.message,
+      error: 'Not authenticated',
     };
   }
-  const { fireteam: selectedCharacters } = await getPreferences(request);
-  return { fireteam, selectedCharacters, status: 'success' };
+  try {
+    const { data: fireteam, error } = await getFireteam({
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        'X-Membership-ID': auth.primaryMembershipId || auth.membershipId,
+        'X-User-ID': auth.id,
+      },
+    });
+    if (error) {
+      const errorMessage =
+        typeof error === 'string'
+          ? error
+          : ((error as { message?: string })?.message ??
+            'Failed to fetch fireteam');
+      return {
+        status: 'error',
+        error: errorMessage,
+      };
+    }
+    const { fireteam: selectedCharacters } = await getPreferences(request);
+    return {
+      fireteam: Array.isArray(fireteam) ? fireteam : [],
+      selectedCharacters,
+      status: 'success',
+    };
+  } catch (err: unknown) {
+    const errorMessage =
+      err instanceof Error ? err.message : 'Failed to fetch fireteam';
+    return {
+      status: 'error',
+      error: errorMessage,
+    };
+  }
 }

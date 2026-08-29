@@ -57,7 +57,8 @@ export function FireteamPreview({
           <div className="text-center">Currently Offline...</div>
         )}
         {fireteam.map((m) => {
-          const characterId = selectedCharacters?.[m.membershipId];
+          const characterId =
+            selectedCharacters?.[m.id] ?? selectedCharacters?.[m.membershipId];
           const character = membershipToCharacters[
             m.membershipId
           ]?.characters.find((it) => it.id === characterId);
