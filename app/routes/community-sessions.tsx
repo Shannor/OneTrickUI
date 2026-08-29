@@ -181,12 +181,12 @@ export function CommunitySessionsPage() {
 
   return (
     <div className="flex w-full flex-1 flex-col justify-start gap-8">
-      <title>Sessions — One Trick</title>
+      <title>Sessions — 1 Trick</title>
       <meta
         name="description"
         content="Browse Destiny 2 PvP tracking sessions. View live player stats, loadouts, and game logs."
       />
-      <meta property="og:title" content="Sessions — One Trick" />
+      <meta property="og:title" content="Sessions — 1 Trick" />
       <meta
         property="og:description"
         content="Browse Destiny 2 PvP tracking sessions. View live player stats, loadouts, and game logs."
@@ -194,146 +194,224 @@ export function CommunitySessionsPage() {
       <meta property="og:type" content="website" />
       <meta property="og:url" content="https://d2onetrick.com/sessions" />
       <link rel="canonical" href="https://d2onetrick.com/sessions" />
-      {/* Header section */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-            <Users className="h-8 w-8 text-primary" />
-            Sessions
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Browse PvP tracking sessions logged by Guardians across the
-            community.
-          </p>
-        </div>
+      <CommunitySessionsHeader
+        actionUrl={actionUrl}
+        actionLabel={actionLabel}
+      />
 
+      <CommunitySessionsFilterTabs
+        status={status}
+        page={page}
+        buildFilterUrl={buildFilterUrl}
+      />
+
+      <CommunitySessionsGrid
+        sessions={sessions}
+        profiles={profiles}
+        page={page}
+        auth={auth}
+        actionUrl={actionUrl}
+        actionLabel={actionLabel}
+        buildPageUrl={buildPageUrl}
+      />
+
+      {(page > 1 || hasNextPage) && (
+        <CommunitySessionsPagination
+          page={page}
+          hasNextPage={hasNextPage}
+          buildPageUrl={buildPageUrl}
+        />
+      )}
+    </div>
+  );
+}
+
+export function CommunitySessionsHeader({
+  actionUrl,
+  actionLabel,
+}: {
+  actionUrl: string;
+  actionLabel: string;
+}) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight md:text-4xl">
+          <Users className="h-8 w-8 text-primary" />
+          Sessions
+        </h1>
+        <p className="mt-1 text-muted-foreground">
+          Browse PvP tracking sessions logged by Guardians across the community.
+        </p>
+      </div>
+
+      <Link
+        to={actionUrl}
+        className={cn(
+          buttonVariants({ variant: 'default' }),
+          'shrink-0 text-sm font-semibold',
+        )}
+      >
+        {actionLabel}
+      </Link>
+    </div>
+  );
+}
+
+export function CommunitySessionsFilterTabs({
+  status,
+  page,
+  buildFilterUrl,
+}: {
+  status: string;
+  page: number;
+  buildFilterUrl: (newStatus: string) => string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+      <div className="flex items-center gap-2">
         <Link
-          to={actionUrl}
+          to={buildFilterUrl('all')}
           className={cn(
-            buttonVariants({ variant: 'default' }),
-            'shrink-0 text-sm font-semibold',
+            buttonVariants({
+              variant: status === 'all' ? 'default' : 'outline',
+              size: 'sm',
+            }),
           )}
         >
-          {actionLabel}
+          All Sessions
+        </Link>
+        <Link
+          to={buildFilterUrl('pending')}
+          className={cn(
+            buttonVariants({
+              variant: status === 'pending' ? 'default' : 'outline',
+              size: 'sm',
+            }),
+          )}
+        >
+          Active Only
+        </Link>
+        <Link
+          to={buildFilterUrl('complete')}
+          className={cn(
+            buttonVariants({
+              variant: status === 'complete' ? 'default' : 'outline',
+              size: 'sm',
+            }),
+          )}
+        >
+          Completed Only
         </Link>
       </div>
 
-      {/* Filter Tabs / Status Filter */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-        <div className="flex items-center gap-2">
+      <span className="text-xs font-medium text-muted-foreground">
+        Page {page}
+      </span>
+    </div>
+  );
+}
+
+export function CommunitySessionsGrid({
+  sessions,
+  profiles,
+  page,
+  auth,
+  actionUrl,
+  actionLabel,
+  buildPageUrl,
+}: {
+  sessions: Session[];
+  profiles: Record<string, Profile>;
+  page: number;
+  auth: any;
+  actionUrl: string;
+  actionLabel: string;
+  buildPageUrl: (page: number) => string;
+}) {
+  if (sessions.length === 0) {
+    return (
+      <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+        <Users className="mb-4 h-12 w-12 text-muted-foreground/50" />
+        <h3 className="text-xl font-semibold">No Sessions Found</h3>
+        <p className="mt-2 max-w-md text-balance text-sm text-muted-foreground">
+          {page > 1
+            ? 'No sessions found on this page. Try navigating back to earlier pages.'
+            : auth
+              ? 'No community sessions found matching your filter. Head over to your sessions page to start tracking!'
+              : 'No community sessions found matching your filter. Sign in to start your own tracking session!'}
+        </p>
+
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          {page > 1 && (
+            <Button asChild variant="outline">
+              <Link to={buildPageUrl(1)}>Back to Page 1</Link>
+            </Button>
+          )}
           <Link
-            to={buildFilterUrl('all')}
+            to={actionUrl}
             className={cn(
-              buttonVariants({
-                variant: status === 'all' ? 'default' : 'outline',
-                size: 'sm',
-              }),
+              buttonVariants({ variant: 'default' }),
+              'font-medium',
             )}
           >
-            All Sessions
-          </Link>
-          <Link
-            to={buildFilterUrl('pending')}
-            className={cn(
-              buttonVariants({
-                variant: status === 'pending' ? 'default' : 'outline',
-                size: 'sm',
-              }),
-            )}
-          >
-            Active Only
-          </Link>
-          <Link
-            to={buildFilterUrl('complete')}
-            className={cn(
-              buttonVariants({
-                variant: status === 'complete' ? 'default' : 'outline',
-                size: 'sm',
-              }),
-            )}
-          >
-            Completed Only
+            {actionLabel}
           </Link>
         </div>
-
-        <span className="text-xs font-medium text-muted-foreground">
-          Page {page}
-        </span>
       </div>
+    );
+  }
 
-      {/* Sessions Grid / Empty State */}
-      {sessions.length === 0 ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-          <Users className="mb-4 h-12 w-12 text-muted-foreground/50" />
-          <h3 className="text-xl font-semibold">No Sessions Found</h3>
-          <p className="mt-2 max-w-md text-balance text-sm text-muted-foreground">
-            {page > 1
-              ? 'No sessions found on this page. Try navigating back to earlier pages.'
-              : auth
-                ? 'No community sessions found matching your filter. Head over to your sessions page to start tracking!'
-                : 'No community sessions found matching your filter. Sign in to start your own tracking session!'}
-          </p>
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {sessions.map((session) => (
+        <ActiveSessionCard
+          key={session.id}
+          session={session}
+          profile={profiles[session.userId]}
+        />
+      ))}
+    </div>
+  );
+}
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            {page > 1 && (
-              <Button asChild variant="outline">
-                <Link to={buildPageUrl(1)}>Back to Page 1</Link>
-              </Button>
-            )}
-            <Link
-              to={actionUrl}
-              className={cn(
-                buttonVariants({ variant: 'default' }),
-                'font-medium',
-              )}
-            >
-              {actionLabel}
-            </Link>
-          </div>
-        </div>
+export function CommunitySessionsPagination({
+  page,
+  hasNextPage,
+  buildPageUrl,
+}: {
+  page: number;
+  hasNextPage: boolean;
+  buildPageUrl: (page: number) => string;
+}) {
+  return (
+    <div className="flex items-center justify-between border-t pt-4">
+      {page <= 1 ? (
+        <Button disabled variant="outline" size="sm">
+          <ChevronLeft className="mr-1 h-4 w-4" /> Previous Page
+        </Button>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {sessions.map((session) => (
-            <ActiveSessionCard
-              key={session.id}
-              session={session}
-              profile={profiles[session.userId]}
-            />
-          ))}
-        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to={buildPageUrl(page - 1)}>
+            <ChevronLeft className="mr-1 h-4 w-4" /> Previous Page
+          </Link>
+        </Button>
       )}
 
-      {/* Pagination controls */}
-      {(page > 1 || hasNextPage) && (
-        <div className="flex items-center justify-between border-t pt-4">
-          {page <= 1 ? (
-            <Button disabled variant="outline" size="sm">
-              <ChevronLeft className="mr-1 h-4 w-4" /> Previous Page
-            </Button>
-          ) : (
-            <Button asChild variant="outline" size="sm">
-              <Link to={buildPageUrl(page - 1)}>
-                <ChevronLeft className="mr-1 h-4 w-4" /> Previous Page
-              </Link>
-            </Button>
-          )}
+      <span className="text-xs font-semibold text-muted-foreground">
+        Page {page}
+      </span>
 
-          <span className="text-xs font-semibold text-muted-foreground">
-            Page {page}
-          </span>
-
-          {!hasNextPage ? (
-            <Button disabled variant="outline" size="sm">
-              Next Page <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button asChild variant="outline" size="sm">
-              <Link to={buildPageUrl(page + 1)}>
-                Next Page <ChevronRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          )}
-        </div>
+      {!hasNextPage ? (
+        <Button disabled variant="outline" size="sm">
+          Next Page <ChevronRight className="ml-1 h-4 w-4" />
+        </Button>
+      ) : (
+        <Button asChild variant="outline" size="sm">
+          <Link to={buildPageUrl(page + 1)}>
+            Next Page <ChevronRight className="ml-1 h-4 w-4" />
+          </Link>
+        </Button>
       )}
     </div>
   );

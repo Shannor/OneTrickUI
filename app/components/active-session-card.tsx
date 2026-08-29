@@ -106,9 +106,34 @@ export function ActiveSessionCard({
                 Games Logged
               </span>
               <span className="font-bold text-foreground">
-                {(session.aggregateIds?.length ?? 0).toString()}
+                {(
+                  session.summary?.totalMatches ??
+                  session.aggregateIds?.length ??
+                  0
+                ).toString()}
               </span>
             </div>
+
+            {session.summary?.winRate != null && (
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Win Rate</span>
+                <span className="font-semibold text-foreground">
+                  {session.summary.winRate <= 1
+                    ? Math.round(session.summary.winRate * 100)
+                    : Math.round(session.summary.winRate)}
+                  %
+                </span>
+              </div>
+            )}
+
+            {session.summary?.kdRatio != null && (
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>K/D Ratio</span>
+                <span className="font-semibold text-foreground">
+                  {session.summary.kdRatio.toFixed(2)}
+                </span>
+              </div>
+            )}
 
             {isPending && startTime && (
               <div className="text-muted-foreground">

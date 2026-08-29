@@ -222,7 +222,7 @@ export function App() {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
-      <body style={{ height: '100vh' }}>
+      <body className="min-h-screen w-full max-w-full overflow-x-hidden bg-background font-sans text-foreground antialiased">
         <Outlet />
         <Toaster />
         <ScrollRestoration />

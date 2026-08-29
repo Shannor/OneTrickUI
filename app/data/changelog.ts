@@ -22,6 +22,10 @@ export const CHANGELOG: ReleaseNote[] = [
       'Easily manage sessions and loadouts with streamlined delete dialogs, instant link sharing, non-blocking form saves, and visual toast notifications.',
     changes: [
       {
+        type: 'improvement',
+        text: 'View comprehensive session performance summaries—including matches played, win rate, K/D ratios, game modes, and top weapons—at a glance directly from the session list.',
+      },
+      {
         type: 'feature',
         text: 'Easily delete unwanted sessions or loadout snapshots with a quick confirmation prompt.',
       },

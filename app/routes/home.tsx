@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader } from '~/components/ui/card';
 import { WeaponStats } from '~/components/weapon-stats';
 import { getDetailWeapons, getExotic } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
+import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
 import { SubClassProvider } from '~/providers/sub-class-provider';
@@ -49,6 +50,7 @@ export async function loader({ params }: Route.LoaderArgs) {
       error: undefined,
     };
   } catch (e) {
+    Logger.error(e, 'Failed to load home page data');
     return {
       sessions: [],
       loadouts: { items: [], count: {}, stats: {} },
@@ -101,7 +103,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             {type === 'viewer' ? 'Viewing' : 'Welcome'} {profile.displayName}!
           </h2>
 
-          {/* Last 3 Sessions Section */}
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
@@ -118,7 +119,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             </div>
 
             {sessions.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4">
                 {sessions.map((s) => (
                   <SessionCard
                     key={s.id}
@@ -139,7 +140,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             )}
           </section>
 
-          {/* Top 3 Loadouts Section */}
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
@@ -258,4 +258,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       </div>
     );
   }
+
+  return null;
 }
