@@ -7,17 +7,9 @@ import {
 import { Link, useFetcher, useNavigate } from 'react-router';
 import { type Session, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
-import { FormattedDate } from '~/components/formatted-date';
 import { LoadingButton } from '~/components/loading-button';
 import { SessionCard } from '~/components/session-card';
-import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { cn } from '~/lib/utils';
 
@@ -84,10 +76,10 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
     : `${profile?.displayName ?? 'Guardian'}'s Sessions`;
 
   return (
-    <div className="flex flex-col gap-8">
-      <title>{`${pageTitle} - One Trick`}</title>
-      <meta property="og:title" content={`${pageTitle} - One Trick`} />
-      <meta name="description" content="View and manage one trick sessions." />
+    <div className="flex w-full max-w-full flex-col gap-8 overflow-hidden">
+      <title>{`${pageTitle} - 1 Trick`}</title>
+      <meta property="og:title" content={`${pageTitle} - 1 Trick`} />
+      <meta name="description" content="View and manage 1 Trick sessions." />
       <div className="flex flex-col justify-between gap-4 md:flex-row">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
@@ -96,26 +88,7 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
         </div>
         {isOwner && (
           <div className="flex flex-row gap-4">
-            {!hasCurrentSession ? (
-              <Form
-                method="post"
-                action="/action/start-session"
-                className="w-full"
-              >
-                <input type="hidden" name="characterId" value={characterId} />
-                <input type="hidden" name="userId" value={userId} />
-                <LoadingButton
-                  type="submit"
-                  variant="default"
-                  disabled={!characterId || isSubmitting}
-                  isLoading={isSubmitting}
-                  className={cn('w-full lg:w-auto')}
-                >
-                  <PlusIcon className="h-4 w-4" />
-                  Start Session
-                </LoadingButton>
-              </Form>
-            ) : (
+            {hasCurrentSession ? (
               <Form
                 method="post"
                 action="/action/end-session"
@@ -132,6 +105,25 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
                 >
                   <StopCircleIcon className="h-4 w-4" />
                   Stop Session
+                </LoadingButton>
+              </Form>
+            ) : (
+              <Form
+                method="post"
+                action="/action/start-session"
+                className="w-full"
+              >
+                <input type="hidden" name="characterId" value={characterId} />
+                <input type="hidden" name="userId" value={userId} />
+                <LoadingButton
+                  type="submit"
+                  variant="default"
+                  disabled={!characterId || isSubmitting}
+                  isLoading={isSubmitting}
+                  className={cn('w-full lg:w-auto')}
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Start Session
                 </LoadingButton>
               </Form>
             )}
@@ -191,31 +183,51 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
             />
           ))}
       </div>
-      <div className="flex flex-row justify-between gap-4 self-end">
+      <div className="flex w-full flex-row items-center justify-between gap-3 sm:w-auto sm:self-end">
         {page <= 1 ? (
-          <Button disabled variant="outline">
+          <Button
+            disabled
+            variant="outline"
+            size="sm"
+            className="sm:size-default"
+          >
             <ChevronLeft />
-            Previous Page
+            <span>Previous</span>
           </Button>
         ) : (
-          <Button asChild variant="outline">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="sm:size-default"
+          >
             <Link to={page - 1 === 1 ? '?' : `?page=${page - 1}`}>
               <ChevronLeft />
-              Previous Page
+              <span>Previous</span>
             </Link>
           </Button>
         )}
-        {data.length !== 10 ? (
-          <Button disabled variant="outline">
-            Next Page
-            <ChevronRight />
-          </Button>
-        ) : (
-          <Button asChild variant="outline">
+        {data.length === 10 ? (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="sm:size-default"
+          >
             <Link to={`?page=${page + 1}`}>
-              Next Page
+              <span>Next</span>
               <ChevronRight />
             </Link>
+          </Button>
+        ) : (
+          <Button
+            disabled
+            variant="outline"
+            size="sm"
+            className="sm:size-default"
+          >
+            <span>Next</span>
+            <ChevronRight />
           </Button>
         )}
       </div>
@@ -228,23 +240,18 @@ function CurrentSession({
   onClick,
 }: {
   data?: Session;
-  onClick?: () => void;
+  onClick: () => void;
 }) {
   if (!data) {
     return null;
   }
   return (
-    <Card onClick={onClick} className="cursor-pointer" key={data.id}>
-      <CardHeader className="flex flex-col gap-4">
-        <CardTitle className="flex flex-row items-center gap-4">
-          <Badge className="animate-pulse">Active</Badge>
-          {data.name}
-        </CardTitle>
-        <CardDescription className="flex flex-row items-center gap-4 text-lg">
-          <FormattedDate date={data.startedAt} />
-        </CardDescription>
-      </CardHeader>
-    </Card>
+    <div className="flex flex-col gap-2">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
+        Active Session
+      </h3>
+      <SessionCard session={data} onClick={onClick} />
+    </div>
   );
 }
 

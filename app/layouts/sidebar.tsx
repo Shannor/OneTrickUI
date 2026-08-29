@@ -300,14 +300,14 @@ export function Sidebar() {
         }
       />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 md:h-16">
-          <div className="flex items-center gap-2 px-2.5 sm:px-4">
-            <SidebarTrigger className="-ml-1" />
+        <header className="flex h-14 w-full min-w-0 max-w-full shrink-0 items-center justify-between gap-1.5 overflow-hidden px-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 sm:px-4 md:h-16">
+          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+            <SidebarTrigger className="-ml-1 shrink-0" />
             {canGoBack && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 md:hidden"
+                className="h-7 w-7 shrink-0 md:hidden"
                 onClick={() =>
                   handleBackNavigation(navigate, location.pathname, params)
                 }
@@ -319,12 +319,12 @@ export function Sidebar() {
             )}
             <AppBreadcrumbs />
           </div>
-          <div className="flex items-center gap-2 px-2.5 sm:px-4">
+          <div className="flex shrink-0 items-center gap-1.5">
             <ChangelogModal />
             <ModeToggle />
           </div>
         </header>
-        <div className="relative flex w-full flex-1 flex-col overflow-y-auto px-2.5 pb-4 sm:px-6 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
+        <div className="relative flex w-full min-w-0 max-w-full flex-1 flex-col overflow-y-auto overflow-x-hidden px-2.5 pb-4 sm:px-6 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
           {isNavigating ? (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
               <div className="flex items-center gap-3 rounded-md border bg-background/80 px-4 py-3 shadow-sm">

@@ -109,6 +109,26 @@ export type AuditField = {
   username: string;
 };
 
+export type SessionWeaponSummary = {
+  name?: string;
+  icon?: string;
+  kills?: number;
+};
+
+export type SessionSummary = {
+  totalMatches?: number;
+  wins?: number;
+  losses?: number;
+  winRate?: number;
+  kills?: number;
+  deaths?: number;
+  assists?: number;
+  kdRatio?: number;
+  kdaRatio?: number;
+  modesPlayed?: Array<string>;
+  topWeapons?: Array<SessionWeaponSummary>;
+};
+
 export type Session = {
   id: string;
   startedAt: Date;
@@ -124,6 +144,7 @@ export type Session = {
    * List of aggregates linked to this session
    */
   aggregateIds: Array<string>;
+  summary?: SessionSummary;
 };
 
 export type BaseItemInfo = {
@@ -542,6 +563,7 @@ export type SessionWritable = {
   aggregateIds: Array<string>;
   lastSeenActivityId?: string;
   lastSeenTimestamp?: Date;
+  summary?: SessionSummary;
 };
 
 export type XUserId = string;

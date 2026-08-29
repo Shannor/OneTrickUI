@@ -155,6 +155,8 @@ export type {
   SearchResponses,
   SearchUserResult,
   Session,
+  SessionSummary,
+  SessionWeaponSummary,
   SessionWritable,
   SnapshotLink,
   Socket,
