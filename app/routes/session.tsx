@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
-import { FormattedDate } from '~/components/formatted-date';
+import { SessionDate } from '~/components/session-date';
 import { SessionHeaderActions } from '~/components/session-header-actions';
 import { SessionUpdateForm } from '~/components/session-update-form';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
@@ -167,15 +167,11 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             {isCurrent && <Badge className="animate-pulse">Active</Badge>}
-            <div className="text-sm text-muted-foreground">
-              <FormattedDate date={session.startedAt} />
-              {session.completedAt && (
-                <>
-                  {' - '}
-                  <FormattedDate date={session.completedAt} />
-                </>
-              )}
-            </div>
+            <SessionDate
+              startedAt={session.startedAt}
+              completedAt={session.completedAt}
+              className="text-sm"
+            />
           </div>
 
           <SessionHeaderActions

@@ -83,7 +83,7 @@ describe('SessionCard', () => {
     render(<SessionCard session={mockLegacySession} onClick={handleClick} />);
 
     expect(screen.getByText('Legacy Session')).toBeInTheDocument();
-    expect(screen.getByText('Games Logged:')).toBeInTheDocument();
+    expect(screen.getByText('Matches:')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 

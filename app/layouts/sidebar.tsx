@@ -265,7 +265,7 @@ export function Sidebar() {
               <Logo className="h-10 w-auto" alt="D2 One Trick logo" />
             </div>
             <div className="grid flex-1 text-left leading-tight">
-              <span className="truncate text-lg font-bold">
+              <span className="truncate font-heading text-xl font-bold tracking-wider">
                 <span className="text-primary">1</span>
                 Trick
               </span>

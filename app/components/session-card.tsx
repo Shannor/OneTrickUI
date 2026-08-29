@@ -1,8 +1,6 @@
-import { format, formatDistance } from 'date-fns';
 import {
   ArrowRightIcon,
   CheckCircle2Icon,
-  ClockIcon,
   CrosshairIcon,
   Gamepad2Icon,
   RadioIcon,
@@ -10,6 +8,7 @@ import {
   TrophyIcon,
 } from 'lucide-react';
 import type { Session, SessionSummary, SessionWeaponSummary } from '~/api';
+import { SessionDate } from '~/components/session-date';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import {
@@ -60,9 +59,6 @@ export function SessionCardHeader({
   session: Session;
   isPending: boolean;
 }) {
-  const startDate = session.startedAt ? new Date(session.startedAt) : null;
-  const endDate = session.completedAt ? new Date(session.completedAt) : null;
-
   return (
     <div className="flex w-full min-w-0 flex-col gap-2 border-b border-border/50 pb-3.5">
       <div className="flex min-w-0 items-start justify-between gap-3">
@@ -94,19 +90,10 @@ export function SessionCardHeader({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground lg:text-sm">
-        {startDate && (
-          <span className="flex shrink-0 items-center gap-1">
-            <ClockIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground lg:h-4 lg:w-4" />
-            {format(startDate, 'MMM d, yyyy')}
-          </span>
-        )}
-        {startDate && endDate && (
-          <span className="shrink-0 font-medium text-foreground">
-            ({formatDistance(startDate, endDate)})
-          </span>
-        )}
-      </div>
+      <SessionDate
+        startedAt={session.startedAt}
+        completedAt={session.completedAt}
+      />
     </div>
   );
 }
@@ -140,12 +127,12 @@ export function SessionCardSummary({ summary }: { summary: SessionSummary }) {
     <div className="flex w-full min-w-0 flex-col gap-4 lg:gap-5">
       <div className="grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 md:divide-x md:divide-border/60">
         <div className="flex min-w-0 flex-col gap-1 md:pr-4 lg:pr-6">
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground lg:text-sm">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
             <Gamepad2Icon className="h-3.5 w-3.5 shrink-0 text-primary lg:h-4 lg:w-4" />
             Matches
           </span>
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-xl font-extrabold tracking-tight text-foreground sm:text-2xl lg:text-3xl">
+            <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
               {totalMatches}
             </span>
             <span className="text-xs font-medium text-muted-foreground lg:text-sm">
@@ -155,12 +142,12 @@ export function SessionCardSummary({ summary }: { summary: SessionSummary }) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-1 md:px-4 lg:px-6">
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground lg:text-sm">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
             <TrophyIcon className="h-3.5 w-3.5 shrink-0 text-primary lg:h-4 lg:w-4" />
             Win Rate
           </span>
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-xl font-extrabold tracking-tight text-foreground sm:text-2xl lg:text-3xl">
+            <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
               {calculatedWinRate}%
             </span>
             <span
@@ -177,12 +164,12 @@ export function SessionCardSummary({ summary }: { summary: SessionSummary }) {
         </div>
 
         <div className="col-span-2 flex min-w-0 flex-col gap-1 sm:col-span-1 md:px-4 lg:px-6">
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground lg:text-sm">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
             <CrosshairIcon className="h-3.5 w-3.5 shrink-0 text-primary lg:h-4 lg:w-4" />
             K / D
           </span>
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-xl font-extrabold tracking-tight text-foreground sm:text-2xl lg:text-3xl">
+            <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
               {summary.kdRatio == null ? '--' : summary.kdRatio.toFixed(2)}
             </span>
             {summary.kdaRatio != null && (
@@ -298,8 +285,10 @@ export function SessionCardFallback({ session }: { session: Session }) {
   return (
     <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground lg:text-base">
       <Gamepad2Icon className="h-4 w-4 shrink-0 text-primary lg:h-5 lg:w-5" />
-      <span>Games Logged:</span>
-      <span className="font-bold text-foreground">{gamesCount}</span>
+      <span>Matches:</span>
+      <span className="font-heading text-lg font-bold text-foreground">
+        {gamesCount}
+      </span>
     </div>
   );
 }

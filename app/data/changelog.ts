@@ -23,6 +23,14 @@ export const CHANGELOG: ReleaseNote[] = [
     changes: [
       {
         type: 'improvement',
+        text: 'Enhanced visual identity with a futuristic boxy header font (Iceland) paired with clean body text (Inter) across titles, sidebar branding, and stat callouts.',
+      },
+      {
+        type: 'improvement',
+        text: 'Standardized numeric stat callouts (Matches, Win Rate, K/D, Efficiency) and uppercase HUD labels across session feeds, game lists, and metrics summaries for improved readability.',
+      },
+      {
+        type: 'improvement',
         text: 'View comprehensive session performance summaries—including matches played, win rate, K/D ratios, game modes, and top weapons—at a glance directly from the session list.',
       },
       {

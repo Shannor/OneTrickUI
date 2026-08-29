@@ -118,15 +118,15 @@ export function SessionGames({ params }: Route.ComponentProps) {
               {!hasLoadout && (
                 <div
                   className={cn(
-                    'flex flex-row items-center gap-4 border-b-4 p-4',
+                    'flex flex-row items-center gap-4 py-2 text-sm text-muted-foreground',
                   )}
                 >
                   No Found Loadout for Games
                 </div>
               )}
               {snapshot && showLoadout && (
-                <div className={cn('flex flex-col gap-4 border-b-4 py-4')}>
-                  <div className="group flex flex-row gap-2">
+                <div className={cn('flex flex-col gap-4 pb-2 pt-4')}>
+                  <div className="group flex flex-row items-center gap-2">
                     <Link
                       to={`/profile/${id}/c/${characterId}/loadouts/${snapshot.id}`}
                     >
@@ -152,7 +152,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
                 </div>
               )}
               <div
-                className="group flex w-full flex-col gap-4 rounded-lg border p-3 transition-colors hover:cursor-pointer hover:bg-muted/50 md:flex-row md:items-center md:gap-6 md:p-4"
+                className="group flex w-full flex-col gap-4 rounded-lg bg-card p-3 transition-colors hover:cursor-pointer hover:bg-muted/50 md:flex-row md:items-center md:gap-6 md:p-4"
                 onClick={() => {
                   navigate(
                     `/profile/${id}/c/${characterId}/activities/${activityDetails.instanceId}`,

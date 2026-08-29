@@ -1,10 +1,18 @@
 import { format, formatDistance } from 'date-fns';
-import { ArrowRight, CheckCircle2, Gamepad2, Radio } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Crosshair,
+  Gamepad2,
+  Radio,
+  Trophy,
+} from 'lucide-react';
 import { Link } from 'react-router';
 import type { Profile, Session } from '~/api';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { useHydrated } from '~/hooks/use-hydrated';
+import { setBungieUrl } from '~/lib/utils';
 
 export interface ActiveSessionCardProps {
   session: Session;
@@ -101,11 +109,11 @@ export function ActiveSessionCard({
 
           <div className="space-y-2 border-t pt-3 text-xs">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 uppercase tracking-wider">
                 <Gamepad2 className="h-3.5 w-3.5 text-muted-foreground" />
-                Games Logged
+                Matches
               </span>
-              <span className="font-bold text-foreground">
+              <span className="font-heading text-lg font-bold tracking-wide text-foreground">
                 {(
                   session.summary?.totalMatches ??
                   session.aggregateIds?.length ??
@@ -116,8 +124,11 @@ export function ActiveSessionCard({
 
             {session.summary?.winRate != null && (
               <div className="flex items-center justify-between text-muted-foreground">
-                <span>Win Rate</span>
-                <span className="font-semibold text-foreground">
+                <span className="flex items-center gap-1.5 uppercase tracking-wider">
+                  <Trophy className="h-3.5 w-3.5 text-muted-foreground" />
+                  Win Rate
+                </span>
+                <span className="font-heading text-lg font-bold tracking-wide text-foreground">
                   {session.summary.winRate <= 1
                     ? Math.round(session.summary.winRate * 100)
                     : Math.round(session.summary.winRate)}
@@ -128,12 +139,56 @@ export function ActiveSessionCard({
 
             {session.summary?.kdRatio != null && (
               <div className="flex items-center justify-between text-muted-foreground">
-                <span>K/D Ratio</span>
-                <span className="font-semibold text-foreground">
+                <span className="flex items-center gap-1.5 uppercase tracking-wider">
+                  <Crosshair className="h-3.5 w-3.5 text-muted-foreground" />
+                  K/D Ratio
+                </span>
+                <span className="font-heading text-lg font-bold tracking-wide text-foreground">
                   {session.summary.kdRatio.toFixed(2)}
                 </span>
               </div>
             )}
+
+            {session.summary?.modesPlayed &&
+              session.summary.modesPlayed.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1 pt-1">
+                  {session.summary.modesPlayed.slice(0, 3).map((mode) => (
+                    <Badge
+                      key={mode}
+                      variant="secondary"
+                      className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
+                    >
+                      {mode}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+            {session.summary?.topWeapons &&
+              session.summary.topWeapons.length > 0 && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+                  {session.summary.topWeapons.slice(0, 3).map((w, idx) => {
+                    const iconUrl = setBungieUrl(w.icon);
+                    return (
+                      <div
+                        key={w.name || idx}
+                        className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground"
+                      >
+                        {iconUrl ? (
+                          <img
+                            src={iconUrl}
+                            alt={w.name || 'Weapon'}
+                            className="h-4 w-4 shrink-0 rounded object-cover"
+                          />
+                        ) : null}
+                        <span className="max-w-[85px] truncate font-medium">
+                          {w.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
             {isPending && startTime && (
               <div className="text-muted-foreground">

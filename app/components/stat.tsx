@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Label } from '~/components/label';
 import { cn } from '~/lib/utils';
 
@@ -26,7 +26,10 @@ export const Stat: React.FC<Props> = ({
     >
       <Label className={labelClassName}>{label}</Label>
       <h4
-        className={cn('text-xl font-semibold tracking-tight', valueClassName)}
+        className={cn(
+          'font-heading text-xl font-bold tracking-wide',
+          valueClassName,
+        )}
       >
         {value}
       </h4>

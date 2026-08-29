@@ -1,9 +1,7 @@
-import { format, formatDistance } from 'date-fns';
 import {
   Activity,
   ArrowRight,
   BarChart3,
-  Gamepad2,
   Radio,
   Swords,
   Users,
@@ -24,7 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { useHydrated } from '~/hooks/use-hydrated';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
@@ -180,7 +177,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function Landing({ loaderData }: Route.ComponentProps) {
-  const isHydrated = useHydrated();
   const [isLoading] = useIsNavigating();
   const {
     activeCount,
@@ -235,7 +231,7 @@ export function Landing({ loaderData }: Route.ComponentProps) {
       <div className="container mx-auto flex flex-col gap-4 px-4 pt-4 text-center">
         <Logo className="mx-auto mb-2 h-16 w-auto" alt="D2 One Trick logo" />
 
-        <h1 className="mx-auto max-w-4xl text-balance text-4xl font-extrabold uppercase tracking-wider text-foreground drop-shadow-sm sm:text-5xl md:text-6xl">
+        <h1 className="mx-auto max-w-4xl text-balance font-heading text-4xl font-extrabold uppercase tracking-wider text-foreground drop-shadow-sm sm:text-5xl md:text-6xl">
           <span className="text-primary">1</span> Trick
         </h1>
 
@@ -340,7 +336,9 @@ export function Landing({ loaderData }: Route.ComponentProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold">{activeCount}</div>
+                <div className="font-heading text-4xl font-bold tracking-wide">
+                  {activeCount}
+                </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Currently active & being tracked
                 </p>
@@ -359,7 +357,9 @@ export function Landing({ loaderData }: Route.ComponentProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold">{todayCount}</div>
+              <div className="font-heading text-4xl font-bold tracking-wide">
+                {todayCount}
+              </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 Sessions completed in last 24h
               </p>
@@ -373,7 +373,9 @@ export function Landing({ loaderData }: Route.ComponentProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold">{weekCount}</div>
+              <div className="font-heading text-4xl font-bold tracking-wide">
+                {weekCount}
+              </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 Sessions completed in last 7 days
               </p>
@@ -458,101 +460,14 @@ export function Landing({ loaderData }: Route.ComponentProps) {
             </p>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {recent.map((s) => {
-                const userProfile = recentProfiles[s.userId];
-                const character = userProfile?.characters?.find(
-                  (c) => c.id === s.characterId,
-                );
-                const completedTime = s.completedAt
-                  ? new Date(s.completedAt)
-                  : null;
-
-                return (
-                  <li key={s.id} className="text-left">
-                    <Link
-                      to={`/profile/${s.userId}/c/${s.characterId}/sessions/${s.id}`}
-                      className="group block h-full"
-                    >
-                      <Card className="flex h-full flex-col overflow-hidden border transition-all duration-200 hover:border-primary hover:shadow-lg">
-                        {character?.emblemBackgroundURL && (
-                          <div
-                            style={{
-                              backgroundImage: `url(${character.emblemBackgroundURL})`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                            }}
-                            className="relative flex min-h-[5rem] w-full items-center justify-between px-5 py-3"
-                          >
-                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
-                            <div className="relative z-10 flex min-w-0 flex-col justify-center gap-0.5 py-1">
-                              <span className="truncate text-base font-extrabold tracking-wide text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                                {userProfile?.displayName || 'Guardian'}
-                              </span>
-                              {character.currentTitle && (
-                                <div>
-                                  <span className="inline-block shrink-0 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-yellow-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                                    {character.currentTitle}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            {character.light != null && (
-                              <span className="relative z-10 shrink-0 text-base font-bold text-yellow-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                                {character.light.toString()}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        <CardContent className="flex flex-1 flex-col justify-between space-y-4 p-4">
-                          <div>
-                            <div className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                              {s.name || 'Completed Session'}
-                            </div>
-                            {character?.class ? (
-                              <div className="truncate text-xs font-semibold uppercase tracking-wider text-primary">
-                                {character.class}
-                              </div>
-                            ) : userProfile?.displayName ? (
-                              <div className="truncate text-xs font-semibold uppercase tracking-wider text-primary">
-                                {userProfile.displayName}
-                              </div>
-                            ) : null}
-                          </div>
-
-                          <div className="space-y-2 border-t pt-3 text-xs">
-                            <div className="flex items-center justify-between text-muted-foreground">
-                              <span className="flex items-center gap-1.5">
-                                <Gamepad2 className="h-3.5 w-3.5 text-muted-foreground" />
-                                Games Logged
-                              </span>
-                              <span className="font-bold text-foreground">
-                                {s.aggregateIds.length.toString()}
-                              </span>
-                            </div>
-
-                            {completedTime && (
-                              <div className="text-muted-foreground">
-                                Completed{' '}
-                                {isHydrated
-                                  ? formatDistance(completedTime, new Date(), {
-                                      addSuffix: true,
-                                    })
-                                  : format(completedTime, 'MMM d, yyyy')}
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-end gap-1 font-medium text-primary opacity-90 transition-opacity group-hover:underline group-hover:opacity-100">
-                              <span>View Session Stats</span>
-                              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  </li>
-                );
-              })}
+              {recent.map((s) => (
+                <li key={s.id} className="text-left">
+                  <ActiveSessionCard
+                    session={s}
+                    profile={recentProfiles[s.userId]}
+                  />
+                </li>
+              ))}
             </ul>
           )}
         </div>
