@@ -18,8 +18,8 @@ When creating or updating release notes in `app/data/changelog.ts`, all entries 
 
 2. **Avoid Technical Code Details**:
    - Do NOT mention variable names, component names, hooks, internal state, fetchers, refactoring details, or technical stack internals (e.g., avoid mentioning `useFetcher`, `useState`, `schema changes`, `refactored components`, etc.).
-   - Instead of *"Converted forms to useFetcher for non-blocking submission"*, write *"Save session and loadout updates instantly without full page reloads."*
-   - Instead of *"Added DeleteSessionDialog component with client action handler"*, write *"Easily delete unwanted sessions or loadout snapshots with a quick confirmation prompt."*
+   - Instead of _"Converted forms to useFetcher for non-blocking submission"_, write _"Save session and loadout updates instantly without full page reloads."_
+   - Instead of _"Added DeleteSessionDialog component with client action handler"_, write _"Easily delete unwanted sessions or loadout snapshots with a quick confirmation prompt."_
 
 3. **Classification Types**:
    - `feature`: A brand new capability or action the user can perform.
@@ -37,14 +37,14 @@ When creating or updating release notes in `app/data/changelog.ts`, all entries 
 
 ### Good (User-Centric)
 
-- ✅ *"Easily delete sessions and loadout snapshots directly from the header using the new trash icon action."*
-- ✅ *"Share your loadout links with a single click and instant clipboard copy feedback."*
-- ✅ *"Save session details without losing your place—updates now process seamlessly in the background."*
-- ✅ *"Get instant visual confirmation with toast notifications whenever you update a session or loadout."*
+- ✅ _"Easily delete sessions and loadout snapshots directly from the header using the new trash icon action."_
+- ✅ _"Share your loadout links with a single click and instant clipboard copy feedback."_
+- ✅ _"Save session details without losing your place—updates now process seamlessly in the background."_
+- ✅ _"Get instant visual confirmation with toast notifications whenever you update a session or loadout."_
 
 ### Bad (Code-Centric - Avoid)
 
-- ❌ *"Created DeleteSessionDialog component and added /action/delete-session route handler."*
-- ❌ *"Added share button rendering logic in LoadoutHeaderActions.tsx."*
-- ❌ *"Refactored forms to use fetcher.Form and useEffect hook for sonner toast calls."*
-- ❌ *"Applied md:max-w-md Tailwind class to shrink form container."*
+- ❌ _"Created DeleteSessionDialog component and added /action/delete-session route handler."_
+- ❌ _"Added share button rendering logic in LoadoutHeaderActions.tsx."_
+- ❌ _"Refactored forms to use fetcher.Form and useEffect hook for sonner toast calls."_
+- ❌ _"Applied md:max-w-md Tailwind class to shrink form container."_
