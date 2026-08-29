@@ -1,20 +1,28 @@
-import React from 'react';
+import type React from 'react';
 import type { CharacterSnapshot } from '~/api';
 import { Armor } from '~/components/armor';
+import { TooltipProvider } from '~/components/ui/tooltip';
 import { ArmorBuckets } from '~/constants/hashes';
 import { cn } from '~/lib/utils';
 
 interface Props {
   snapshot?: CharacterSnapshot;
   className?: string;
+  hideInlineStats?: boolean;
+  showHint?: boolean;
 }
 
 /**
- * ArmorSet: Renders the character's armor pieces in ArmorBuckets order.
+ * ArmorSet: Renders the character's armor pieces in ArmorBuckets order together.
  * - Helmet, Gauntlets, Chest, Legs, ClassItem
- * - Shows item name and its sockets via <Armor />
+ * - Hover / tap shows armor bar stats
  */
-export const ArmorSet: React.FC<Props> = ({ snapshot, className }) => {
+export const ArmorSet: React.FC<Props> = ({
+  snapshot,
+  className,
+  hideInlineStats = true,
+  showHint = true,
+}) => {
   if (!snapshot) return null;
 
   const items = [
@@ -30,10 +38,28 @@ export const ArmorSet: React.FC<Props> = ({ snapshot, className }) => {
   if (items.length === 0) return null;
 
   return (
-    <div className={cn('grid grid-cols-1 gap-3', className)}>
-      {items.map((item) => (
-        <Armor key={item.instanceId} {...item} />
-      ))}
-    </div>
+    <TooltipProvider font-sans>
+      <div className="flex w-full flex-col gap-2">
+        {showHint && (
+          <p className="text-xs font-medium text-muted-foreground">
+            💡 Hover or tap any armor piece to view exact stats
+          </p>
+        )}
+        <div
+          className={cn(
+            'grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5',
+            className,
+          )}
+        >
+          {items.map((item) => (
+            <Armor
+              key={item.instanceId || item.itemHash}
+              hideInlineStats={hideInlineStats}
+              {...item}
+            />
+          ))}
+        </div>
+      </div>
+    </TooltipProvider>
   );
 };

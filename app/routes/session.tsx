@@ -6,6 +6,7 @@ import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
 import { SessionDate } from '~/components/session-date';
 import { SessionHeaderActions } from '~/components/session-header-actions';
+import { SessionOverview } from '~/components/session-overview';
 import { SessionUpdateForm } from '~/components/session-update-form';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
@@ -62,7 +63,7 @@ type ISession = Awaited<ReturnType<typeof getSession>>;
 
 export function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
-  const { session, error, path } = loaderData;
+  const { session, aggregates, snapshots, error, path } = loaderData;
   const { characterId } = params;
   const isOwner = type === 'owner';
   const revalidator = useRevalidator();
@@ -203,6 +204,13 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
             )}
           </div>
         )}
+
+        <SessionOverview
+          session={session}
+          aggregates={aggregates}
+          snapshots={snapshots}
+          characterId={characterId}
+        />
 
         <Tabs value={currentTab}>
           <TabsList>

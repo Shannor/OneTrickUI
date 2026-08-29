@@ -1,20 +1,11 @@
 import { Link, useNavigate } from 'react-router';
 import { getBestPerformingLoadouts, getUserSessions } from '~/api';
-import { ArmorStats } from '~/components/armor-stats';
 import { Empty } from '~/components/empty';
-import { ItemSnapshot } from '~/components/item-snapshot';
-import { Label } from '~/components/label';
+import { LoadoutCard } from '~/components/loadout-card';
 import { SessionCard } from '~/components/session-card';
-import { Super } from '~/components/sub-class';
 import { Button } from '~/components/ui/button';
-import { Card, CardContent, CardHeader } from '~/components/ui/card';
-import { WeaponStats } from '~/components/weapon-stats';
-import { getDetailWeapons, getExotic } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
-import { cn } from '~/lib/utils';
-import { Performance, type StatItem } from '~/organisims/performance';
-import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/home';
 
@@ -28,7 +19,7 @@ export async function loader({ params }: Route.LoaderArgs) {
           userId: id,
         },
         query: {
-          count: BigInt(3),
+          count: BigInt(5),
           page: BigInt(0),
           characterId,
         },
@@ -87,6 +78,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     >;
     const countRecord = (loadouts?.count ?? {}) as Record<string, number>;
 
+    const activeSession = sessions.find((s) => s.status === 'pending');
+    const lastSession = sessions[0];
+    const featuredSession = activeSession ?? lastSession;
+    const displayedSessions = featuredSession ? [featuredSession] : [];
+
     return (
       <div>
         <title>{`${profile.displayName} - ${character?.class ?? 'Home'}`}</title>
@@ -106,7 +102,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-                Recent Sessions
+                {activeSession ? 'Active Session' : 'Recent Session'}
               </h3>
               {sessions.length > 0 && (
                 <Link
@@ -118,9 +114,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               )}
             </div>
 
-            {sessions.length > 0 ? (
+            {displayedSessions.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
-                {sessions.map((s) => (
+                {displayedSessions.map((s) => (
                   <SessionCard
                     key={s.id}
                     onClick={() => navigate(`sessions/${s.id}`)}
@@ -157,91 +153,15 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
             {topLoadouts.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
-                {topLoadouts.map((snapshot) => {
-                  const { armor } = getExotic(snapshot?.loadout);
-                  const weapons = getDetailWeapons(snapshot?.loadout);
-                  const kd = statsRecord[snapshot.id]?.kd?.value ?? 0;
-                  const kda = statsRecord[snapshot.id]?.kda?.value ?? 0;
-                  const winRatio =
-                    statsRecord[snapshot.id]?.standing?.value ?? 0;
-
-                  const stats: StatItem[] = [
-                    { label: 'K/D', value: kd.toFixed(2) },
-                    { label: 'Efficiency', value: kda.toFixed(2) },
-                    {
-                      label: 'Win Percentage',
-                      value: `${(winRatio * 100).toFixed(0)}%`,
-                      valueClassName:
-                        winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
-                    },
-                    {
-                      label: 'Games',
-                      value: countRecord[snapshot.id]?.toString() ?? '0',
-                    },
-                  ];
-
-                  return (
-                    <Card
-                      key={snapshot.id}
-                      className="cursor-pointer transition-all hover:border-primary hover:shadow-md"
-                      onClick={() => navigate(`loadouts/${snapshot.id}`)}
-                    >
-                      <CardHeader className="flex flex-col gap-1">
-                        <h4 className="text-xl font-semibold tracking-tight">
-                          {snapshot.name}
-                        </h4>
-                        {snapshot.description && (
-                          <div className="truncate text-sm text-muted-foreground">
-                            {snapshot.description}
-                          </div>
-                        )}
-                        <SubClassProvider snapshot={snapshot}>
-                          <Super />
-                        </SubClassProvider>
-                        <div className="flex flex-col flex-wrap gap-4 align-top lg:flex-row lg:items-center lg:align-middle">
-                          {weapons.map((item) => (
-                            <ItemSnapshot key={item.itemHash} item={item}>
-                              <div className="flex flex-col gap-4">
-                                <Label
-                                  className={cn(
-                                    'truncate',
-                                    item.details.baseInfo.tierTypeName ===
-                                      'Exotic'
-                                      ? 'text-yellow-500'
-                                      : 'text-purple-500',
-                                  )}
-                                >
-                                  {item.details.baseInfo.name}
-                                </Label>
-                                {item.details.stats && (
-                                  <WeaponStats stats={item.details.stats} />
-                                )}
-                              </div>
-                            </ItemSnapshot>
-                          ))}
-                          {armor && (
-                            <ItemSnapshot item={armor}>
-                              <div className="flex flex-col gap-4">
-                                <Label className="truncate text-yellow-500">
-                                  {armor.details.baseInfo.name}
-                                </Label>
-                                {armor.details.stats && (
-                                  <ArmorStats stats={armor.details.stats} />
-                                )}
-                              </div>
-                            </ItemSnapshot>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex flex-col items-start gap-10">
-                        <Performance
-                          stats={stats}
-                          className="flex flex-col flex-wrap items-start gap-4 align-top md:flex-row md:items-center md:align-middle"
-                        />
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {topLoadouts.map((snapshot) => (
+                  <LoadoutCard
+                    key={snapshot.id}
+                    snapshot={snapshot}
+                    stats={statsRecord[snapshot.id]}
+                    gamesCount={countRecord[snapshot.id] ?? 0}
+                    onClick={() => navigate(`loadouts/${snapshot.id}`)}
+                  />
+                ))}
               </div>
             ) : (
               <Empty

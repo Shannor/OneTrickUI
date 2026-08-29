@@ -1,12 +1,8 @@
 import { useRef } from 'react';
 import { Form, useLocation, useNavigate } from 'react-router';
 import { type GameMode, getBestPerformingLoadouts } from '~/api';
-import { ArmorStats } from '~/components/armor-stats';
 import { Empty } from '~/components/empty';
-import { ItemSnapshot } from '~/components/item-snapshot';
-import { Label } from '~/components/label';
-import { Super } from '~/components/sub-class';
-import { Card, CardContent, CardHeader } from '~/components/ui/card';
+import { LoadoutCard } from '~/components/loadout-card';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import {
@@ -16,13 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
-import { WeaponStats } from '~/components/weapon-stats';
-import { getDetailWeapons, getExotic } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
-import { cn } from '~/lib/utils';
-import { Performance, type StatItem } from '~/organisims/performance';
-import { SubClassProvider } from '~/providers/sub-class-provider';
 
 import type { Route } from './+types/loadouts';
 
@@ -181,88 +172,15 @@ export default function Loadouts({ loaderData }: Route.ComponentProps) {
         />
       )}
       <div className="grid grid-cols-1 gap-4">
-        {loadouts?.items?.map((snapshot) => {
-          const { armor } = getExotic(snapshot?.loadout);
-          const data = getDetailWeapons(snapshot?.loadout);
-          const kd = loadouts.stats[snapshot.id]?.kd?.value ?? 0;
-          const kda = loadouts.stats[snapshot.id]?.kda?.value ?? 0;
-          const winRatio = loadouts.stats[snapshot.id]?.standing?.value ?? 0;
-
-          const stats: StatItem[] = [
-            { label: 'K/D', value: kd.toFixed(2) },
-            { label: 'Efficiency', value: kda.toFixed(2) },
-            {
-              label: 'Win Percentage',
-              value: `${(winRatio * 100).toFixed(0)}%`,
-              valueClassName:
-                winRatio >= 0.5 ? 'text-green-500' : 'text-red-500',
-            },
-            {
-              label: 'Games',
-              value: loadouts.count[snapshot.id]?.toString() ?? '0',
-            },
-          ];
-          return (
-            <Card
-              key={snapshot.id}
-              className="cursor-pointer"
-              onClick={() => navigate(`${snapshot.id}`)}
-            >
-              <CardHeader className="flex flex-col gap-1">
-                <h2 className="text-xl font-semibold tracking-tight">
-                  {snapshot.name}
-                </h2>
-                {snapshot.description && (
-                  <div className="truncate text-sm text-muted-foreground">
-                    {snapshot.description}
-                  </div>
-                )}
-                <SubClassProvider snapshot={snapshot}>
-                  <Super />
-                </SubClassProvider>
-                <div className="flex flex-col flex-wrap gap-4 align-top lg:flex-row lg:items-center lg:align-middle">
-                  {data.map((item) => (
-                    <ItemSnapshot key={item.itemHash} item={item}>
-                      <div className="flex flex-col gap-4">
-                        <Label
-                          className={cn(
-                            'truncate',
-                            item.details.baseInfo.tierTypeName === 'Exotic'
-                              ? 'text-yellow-500'
-                              : 'text-purple-500',
-                          )}
-                        >
-                          {item.details.baseInfo.name}
-                        </Label>
-                        {item.details.stats && (
-                          <WeaponStats stats={item.details.stats} />
-                        )}
-                      </div>
-                    </ItemSnapshot>
-                  ))}
-                  {armor && (
-                    <ItemSnapshot item={armor}>
-                      <div className="flex flex-col gap-4">
-                        <Label className={cn('truncate text-yellow-500')}>
-                          {armor.details.baseInfo.name}
-                        </Label>
-                        {armor.details.stats && (
-                          <ArmorStats stats={armor.details.stats} />
-                        )}
-                      </div>
-                    </ItemSnapshot>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col items-start gap-10">
-                <Performance
-                  stats={stats}
-                  className="flex flex-col flex-wrap items-start gap-4 align-top md:flex-row md:items-center md:align-middle"
-                />
-              </CardContent>
-            </Card>
-          );
-        })}
+        {loadouts?.items?.map((snapshot) => (
+          <LoadoutCard
+            key={snapshot.id}
+            snapshot={snapshot}
+            stats={loadouts.stats[snapshot.id]}
+            gamesCount={loadouts.count[snapshot.id] ?? 0}
+            onClick={() => navigate(`${snapshot.id}`)}
+          />
+        ))}
       </div>
     </div>
   );

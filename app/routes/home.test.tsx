@@ -49,7 +49,7 @@ describe('Home Page Route Component', () => {
     render(<RouterProvider router={router} />);
 
     expect(screen.getByText(/welcome testguardian/i)).toBeInTheDocument();
-    expect(screen.getByText('Recent Sessions')).toBeInTheDocument();
+    expect(screen.getByText(/recent session/i)).toBeInTheDocument();
     expect(screen.getByText('Trials Run 1')).toBeInTheDocument();
     expect(screen.getByText('Get in the Crucible!')).toBeInTheDocument();
   });

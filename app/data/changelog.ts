@@ -23,6 +23,26 @@ export const CHANGELOG: ReleaseNote[] = [
     changes: [
       {
         type: 'improvement',
+        text: 'Updated the Overview page to feature a single active session or most recent session card instead of listing multiple past sessions.',
+      },
+      {
+        type: 'improvement',
+        text: 'Featured an interactive K/D and Efficiency timeline performance graph directly on the session overview page.',
+      },
+      {
+        type: 'improvement',
+        text: 'Added class stats radar charts and class armor loadout breakdowns with socket mods and individual stat bars on session views.',
+      },
+      {
+        type: 'improvement',
+        text: 'Redesigned Top Loadouts cards to showcase weapon and exotic gear icons along with item names and exotic rarity highlighting.',
+      },
+      {
+        type: 'improvement',
+        text: 'Standardized loadout performance metrics (Games, Win Rate, K/D, Efficiency) with HUD labels and positive/negative win rate indicators matching the session cards.',
+      },
+      {
+        type: 'improvement',
         text: 'Enhanced visual identity with a futuristic boxy header font (Iceland) paired with clean body text (Inter) across titles, sidebar branding, and stat callouts.',
       },
       {

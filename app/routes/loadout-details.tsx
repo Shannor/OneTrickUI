@@ -66,7 +66,7 @@ export default function LoadoutDetails({ loaderData }: Route.ComponentProps) {
           ))}
         </div>
       </div>
-      <div className="flex max-w-[400px] flex-col">
+      <div className="flex w-full flex-col">
         <ArmorSet snapshot={snapshot} />
       </div>
     </div>
