@@ -34,7 +34,7 @@ export default defineConfig({
   plugins: [
     reactRouterDevTools({
       editor,
-    }),
+    } as any),
     reactRouter(),
     tsconfigPaths(),
   ],

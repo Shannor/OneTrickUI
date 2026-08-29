@@ -7,6 +7,7 @@ import {
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
   getBestPerformingLoadoutsResponseTransformer,
+  getFeaturedLoadoutsResponseTransformer,
   getFireteamResponseTransformer,
   getSessionAggregatesResponseTransformer,
   getSessionResponseTransformer,
@@ -34,6 +35,12 @@ import type {
   CompleteSessionResponses,
   CreateSnapshotData,
   CreateSnapshotResponses,
+  DeleteSessionData,
+  DeleteSessionErrors,
+  DeleteSessionResponses,
+  DeleteSnapshotData,
+  DeleteSnapshotErrors,
+  DeleteSnapshotResponses,
   GetActivitiesData,
   GetActivitiesResponses,
   GetActivityData,
@@ -41,6 +48,9 @@ import type {
   GetActivityResponses,
   GetBestPerformingLoadoutsData,
   GetBestPerformingLoadoutsResponses,
+  GetFeaturedLoadoutsData,
+  GetFeaturedLoadoutsErrors,
+  GetFeaturedLoadoutsResponses,
   GetFireteamData,
   GetFireteamErrors,
   GetFireteamResponses,
@@ -276,6 +286,18 @@ export const createSnapshot = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Delete a snapshot in the system
+ */
+export const deleteSnapshot = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteSnapshotData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteSnapshotResponses,
+    DeleteSnapshotErrors,
+    ThrowOnError
+  >({ url: '/snapshots/{snapshotId}', ...options });
+
+/**
  * Returns a snapshot in the system for a character
  */
 export const getSnapshot = <ThrowOnError extends boolean = false>(
@@ -396,6 +418,18 @@ export const startSession = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Delete a session
+ */
+export const deleteSession = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteSessionData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteSessionResponses,
+    DeleteSessionErrors,
+    ThrowOnError
+  >({ url: '/sessions/{sessionId}', ...options });
+
+/**
  * Get a specific session
  */
 export const getSession = <ThrowOnError extends boolean = false>(
@@ -468,5 +502,21 @@ export const getBestPerformingLoadouts = <ThrowOnError extends boolean = false>(
   >({
     responseTransformer: getBestPerformingLoadoutsResponseTransformer,
     url: '/metrics/best-performing-loadouts',
+    ...options,
+  });
+
+/**
+ * Returns featured PvP loadouts of the day for display on the home page
+ */
+export const getFeaturedLoadouts = <ThrowOnError extends boolean = false>(
+  options?: Options<GetFeaturedLoadoutsData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetFeaturedLoadoutsResponses,
+    GetFeaturedLoadoutsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getFeaturedLoadoutsResponseTransformer,
+    url: '/metrics/featured-loadouts',
     ...options,
   });

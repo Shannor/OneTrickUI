@@ -15,6 +15,35 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-08-29',
+    date: 'August 29, 2026',
+    title: 'Session & Loadout Management & Non-Blocking Updates',
+    summary:
+      'Easily manage sessions and loadouts with streamlined delete dialogs, instant link sharing, non-blocking form saves, and visual toast notifications.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Easily delete unwanted sessions or loadout snapshots with a quick confirmation prompt.',
+      },
+      {
+        type: 'feature',
+        text: 'Share your loadout and session links with a single click and instant clipboard copy feedback.',
+      },
+      {
+        type: 'improvement',
+        text: 'Cleaned up session and loadout headers by separating the delete action into a compact trash icon button with a hover description.',
+      },
+      {
+        type: 'improvement',
+        text: 'Save session and loadout details seamlessly in the background without losing your place or reloading the page.',
+      },
+      {
+        type: 'improvement',
+        text: 'Receive instant visual confirmation via toast notifications whenever you save changes to a session or loadout.',
+      },
+    ],
+  },
+  {
     id: '2026-08-28',
     date: 'August 28, 2026',
     title: 'Navigation Suite, Condensed Loadouts & Activity Breakdown',
