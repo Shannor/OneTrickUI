@@ -1,18 +1,17 @@
 import { format } from 'date-fns';
 import React from 'react';
-import { Form, NavLink, Outlet, data, useLocation } from 'react-router';
+import { NavLink, Outlet, data, useLocation, useParams } from 'react-router';
 import { getSnapshot } from '~/api';
-import { LoadingButton } from '~/components/loading-button';
-import { Input } from '~/components/ui/input';
+import { LoadoutHeaderActions } from '~/components/loadout-header-actions';
+import { LoadoutUpdateForm } from '~/components/loadout-update-form';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
-import { Textarea } from '~/components/ui/textarea';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/loadout';
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { snapshotId } = params;
+export async function loader({ params }: Route.LoaderArgs) {
+  const { snapshotId, id, characterId } = params;
   const { data: snapshot, error } = await getSnapshot({
     path: { snapshotId },
   });
@@ -23,14 +22,25 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!snapshot) {
     throw data('Record Not Found', { status: 404 });
   }
+
+  const sharablePath = `profile/${id}/c/${characterId}/loadouts/${snapshotId}`;
+  let path: string;
+  if (process.env.NODE_ENV === 'development') {
+    path = `https://local.d2onetrick.ngrok.app/${sharablePath}`;
+  } else {
+    path = `https://d2onetrick.com/${sharablePath}`;
+  }
+
   return {
     snapshot,
+    path,
   };
 }
 
-export default function Loadout({ loaderData }: Route.ComponentProps) {
-  const { snapshot } = loaderData;
+export function Loadout({ loaderData }: Route.ComponentProps) {
+  const { snapshot, path } = loaderData;
   const { profile, type } = useProfileData();
+  const { characterId } = useParams();
   const isOwner = type === 'owner';
   const location = useLocation();
 
@@ -48,7 +58,7 @@ export default function Loadout({ loaderData }: Route.ComponentProps) {
   }, [location.pathname]);
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-6">
       <title>{`${snapshot.name ?? 'Snapshot'} - Loadout & Metrics`}</title>
       <meta
         property="og:title"
@@ -61,46 +71,39 @@ export default function Loadout({ loaderData }: Route.ComponentProps) {
           `View the loadout and performance metrics for ${snapshot.name ?? 'this snapshot'}.`
         }
       />
-      <div className="flex w-full flex-row justify-between gap-4">
-        <div className="flex w-full flex-col gap-2">
-          {isOwner ? (
-            <div className="flex w-full flex-row gap-4">
-              <Form
-                method="post"
-                action="/action/update-loadout"
-                className="flex w-full flex-col gap-4 lg:w-1/2 xl:w-1/3"
-              >
-                <Input
-                  name="name"
-                  defaultValue={snapshot.name ?? ''}
-                  className="h-auto scroll-m-20 border-none bg-transparent px-1 py-2 text-3xl font-semibold tracking-tight shadow-none focus-visible:ring-0 md:text-3xl"
-                />
-                <input type="hidden" name="snapshotId" value={snapshot.id} />
-                <Textarea
-                  name="description"
-                  placeholder="Add a description..."
-                  className="w-full"
-                  defaultValue={snapshot.description}
-                />
-                <LoadingButton type="submit">Save</LoadingButton>
-              </Form>
-            </div>
-          ) : (
-            <div className="flex w-full flex-col gap-4">
-              <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-                {snapshot.name ?? ''}
-              </h2>
-              {snapshot.description && (
-                <div className="text-sm text-muted-foreground">
-                  {snapshot.description}
-                </div>
-              )}
-            </div>
-          )}
+      <div className="flex w-full flex-col gap-4">
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             Created on {format(new Date(snapshot.createdAt), 'MMMM d, yyyy')}
           </p>
+          <LoadoutHeaderActions
+            isOwner={isOwner}
+            snapshotId={snapshot.id}
+            snapshotName={snapshot.name}
+            characterId={characterId}
+            userId={profile?.id}
+            shareUrl={path}
+          />
         </div>
+
+        {isOwner ? (
+          <LoadoutUpdateForm
+            snapshotId={snapshot.id}
+            defaultName={snapshot.name}
+            defaultDescription={snapshot.description}
+          />
+        ) : (
+          <div className="flex w-full flex-col gap-2">
+            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              {snapshot.name ?? ''}
+            </h2>
+            {snapshot.description && (
+              <p className="whitespace-pre-line text-sm text-muted-foreground">
+                {snapshot.description}
+              </p>
+            )}
+          </div>
+        )}
       </div>
       <Tabs value={currentTab}>
         <TabsList>
@@ -118,3 +121,5 @@ export default function Loadout({ loaderData }: Route.ComponentProps) {
     </div>
   );
 }
+
+export default Loadout;

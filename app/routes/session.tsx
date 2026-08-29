@@ -1,28 +1,15 @@
 import { doc, onSnapshot } from '@firebase/firestore';
-import { Info, Share2, StopCircleIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  NavLink,
-  Outlet,
-  useFetcher,
-  useLocation,
-  useRevalidator,
-} from 'react-router';
+import { Info } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
 import { FormattedDate } from '~/components/formatted-date';
-import { LoadingButton } from '~/components/loading-button';
+import { SessionHeaderActions } from '~/components/session-header-actions';
+import { SessionUpdateForm } from '~/components/session-update-form';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
-import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
-import { Textarea } from '~/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { db } from '~/lib/firebaseConfig';
 import { Logger } from '~/lib/logger';
@@ -78,8 +65,6 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   const { session, error, path } = loaderData;
   const { characterId } = params;
   const isOwner = type === 'owner';
-  const { state, Form } = useFetcher();
-  const isSubmitting = state === 'submitting';
   const revalidator = useRevalidator();
 
   const location = useLocation();
@@ -150,32 +135,21 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   const gamesRecorded = session.aggregateIds?.length ?? 0;
   const showActiveNotice = isCurrent && gamesRecorded < 3;
 
-  const [copyStatus, setCopyStatus] = useState('');
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(path);
-      setCopyStatus('Copied!');
-    } catch (err) {
-      setCopyStatus('Failed to copy!');
-      Logger.error(err, 'Failed to copy text');
-    }
-    setTimeout(() => setCopyStatus(''), 2000);
-  };
+  const pageTitle = `${session.name ?? 'Session'}${profile?.displayName ? ` - ${profile.displayName}` : ''} | 1 Trick`;
+  const pageDescription =
+    session.description ||
+    `View games, metrics, and details for ${profile?.displayName ?? 'player'}'s session ${session.name ?? ''} on 1 Trick.`;
 
   return (
     <div className="flex flex-col gap-4">
-      <title>{`${session.name}${profile?.displayName ? ` - ${profile.displayName}` : ''}`}</title>
-      <meta
-        property="og:title"
-        content={`${session.name}${profile?.displayName ? ` - ${profile.displayName}` : ''}`}
-      />
-      <meta
-        name="description"
-        content={`View games, metrics, and details for ${profile?.displayName ?? ''}'s session ${session.name}.`}
-      />
-      <div className="flex w-full flex-col items-start gap-4">
-        {isCurrent && <Badge className="animate-pulse">Active</Badge>}
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={path} />
+      <link rel="canonical" href={path} />
+      <div className="flex w-full flex-col gap-4">
         {showActiveNotice && (
           <Alert className="border-blue-500/40 bg-blue-500/10 text-blue-950 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-100">
             <Info className="h-4 w-4 text-blue-500 dark:text-blue-400" />
@@ -189,85 +163,51 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
             </AlertDescription>
           </Alert>
         )}
-        <div className="text-sm text-muted-foreground">
-          <FormattedDate date={session.startedAt} />
-          {session.completedAt && (
-            <>
-              {' - '}
-              <FormattedDate date={session.completedAt} />
-            </>
-          )}
-        </div>
-        {isOwner ? (
-          <div className="flex w-full flex-row gap-4">
-            <Form
-              method="post"
-              action="/action/update-session"
-              className="flex w-full flex-col gap-4 lg:w-1/2"
-            >
-              <Input
-                name="name"
-                defaultValue={session.name ?? ''}
-                className="h-auto scroll-m-20 border-none bg-transparent px-1 py-2 text-3xl font-semibold tracking-tight shadow-none focus-visible:ring-0 md:text-3xl"
-              />
-              <input type="hidden" name="sessionId" value={session.id} />
-              <Textarea
-                name="description"
-                placeholder="Add a description..."
-                className="w-full"
-                defaultValue={session.description}
-              />
-              <LoadingButton type="submit">Save</LoadingButton>
-            </Form>
+
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            {isCurrent && <Badge className="animate-pulse">Active</Badge>}
+            <div className="text-sm text-muted-foreground">
+              <FormattedDate date={session.startedAt} />
+              {session.completedAt && (
+                <>
+                  {' - '}
+                  <FormattedDate date={session.completedAt} />
+                </>
+              )}
+            </div>
           </div>
+
+          <SessionHeaderActions
+            isOwner={isOwner}
+            isCurrent={isCurrent}
+            sessionId={session.id}
+            sessionName={session.name}
+            characterId={characterId}
+            userId={profile?.id}
+            shareUrl={path}
+          />
+        </div>
+
+        {isOwner ? (
+          <SessionUpdateForm
+            sessionId={session.id}
+            defaultName={session.name}
+            defaultDescription={session.description}
+          />
         ) : (
-          <div className="flex w-full flex-col gap-4">
-            <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+          <div className="flex w-full flex-col gap-2">
+            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
               {session.name ?? ''}
             </h2>
             {session.description && (
-              <div className="text-sm text-muted-foreground">
+              <p className="whitespace-pre-line text-sm text-muted-foreground">
                 {session.description}
-              </div>
+              </p>
             )}
           </div>
         )}
-        <div className="flex w-full flex-col gap-4 md:flex-row">
-          {isOwner && isCurrent && (
-            <div className="flex w-full flex-row gap-4 lg:w-auto">
-              <Form
-                method="post"
-                action="/action/end-session"
-                className="w-full"
-              >
-                <input type="hidden" name="characterId" value={characterId} />
-                <input type="hidden" name="sessionId" value={session.id} />
-                <LoadingButton
-                  type="submit"
-                  variant="outline"
-                  disabled={!characterId || isSubmitting}
-                  className="w-full lg:w-auto"
-                  isLoading={isSubmitting}
-                >
-                  <StopCircleIcon className="h-4 w-4" />
-                  Stop Session
-                </LoadingButton>
-              </Form>
-            </div>
-          )}
-          <Tooltip open={Boolean(copyStatus)}>
-            <TooltipContent>{copyStatus}</TooltipContent>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleCopy}
-                variant="outline"
-                className="w-full lg:w-auto"
-              >
-                <Share2 className="h-6 w-6" /> Share
-              </Button>
-            </TooltipTrigger>
-          </Tooltip>
-        </div>
+
         <Tabs value={currentTab}>
           <TabsList>
             <TabsTrigger value="games" asChild>

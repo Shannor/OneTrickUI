@@ -21,6 +21,8 @@ import { type Character, getUser } from '~/api';
 import { client } from '~/api/client.gen';
 import { ErrorBoundaryContent } from '~/components/error-boundary-content';
 import { ModeToggle } from '~/components/mode-toggle';
+import { Toaster } from '~/components/ui/sonner';
+import { useToastNotification } from '~/hooks/use-toast-notification';
 import { Logger } from '~/lib/logger';
 import { trackUserSession } from '~/lib/tracking';
 import { isDev } from '~/lib/utils';
@@ -161,6 +163,7 @@ export default function AppWithProviders() {
 export function App() {
   const data = useLoaderData<typeof loader>();
   const [theme] = useTheme();
+  useToastNotification();
 
   useEffect(() => {
     trackUserSession(data.user);
@@ -221,6 +224,7 @@ export function App() {
       </head>
       <body style={{ height: '100vh' }}>
         <Outlet />
+        <Toaster />
         <ScrollRestoration />
         <Scripts />
       </body>

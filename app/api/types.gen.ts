@@ -514,6 +514,17 @@ export type User = {
   characterIds: Array<string>;
 };
 
+/**
+ * Featured loadout of the day with associated snapshot, user info, and performance metrics
+ */
+export type FeaturedLoadout = {
+  snapshot: CharacterSnapshot;
+  user?: User;
+  stats?: PlayerStats;
+  usageCount?: number;
+  featuredReason?: string;
+};
+
 export type SessionWritable = {
   id: string;
   startedAt: Date;
@@ -856,6 +867,53 @@ export type CreateSnapshotResponses = {
 export type CreateSnapshotResponse =
   CreateSnapshotResponses[keyof CreateSnapshotResponses];
 
+export type DeleteSnapshotData = {
+  body?: never;
+  headers: {
+    'X-User-ID': string;
+  };
+  path: {
+    /**
+     * The unique identifier for the snapshot.
+     */
+    snapshotId: string;
+  };
+  query?: never;
+  url: '/snapshots/{snapshotId}';
+};
+
+export type DeleteSnapshotErrors = {
+  /**
+   * Bad Request
+   */
+  400: OneTrickError;
+  /**
+   * Unauthorized
+   */
+  401: OneTrickError;
+  /**
+   * Snapshot not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal Server Error
+   */
+  500: OneTrickError;
+};
+
+export type DeleteSnapshotError =
+  DeleteSnapshotErrors[keyof DeleteSnapshotErrors];
+
+export type DeleteSnapshotResponses = {
+  /**
+   * Snapshot deleted successfully
+   */
+  204: void;
+};
+
+export type DeleteSnapshotResponse =
+  DeleteSnapshotResponses[keyof DeleteSnapshotResponses];
+
 export type GetSnapshotData = {
   body?: never;
   path: {
@@ -1144,6 +1202,49 @@ export type StartSessionResponses = {
 export type StartSessionResponse =
   StartSessionResponses[keyof StartSessionResponses];
 
+export type DeleteSessionData = {
+  body?: never;
+  headers: {
+    'X-User-ID': string;
+  };
+  path: {
+    sessionId: string;
+  };
+  query?: never;
+  url: '/sessions/{sessionId}';
+};
+
+export type DeleteSessionErrors = {
+  /**
+   * Bad Request
+   */
+  400: OneTrickError;
+  /**
+   * Unauthorized
+   */
+  401: OneTrickError;
+  /**
+   * Session not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal Server Error
+   */
+  500: OneTrickError;
+};
+
+export type DeleteSessionError = DeleteSessionErrors[keyof DeleteSessionErrors];
+
+export type DeleteSessionResponses = {
+  /**
+   * Session deleted successfully
+   */
+  204: void;
+};
+
+export type DeleteSessionResponse =
+  DeleteSessionResponses[keyof DeleteSessionResponses];
+
 export type GetSessionData = {
   body?: never;
   path: {
@@ -1275,3 +1376,47 @@ export type GetBestPerformingLoadoutsResponses = {
 
 export type GetBestPerformingLoadoutsResponse =
   GetBestPerformingLoadoutsResponses[keyof GetBestPerformingLoadoutsResponses];
+
+export type GetFeaturedLoadoutsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    count?: number;
+    gameMode?: GameMode;
+  };
+  url: '/metrics/featured-loadouts';
+};
+
+export type GetFeaturedLoadoutsErrors = {
+  /**
+   * Bad request
+   */
+  400: OneTrickError;
+  /**
+   * Unauthorized
+   */
+  401: OneTrickError;
+  /**
+   * Not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal server error
+   */
+  500: OneTrickError;
+};
+
+export type GetFeaturedLoadoutsError =
+  GetFeaturedLoadoutsErrors[keyof GetFeaturedLoadoutsErrors];
+
+export type GetFeaturedLoadoutsResponses = {
+  /**
+   * Returns featured loadouts of the day
+   */
+  200: {
+    items: Array<FeaturedLoadout>;
+  };
+};
+
+export type GetFeaturedLoadoutsResponse =
+  GetFeaturedLoadoutsResponses[keyof GetFeaturedLoadoutsResponses];

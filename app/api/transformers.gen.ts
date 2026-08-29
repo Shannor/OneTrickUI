@@ -5,6 +5,7 @@ import type {
   GetActivitiesResponse,
   GetActivityResponse,
   GetBestPerformingLoadoutsResponse,
+  GetFeaturedLoadoutsResponse,
   GetFireteamResponse,
   GetSessionAggregatesResponse,
   GetSessionResponse,
@@ -228,6 +229,36 @@ export const getBestPerformingLoadoutsResponseTransformer = async (
 ): Promise<GetBestPerformingLoadoutsResponse> => {
   data.items = data.items.map((item: any) =>
     characterSnapshotSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const membershipSchemaResponseTransformer = (data: any) => {
+  data.type = BigInt(data.type.toString());
+  return data;
+};
+
+const userSchemaResponseTransformer = (data: any) => {
+  data.memberships = data.memberships.map((item: any) =>
+    membershipSchemaResponseTransformer(item),
+  );
+  data.createdAt = new Date(data.createdAt);
+  return data;
+};
+
+const featuredLoadoutSchemaResponseTransformer = (data: any) => {
+  data.snapshot = characterSnapshotSchemaResponseTransformer(data.snapshot);
+  if (data.user) {
+    data.user = userSchemaResponseTransformer(data.user);
+  }
+  return data;
+};
+
+export const getFeaturedLoadoutsResponseTransformer = async (
+  data: any,
+): Promise<GetFeaturedLoadoutsResponse> => {
+  data.items = data.items.map((item: any) =>
+    featuredLoadoutSchemaResponseTransformer(item),
   );
   return data;
 };

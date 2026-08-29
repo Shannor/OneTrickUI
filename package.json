@@ -7,7 +7,8 @@
     "dev": "react-router dev",
     "start": "NODE_ENV=production react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
-    "gen-api": "openapi-ts"
+    "gen-api": "openapi-ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@google-cloud/firestore": "^7.11.0",
@@ -37,6 +38,7 @@
     "react-router": "^7.12.0",
     "recharts": "^2.15.4",
     "remix-themes": "^2.0.1",
+    "sonner": "^2.0.8",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.1.13"
