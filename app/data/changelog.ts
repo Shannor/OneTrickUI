@@ -15,6 +15,35 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-08-29',
+    date: 'August 29, 2026',
+    title: 'Session & Loadout Management & Non-Blocking Updates',
+    summary:
+      'Redesigned Session and Loadout management headers and update forms, introduced trash icon delete confirmation dialogs, non-blocking form submissions with toast notifications, and share buttons.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Added session and loadout deletion dialogs with action handlers for deleting sessions and loadout snapshots.',
+      },
+      {
+        type: 'feature',
+        text: 'Added share buttons for loadouts and sessions with instant copy-to-clipboard feedback tooltips.',
+      },
+      {
+        type: 'improvement',
+        text: 'Redesigned session and loadout header actions, moving the delete action to a trash icon button with a hover tooltip separated from the Save button.',
+      },
+      {
+        type: 'improvement',
+        text: 'Converted session and loadout update forms to fetcher-based submissions with localized button loading indicators and toast feedback.',
+      },
+      {
+        type: 'improvement',
+        text: 'Applied responsive max-width layout constraints for form description boxes on desktop displays.',
+      },
+    ],
+  },
+  {
     id: '2026-08-28',
     date: 'August 28, 2026',
     title: 'Navigation Suite, Condensed Loadouts & Activity Breakdown',
