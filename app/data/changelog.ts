@@ -19,27 +19,27 @@ export const CHANGELOG: ReleaseNote[] = [
     date: 'August 29, 2026',
     title: 'Session & Loadout Management & Non-Blocking Updates',
     summary:
-      'Redesigned Session and Loadout management headers and update forms, introduced trash icon delete confirmation dialogs, non-blocking form submissions with toast notifications, and share buttons.',
+      'Easily manage sessions and loadouts with streamlined delete dialogs, instant link sharing, non-blocking form saves, and visual toast notifications.',
     changes: [
       {
         type: 'feature',
-        text: 'Added session and loadout deletion dialogs with action handlers for deleting sessions and loadout snapshots.',
+        text: 'Easily delete unwanted sessions or loadout snapshots with a quick confirmation prompt.',
       },
       {
         type: 'feature',
-        text: 'Added share buttons for loadouts and sessions with instant copy-to-clipboard feedback tooltips.',
+        text: 'Share your loadout and session links with a single click and instant clipboard copy feedback.',
       },
       {
         type: 'improvement',
-        text: 'Redesigned session and loadout header actions, moving the delete action to a trash icon button with a hover tooltip separated from the Save button.',
+        text: 'Cleaned up session and loadout headers by separating the delete action into a compact trash icon button with a hover description.',
       },
       {
         type: 'improvement',
-        text: 'Converted session and loadout update forms to fetcher-based submissions with localized button loading indicators and toast feedback.',
+        text: 'Save session and loadout details seamlessly in the background without losing your place or reloading the page.',
       },
       {
         type: 'improvement',
-        text: 'Applied responsive max-width layout constraints for form description boxes on desktop displays.',
+        text: 'Receive instant visual confirmation via toast notifications whenever you save changes to a session or loadout.',
       },
     ],
   },
