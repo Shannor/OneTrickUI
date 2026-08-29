@@ -10,7 +10,7 @@ const mockCharacters: Character[] = [
     id: 'char-1',
     class: 'Hunter',
     race: 'Human',
-    light: 2000n,
+    light: BigInt(2000),
     emblemURL: '/emblem1.png',
     emblemBackgroundURL: '/bg1.png',
     emblemColor: { red: 0, green: 0, blue: 0, alpha: 1 },
@@ -20,7 +20,7 @@ const mockCharacters: Character[] = [
     id: 'char-2',
     class: 'Titan',
     race: 'Exo',
-    light: 1990n,
+    light: BigInt(1990),
     emblemURL: '/emblem2.png',
     emblemBackgroundURL: '/bg2.png',
     emblemColor: { red: 0, green: 0, blue: 0, alpha: 1 },
@@ -29,9 +29,11 @@ const mockCharacters: Character[] = [
 ];
 
 describe('CharacterPicker Component', () => {
-  it('calls children render prop with undefined initial selection when currentCharacterId is not provided', () => {
+  it('renders all characters when currentCharacterId is not provided', () => {
     const childrenSpy = vi.fn((current?: string | null) => (
-      <button disabled={!current}>Pick a Guardian</button>
+      <button type="button" disabled={!current}>
+        Pick a Guardian
+      </button>
     ));
 
     render(
@@ -40,34 +42,79 @@ describe('CharacterPicker Component', () => {
       </CharacterPicker>,
     );
 
-    expect(childrenSpy).toHaveBeenCalledWith(undefined, undefined);
+    expect(screen.getByText('Hunter')).toBeInTheDocument();
+    expect(screen.getByText('Titan')).toBeInTheDocument();
+
     const button = screen.getByRole('button', { name: /pick a guardian/i });
     expect(button).toBeDisabled();
-  });
-
-  it('updates selection and enables button when a character is clicked', () => {
-    const childrenSpy = vi.fn((current?: string | null) => (
-      <button disabled={!current}>Pick a Guardian</button>
-    ));
-
-    render(
-      <CharacterPicker characters={mockCharacters}>
-        {childrenSpy}
-      </CharacterPicker>,
-    );
 
     fireEvent.click(screen.getByText('Hunter'));
-
     expect(childrenSpy).toHaveBeenLastCalledWith('char-1', undefined);
-    const button = screen.getByRole('button', { name: /pick a guardian/i });
     expect(button).not.toBeDisabled();
   });
 
-  it('initializes selection when currentCharacterId is provided', () => {
+  it('hides change guardian button when not actively swapping, shows it during swap, and hides again on collapse', () => {
     const childrenSpy = vi.fn(
       (current?: string | null, previous?: string | null) => (
-        <button disabled={!current || current === previous}>
-          {previous ? 'Change Guardian' : 'Pick a Guardian'}
+        <button disabled={!current || current === previous} type="submit">
+          Change Guardian
+        </button>
+      ),
+    );
+
+    const { rerender } = render(
+      <CharacterPicker characters={mockCharacters} currentCharacterId="char-1">
+        {childrenSpy}
+      </CharacterPicker>,
+    );
+
+    expect(screen.getByText('Hunter')).toBeInTheDocument();
+    expect(screen.queryByText('Titan')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /change guardian/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /swap guardian/i }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /swap guardian/i }));
+
+    expect(screen.getByText('Titan')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /change guardian/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /swap guardian/i }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Titan'));
+    expect(childrenSpy).toHaveBeenLastCalledWith('char-2', 'char-1');
+
+    rerender(
+      <CharacterPicker characters={mockCharacters} currentCharacterId="char-2">
+        {childrenSpy}
+      </CharacterPicker>,
+    );
+
+    expect(screen.getByText('Titan')).toBeInTheDocument();
+    expect(screen.queryByText('Hunter')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /change guardian/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /cancel/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /swap guardian/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('collapses back and resets selection when Cancel is clicked without changing character', () => {
+    const childrenSpy = vi.fn(
+      (current?: string | null, previous?: string | null) => (
+        <button type="button" disabled={!current || current === previous}>
+          Change Guardian
         </button>
       ),
     );
@@ -78,13 +125,18 @@ describe('CharacterPicker Component', () => {
       </CharacterPicker>,
     );
 
-    expect(childrenSpy).toHaveBeenCalledWith('char-1', 'char-1');
-    const button = screen.getByRole('button', { name: /change guardian/i });
-    expect(button).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /swap guardian/i }));
+    expect(screen.getByText('Titan')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Titan'));
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
-    expect(childrenSpy).toHaveBeenLastCalledWith('char-2', 'char-1');
-    expect(button).not.toBeDisabled();
+    expect(screen.getByText('Hunter')).toBeInTheDocument();
+    expect(screen.queryByText('Titan')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /change guardian/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /swap guardian/i }),
+    ).toBeInTheDocument();
   });
 });
