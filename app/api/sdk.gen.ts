@@ -253,14 +253,13 @@ export const startUserSession = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Returns a list of snapshots in the system for a character
+ * Returns a paginated list of snapshots in the system for a user and character, with optional metrics, sorting, and gameMode filtering
  */
 export const getSnapshots = <ThrowOnError extends boolean = false>(
   options: Options<GetSnapshotsData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<GetSnapshotsResponses, unknown, ThrowOnError>({
     responseTransformer: getSnapshotsResponseTransformer,
-    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/snapshots',
     ...options,
   });

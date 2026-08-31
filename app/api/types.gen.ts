@@ -147,6 +147,13 @@ export type Session = {
   summary?: SessionSummary;
 };
 
+export type GameMode =
+  | 'allGameModes'
+  | 'quickplay'
+  | 'competitive'
+  | 'trials'
+  | 'ironBanner';
+
 export type BaseItemInfo = {
   name: string;
   icon?: string;
@@ -307,6 +314,59 @@ export type CharacterSnapshot = {
   loadout: Loadout;
 };
 
+export type StatsValuePair = {
+  /**
+   * Raw value of the statistic
+   */
+  value?: number;
+  /**
+   * Localized formatted version of the value.
+   */
+  displayValue?: string;
+};
+
+/**
+ * All Player Stats from a match that we currently care about
+ */
+export type PlayerStats = {
+  /**
+   * Number of kills done in the match
+   */
+  kills?: StatsValuePair;
+  /**
+   * Number of assists done in the match
+   */
+  assists?: StatsValuePair;
+  /**
+   * Number of deaths done in the match
+   */
+  deaths?: StatsValuePair;
+  /**
+   * ratio of kill / deaths in the match
+   */
+  kd?: StatsValuePair;
+  /**
+   * ratio of kills + assists/ deaths in the match
+   */
+  kda?: StatsValuePair;
+  /**
+   * Win or lose in the match
+   */
+  standing?: StatsValuePair;
+  /**
+   * Id for the team the player was on this match
+   */
+  team?: StatsValuePair;
+  /**
+   * ID for the fireteam player was on. If the same as another player then they were together
+   */
+  fireTeamId?: StatsValuePair;
+  /**
+   * Time in seconds the player was in the match
+   */
+  timePlayed?: StatsValuePair;
+};
+
 /**
  * Known errors for the one trick API
  */
@@ -317,13 +377,6 @@ export type OneTrickError = {
   message: string;
   status: InternalError;
 };
-
-export type GameMode =
-  | 'allGameModes'
-  | 'quickplay'
-  | 'competitive'
-  | 'trials'
-  | 'ironBanner';
 
 export type ActivityHistory = {
   location: string;
@@ -380,59 +433,6 @@ export type SnapshotLink = {
   confidenceLevel: ConfidenceLevel;
   confidenceSource: ConfidenceSource;
   createdAt: Date;
-};
-
-export type StatsValuePair = {
-  /**
-   * Raw value of the statistic
-   */
-  value?: number;
-  /**
-   * Localized formatted version of the value.
-   */
-  displayValue?: string;
-};
-
-/**
- * All Player Stats from a match that we currently care about
- */
-export type PlayerStats = {
-  /**
-   * Number of kills done in the match
-   */
-  kills?: StatsValuePair;
-  /**
-   * Number of assists done in the match
-   */
-  assists?: StatsValuePair;
-  /**
-   * Number of deaths done in the match
-   */
-  deaths?: StatsValuePair;
-  /**
-   * ratio of kill / deaths in the match
-   */
-  kd?: StatsValuePair;
-  /**
-   * ratio of kills + assists/ deaths in the match
-   */
-  kda?: StatsValuePair;
-  /**
-   * Win or lose in the match
-   */
-  standing?: StatsValuePair;
-  /**
-   * Id for the team the player was on this match
-   */
-  team?: StatsValuePair;
-  /**
-   * ID for the fireteam player was on. If the same as another player then they were together
-   */
-  fireTeamId?: StatsValuePair;
-  /**
-   * Time in seconds the player was in the match
-   */
-  timePlayed?: StatsValuePair;
 };
 
 export type Display = {
@@ -841,23 +841,39 @@ export type StartUserSessionResponse =
 
 export type GetSnapshotsData = {
   body?: never;
-  headers: {
-    'X-User-ID': string;
-  };
   path?: never;
   query: {
-    count: bigint;
-    page: bigint;
+    userId: string;
     characterId: string;
+    count?: number;
+    page?: number;
+    gameMode?: GameMode;
+    minimumGames?: number;
+    includeStats?: boolean;
+    sortBy?: 'created_at' | 'win_rate' | 'kd_ratio' | 'matches_played';
   };
   url: '/snapshots';
 };
 
 export type GetSnapshotsResponses = {
   /**
-   * Returns an array of all snapshots for a character
+   * Returns loadouts response with optional metrics map and match counts
    */
-  200: Array<CharacterSnapshot>;
+  200: {
+    items: Array<CharacterSnapshot>;
+    /**
+     * Map of snapshot ID to PlayerStats (populated when includeStats is true or when sorting by metrics)
+     */
+    stats?: {
+      [key: string]: PlayerStats;
+    };
+    /**
+     * Map of snapshot ID to total matches played
+     */
+    count?: {
+      [key: string]: number;
+    };
+  };
 };
 
 export type GetSnapshotsResponse =
