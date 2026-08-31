@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import type { CharacterSnapshot } from '~/api';
 import { ArmorStats } from '~/components/armor-stats';
+import { FormattedDate } from '~/components/formatted-date';
 import { SubClassHeader } from '~/components/sub-class/header';
 import { Card, CardContent } from '~/components/ui/card';
 import {
@@ -67,9 +68,19 @@ export function LoadoutCardHeader({
   return (
     <div className="flex w-full min-w-0 flex-col gap-3 border-b border-border/50 pb-3.5">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <h3 className="truncate text-lg font-bold tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-xl lg:text-2xl">
-          {snapshot.name || 'Loadout'}
-        </h3>
+        <div className="flex w-full items-center justify-between gap-2">
+          <h3 className="truncate text-lg font-bold tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-xl lg:text-2xl">
+            {snapshot.name || 'Loadout'}
+          </h3>
+          {snapshot.createdAt && (
+            <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
+              <FormattedDate
+                date={snapshot.createdAt}
+                formatStr="MMM d, yyyy"
+              />
+            </span>
+          )}
+        </div>
         {snapshot.description && (
           <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm lg:text-base">
             {snapshot.description}

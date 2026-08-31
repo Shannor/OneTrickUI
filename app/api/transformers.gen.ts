@@ -23,91 +23,60 @@ import type {
   UpdateSnapshotResponse,
 } from './types.gen';
 
-if (typeof BigInt !== 'undefined' && !(BigInt.prototype as any).toJSON) {
-  (BigInt.prototype as any).toJSON = function () {
-    return Number(this);
-  };
-}
-
 const characterSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.light !== undefined && data.light !== null) {
-    data.light = Number(data.light);
-  }
+  data.light = BigInt(data.light.toString());
   return data;
 };
 
 const fireteamMemberSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (Array.isArray(data.characters)) {
-    data.characters = data.characters.map((item: any) =>
-      characterSchemaResponseTransformer(item),
-    );
-  }
+  data.characters = data.characters.map((item: any) =>
+    characterSchemaResponseTransformer(item),
+  );
   return data;
 };
 
 export const getFireteamResponseTransformer = async (
   data: any,
 ): Promise<GetFireteamResponse> => {
-  if (Array.isArray(data)) {
-    data = data.map((item: any) =>
-      fireteamMemberSchemaResponseTransformer(item),
-    );
-  }
+  data = data.map((item: any) => fireteamMemberSchemaResponseTransformer(item));
   return data;
 };
 
 const profileSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (Array.isArray(data.characters)) {
-    data.characters = data.characters.map((item: any) =>
-      characterSchemaResponseTransformer(item),
-    );
-  }
+  data.characters = data.characters.map((item: any) =>
+    characterSchemaResponseTransformer(item),
+  );
   return data;
 };
 
 export const getUserResponseTransformer = async (
   data: any,
 ): Promise<GetUserResponse> => {
-  if (data) {
-    data = profileSchemaResponseTransformer(data);
-  }
+  data = profileSchemaResponseTransformer(data);
   return data;
 };
 
 const authResponseSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.timestamp) {
-    data.timestamp = new Date(data.timestamp);
-  }
+  data.timestamp = new Date(data.timestamp);
   return data;
 };
 
 export const loginResponseTransformer = async (
   data: any,
 ): Promise<LoginResponse> => {
-  if (data) {
-    data = authResponseSchemaResponseTransformer(data);
-  }
+  data = authResponseSchemaResponseTransformer(data);
   return data;
 };
 
 export const refreshTokenResponseTransformer = async (
   data: any,
 ): Promise<RefreshTokenResponse> => {
-  if (data) {
-    data = authResponseSchemaResponseTransformer(data);
-  }
+  data = authResponseSchemaResponseTransformer(data);
   return data;
 };
 
 const sessionSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.startedAt) {
-    data.startedAt = new Date(data.startedAt);
-  }
+  data.startedAt = new Date(data.startedAt);
   if (data.completedAt) {
     data.completedAt = new Date(data.completedAt);
   }
@@ -117,111 +86,77 @@ const sessionSchemaResponseTransformer = (data: any) => {
 export const getUserSessionsResponseTransformer = async (
   data: any,
 ): Promise<GetUserSessionsResponse> => {
-  if (Array.isArray(data)) {
-    data = data.map((item: any) => sessionSchemaResponseTransformer(item));
-  }
+  data = data.map((item: any) => sessionSchemaResponseTransformer(item));
   return data;
 };
 
 export const startUserSessionResponseTransformer = async (
   data: any,
 ): Promise<StartUserSessionResponse> => {
-  if (data) {
-    data = sessionSchemaResponseTransformer(data);
-  }
+  data = sessionSchemaResponseTransformer(data);
   return data;
 };
 
 const characterSnapshotSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.createdAt) {
-    data.createdAt = new Date(data.createdAt);
-  }
-  if (data.updatedAt) {
-    data.updatedAt = new Date(data.updatedAt);
-  }
+  data.createdAt = new Date(data.createdAt);
+  data.updatedAt = new Date(data.updatedAt);
   return data;
 };
 
 export const getSnapshotsResponseTransformer = async (
   data: any,
 ): Promise<GetSnapshotsResponse> => {
-  if (Array.isArray(data)) {
-    data = data.map((item: any) =>
-      characterSnapshotSchemaResponseTransformer(item),
-    );
-  }
+  data.items = data.items.map((item: any) =>
+    characterSnapshotSchemaResponseTransformer(item),
+  );
   return data;
 };
 
 export const createSnapshotResponseTransformer = async (
   data: any,
 ): Promise<CreateSnapshotResponse> => {
-  if (data) {
-    data = characterSnapshotSchemaResponseTransformer(data);
-  }
+  data = characterSnapshotSchemaResponseTransformer(data);
   return data;
 };
 
 export const getSnapshotResponseTransformer = async (
   data: any,
 ): Promise<GetSnapshotResponse> => {
-  if (data) {
-    data = characterSnapshotSchemaResponseTransformer(data);
-  }
+  data = characterSnapshotSchemaResponseTransformer(data);
   return data;
 };
 
 export const updateSnapshotResponseTransformer = async (
   data: any,
 ): Promise<UpdateSnapshotResponse> => {
-  if (data) {
-    data = characterSnapshotSchemaResponseTransformer(data);
-  }
+  data = characterSnapshotSchemaResponseTransformer(data);
   return data;
 };
 
 const activityHistorySchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.period) {
-    data.period = new Date(data.period);
-  }
-  if (data.referenceId !== undefined && data.referenceId !== null) {
-    data.referenceId = Number(data.referenceId);
-  }
-  if (data.activityHash !== undefined && data.activityHash !== null) {
-    data.activityHash = Number(data.activityHash);
-  }
+  data.period = new Date(data.period);
+  data.referenceId = BigInt(data.referenceId.toString());
+  data.activityHash = BigInt(data.activityHash.toString());
   return data;
 };
 
 const aggregateSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.activityDetails) {
-    data.activityDetails = activityHistorySchemaResponseTransformer(
-      data.activityDetails,
-    );
-  }
-  if (data.createdAt) {
-    data.createdAt = new Date(data.createdAt);
-  }
+  data.activityDetails = activityHistorySchemaResponseTransformer(
+    data.activityDetails,
+  );
+  data.createdAt = new Date(data.createdAt);
   return data;
 };
 
 export const getSnapshotAggregatesResponseTransformer = async (
   data: any,
 ): Promise<GetSnapshotAggregatesResponse> => {
-  if (Array.isArray(data)) {
-    data = data.map((item: any) => aggregateSchemaResponseTransformer(item));
-  }
+  data = data.map((item: any) => aggregateSchemaResponseTransformer(item));
   return data;
 };
 
 const detailActivitySchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.activity) {
-    data.activity = activityHistorySchemaResponseTransformer(data.activity);
-  }
+  data.activity = activityHistorySchemaResponseTransformer(data.activity);
   if (data.aggregate) {
     data.aggregate = aggregateSchemaResponseTransformer(data.aggregate);
   }
@@ -231,21 +166,14 @@ const detailActivitySchemaResponseTransformer = (data: any) => {
 export const getActivitiesResponseTransformer = async (
   data: any,
 ): Promise<GetActivitiesResponse> => {
-  if (Array.isArray(data)) {
-    data = data.map((item: any) =>
-      detailActivitySchemaResponseTransformer(item),
-    );
-  }
+  data = data.map((item: any) => detailActivitySchemaResponseTransformer(item));
   return data;
 };
 
 export const getActivityResponseTransformer = async (
   data: any,
 ): Promise<GetActivityResponse> => {
-  if (!data) return data;
-  if (data.activity) {
-    data.activity = activityHistorySchemaResponseTransformer(data.activity);
-  }
+  data.activity = activityHistorySchemaResponseTransformer(data.activity);
   if (data.aggregate) {
     data.aggregate = aggregateSchemaResponseTransformer(data.aggregate);
   }
@@ -255,98 +183,71 @@ export const getActivityResponseTransformer = async (
 export const getSessionsResponseTransformer = async (
   data: any,
 ): Promise<GetSessionsResponse> => {
-  if (Array.isArray(data)) {
-    data = data.map((item: any) => sessionSchemaResponseTransformer(item));
-  }
+  data = data.map((item: any) => sessionSchemaResponseTransformer(item));
   return data;
 };
 
 export const startSessionResponseTransformer = async (
   data: any,
 ): Promise<StartSessionResponse> => {
-  if (data) {
-    data = sessionSchemaResponseTransformer(data);
-  }
+  data = sessionSchemaResponseTransformer(data);
   return data;
 };
 
 export const getSessionResponseTransformer = async (
   data: any,
 ): Promise<GetSessionResponse> => {
-  if (data) {
-    data = sessionSchemaResponseTransformer(data);
-  }
+  data = sessionSchemaResponseTransformer(data);
   return data;
 };
 
 export const updateSessionResponseTransformer = async (
   data: any,
 ): Promise<UpdateSessionResponse> => {
-  if (data) {
-    data = sessionSchemaResponseTransformer(data);
-  }
+  data = sessionSchemaResponseTransformer(data);
   return data;
 };
 
 export const completeSessionResponseTransformer = async (
   data: any,
 ): Promise<CompleteSessionResponse> => {
-  if (data) {
-    data = sessionSchemaResponseTransformer(data);
-  }
+  data = sessionSchemaResponseTransformer(data);
   return data;
 };
 
 export const getSessionAggregatesResponseTransformer = async (
   data: any,
 ): Promise<GetSessionAggregatesResponse> => {
-  if (!data) return data;
-  if (Array.isArray(data.aggregates)) {
-    data.aggregates = data.aggregates.map((item: any) =>
-      aggregateSchemaResponseTransformer(item),
-    );
-  }
+  data.aggregates = data.aggregates.map((item: any) =>
+    aggregateSchemaResponseTransformer(item),
+  );
   return data;
 };
 
 export const getBestPerformingLoadoutsResponseTransformer = async (
   data: any,
 ): Promise<GetBestPerformingLoadoutsResponse> => {
-  if (!data) return data;
-  if (Array.isArray(data.items)) {
-    data.items = data.items.map((item: any) =>
-      characterSnapshotSchemaResponseTransformer(item),
-    );
-  }
+  data.items = data.items.map((item: any) =>
+    characterSnapshotSchemaResponseTransformer(item),
+  );
   return data;
 };
 
 const membershipSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.type !== undefined && data.type !== null) {
-    data.type = Number(data.type);
-  }
+  data.type = BigInt(data.type.toString());
   return data;
 };
 
 const userSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (Array.isArray(data.memberships)) {
-    data.memberships = data.memberships.map((item: any) =>
-      membershipSchemaResponseTransformer(item),
-    );
-  }
-  if (data.createdAt) {
-    data.createdAt = new Date(data.createdAt);
-  }
+  data.memberships = data.memberships.map((item: any) =>
+    membershipSchemaResponseTransformer(item),
+  );
+  data.createdAt = new Date(data.createdAt);
   return data;
 };
 
 const featuredLoadoutSchemaResponseTransformer = (data: any) => {
-  if (!data) return data;
-  if (data.snapshot) {
-    data.snapshot = characterSnapshotSchemaResponseTransformer(data.snapshot);
-  }
+  data.snapshot = characterSnapshotSchemaResponseTransformer(data.snapshot);
   if (data.user) {
     data.user = userSchemaResponseTransformer(data.user);
   }
@@ -356,11 +257,8 @@ const featuredLoadoutSchemaResponseTransformer = (data: any) => {
 export const getFeaturedLoadoutsResponseTransformer = async (
   data: any,
 ): Promise<GetFeaturedLoadoutsResponse> => {
-  if (!data) return data;
-  if (Array.isArray(data.items)) {
-    data.items = data.items.map((item: any) =>
-      featuredLoadoutSchemaResponseTransformer(item),
-    );
-  }
+  data.items = data.items.map((item: any) =>
+    featuredLoadoutSchemaResponseTransformer(item),
+  );
   return data;
 };
