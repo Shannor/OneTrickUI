@@ -117,7 +117,20 @@ function redirectBack(
   request: Request,
   { fallback, response }: { fallback: string; response?: ResponseInit },
 ) {
-  return redirect(request.headers.get('Referer') ?? fallback, response);
+  const referer = request.headers.get('Referer');
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      const fallbackUrl = new URL(fallback, refererUrl.origin);
+      if (refererUrl.pathname !== fallbackUrl.pathname) {
+        return redirect(fallback, response);
+      }
+    } catch {
+      // Ignore URL parsing errors and fallback to referer
+    }
+    return redirect(referer, response);
+  }
+  return redirect(fallback, response);
 }
 
 export {

@@ -13,16 +13,31 @@ export async function action({ request }: Route.ClientActionArgs) {
     return null;
   }
 
+  const userIdStr = userId.toString();
+  const charIdStr = characterId.toString();
+
   const { fireteam } = await getPreferences(request);
   const headers = await setPreferences(request, {
     fireteam: {
       ...fireteam,
-      [userId.toString()]: characterId.toString(),
+      [userIdStr]: charIdStr,
     },
   });
 
+  let targetRedirect = redirectLocation?.toString() ?? '/';
+  const profilePrefix = `/profile/${userIdStr}/c/`;
+  const prefixIndex = targetRedirect.indexOf(profilePrefix);
+  if (prefixIndex !== -1) {
+    const afterPrefix = targetRedirect.slice(
+      prefixIndex + profilePrefix.length,
+    );
+    const nextSlash = afterPrefix.indexOf('/');
+    const rest = nextSlash !== -1 ? afterPrefix.slice(nextSlash) : '';
+    targetRedirect = `${targetRedirect.slice(0, prefixIndex)}${profilePrefix}${charIdStr}${rest}`;
+  }
+
   return redirectBack(request, {
-    fallback: redirectLocation?.toString() ?? '/',
+    fallback: targetRedirect,
     response: {
       ...headers,
     },

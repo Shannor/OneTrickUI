@@ -36,12 +36,19 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { fireteam, selectedCharacters } = response;
   const members = Array.isArray(fireteam) ? fireteam : [];
   const withCharacters = members.reduce<Record<string, string>>((state, m) => {
+    const memberKey = m.id || m.membershipId;
     const prefChar =
-      selectedCharacters?.[m.id] ?? selectedCharacters?.[m.membershipId];
+      (m.id ? selectedCharacters?.[m.id] : undefined) ??
+      (m.membershipId ? selectedCharacters?.[m.membershipId] : undefined);
     const defaultChar = m.characters?.[0]?.id;
     const charId = prefChar ?? defaultChar;
-    if (charId && m.id) {
-      state[m.id] = charId;
+    if (charId && memberKey) {
+      if (m.id) {
+        state[m.id] = charId;
+      }
+      if (m.membershipId) {
+        state[m.membershipId] = charId;
+      }
     }
     return state;
   }, {});
@@ -134,13 +141,20 @@ export default function Fireteam({ loaderData }: Route.ComponentProps) {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
         {members.map((m) => {
           const memberSession = sessions.find(
-            (it) => it?.userId === m.id,
+            (it) =>
+              (m.id && it?.userId === m.id) ||
+              (m.membershipId && it?.userId === m.membershipId),
           )?.session;
+          const charId =
+            (m.id ? fireteamMemWithCharacters[m.id] : undefined) ??
+            (m.membershipId
+              ? fireteamMemWithCharacters[m.membershipId]
+              : undefined);
           return (
             <FireteamMemberCard
-              key={m.membershipId}
+              key={m.membershipId || m.id}
               member={m}
-              characterId={fireteamMemWithCharacters[m.id]}
+              characterId={charId}
               session={memberSession}
               isSubmitting={isSubmitting}
             />

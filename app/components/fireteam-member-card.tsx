@@ -22,10 +22,11 @@ export function FireteamMemberCard({
   isSubmitting = false,
 }: FireteamMemberCardProps) {
   const location = useLocation();
+  const userId = member.id || member.membershipId;
 
   const profilePath = characterId
-    ? `/profile/${member.id}/c/${characterId}`
-    : `/profile/${member.id}`;
+    ? `/profile/${userId}/c/${characterId}`
+    : `/profile/${userId}`;
 
   return (
     <div className="flex flex-col justify-between gap-5 rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-border/80">
@@ -43,7 +44,7 @@ export function FireteamMemberCard({
                 {member.displayName}
               </Link>
               <span className="truncate text-xs text-muted-foreground">
-                ID: {member.id}
+                ID: {userId}
               </span>
             </div>
           </div>
@@ -55,7 +56,7 @@ export function FireteamMemberCard({
           method="post"
           className="flex flex-col gap-4"
         >
-          <input hidden value={member.id} name="userId" readOnly />
+          <input hidden value={userId} name="userId" readOnly />
           <input hidden value={location.pathname} name="redirect" readOnly />
           <CharacterPicker
             characters={member.characters ?? []}
@@ -84,7 +85,7 @@ export function FireteamMemberCard({
 
       <MemberSessionStatus
         session={session}
-        userId={member.id}
+        userId={userId}
         characterId={characterId}
         isSubmitting={isSubmitting}
       />
