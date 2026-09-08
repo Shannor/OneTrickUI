@@ -1,8 +1,9 @@
-import { getAuth, redirectBack } from '~/.server/auth';
+import { redirect } from 'react-router';
+import { getAuth } from '~/.server/auth';
 import { startSession } from '~/api';
 import { Logger } from '~/lib/logger';
 
-import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
+import type { Route } from '../../.react-router/types/app/routes/+types/sessions.ts';
 
 export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -39,5 +40,12 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (!data) {
     return { error: 'No data' };
   }
-  return redirectBack(request, { fallback: redirectTo?.toString() ?? '/' });
+
+  const targetUserId = data.userId || userId.toString();
+  const targetCharId = data.characterId || characterId.toString();
+  const target =
+    redirectTo?.toString() ||
+    `/profile/${targetUserId}/c/${targetCharId}/sessions/${data.id}`;
+
+  return redirect(target);
 }

@@ -120,15 +120,14 @@ function redirectBack(
   const referer = request.headers.get('Referer');
   if (referer) {
     try {
-      const refererUrl = new URL(referer);
-      const fallbackUrl = new URL(fallback, refererUrl.origin);
-      if (refererUrl.pathname !== fallbackUrl.pathname) {
-        return redirect(fallback, response);
+      const requestUrl = new URL(request.url);
+      const refererUrl = new URL(referer, requestUrl.origin);
+      if (refererUrl.origin === requestUrl.origin) {
+        return redirect(refererUrl.pathname + refererUrl.search, response);
       }
     } catch {
-      // Ignore URL parsing errors and fallback to referer
+      // Ignore URL parsing errors and fallback
     }
-    return redirect(referer, response);
   }
   return redirect(fallback, response);
 }

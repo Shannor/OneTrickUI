@@ -1,7 +1,7 @@
-import { redirectBack } from '~/.server/auth';
+import { redirect } from 'react-router';
 import { getPreferences, setPreferences } from '~/.server/preferences';
 
-import type { Route } from '../../.react-router/types/app/+types/root';
+import type { Route } from '../../.react-router/types/app/+types/root.ts';
 
 export async function action({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -32,14 +32,11 @@ export async function action({ request }: Route.ClientActionArgs) {
       prefixIndex + profilePrefix.length,
     );
     const nextSlash = afterPrefix.indexOf('/');
-    const rest = nextSlash !== -1 ? afterPrefix.slice(nextSlash) : '';
+    const rest = nextSlash === -1 ? '' : afterPrefix.slice(nextSlash);
     targetRedirect = `${targetRedirect.slice(0, prefixIndex)}${profilePrefix}${charIdStr}${rest}`;
   }
 
-  return redirectBack(request, {
-    fallback: targetRedirect,
-    response: {
-      ...headers,
-    },
+  return redirect(targetRedirect, {
+    ...headers,
   });
 }
