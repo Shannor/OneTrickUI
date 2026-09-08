@@ -129,7 +129,7 @@ describe('SessionOverview', () => {
     expect(screen.getByText('2.50')).toBeInTheDocument();
   });
 
-  it('renders performance graph wrapper and class armor details', () => {
+  it('renders performance graph wrapper and class armor details without nested card containers', () => {
     render(
       <SessionOverview
         session={mockSession}
@@ -139,10 +139,16 @@ describe('SessionOverview', () => {
       />,
     );
 
-    expect(screen.getByText('Session Performance Graph')).toBeInTheDocument();
-    expect(screen.getByText('Class & Armor Loadout')).toBeInTheDocument();
+    const classArmorHeading = screen.getByText('Class & Armor Loadout');
+    expect(classArmorHeading).toBeInTheDocument();
     expect(screen.getByText('Solar Hunter')).toBeInTheDocument();
     expect(screen.getByText('Class Stats Overview')).toBeInTheDocument();
-    expect(screen.getByText('Armor Pieces & Mods')).toBeInTheDocument();
+
+    const armorHeading = screen.getByText('Armor Pieces & Mods');
+    expect(armorHeading).toBeInTheDocument();
+
+    // Ensure neither Class & Armor Loadout nor Armor Pieces & Mods are wrapped in nested border containers
+    expect(classArmorHeading.closest('.border.bg-card')).toBeNull();
+    expect(armorHeading.parentElement).not.toHaveClass('border');
   });
 });

@@ -2,7 +2,6 @@ import {
   CrosshairIcon,
   Gamepad2Icon,
   ShieldIcon,
-  SparklesIcon,
   SwordsIcon,
   TrophyIcon,
 } from 'lucide-react';
@@ -234,12 +233,10 @@ export function SessionOverviewClassDetails({
   classStatValues: { stat: string; value: number }[];
 }) {
   return (
-    <div className="flex flex-col gap-5 rounded-lg border bg-card p-4 sm:p-5">
-      <div className="flex flex-col gap-1 border-b border-border/50 pb-3">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          <SparklesIcon className="h-4 w-4 text-primary" />
-          Class & Armor Loadout
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        <ShieldIcon className="h-4 w-4 text-primary" />
+        Class & Armor Loadout
       </div>
 
       <SubClassProvider snapshot={snapshot}>
@@ -247,7 +244,7 @@ export function SessionOverviewClassDetails({
       </SubClassProvider>
 
       {classStatValues.length > 0 && (
-        <div className="flex flex-col gap-4 rounded-lg border bg-muted/20 p-4">
+        <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 sm:p-5">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <ShieldIcon className="h-4 w-4 text-primary" />
             Class Stats Overview
@@ -259,7 +256,7 @@ export function SessionOverviewClassDetails({
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <ShieldIcon className="h-4 w-4 text-primary" />
           Armor Pieces & Mods

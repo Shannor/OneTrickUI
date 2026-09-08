@@ -42,7 +42,7 @@ export const ArmorSet: React.FC<Props> = ({
       <div className="flex w-full flex-col gap-2">
         {showHint && (
           <p className="text-xs font-medium text-muted-foreground">
-            💡 Hover or tap any armor piece to view exact stats
+            Hover or tap any armor piece to view exact stats
           </p>
         )}
         <div

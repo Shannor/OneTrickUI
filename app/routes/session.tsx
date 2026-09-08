@@ -212,7 +212,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           characterId={characterId}
         />
 
-        <Tabs value={currentTab}>
+        <Tabs value={currentTab} className="mt-6 sm:mt-8">
           <TabsList>
             <TabsTrigger value="games" asChild>
               <NavLink to="." end>
