@@ -176,10 +176,17 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   const gamesRecorded = session.aggregateIds?.length ?? 0;
   const showActiveNotice = isCurrent && gamesRecorded < 3;
 
-  const pageTitle = `${session.name ?? 'Session'}${profile?.displayName ? ` - ${profile.displayName}` : ''} | 1 Trick`;
+  const sessionName = session.name || 'Session';
+  const displayName = profile?.displayName;
+  const sessionNameText = session.name ? ` ${session.name}` : '';
+
+  const pageTitle = displayName
+    ? `${sessionName} - ${displayName} | 1 Trick`
+    : `${sessionName} | 1 Trick`;
+
   const pageDescription =
     session.description ||
-    `View games, metrics, and details for ${profile?.displayName ?? 'player'}'s session ${session.name ?? ''} on 1 Trick.`;
+    `View games, metrics, and details for ${displayName ?? 'player'}'s session${sessionNameText} on 1 Trick.`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -189,6 +196,9 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
       <meta property="og:description" content={pageDescription} />
       <meta property="og:type" content="website" />
       <meta property="og:url" content={path} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
       <link rel="canonical" href={path} />
       <div className="flex w-full flex-col gap-4">
         {showActiveNotice && (

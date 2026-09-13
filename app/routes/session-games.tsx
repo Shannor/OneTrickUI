@@ -9,7 +9,10 @@ import { Button } from '~/components/ui/button';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
-import { useSessionData } from '~/hooks/use-route-loaders';
+import {
+  useOptionalProfileData,
+  useSessionData,
+} from '~/hooks/use-route-loaders';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
 
@@ -17,8 +20,21 @@ import type { Route } from './+types/session-games';
 
 export function SessionGames({ params }: Route.ComponentProps) {
   const { session, aggregates, snapshots } = useSessionData();
+  const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id } = params;
   const navigate = useNavigate();
+
+  const sessionName = session?.name || 'Session';
+  const displayName = profile?.displayName;
+  const sessionNameText = session?.name ? ` ${session.name}` : '';
+
+  const pageTitle = displayName
+    ? `${sessionName} - ${displayName} | 1 Trick`
+    : `${sessionName} | 1 Trick`;
+
+  const pageDescription =
+    session?.description ||
+    `Browse games, loadouts, and performance details for ${displayName ?? 'player'}'s session${sessionNameText} on 1 Trick.`;
 
   const totalRecordedGames = session?.aggregateIds?.length ?? 0;
 
@@ -50,12 +66,10 @@ export function SessionGames({ params }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-8 md:gap-6">
-      <title>Session Games</title>
-      <meta property="og:title" content="Session Games" />
-      <meta
-        name="description"
-        content="Browse games from this session, loadouts, and performance details."
-      />
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
       {aggregates
         .sort(
           (a, b) =>

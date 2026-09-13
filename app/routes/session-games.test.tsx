@@ -10,6 +10,7 @@ const mockUseSessionData = vi.fn();
 
 vi.mock('~/hooks/use-route-loaders', () => ({
   useSessionData: () => mockUseSessionData(),
+  useOptionalProfileData: () => null,
 }));
 
 describe('SessionGames Route Component', () => {

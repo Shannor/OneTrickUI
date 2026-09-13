@@ -9,7 +9,10 @@ import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
-import { useSessionData } from '~/hooks/use-route-loaders';
+import {
+  useOptionalProfileData,
+  useSessionData,
+} from '~/hooks/use-route-loaders';
 import { Logger } from '~/lib/logger';
 import { generatePerformancePerMap, timeWindowToCustom } from '~/lib/metrics';
 import { Performance } from '~/organisims/performance';
@@ -18,7 +21,20 @@ import type { Route } from './+types/session-metrics';
 
 export default function SessionMetrics({ params }: Route.ComponentProps) {
   const { aggregates, snapshots, session } = useSessionData();
+  const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id } = params;
+
+  const sessionName = session?.name || 'Session';
+  const displayName = profile?.displayName;
+  const sessionNameText = session?.name ? ` ${session.name}` : '';
+
+  const pageTitle = displayName
+    ? `${sessionName} - ${displayName} Metrics | 1 Trick`
+    : `${sessionName} Metrics | 1 Trick`;
+
+  const pageDescription =
+    session?.description ||
+    `View per-loadout performance metrics for ${displayName ?? 'player'}'s session${sessionNameText} on 1 Trick.`;
 
   if (!aggregates || aggregates.length === 0) {
     return (
@@ -46,12 +62,10 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
 
   return (
     <div className="mt-8 flex flex-col gap-16">
-      <title>{`${session?.name} - Metrics`}</title>
-      <meta property="og:title" content={`${session?.name} Metrics`} />
-      <meta
-        name="description"
-        content="View per-loadout performance metrics for this session."
-      />
+      <title>{pageTitle}</title>
+      <meta property="og:title" content={pageTitle} />
+      <meta name="description" content={pageDescription} />
+      <meta property="og:description" content={pageDescription} />
       <div className="flex flex-col gap-6">
         <h4 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight">
           Session Metrics
