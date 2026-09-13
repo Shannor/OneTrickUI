@@ -1,6 +1,6 @@
-import { doc, onSnapshot } from '@firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { Info } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
@@ -61,6 +61,10 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 type ISession = Awaited<ReturnType<typeof getSession>>;
 
+type FirestoreSessionData = NonNullable<ISession['data']> & {
+  lastSeenActivityId?: string | null;
+};
+
 export function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
   const { session, aggregates, snapshots, error, path } = loaderData;
@@ -84,30 +88,66 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
     );
   }, [location.pathname]);
 
+  const sessionRef = useRef(session);
   useEffect(() => {
-    // Listen for real-time updates from Firestore
-    if (!session) return;
-    if (session.status == 'pending') {
-      const unsubscribe = onSnapshot(
-        doc(db, 'sessions', session.id),
-        (snapshot) => {
-          const newData = snapshot.data() as ISession['data'];
-          if (!newData) return;
-          const currentCount = session.aggregateIds?.length ?? 0;
+    sessionRef.current = session;
+  }, [session]);
+
+  const sessionId = session?.id;
+  const sessionStatus = session?.status;
+
+  useEffect(() => {
+    if (!sessionId || sessionStatus !== 'pending') return;
+
+    let isInitial = true;
+    const unsubscribe = onSnapshot(
+      doc(db, 'sessions', sessionId),
+      (snapshot) => {
+        const newData = snapshot.data() as FirestoreSessionData | undefined;
+        if (!newData) return;
+
+        if (isInitial) {
+          isInitial = false;
+          const current = sessionRef.current as
+            | FirestoreSessionData
+            | undefined;
+          const currentCount = current?.aggregateIds?.length ?? 0;
           const newCount = newData.aggregateIds?.length ?? 0;
-          if (newData.status == 'complete' || newCount !== currentCount) {
+          const statusChanged = newData.status !== current?.status;
+          const activityChanged =
+            Boolean(newData.lastSeenActivityId) &&
+            newData.lastSeenActivityId !== current?.lastSeenActivityId;
+
+          if (statusChanged || newCount !== currentCount || activityChanged) {
             revalidator
               .revalidate()
-              .then(() => Logger.info('firestore updated'));
+              .then(() => Logger.info('firestore updated'))
+              .catch((err) => {
+                Logger.error(
+                  { err },
+                  'Failed to revalidate on initial firestore snapshot',
+                );
+              });
           }
-        },
-      );
-      return () => {
-        unsubscribe();
-      };
-    }
-    // Clean up the listener when the component unmounts
-  }, [session, revalidator]);
+          return;
+        }
+
+        revalidator
+          .revalidate()
+          .then(() => Logger.info('firestore updated'))
+          .catch((err) => {
+            Logger.error({ err }, 'Failed to revalidate on firestore update');
+          });
+      },
+      (error) => {
+        Logger.error({ error }, 'Firestore session onSnapshot error');
+      },
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [sessionId, sessionStatus, revalidator]);
 
   if (!session) {
     return (
