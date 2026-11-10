@@ -1,6 +1,13 @@
 import { format } from 'date-fns';
 import React from 'react';
-import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router';
+import {
+  Link,
+  NavLink,
+  Outlet,
+  type ShouldRevalidateFunctionArgs,
+  useLocation,
+  useParams,
+} from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { getSnapshot } from '~/api';
 import { Empty } from '~/components/empty';
@@ -53,6 +60,19 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     error: undefined,
     path,
   };
+}
+
+// Built-in React Router route module export that controls when this layout's loader re-runs on navigation
+export function shouldRevalidate({
+  currentParams,
+  nextParams,
+  formMethod,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+  if (formMethod && formMethod !== 'GET') {
+    return defaultShouldRevalidate;
+  }
+  return currentParams.snapshotId !== nextParams.snapshotId;
 }
 
 export function Loadout({ loaderData }: Route.ComponentProps) {
