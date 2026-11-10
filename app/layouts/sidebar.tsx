@@ -1,3 +1,4 @@
+import { log } from 'evlog';
 import {
   Activity,
   ArrowLeft,
@@ -36,7 +37,6 @@ import {
   useOptionalProfileData,
   useRootData,
 } from '~/hooks/use-route-loaders';
-import { Logger } from '~/lib/logger';
 import { handleBackNavigation } from '~/lib/navigation';
 import { cn } from '~/lib/utils';
 import type { RootUser } from '~/root';
@@ -101,7 +101,10 @@ export function Sidebar() {
           );
           setCachedCharId(characterId);
         } catch (err) {
-          Logger.error(err, 'Failed to save active character in localStorage');
+          log.error({
+            action: 'sidebar.save_active_character',
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       } else {
         try {
@@ -112,7 +115,10 @@ export function Sidebar() {
             setCachedCharId(stored);
           }
         } catch (err) {
-          Logger.error(err, 'Failed to get active character from localStorage');
+          log.error({
+            action: 'sidebar.get_active_character',
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       }
     }
@@ -280,7 +286,12 @@ export function Sidebar() {
                 submit(null, {
                   method: 'post',
                   action: '/action/logout',
-                }).catch((err) => Logger.error(err, 'Logout failed'))
+                }).catch((err) =>
+                  log.error({
+                    action: 'sidebar.logout',
+                    error: err instanceof Error ? err.message : String(err),
+                  }),
+                )
               }
             />
           ) : (

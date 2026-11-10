@@ -12,13 +12,6 @@ vi.mock('~/api', () => ({
   deleteSession: vi.fn(),
 }));
 
-vi.mock('~/lib/logger', () => ({
-  Logger: {
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 describe('deleteSession action', () => {
   it('returns error when sessionId is missing', async () => {
     const formData = new FormData();

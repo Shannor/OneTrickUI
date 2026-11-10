@@ -1,3 +1,4 @@
+import { createError } from 'evlog';
 import LogRocket from 'logrocket';
 import { isRouteErrorResponse } from 'react-router';
 
@@ -64,11 +65,19 @@ export function trackError(error: unknown): void {
       },
     });
   } else if (typeof error === 'object' && error !== null) {
-    LogRocket.captureException(new Error(JSON.stringify(error)), {
-      extra: {
-        pathname,
-        is404,
+    LogRocket.captureException(
+      createError({
+        message: JSON.stringify(error),
+        status: is404 ? 404 : 500,
+        why: 'Captured non-Error object in ErrorBoundary',
+        fix: 'Inspect the serialized error payload in LogRocket',
+      }),
+      {
+        extra: {
+          pathname,
+          is404,
+        },
       },
-    });
+    );
   }
 }

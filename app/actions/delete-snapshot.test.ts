@@ -12,13 +12,6 @@ vi.mock('~/api', () => ({
   deleteSnapshot: vi.fn(),
 }));
 
-vi.mock('~/lib/logger', () => ({
-  Logger: {
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 describe('deleteSnapshot action', () => {
   it('returns error when snapshotId is missing', async () => {
     const formData = new FormData();

@@ -12,13 +12,6 @@ vi.mock('~/api', () => ({
   startSession: vi.fn(),
 }));
 
-vi.mock('~/lib/logger', () => ({
-  Logger: {
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 describe('start-session action', () => {
   it('returns error when characterId is missing', async () => {
     const formData = new FormData();

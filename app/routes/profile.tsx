@@ -1,18 +1,25 @@
 import { Form, Link, Outlet, useLoaderData, useLocation } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { getUser } from '~/api';
 import { CharacterPicker } from '~/components/character-picker';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { NavLoading } from '~/components/nav-loading';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const url = new URL(request.url); // Parse the request URL
-  const characterId = url.searchParams.get('characterId');
+export async function loader({ params, request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
+  let characterId: string | null = null;
+  try {
+    const url = new URL(request.url);
+    characterId = url.searchParams.get('characterId');
+  } catch {
+    characterId = null;
+  }
   const id = params.id;
+  log.set({ route: 'routes/profile', profile: { userId: id, characterId } });
 
   try {
     const { data } = await getUser({ path: { userId: id } });
@@ -22,7 +29,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       return { error: 'no account found' };
     }
   } catch (e) {
-    Logger.error(e, 'Failed to fetch user in profile loader');
+    log.error(e instanceof Error ? e : String(e), {
+      profile: { userId: id, characterId },
+    });
     return { error: 'unexpected error' };
   }
 }

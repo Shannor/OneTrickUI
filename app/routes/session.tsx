@@ -1,7 +1,9 @@
+import { log } from 'evlog';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Info } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
 import { SessionDate } from '~/components/session-date';
@@ -13,12 +15,16 @@ import { Badge } from '~/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { db } from '~/lib/firebaseConfig';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/session';
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const { sessionId, id, characterId } = params;
+  log.set({
+    route: 'routes/session',
+    session: { id: sessionId, userId: id, characterId },
+  });
   const res = await getSession({
     path: {
       sessionId,
@@ -82,7 +88,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
     };
 
     return (
-      Object.entries(tabPatterns).find(([_, pattern]) =>
+      Object.entries(tabPatterns).find(([, pattern]) =>
         pattern.test(location.pathname),
       )?.[0] ?? 'games'
     );
@@ -121,12 +127,15 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           if (statusChanged || newCount !== currentCount || activityChanged) {
             revalidator
               .revalidate()
-              .then(() => Logger.info('firestore updated'))
+              .then(() =>
+                log.debug({ action: 'firestore.revalidated', initial: true }),
+              )
               .catch((err) => {
-                Logger.error(
-                  { err },
-                  'Failed to revalidate on initial firestore snapshot',
-                );
+                log.error({
+                  action: 'firestore.revalidate',
+                  initial: true,
+                  error: err instanceof Error ? err.message : String(err),
+                });
               });
           }
           return;
@@ -134,13 +143,22 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
 
         revalidator
           .revalidate()
-          .then(() => Logger.info('firestore updated'))
+          .then(() =>
+            log.debug({ action: 'firestore.revalidated', initial: false }),
+          )
           .catch((err) => {
-            Logger.error({ err }, 'Failed to revalidate on firestore update');
+            log.error({
+              action: 'firestore.revalidate',
+              initial: false,
+              error: err instanceof Error ? err.message : String(err),
+            });
           });
       },
       (error) => {
-        Logger.error({ error }, 'Firestore session onSnapshot error');
+        log.error({
+          action: 'firestore.snapshot_error',
+          error: error instanceof Error ? error.message : String(error),
+        });
       },
     );
 
@@ -161,7 +179,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   }
 
   if (error) {
-    Logger.error({ error }, 'Session loader error');
+    log.error({ action: 'session.loader_error', error });
     return (
       <div>
         <Empty

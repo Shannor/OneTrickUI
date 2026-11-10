@@ -143,8 +143,8 @@ export function getDetailWeapons(
   });
 }
 
-export function useClassStats(snapshot: CharacterSnapshot) {
-  return Object.values(snapshot.stats ?? {})
+export function useClassStats(snapshot?: CharacterSnapshot) {
+  return Object.values(snapshot?.stats ?? {})
     .map((stat) => ({
       stat: stat.name,
       value: stat.value ?? 0,

@@ -1,3 +1,4 @@
+import { parseError } from 'evlog';
 import { Activity, ArrowLeft, Home } from 'lucide-react';
 import { useEffect } from 'react';
 import { Link, isRouteErrorResponse } from 'react-router';
@@ -9,24 +10,37 @@ export interface ErrorBoundaryContentProps {
   error?: unknown;
 }
 
-export function ErrorBoundaryContent({ error }: ErrorBoundaryContentProps) {
-  useEffect(() => {
-    trackError(error);
-  }, [error]);
-
-  const is404 = isRouteErrorResponse(error)
-    ? error.status === 404
-    : typeof error === 'object' && error !== null && 'status' in error
-      ? (error as { status: number }).status === 404
-      : false;
+function resolveErrorDisplay(error: unknown): {
+  is404: boolean;
+  errorMessage: string;
+} {
+  const parsed = error ? parseError(error) : undefined;
+  let is404 = parsed?.status === 404;
+  if (isRouteErrorResponse(error)) {
+    is404 = error.status === 404;
+  } else if (typeof error === 'object' && error !== null && 'status' in error) {
+    is404 = (error as { status: number }).status === 404;
+  }
 
   let errorMessage = is404
     ? "The page, session, or Guardian profile you are looking for doesn't exist or has been moved."
     : "Oops! Sorry Guardian, we're working on it!";
 
-  if (import.meta.env.DEV && error && error instanceof Error) {
+  if (parsed?.why) {
+    errorMessage = parsed.fix ? `${parsed.why}. ${parsed.fix}` : parsed.why;
+  } else if (import.meta.env.DEV && error && error instanceof Error) {
     errorMessage = error.message;
   }
+
+  return { is404, errorMessage };
+}
+
+export function ErrorBoundaryContent({ error }: ErrorBoundaryContentProps) {
+  useEffect(() => {
+    trackError(error);
+  }, [error]);
+
+  const { is404, errorMessage } = resolveErrorDisplay(error);
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] w-full flex-col items-center justify-center p-4 text-center sm:p-8">

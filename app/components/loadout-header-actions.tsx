@@ -1,3 +1,4 @@
+import { log } from 'evlog';
 import { Share2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DeleteSnapshotDialog } from '~/components/delete-snapshot-dialog';
@@ -7,7 +8,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { Logger } from '~/lib/logger';
 
 export interface LoadoutHeaderActionsProps {
   isOwner: boolean;
@@ -35,7 +35,7 @@ export function LoadoutHeaderActions({
       setCopyStatus('Copied!');
     } catch (err) {
       setCopyStatus('Failed to copy!');
-      Logger.error(err, 'Failed to copy text');
+      log.error(err instanceof Error ? err : new Error(String(err)));
     }
     setTimeout(() => setCopyStatus(''), 2000);
   };

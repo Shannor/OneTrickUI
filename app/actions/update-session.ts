@@ -1,10 +1,12 @@
 import { getAuth, redirectBack } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { updateSession } from '~/api';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 
-export async function action({ request }: Route.ClientActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
+  const log = getRequestLogger(context);
+  log.set({ action: 'updateSession', route: 'actions/update-session' });
   const formData = await request.formData();
   const sessionId = formData.get('sessionId');
   const name = formData.get('name');
@@ -23,6 +25,11 @@ export async function action({ request }: Route.ClientActionArgs) {
     return { error: 'Name required' };
   }
 
+  log.set({
+    user: { id: auth.id },
+    session: { id: sessionId.toString() },
+  });
+
   const { data, error } = await updateSession({
     path: {
       sessionId: sessionId.toString(),
@@ -38,7 +45,9 @@ export async function action({ request }: Route.ClientActionArgs) {
     },
   });
   if (error) {
-    Logger.error(error, 'failed to update session');
+    log.error('failed to update session', {
+      session: { id: sessionId.toString(), error },
+    });
     return { error: error };
   }
   if (!data) {

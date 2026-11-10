@@ -1,3 +1,4 @@
+import { log } from 'evlog';
 import { Share2, StopCircleIcon, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
@@ -9,7 +10,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { Logger } from '~/lib/logger';
 
 export interface SessionHeaderActionsProps {
   isOwner: boolean;
@@ -40,7 +40,7 @@ export function SessionHeaderActions({
       setCopyStatus('Copied!');
     } catch (err) {
       setCopyStatus('Failed to copy!');
-      Logger.error(err, 'Failed to copy text');
+      log.error(err instanceof Error ? err : new Error(String(err)));
     }
     setTimeout(() => setCopyStatus(''), 2000);
   };

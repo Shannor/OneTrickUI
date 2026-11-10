@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { getAuth } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
 import { type Profile, type Session, getSessions, getUser } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
@@ -23,7 +24,6 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
-import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/landing';
@@ -59,7 +59,9 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
+  log.set({ route: 'routes/landing' });
   const auth = await getAuth(request);
   const preferences = await getPreferences(request);
   let profile: Profile | null = null;
@@ -149,6 +151,14 @@ export async function loader({ request }: Route.LoaderArgs) {
       {},
     );
 
+    log.set({
+      landing: {
+        activeCount: activeSessions.length,
+        todayCount,
+        weekCount,
+        authenticated: Boolean(auth),
+      },
+    });
     return {
       activeCount: activeSessions.length,
       activeSessions: activeTop,
@@ -161,7 +171,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       selectedCharacterId,
     };
   } catch (e) {
-    Logger.error(e, 'Failed to load landing stats');
+    log.error(e instanceof Error ? e : String(e), {
+      step: 'load_landing_stats',
+    });
     return {
       activeCount: 0,
       activeSessions: [] as Session[],

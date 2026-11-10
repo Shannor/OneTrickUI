@@ -1,5 +1,6 @@
 import { reactRouter } from '@react-router/dev/vite';
 import autoprefixer from 'autoprefixer';
+import evlog from 'evlog/vite';
 import { exec } from 'node:child_process';
 import { reactRouterDevTools } from 'react-router-devtools';
 import tailwindcss from 'tailwindcss';
@@ -32,6 +33,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    evlog(),
     reactRouterDevTools({
       editor,
     } as any),

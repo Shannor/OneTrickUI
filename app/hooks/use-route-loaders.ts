@@ -1,3 +1,4 @@
+import { createError } from 'evlog';
 import { useNavigation, useParams, useRouteLoaderData } from 'react-router';
 import type { RootLoaderData } from '~/root';
 import type { loader as snapshotLoader } from '~/routes/loadout';
@@ -32,9 +33,12 @@ export function useProfileData() {
   );
   const { characterId } = useParams();
   if (!data) {
-    throw new Error(
-      'useProfileData must be used within profile state parent route',
-    );
+    throw createError({
+      message: 'useProfileData must be used within profile state parent route',
+      status: 500,
+      why: 'Profile route loader data is missing in current route hierarchy',
+      fix: 'Render this component inside the routes/profile-state parent route',
+    });
   }
   const character = data.profile?.characters?.find((c) => c.id === characterId);
   return { ...data, character };
@@ -43,22 +47,40 @@ export function useProfileData() {
 export function useSessionData() {
   const data = useRouteLoaderData<typeof sessionLoader>('routes/session');
   if (!data) {
-    throw new Error(
-      'useSessionData must be used within a session parent route',
-    );
+    throw createError({
+      message: 'useSessionData must be used within a session parent route',
+      status: 500,
+      why: 'Session route loader data is missing in current route hierarchy',
+      fix: 'Render this component inside the routes/session parent route',
+    });
   }
   if (data.error) {
-    throw new Error(data.error);
+    throw createError({
+      message: data.error,
+      status: 404,
+      why: 'The session loader returned an error',
+      fix: 'Verify the session ID and try again',
+    });
   }
   if (!data.session) {
-    throw new Error('Session data not found');
+    throw createError({
+      message: 'Session data not found',
+      status: 404,
+      why: 'No session record was returned by the session loader',
+      fix: 'Verify the session ID and try again',
+    });
   }
   return data;
 }
 export function useLoadoutData() {
   const data = useRouteLoaderData<typeof snapshotLoader>('routes/loadout');
   if (!data) {
-    throw new Error('useLoadoutData must be used within loadout parent route');
+    throw createError({
+      message: 'useLoadoutData must be used within loadout parent route',
+      status: 500,
+      why: 'Loadout route loader data is missing in current route hierarchy',
+      fix: 'Render this component inside the routes/loadout parent route',
+    });
   }
   return data;
 }

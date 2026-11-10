@@ -1,16 +1,18 @@
 import { Link, useNavigate } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { getBestPerformingLoadouts, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadoutCard } from '~/components/loadout-card';
 import { SessionCard } from '~/components/session-card';
 import { Button } from '~/components/ui/button';
 import { useProfileData } from '~/hooks/use-route-loaders';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/home';
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const { characterId, id } = params;
+  log.set({ route: 'routes/home', home: { userId: id, characterId } });
 
   try {
     const [sessionsRes, loadoutsRes] = await Promise.all([
@@ -41,7 +43,9 @@ export async function loader({ params }: Route.LoaderArgs) {
       error: undefined,
     };
   } catch (e) {
-    Logger.error(e, 'Failed to load home page data');
+    log.error(e instanceof Error ? e : String(e), {
+      home: { userId: id, characterId },
+    });
     return {
       sessions: [],
       loadouts: { items: [], count: {}, stats: {} },

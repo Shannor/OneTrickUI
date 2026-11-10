@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { getAuth } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { mergeSnapshots } from '~/api';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/merge-loadout';
 
@@ -10,7 +10,9 @@ const mergeSchema = z.object({
   targetLoadoutId: z.string(),
 });
 
-export async function action({ request }: Route.ClientActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
+  const log = getRequestLogger(context);
+  log.set({ action: 'mergeLoadout', route: 'actions/merge-loadout' });
   const formData = await request.formData();
   const submission = mergeSchema.safeParse(Object.fromEntries(formData));
 
@@ -22,7 +24,13 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (!submission.success) {
     return { error: 'Invalid submission' };
   }
-  Logger.info({ data: submission.data }, 'Merging loadouts');
+  log.set({
+    user: { id: auth.id },
+    loadoutMerge: {
+      baseLoadoutId: submission.data.baseLoadoutId,
+      targetLoadoutId: submission.data.targetLoadoutId,
+    },
+  });
   await mergeSnapshots({
     path: {
       snapshotId: submission.data.baseLoadoutId,

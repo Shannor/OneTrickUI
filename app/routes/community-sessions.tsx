@@ -1,22 +1,27 @@
 import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { Link, useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { type Profile, type Session, getSessions, getUser } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
 import { Button, buttonVariants } from '~/components/ui/button';
-import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/community-sessions';
 
 const PAGE_SIZE = 12;
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const url = new URL(request.url);
   const rawPage = Number(url.searchParams.get('page') || '1');
   const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage);
   const apiPage = page - 1;
   const statusParam = url.searchParams.get('status') || 'all';
+  log.set({
+    route: 'routes/community-sessions',
+    communitySessions: { page, status: statusParam },
+  });
 
   const statusFilter =
     statusParam === 'pending' || statusParam === 'complete'
@@ -84,7 +89,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       userCharacterId,
     };
   } catch (e) {
-    Logger.error(e, 'Failed to fetch community sessions');
+    log.error(e instanceof Error ? e : String(e), {
+      communitySessions: { page, status: statusParam },
+    });
     return {
       sessions: [] as Session[],
       profiles: {},

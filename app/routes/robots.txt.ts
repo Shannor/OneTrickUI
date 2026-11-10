@@ -1,6 +1,10 @@
+import { getRequestLogger } from '~/.server/logger';
+
 import type { Route } from './+types/robots.txt';
 
-export function loader({ request }: Route.LoaderArgs) {
+export function loader({ request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
+  log.set({ route: 'routes/robots.txt' });
   let origin = 'https://d2onetrick.com';
   try {
     const url = new URL(request.url);

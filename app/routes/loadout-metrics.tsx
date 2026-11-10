@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { data } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshotAggregates } from '~/api';
 import { calculatePercentage } from '~/calculations/precision';
 import { AvgPerformance } from '~/charts/AvgPerformance';
@@ -8,12 +8,12 @@ import { KDPerformance } from '~/charts/KDPerformance';
 import { MapPerformance } from '~/charts/MapPerformance';
 import { MapWinRate } from '~/charts/MapWinRate';
 import { WinRatio } from '~/charts/WinRatio';
+import { Empty } from '~/components/empty';
 import { CardTitle } from '~/components/ui/card';
 import { DateRangePicker } from '~/components/ui/date-range-picker';
 import { FormLabel } from '~/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import { useLoadoutData } from '~/hooks/use-route-loaders';
-import { Logger } from '~/lib/logger';
 import {
   type CustomTimeWindow,
   type TimeWindow,
@@ -25,21 +25,34 @@ import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/loadout-metrics';
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const { snapshotId } = params;
+  log.set({ route: 'routes/loadout-metrics', snapshot: { id: snapshotId } });
   const { data: aggregates, error } = await getSnapshotAggregates({
     path: { snapshotId },
   });
   if (error) {
-    Logger.error(error, 'Failed to fetch snapshot aggregates');
-    throw data(undefined, { status: 404 });
+    log.error('Failed to fetch snapshot aggregates', {
+      snapshot: { id: snapshotId, error },
+    });
+    return {
+      aggregates: [],
+      error: 'Failed to load snapshot aggregates',
+    };
   }
   if (!aggregates) {
-    throw data('Record Not Found', { status: 404 });
+    log.set({ snapshot: { id: snapshotId, aggregateCount: 0 } });
+    return {
+      aggregates: [],
+      error: undefined,
+    };
   }
 
+  log.set({ snapshot: { id: snapshotId, aggregateCount: aggregates.length } });
   return {
     aggregates,
+    error: undefined,
   };
 }
 
@@ -47,7 +60,7 @@ export default function LoadoutMetrics({
   loaderData,
   params,
 }: Route.ComponentProps) {
-  const { aggregates } = loaderData;
+  const { aggregates, error } = loaderData;
   const { characterId } = params;
   const { snapshot } = useLoadoutData();
 
@@ -57,6 +70,19 @@ export default function LoadoutMetrics({
   const customTime = useMemo(() => {
     return timeWindowToCustom(time, aggregates);
   }, [time, snapshot, aggregates]);
+
+  if (error || aggregates.length === 0) {
+    return (
+      <Empty
+        title={error ? 'Unable to Load Metrics' : 'No Metrics Recorded Yet'}
+        description={
+          error
+            ? 'We encountered an error loading performance metrics for this loadout.'
+            : 'Play matches with this loadout to see performance metrics and charts!'
+        }
+      />
+    );
+  }
 
   const data = useMemo(() => {
     return generateKDAResultsForTimeWindow(

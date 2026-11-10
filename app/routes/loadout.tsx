@@ -1,46 +1,64 @@
 import { format } from 'date-fns';
 import React from 'react';
-import { NavLink, Outlet, data, useLocation, useParams } from 'react-router';
+import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { getSnapshot } from '~/api';
+import { Empty } from '~/components/empty';
 import { LoadoutHeaderActions } from '~/components/loadout-header-actions';
 import { LoadoutUpdateForm } from '~/components/loadout-update-form';
+import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { useProfileData } from '~/hooks/use-route-loaders';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/loadout';
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const { snapshotId, id, characterId } = params;
+  log.set({
+    route: 'routes/loadout',
+    snapshot: { id: snapshotId, userId: id, characterId },
+  });
+
+  const sharablePath = `profile/${id}/c/${characterId}/loadouts/${snapshotId}`;
+  const path =
+    process.env.NODE_ENV === 'development'
+      ? `https://local.d2onetrick.ngrok.app/${sharablePath}`
+      : `https://d2onetrick.com/${sharablePath}`;
+
   const { data: snapshot, error } = await getSnapshot({
     path: { snapshotId },
   });
   if (error) {
-    Logger.error(error, 'Failed to fetch snapshot in loadout loader');
-    throw data('Unexpected Error', { status: 500 });
+    log.error('Failed to fetch snapshot in loadout loader', {
+      snapshot: { id: snapshotId, error },
+    });
+    return {
+      snapshot: undefined,
+      error: 'Failed to load loadout',
+      path,
+    };
   }
   if (!snapshot) {
-    throw data('Record Not Found', { status: 404 });
-  }
-
-  const sharablePath = `profile/${id}/c/${characterId}/loadouts/${snapshotId}`;
-  let path: string;
-  if (process.env.NODE_ENV === 'development') {
-    path = `https://local.d2onetrick.ngrok.app/${sharablePath}`;
-  } else {
-    path = `https://d2onetrick.com/${sharablePath}`;
+    log.set({ snapshot: { id: snapshotId, found: false } });
+    return {
+      snapshot: undefined,
+      error: 'Loadout Not Found',
+      path,
+    };
   }
 
   return {
     snapshot,
+    error: undefined,
     path,
   };
 }
 
 export function Loadout({ loaderData }: Route.ComponentProps) {
-  const { snapshot, path } = loaderData;
+  const { snapshot, error, path } = loaderData;
   const { profile, type } = useProfileData();
-  const { characterId } = useParams();
+  const { id, characterId } = useParams();
   const isOwner = type === 'owner';
   const location = useLocation();
 
@@ -51,11 +69,28 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
     };
 
     return (
-      Object.entries(tabPatterns).find(([_, pattern]) =>
+      Object.entries(tabPatterns).find(([, pattern]) =>
         pattern.test(location.pathname),
       )?.[0] ?? 'loadout'
     );
   }, [location.pathname]);
+
+  if (!snapshot || error) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Empty
+          title="No Loadout Found"
+          description="We couldn't load this loadout snapshot. Please try again later."
+        >
+          <Button asChild variant="outline">
+            <Link to={`/profile/${id}/c/${characterId}/loadouts`}>
+              Back to Loadouts
+            </Link>
+          </Button>
+        </Empty>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">

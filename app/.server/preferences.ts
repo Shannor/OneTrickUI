@@ -1,4 +1,5 @@
 import { createCookieSessionStorage } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import type { Character, Profile } from '~/api';
 
 type SessionData = {
@@ -42,10 +43,19 @@ function sanitizeValue<T>(value: T): T {
 }
 
 async function getPreferences(request: Request): Promise<SessionData> {
+  const log = getRequestLogger();
   const preferences = await getSession(request.headers.get('Cookie'));
   const character = preferences.get('character');
   const fireteam = preferences.get('fireteam');
   const profile = preferences.get('profile');
+  log.set({
+    fn: 'getPreferences',
+    preferences: {
+      hasCharacter: Boolean(character),
+      hasProfile: Boolean(profile),
+      fireteamCount: fireteam ? Object.keys(fireteam).length : 0,
+    },
+  });
   return {
     character: sanitizeValue(character),
     fireteam,
@@ -54,6 +64,17 @@ async function getPreferences(request: Request): Promise<SessionData> {
 }
 
 async function setPreferences(request: Request, preferences: SessionData) {
+  const log = getRequestLogger();
+  log.set({
+    fn: 'setPreferences',
+    preferences: {
+      characterId: preferences.character?.id,
+      profileId: preferences.profile?.id,
+      fireteamCount: preferences.fireteam
+        ? Object.keys(preferences.fireteam).length
+        : undefined,
+    },
+  });
   const session = await getSession(request.headers.get('Cookie'));
   if (preferences.character) {
     session.set('character', sanitizeValue(preferences.character));

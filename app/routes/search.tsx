@@ -7,6 +7,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { type SearchUserResult, search } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
 import { NavLoading } from '~/components/nav-loading';
@@ -23,10 +24,19 @@ import { useIsNavigating } from '~/hooks/use-route-loaders';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const url = new URL(request.url); // Parse the request URL
-  const page = Number(url.searchParams.get('page') || '0');
-  const query = url.searchParams.get('query') || '';
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
+  let page = 0;
+  let query = '';
+  try {
+    const url = new URL(request.url);
+    page = Number(url.searchParams.get('page') || '0');
+    query = url.searchParams.get('query') || '';
+  } catch {
+    page = 0;
+    query = '';
+  }
+  log.set({ route: 'routes/search', search: { page, query } });
   if (query) {
     const { data, error } = await search({
       body: {
@@ -34,6 +44,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         prefix: query,
       },
     });
+    if (error) {
+      log.error('Search query failed', { search: { page, query, error } });
+    }
     return { data, error, page, query };
   }
   return { page, query };

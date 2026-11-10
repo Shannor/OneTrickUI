@@ -1,6 +1,7 @@
 'use client';
 
 import { type VariantProps, cva } from 'class-variance-authority';
+import { log } from 'evlog';
 import { PanelLeft } from 'lucide-react';
 import { Slot as SlotPrimitive } from 'radix-ui';
 import * as React from 'react';
@@ -16,7 +17,6 @@ import {
   TooltipTrigger,
 } from '~/components/ui/tooltip';
 import { useIsMobile } from '~/hooks/use-mobile';
-import { Logger } from '~/lib/logger';
 import { cn } from '~/lib/utils';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state';
@@ -108,7 +108,10 @@ const SidebarProvider = React.forwardRef<
             toggleSidebar();
           }
         } catch (err) {
-          Logger.error(err, 'Failed to handle sidebar keyboard shortcut');
+          log.error({
+            action: 'sidebar.shortcut',
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       };
 

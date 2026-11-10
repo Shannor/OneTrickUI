@@ -1,11 +1,13 @@
 import { redirect } from 'react-router';
 import { getAuth } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { startSession } from '~/api';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions.ts';
 
-export async function action({ request }: Route.ClientActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
+  const log = getRequestLogger(context);
+  log.set({ action: 'startSession', route: 'actions/start-session' });
   const formData = await request.formData();
   const characterId = formData.get('characterId');
   const userId = formData.get('userId');
@@ -22,6 +24,11 @@ export async function action({ request }: Route.ClientActionArgs) {
     return { error: 'No auth token' };
   }
 
+  log.set({
+    user: { id: auth.id },
+    session: { characterId: characterId.toString() },
+  });
+
   const { data, error } = await startSession({
     body: {
       characterId: characterId.toString(),
@@ -34,7 +41,9 @@ export async function action({ request }: Route.ClientActionArgs) {
     },
   });
   if (error) {
-    Logger.error(error, 'failed to start session');
+    log.error('failed to start session', {
+      session: { characterId: characterId.toString(), error },
+    });
     return { error: error };
   }
   if (!data) {

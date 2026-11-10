@@ -1,40 +1,41 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link, redirect, useLoaderData } from 'react-router';
 import { getAuth } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { Logo } from '~/components/logo';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { buttonVariants } from '~/components/ui/button';
 import { getBungieAuthUrl } from '~/lib/auth-utils';
-import { Logger } from '~/lib/logger';
 import { extractRequestMeta } from '~/lib/request-logger';
 import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/login';
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const meta = extractRequestMeta(request);
   const url = new URL(request.url);
   const error = url.searchParams.get('error');
 
-  const l = Logger.child({
-    flow: 'login_page',
-    ...meta,
-    errorParam: error,
+  log.set({
+    route: 'routes/login',
+    login: { flow: 'login_page', errorParam: error },
+    requestMeta: meta,
   });
-
-  l.info('Login page loader received request');
 
   const auth = await getAuth(request);
   if (auth) {
-    l.info(
-      { userId: auth.id },
-      'User already authenticated, redirecting to user profile from login page',
-    );
+    log.set({
+      user: { id: auth.id },
+      login: { status: 'already_authenticated' },
+    });
     return redirect(`/profile/${auth.id}`);
   }
 
   if (error) {
-    l.warn({ error }, 'Login page rendered with error query parameter');
+    log.warn('Login page rendered with error query parameter', {
+      login: { error },
+    });
   }
 
   return { error };

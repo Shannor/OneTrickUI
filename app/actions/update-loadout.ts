@@ -1,10 +1,12 @@
 import { getAuth, redirectBack } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { updateSnapshot } from '~/api';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from '../../.react-router/types/app/routes/+types/sessions';
 
-export async function action({ request }: Route.ClientActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
+  const log = getRequestLogger(context);
+  log.set({ action: 'updateLoadout', route: 'actions/update-loadout' });
   const formData = await request.formData();
   const snapshotId = formData.get('snapshotId');
   const name = formData.get('name');
@@ -23,6 +25,11 @@ export async function action({ request }: Route.ClientActionArgs) {
     return { error: 'Name required' };
   }
 
+  log.set({
+    user: { id: auth.id },
+    snapshot: { id: snapshotId.toString() },
+  });
+
   const { data, error } = await updateSnapshot({
     path: {
       snapshotId: snapshotId.toString(),
@@ -38,7 +45,9 @@ export async function action({ request }: Route.ClientActionArgs) {
     },
   });
   if (error) {
-    Logger.error(error, 'failed to update session');
+    log.error('failed to update snapshot', {
+      snapshot: { id: snapshotId.toString(), error },
+    });
     return { error: error };
   }
   if (!data) {

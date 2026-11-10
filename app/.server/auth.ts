@@ -1,6 +1,6 @@
 import { createCookieSessionStorage, redirect } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { type AuthResponse, refreshToken } from '~/api';
-import { Logger } from '~/lib/logger';
 import { extractRequestMeta } from '~/lib/request-logger';
 
 type SessionData = {
@@ -27,6 +27,7 @@ const { getSession, commitSession, destroySession } =
   });
 
 async function getAuth(request: Request): Promise<AuthResponse | undefined> {
+  const log = getRequestLogger();
   const session = await getSession(request.headers.get('Cookie'));
   const auth = session.get('jwt');
   if (!auth) {
@@ -35,8 +36,10 @@ async function getAuth(request: Request): Promise<AuthResponse | undefined> {
   const expiresMillisecond = auth.expiresIn * 1000;
   const givenTime = new Date(auth.timestamp).getTime();
   if (Date.now() >= givenTime + expiresMillisecond) {
-    const l = Logger.child({ flow: 'auth_refresh', userId: auth.id });
-    l.info('Auth session token expired, attempting to refresh token');
+    log.set({
+      fn: 'getAuth',
+      auth: { flow: 'auth_refresh', userId: auth.id },
+    });
     try {
       const {
         data: jwt,
@@ -48,20 +51,23 @@ async function getAuth(request: Request): Promise<AuthResponse | undefined> {
         },
       });
       if (refreshErr || !jwt) {
-        l.error(
-          {
-            refreshErr,
+        log.error('Failed to refresh expired auth token', {
+          auth: {
+            flow: 'auth_refresh',
+            userId: auth.id,
             backendStatus: response?.status,
             backendStatusText: response?.statusText,
+            refreshErr,
           },
-          'Failed to refresh expired auth token',
-        );
+        });
         return undefined;
       }
-      l.info('Auth session token refreshed successfully');
+      log.set({ auth: { refreshed: true } });
       return jwt;
     } catch (e) {
-      l.error({ err: e }, 'Exception encountered while refreshing auth token');
+      log.error(e instanceof Error ? e : String(e), {
+        auth: { flow: 'auth_refresh', userId: auth.id },
+      });
       return undefined;
     }
   }
@@ -69,6 +75,11 @@ async function getAuth(request: Request): Promise<AuthResponse | undefined> {
 }
 
 async function refreshHeaders(request: Request, auth: AuthResponse) {
+  const log = getRequestLogger();
+  log.set({
+    fn: 'refreshHeaders',
+    auth: { userId: auth.id },
+  });
   const session = await getSession(request.headers.get('Cookie'));
   session.set('jwt', auth);
   return {
@@ -85,8 +96,12 @@ async function logout(request: Request) {
   const meta = extractRequestMeta(request);
   const session = await getSession(request.headers.get('Cookie'));
   const auth = session.get('jwt');
-  const l = Logger.child({ flow: 'logout', ...meta, userId: auth?.id });
-  l.info('Destroying session cookie and redirecting to home page');
+  const log = getRequestLogger();
+  log.set({
+    fn: 'logout',
+    auth: { flow: 'logout', userId: auth?.id },
+    requestMeta: meta,
+  });
   return redirect('/', {
     headers: {
       'Set-Cookie': await destroySession(session, {
@@ -99,8 +114,12 @@ async function logout(request: Request) {
 
 async function setAuth(request: Request, auth: AuthResponse) {
   const meta = extractRequestMeta(request);
-  const l = Logger.child({ flow: 'set_auth', ...meta, userId: auth.id });
-  l.info('Committing session cookie and redirecting user to profile page');
+  const log = getRequestLogger();
+  log.set({
+    fn: 'setAuth',
+    auth: { flow: 'set_auth', userId: auth.id },
+    requestMeta: meta,
+  });
   const session = await getSession(request.headers.get('Cookie'));
   session.set('jwt', auth);
   return redirect(`/profile/${auth.id}`, {

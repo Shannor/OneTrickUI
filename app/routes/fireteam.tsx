@@ -1,6 +1,7 @@
 import { Users } from 'lucide-react';
 import { data } from 'react-router';
 import { getFireteamData } from '~/.server/fireteam';
+import { getRequestLogger } from '~/.server/logger';
 import { setPreferences } from '~/.server/preferences';
 import { getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
@@ -23,7 +24,9 @@ type FireteamSession = {
   };
 };
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
+  log.set({ route: 'routes/fireteam' });
   const response = await getFireteamData(request);
   if (response.status === 'error') {
     return data({
@@ -35,6 +38,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const { fireteam, selectedCharacters } = response;
   const members = Array.isArray(fireteam) ? fireteam : [];
+  log.set({ fireteam: { memberCount: members.length } });
   const withCharacters = members.reduce<Record<string, string>>((state, m) => {
     const memberKey = m.id || m.membershipId;
     const prefChar =

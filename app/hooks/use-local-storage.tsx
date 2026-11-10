@@ -1,5 +1,5 @@
+import { log } from 'evlog';
 import { useEffect, useState } from 'react';
-import { Logger } from '~/lib/logger';
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   // State to store the value, safe for initial SSR & hydration render
@@ -15,7 +15,11 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         }
       }
     } catch (error) {
-      Logger.error(error, 'Error reading from localStorage');
+      log.error({
+        action: 'localStorage.read',
+        key,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }, [key]);
 
@@ -29,7 +33,11 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
-      Logger.error(error, 'Error setting localStorage value');
+      log.error({
+        action: 'localStorage.write',
+        key,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 

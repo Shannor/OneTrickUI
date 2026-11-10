@@ -16,6 +16,7 @@ import {
   useTheme,
 } from 'remix-themes';
 import { getAuth } from '~/.server/auth';
+import { evlogMiddleware, getRequestLogger } from '~/.server/logger';
 import { themeSessionResolver } from '~/.server/sessions';
 import { type Character, getUser } from '~/api';
 import { client } from '~/api/client.gen';
@@ -23,12 +24,13 @@ import { ErrorBoundaryContent } from '~/components/error-boundary-content';
 import { ModeToggle } from '~/components/mode-toggle';
 import { Toaster } from '~/components/ui/sonner';
 import { useToastNotification } from '~/hooks/use-toast-notification';
-import { Logger } from '~/lib/logger';
 import { trackUserSession } from '~/lib/tracking';
 import { isDev } from '~/lib/utils';
 
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
+
+export const middleware: Route.MiddlewareFunction[] = [evlogMiddleware];
 
 if (typeof window !== 'undefined') {
   LogRocket.init('gruntt/d2-one-trick');
@@ -103,13 +105,18 @@ export type RootLoaderData = {
 
 export const loader = async ({
   request,
+  context,
 }: Route.LoaderArgs): Promise<RootLoaderData> => {
+  const log = getRequestLogger(context);
+  log.set({ loader: 'root' });
   let theme: Theme | null = null;
   try {
     const { getTheme } = await themeSessionResolver(request);
     theme = getTheme();
   } catch (e) {
-    Logger.error(e, 'Failed to resolve theme session in root loader');
+    log.error(e instanceof Error ? e : String(e), {
+      step: 'resolve_theme_session',
+    });
     theme = null;
   }
 
@@ -122,6 +129,7 @@ export const loader = async ({
         membershipId: auth.membershipId,
         primaryMembershipId: auth.primaryMembershipId,
       };
+      log.set({ user: { id: auth.id, membershipId: auth.membershipId } });
       try {
         const { data: profile } = await getUser({ path: { userId: auth.id } });
         if (profile?.displayName) {
@@ -132,13 +140,23 @@ export const loader = async ({
             uniqueName: profile.uniqueName,
             characters: profile.characters ?? [],
           };
+          log.set({
+            user: {
+              id: auth.id,
+              displayName: profile.displayName,
+            },
+          });
         }
       } catch (e) {
-        Logger.error(e, 'Failed to fetch user profile in root loader');
+        log.error(e instanceof Error ? e : String(e), {
+          step: 'fetch_user_profile',
+        });
       }
     }
   } catch (e) {
-    Logger.error(e, 'Failed to resolve auth session in root loader');
+    log.error(e instanceof Error ? e : String(e), {
+      step: 'resolve_auth_session',
+    });
     user = null;
   }
 

@@ -1,13 +1,14 @@
 import { redirect, useLoaderData } from 'react-router';
 import { getAuth, setAuth } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { login } from '~/api';
 import { AuthRetryCard } from '~/components/auth-retry';
-import { Logger } from '~/lib/logger';
 import { extractRequestMeta, maskCode } from '~/lib/request-logger';
 
 import type { Route } from './+types/oauth';
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const meta = extractRequestMeta(request);
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
@@ -18,30 +19,30 @@ export async function loader({ request }: Route.LoaderArgs) {
   const maskedCode = maskCode(code);
   const codeLength = code ? code.length : 0;
 
-  const l = Logger.child({
-    flow: 'oauth_callback',
-    ...meta,
-    codePrefix: maskedCode,
-    codeLength,
-    state,
+  log.set({
+    route: 'routes/oauth',
+    oauth: {
+      flow: 'oauth_callback',
+      codePrefix: maskedCode,
+      codeLength,
+      state,
+    },
+    requestMeta: meta,
   });
-
-  l.info('OAuth callback loader received request');
 
   const existingAuth = await getAuth(request);
   if (existingAuth) {
-    l.info(
-      { userId: existingAuth.id },
-      'User is already authenticated during OAuth callback, redirecting to profile',
-    );
+    log.set({
+      user: { id: existingAuth.id },
+      oauth: { status: 'already_authenticated' },
+    });
     return redirect(`/profile/${existingAuth.id}`);
   }
 
   if (oauthError) {
-    l.warn(
-      { oauthError, errorDescription },
-      'OAuth error parameter received from Bungie redirect',
-    );
+    log.warn('OAuth error parameter received from Bungie redirect', {
+      oauth: { oauthError, errorDescription },
+    });
     return {
       error:
         errorDescription ||
@@ -51,34 +52,29 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   if (!code) {
-    l.warn('Missing authorization code in Bungie OAuth callback');
+    log.warn('Missing authorization code in Bungie OAuth callback');
     return { error: 'Missing authorization code from Bungie.' };
   }
 
   try {
-    l.info(
-      { codePrefix: maskedCode },
-      'Sending authorization code to backend login endpoint',
-    );
     const { data, error: apiError, response } = await login({ body: { code } });
 
     if (apiError || !data) {
-      l.error(
-        {
+      log.error('Missing data from login or API error', {
+        oauth: {
           apiError,
           backendStatus: response?.status,
           backendStatusText: response?.statusText,
           codePrefix: maskedCode,
         },
-        'Missing data from login or API error',
-      );
+      });
 
       const fallbackAuth = await getAuth(request);
       if (fallbackAuth) {
-        l.info(
-          { userId: fallbackAuth.id },
-          'Auth session found despite login API error, redirecting to profile',
-        );
+        log.set({
+          user: { id: fallbackAuth.id },
+          oauth: { status: 'fallback_auth_redirect' },
+        });
         return redirect(`/profile/${fallbackAuth.id}`);
       }
 
@@ -92,16 +88,15 @@ export async function loader({ request }: Route.LoaderArgs) {
       return { error: errorMessage };
     }
 
-    l.info(
-      { userId: data.id, codePrefix: maskedCode },
-      'Backend login succeeded, setting auth session',
-    );
+    log.set({
+      user: { id: data.id },
+      oauth: { status: 'succeeded', codePrefix: maskedCode },
+    });
     return setAuth(request, data);
   } catch (e) {
-    l.error(
-      { err: e, codePrefix: maskedCode },
-      'Unexpected error occurred while setting session during OAuth callback',
-    );
+    log.error(e instanceof Error ? e : String(e), {
+      oauth: { codePrefix: maskedCode },
+    });
     return { error: 'An unexpected error occurred while saving your session.' };
   }
 }

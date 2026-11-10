@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshots } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadoutCard } from '~/components/loadout-card';
@@ -14,7 +15,6 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { useProfileData } from '~/hooks/use-route-loaders';
-import { Logger } from '~/lib/logger';
 
 import type { Route } from './+types/loadouts';
 
@@ -27,7 +27,8 @@ export type SortByOption =
   | 'kd_ratio'
   | 'matches_played';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params, request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const url = new URL(request.url);
   const { id: userId, characterId } = params;
   const rawPage = Number(url.searchParams.get('page') || '1');
@@ -56,11 +57,22 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     },
   });
 
+  log.set({
+    route: 'routes/loadouts',
+    loadouts: {
+      userId,
+      characterId,
+      page,
+      mode,
+      minimumGames,
+      sortBy: sortParam,
+    },
+  });
+
   if (error) {
-    Logger.error(
-      { error, userId, characterId, page },
-      'Failed to fetch loadouts in loader',
-    );
+    log.error('Failed to fetch loadouts in loader', {
+      loadouts: { error, userId, characterId, page },
+    });
     return {
       loadouts: {
         items: [],

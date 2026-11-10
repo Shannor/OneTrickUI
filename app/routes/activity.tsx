@@ -1,6 +1,8 @@
 import { SquareArrowOutUpRight } from 'lucide-react';
-import { Link, data } from 'react-router';
+import { Link } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { getActivity } from '~/api';
+import { Empty } from '~/components/empty';
 import { FormattedDate } from '~/components/formatted-date';
 import { PlayerCard } from '~/components/player-card';
 import { TeamScore } from '~/components/team-score';
@@ -15,28 +17,54 @@ import { isEmptyObject } from '~/lib/utils';
 
 import type { Route } from './+types/activity';
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
   const { instanceId } = params;
+  log.set({ route: 'routes/activity', activity: { instanceId } });
 
   const res = await getActivity({
     path: { activityId: instanceId },
   });
 
-  if (!res.data || isEmptyObject(res.data)) {
-    throw data('Record Not Found', { status: 404 });
+  if (res.error) {
+    log.error('Failed to fetch activity in loader', {
+      activity: { instanceId, error: res.error },
+    });
+    return { activityDetails: undefined, error: 'Failed to load activity' };
   }
-  return { activityDetails: res.data };
+
+  if (!res.data || isEmptyObject(res.data)) {
+    log.set({ activity: { instanceId, found: false } });
+    return { activityDetails: undefined, error: 'Activity Not Found' };
+  }
+  return { activityDetails: res.data, error: undefined };
 }
 
 const destinyTrackerUrl = 'https://destinytracker.com/destiny-2/pgcr';
 const crucibleReportUrl = 'https://crucible.report/pgcr';
 
 export function Activity({ loaderData, params }: Route.ComponentProps) {
-  const {
-    activityDetails: { activity, aggregate, teams, snapshots, users },
-  } = loaderData;
-
+  const { activityDetails, error } = loaderData;
   const { characterId, id } = params;
+
+  if (!activityDetails || error) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Empty
+          title="No Activity Found"
+          description="We couldn't find this activity report. It may still be processing or no longer exists."
+        >
+          <Button asChild variant="outline">
+            <Link to={`/profile/${id}/c/${characterId}/sessions`}>
+              Back to Sessions
+            </Link>
+          </Button>
+        </Empty>
+      </div>
+    );
+  }
+
+  const { activity, aggregate, teams, snapshots, users } = activityDetails;
   const allPerformances = Object.entries(aggregate?.performance ?? {}).filter(
     ([characterId]) => {
       const link = aggregate?.snapshotLinks[characterId];

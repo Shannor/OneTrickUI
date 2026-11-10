@@ -5,6 +5,7 @@ import {
   StopCircleIcon,
 } from 'lucide-react';
 import { Link, useFetcher, useNavigate } from 'react-router';
+import { getRequestLogger } from '~/.server/logger';
 import { type Session, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
@@ -15,12 +16,22 @@ import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/sessions';
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const url = new URL(request.url); // Parse the request URL
-  const rawPage = Number(url.searchParams.get('page') || '1');
+export async function loader({ params, request, context }: Route.LoaderArgs) {
+  const log = getRequestLogger(context);
+  let rawPage = 1;
+  try {
+    const url = new URL(request.url);
+    rawPage = Number(url.searchParams.get('page') || '1');
+  } catch {
+    rawPage = 1;
+  }
   const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage);
   const apiPage = BigInt(page - 1);
   const { characterId, id } = params;
+  log.set({
+    route: 'routes/sessions',
+    sessions: { userId: id, characterId, page },
+  });
 
   const res = await getUserSessions({
     path: {

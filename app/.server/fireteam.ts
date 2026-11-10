@@ -1,4 +1,5 @@
 import { getAuth } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
 import { type FireteamMember, getFireteam } from '~/api';
 
@@ -22,13 +23,17 @@ interface SuccessResponse {
 type Response = SuccessResponse | FailureResponse;
 
 export async function getFireteamData(request: Request): Promise<Response> {
+  const log = getRequestLogger();
+  log.set({ fn: 'getFireteamData' });
   const auth = await getAuth(request);
   if (!auth) {
+    log.set({ fireteam: { status: 'unauthenticated' } });
     return {
       status: 'error',
       error: 'Not authenticated',
     };
   }
+  log.set({ user: { id: auth.id } });
   try {
     const { data: fireteam, error } = await getFireteam({
       headers: {
@@ -43,20 +48,26 @@ export async function getFireteamData(request: Request): Promise<Response> {
           ? error
           : ((error as { message?: string })?.message ??
             'Failed to fetch fireteam');
+      log.error(errorMessage, { fireteam: { status: 'error' } });
       return {
         status: 'error',
         error: errorMessage,
       };
     }
     const { fireteam: selectedCharacters } = await getPreferences(request);
+    const fireteamMembers = Array.isArray(fireteam) ? fireteam : [];
+    log.set({ fireteam: { count: fireteamMembers.length } });
     return {
-      fireteam: Array.isArray(fireteam) ? fireteam : [],
+      fireteam: fireteamMembers,
       selectedCharacters,
       status: 'success',
     };
   } catch (err: unknown) {
     const errorMessage =
       err instanceof Error ? err.message : 'Failed to fetch fireteam';
+    log.error(err instanceof Error ? err : errorMessage, {
+      fireteam: { status: 'error' },
+    });
     return {
       status: 'error',
       error: errorMessage,

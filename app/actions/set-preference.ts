@@ -1,9 +1,12 @@
 import { redirectBack } from '~/.server/auth';
+import { getRequestLogger } from '~/.server/logger';
 import { setPreferences } from '~/.server/preferences';
 
 import type { Route } from './+types/set-preference';
 
-export async function action({ request }: Route.ClientActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
+  const log = getRequestLogger(context);
+  log.set({ action: 'setPreference', route: 'actions/set-preference' });
   const formData = await request.formData();
   const characterId = formData.get('characterId');
   const emblemURL = formData.get('emblemUrl');
@@ -21,6 +24,12 @@ export async function action({ request }: Route.ClientActionArgs) {
   if (!characterId) {
     return { message: 'No character id' };
   }
+  log.set({
+    preference: {
+      characterId: characterId.toString(),
+      profileId: profileId?.toString(),
+    },
+  });
   let l: number = 0;
   if (light) {
     l = parseInt(light.toString(), 10);

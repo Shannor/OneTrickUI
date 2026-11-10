@@ -1,3 +1,4 @@
+import { log } from 'evlog';
 import { ExternalLink } from 'lucide-react';
 import { Link } from 'react-router';
 import type { Aggregate } from '~/api';
@@ -13,7 +14,6 @@ import {
   useOptionalProfileData,
   useSessionData,
 } from '~/hooks/use-route-loaders';
-import { Logger } from '~/lib/logger';
 import { generatePerformancePerMap, timeWindowToCustom } from '~/lib/metrics';
 import { Performance } from '~/organisims/performance';
 
@@ -166,7 +166,8 @@ function groupAggregates(
               state[link.snapshotId] = [current];
             }
           } else {
-            Logger.warn(
+            log.warn(
+              'session-metrics',
               "Applied confidence level to aggregate but didn't have a snapshotId",
             );
           }

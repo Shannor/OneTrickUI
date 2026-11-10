@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+import { createError } from 'evlog';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
@@ -58,5 +59,25 @@ describe('ErrorBoundaryContent', () => {
 
     expect(screen.getByText('Something Went Wrong')).toBeInTheDocument();
     expect(screen.getByText('Server Error')).toBeInTheDocument();
+  });
+
+  it('renders structured why and fix guidance when error is an EvlogError', () => {
+    const structuredError = createError({
+      message: 'Not Found',
+      status: 404,
+      why: 'Snapshot was deleted',
+      fix: 'Select another loadout',
+    });
+
+    render(
+      <MemoryRouter>
+        <ErrorBoundaryContent error={structuredError} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Page Not Found')).toBeInTheDocument();
+    expect(
+      screen.getByText('Snapshot was deleted. Select another loadout'),
+    ).toBeInTheDocument();
   });
 });
