@@ -25,20 +25,22 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     route: 'routes/session',
     session: { id: sessionId, userId: id, characterId },
   });
-  const res = await getSession({
-    path: {
-      sessionId,
-    },
-  });
+  const [res, aggRes] = await Promise.all([
+    getSession({
+      path: {
+        sessionId,
+      },
+    }),
+    getSessionAggregates({
+      path: {
+        sessionId,
+      },
+    }),
+  ]);
 
   if (!res.data) {
     return { session: undefined, error: 'Session Not Found' };
   }
-  const aggRes = await getSessionAggregates({
-    path: {
-      sessionId,
-    },
-  });
 
   const sharablePath = `profile/${id}/c/${characterId}/sessions/${sessionId}`;
   let path: string;
@@ -115,8 +117,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
         if (isInitial) {
           isInitial = false;
           const current = sessionRef.current as
-            | FirestoreSessionData
-            | undefined;
+            FirestoreSessionData | undefined;
           const currentCount = current?.aggregateIds?.length ?? 0;
           const newCount = newData.aggregateIds?.length ?? 0;
           const statusChanged = newData.status !== current?.status;

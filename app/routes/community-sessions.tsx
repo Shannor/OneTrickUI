@@ -1,8 +1,8 @@
 import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { Link, useLoaderData } from 'react-router';
-import { getAuth } from '~/.server/auth';
+import { getAuth, getCachedUser } from '~/.server/auth';
 import { getRequestLogger } from '~/.server/logger';
-import { type Profile, type Session, getSessions, getUser } from '~/api';
+import { type Profile, type Session, getSessions } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
 import { Button, buttonVariants } from '~/components/ui/button';
 import { cn } from '~/lib/utils';
@@ -30,23 +30,22 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   const auth = await getAuth(request);
   let userProfile: Profile | null = null;
-  if (auth?.id) {
-    try {
-      const { data } = await getUser({ path: { userId: auth.id } });
-      userProfile = data ?? null;
-    } catch {
-      userProfile = null;
-    }
-  }
+  const userProfilePromise = auth?.id
+    ? getCachedUser(request, auth.id).catch(() => null)
+    : Promise.resolve(null);
 
   try {
-    const sessionsRes = await getSessions({
-      query: {
-        count: PAGE_SIZE,
-        page: apiPage,
-        ...(statusFilter ? { status: statusFilter } : {}),
-      },
-    });
+    const [userProfileRes, sessionsRes] = await Promise.all([
+      userProfilePromise,
+      getSessions({
+        query: {
+          count: PAGE_SIZE,
+          page: apiPage,
+          ...(statusFilter ? { status: statusFilter } : {}),
+        },
+      }),
+    ]);
+    userProfile = userProfileRes?.data ?? null;
     const sessions: Session[] = sessionsRes.data ?? [];
 
     const userActiveSession = sessions.find(
@@ -59,9 +58,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const profilesList = await Promise.all(
       userIds.map(async (userId) => {
-        const { data: profile, error } = await getUser({
-          path: { userId },
-        });
+        const { data: profile, error } = await getCachedUser(request, userId);
         if (error) {
           return null;
         }

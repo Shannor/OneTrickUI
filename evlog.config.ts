@@ -9,6 +9,9 @@ function resolveEventTarget(event: WideEvent): string | undefined {
   if (event.route) {
     return String(event.route);
   }
+  if (event.layout) {
+    return String(event.layout);
+  }
   if (event.loader) {
     return `loader:${String(event.loader)}`;
   }

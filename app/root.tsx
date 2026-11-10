@@ -9,16 +9,17 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from 'react-router';
+import type { ShouldRevalidateFunctionArgs } from 'react-router';
 import {
   PreventFlashOnWrongTheme,
   type Theme,
   ThemeProvider,
   useTheme,
 } from 'remix-themes';
-import { getAuth } from '~/.server/auth';
+import { getAuth, getCachedUser } from '~/.server/auth';
 import { evlogMiddleware, getRequestLogger } from '~/.server/logger';
 import { themeSessionResolver } from '~/.server/sessions';
-import { type Character, getUser } from '~/api';
+import type { Character } from '~/api';
 import { client } from '~/api/client.gen';
 import { ErrorBoundaryContent } from '~/components/error-boundary-content';
 import { ModeToggle } from '~/components/mode-toggle';
@@ -131,7 +132,7 @@ export const loader = async ({
       };
       log.set({ user: { id: auth.id, membershipId: auth.membershipId } });
       try {
-        const { data: profile } = await getUser({ path: { userId: auth.id } });
+        const { data: profile } = await getCachedUser(request, auth.id);
         if (profile?.displayName) {
           user = {
             ...user,
@@ -165,6 +166,27 @@ export const loader = async ({
     user,
   };
 };
+
+// Built-in React Router route module export that controls when the root loader re-runs on navigation
+export function shouldRevalidate({
+  formMethod,
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+  if (formMethod && formMethod !== 'GET') {
+    return defaultShouldRevalidate;
+  }
+  if (
+    currentUrl.pathname === '/oauth' ||
+    nextUrl.pathname === '/oauth' ||
+    currentUrl.pathname === '/login' ||
+    nextUrl.pathname === '/login'
+  ) {
+    return defaultShouldRevalidate;
+  }
+  return false;
+}
 
 // Wrap your app with ThemeProvider.
 // `specifiedTheme` is the stored theme in the session storage.

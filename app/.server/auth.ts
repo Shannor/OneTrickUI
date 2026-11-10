@@ -1,6 +1,6 @@
 import { createCookieSessionStorage, redirect } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
-import { type AuthResponse, refreshToken } from '~/api';
+import { type AuthResponse, getUser, refreshToken } from '~/api';
 import { extractRequestMeta } from '~/lib/request-logger';
 
 type SessionData = {
@@ -12,6 +12,30 @@ type SessionFlashData = {
 };
 
 const isProd = process.env.NODE_ENV === 'production';
+
+const authPromiseCache = new WeakMap<
+  Request,
+  Promise<AuthResponse | undefined>
+>();
+const userFetchCache = new WeakMap<
+  Request,
+  Map<string, ReturnType<typeof getUser<false>>>
+>();
+
+export function getCachedUser(request: Request, userId: string) {
+  let map = userFetchCache.get(request);
+  if (!map) {
+    map = new Map();
+    userFetchCache.set(request, map);
+  }
+  const existing = map.get(userId);
+  if (existing) {
+    return existing;
+  }
+  const promise = getUser({ path: { userId } });
+  map.set(userId, promise);
+  return promise;
+}
 
 const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<SessionData, SessionFlashData>({
@@ -27,6 +51,18 @@ const { getSession, commitSession, destroySession } =
   });
 
 async function getAuth(request: Request): Promise<AuthResponse | undefined> {
+  const cached = authPromiseCache.get(request);
+  if (cached) {
+    return cached;
+  }
+  const promise = resolveAuth(request);
+  authPromiseCache.set(request, promise);
+  return promise;
+}
+
+async function resolveAuth(
+  request: Request,
+): Promise<AuthResponse | undefined> {
   const log = getRequestLogger();
   const session = await getSession(request.headers.get('Cookie'));
   const auth = session.get('jwt');
@@ -141,7 +177,7 @@ function redirectBack(
     try {
       const requestUrl = new URL(request.url);
       const refererUrl = new URL(referer, requestUrl.origin);
-      if (refererUrl.origin === requestUrl.origin) {
+      if (refererUrl.host === requestUrl.host) {
         return redirect(refererUrl.pathname + refererUrl.search, response);
       }
     } catch {

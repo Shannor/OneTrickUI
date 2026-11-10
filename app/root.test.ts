@@ -31,6 +31,9 @@ vi.mock('~/.server/sessions', () => ({
 
 vi.mock('~/.server/auth', () => ({
   getAuth: vi.fn(),
+  getCachedUser: vi.fn((_req: Request, userId: string) =>
+    getUser({ path: { userId } }),
+  ),
 }));
 
 vi.mock('~/api', () => ({

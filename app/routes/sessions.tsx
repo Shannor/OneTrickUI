@@ -33,28 +33,30 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     sessions: { userId: id, characterId, page },
   });
 
-  const res = await getUserSessions({
-    path: {
-      userId: id,
-    },
-    query: {
-      count: BigInt(10),
-      page: apiPage,
-      characterId,
-      status: 'complete',
-    },
-  });
-  const currentRes = await getUserSessions({
-    path: {
-      userId: id,
-    },
-    query: {
-      count: BigInt(1),
-      page: BigInt(0),
-      characterId,
-      status: 'pending',
-    },
-  });
+  const [res, currentRes] = await Promise.all([
+    getUserSessions({
+      path: {
+        userId: id,
+      },
+      query: {
+        count: BigInt(10),
+        page: apiPage,
+        characterId,
+        status: 'complete',
+      },
+    }),
+    getUserSessions({
+      path: {
+        userId: id,
+      },
+      query: {
+        count: BigInt(1),
+        page: BigInt(0),
+        characterId,
+        status: 'pending',
+      },
+    }),
+  ]);
   if (!res.data) {
     return {
       data: [],

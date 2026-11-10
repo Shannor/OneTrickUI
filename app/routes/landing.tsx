@@ -8,10 +8,10 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { getAuth } from '~/.server/auth';
+import { getAuth, getCachedUser } from '~/.server/auth';
 import { getRequestLogger } from '~/.server/logger';
 import { getPreferences } from '~/.server/preferences';
-import { type Profile, type Session, getSessions, getUser } from '~/api';
+import { type Profile, type Session, getSessions } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
 import { LoadingButton } from '~/components/loading-button';
 import { Logo } from '~/components/logo';
@@ -62,28 +62,33 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
   log.set({ route: 'routes/landing' });
-  const auth = await getAuth(request);
-  const preferences = await getPreferences(request);
+  const [auth, preferences] = await Promise.all([
+    getAuth(request),
+    getPreferences(request),
+  ]);
   let profile: Profile | null = null;
   let selectedCharacterId: string | null = null;
 
-  if (auth) {
-    const response = await getUser({ path: { userId: auth.id } });
-    if (response.data) {
-      profile = response.data;
+  const userProfilePromise = auth
+    ? getCachedUser(request, auth.id)
+    : Promise.resolve(undefined);
+
+  // Fetch lightweight public stats for the landing page
+  try {
+    const [userRes, pendingRes, recentRes] = await Promise.all([
+      userProfilePromise,
+      getSessions({ query: { count: 20, page: 0, status: 'pending' } }),
+      getSessions({ query: { count: 20, page: 0, status: 'complete' } }),
+    ]);
+
+    if (userRes?.data) {
+      profile = userRes.data;
       const prefCharId = preferences.character?.id;
       const isValid = profile.characters?.some((c) => c.id === prefCharId);
       if (isValid && prefCharId) {
         selectedCharacterId = prefCharId;
       }
     }
-  }
-  // Fetch lightweight public stats for the landing page
-  try {
-    const [pendingRes, recentRes] = await Promise.all([
-      getSessions({ query: { count: 20, page: 0, status: 'pending' } }),
-      getSessions({ query: { count: 20, page: 0, status: 'complete' } }),
-    ]);
 
     const activeSessions: Session[] = pendingRes.data ?? [];
     const recent: Session[] = recentRes.data ?? [];
@@ -131,9 +136,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const profilesList = await Promise.all(
       userIds.map(async (userId) => {
-        const { data: userProfile, error } = await getUser({
-          path: { userId },
-        });
+        const { data: userProfile, error } = await getCachedUser(
+          request,
+          userId,
+        );
         if (error) {
           return null;
         }
