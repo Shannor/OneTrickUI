@@ -4,7 +4,7 @@ WORKDIR /app
 RUN npm ci
 
 FROM node:22-alpine AS production-dependencies-env
-COPY ./package.json package-lock.json .npmrc /app/
+COPY ./package.json package-lock.json /app/
 WORKDIR /app
 RUN npm ci --omit=dev
 
