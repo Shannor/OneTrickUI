@@ -35,7 +35,11 @@ export function LoadoutHeaderActions({
       setCopyStatus('Copied!');
     } catch (err) {
       setCopyStatus('Failed to copy!');
-      log.error(err instanceof Error ? err : new Error(String(err)));
+      log.error({
+        action: 'loadout.copy_share_url',
+        message: 'Failed to copy loadout share URL',
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
     setTimeout(() => setCopyStatus(''), 2000);
   };

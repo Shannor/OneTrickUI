@@ -40,7 +40,11 @@ export function SessionHeaderActions({
       setCopyStatus('Copied!');
     } catch (err) {
       setCopyStatus('Failed to copy!');
-      log.error(err instanceof Error ? err : new Error(String(err)));
+      log.error({
+        action: 'session.copy_share_url',
+        message: 'Failed to copy session share URL',
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
     setTimeout(() => setCopyStatus(''), 2000);
   };

@@ -103,6 +103,7 @@ export function Sidebar() {
         } catch (err) {
           log.error({
             action: 'sidebar.save_active_character',
+            message: 'Failed to save active character in localStorage',
             error: err instanceof Error ? err.message : String(err),
           });
         }
@@ -117,6 +118,7 @@ export function Sidebar() {
         } catch (err) {
           log.error({
             action: 'sidebar.get_active_character',
+            message: 'Failed to get active character from localStorage',
             error: err instanceof Error ? err.message : String(err),
           });
         }
@@ -289,6 +291,7 @@ export function Sidebar() {
                 }).catch((err) =>
                   log.error({
                     action: 'sidebar.logout',
+                    message: 'Logout failed',
                     error: err instanceof Error ? err.message : String(err),
                   }),
                 )

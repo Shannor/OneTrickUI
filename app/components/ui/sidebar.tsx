@@ -110,6 +110,7 @@ const SidebarProvider = React.forwardRef<
         } catch (err) {
           log.error({
             action: 'sidebar.shortcut',
+            message: 'Failed to handle sidebar keyboard shortcut',
             error: err instanceof Error ? err.message : String(err),
           });
         }

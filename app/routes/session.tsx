@@ -128,11 +128,16 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
             revalidator
               .revalidate()
               .then(() =>
-                log.debug({ action: 'firestore.revalidated', initial: true }),
+                log.debug({
+                  action: 'firestore.revalidated',
+                  message: 'Firestore session snapshot revalidated (initial)',
+                  initial: true,
+                }),
               )
               .catch((err) => {
                 log.error({
                   action: 'firestore.revalidate',
+                  message: 'Failed to revalidate on initial firestore snapshot',
                   initial: true,
                   error: err instanceof Error ? err.message : String(err),
                 });
@@ -144,11 +149,16 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
         revalidator
           .revalidate()
           .then(() =>
-            log.debug({ action: 'firestore.revalidated', initial: false }),
+            log.debug({
+              action: 'firestore.revalidated',
+              message: 'Firestore session snapshot revalidated',
+              initial: false,
+            }),
           )
           .catch((err) => {
             log.error({
               action: 'firestore.revalidate',
+              message: 'Failed to revalidate on firestore update',
               initial: false,
               error: err instanceof Error ? err.message : String(err),
             });
@@ -157,6 +167,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
       (error) => {
         log.error({
           action: 'firestore.snapshot_error',
+          message: 'Firestore session onSnapshot error',
           error: error instanceof Error ? error.message : String(error),
         });
       },
@@ -179,7 +190,11 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   }
 
   if (error) {
-    log.error({ action: 'session.loader_error', error });
+    log.error({
+      action: 'session.loader_error',
+      message: 'Session loader error',
+      error,
+    });
     return (
       <div>
         <Empty

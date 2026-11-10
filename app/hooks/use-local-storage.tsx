@@ -17,6 +17,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     } catch (error) {
       log.error({
         action: 'localStorage.read',
+        message: 'Error reading from localStorage',
         key,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -35,6 +36,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     } catch (error) {
       log.error({
         action: 'localStorage.write',
+        message: 'Error setting localStorage value',
         key,
         error: error instanceof Error ? error.message : String(error),
       });
