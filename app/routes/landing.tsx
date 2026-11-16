@@ -24,40 +24,9 @@ import {
   CardTitle,
 } from '~/components/ui/card';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
-import { cn } from '~/lib/utils';
+import { cn, getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/landing';
-
-export function meta({}: Route.MetaArgs) {
-  const title = 'One Trick — Destiny 2 Performance Tracker';
-  const description =
-    'Track your Destiny 2 performance with your favorite loadouts. Analyze stats and improve your game with One Trick by tracking performance across different game modes.';
-  const url = 'https://d2onetrick.com/';
-  const image = '/og-image.svg';
-  return [
-    { title },
-    { description },
-    {
-      keywords:
-        'Destiny 2, d2, tracker, stats, performance, loadouts, PvP, gaming, one trick, min-max, min, max',
-    },
-    { tagName: 'link', rel: 'canonical', href: url },
-    { name: 'robots', content: 'index,follow' },
-    // Open Graph
-    { property: 'og:type', content: 'website' },
-    { property: 'og:title', content: title },
-    { property: 'og:description', content: description },
-    { property: 'og:url', content: url },
-    { property: 'og:image', content: image },
-    { property: 'og:image:width', content: '1200' },
-    { property: 'og:image:height', content: '630' },
-    // Twitter
-    { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: title },
-    { name: 'twitter:description', content: description },
-    { name: 'twitter:image', content: '/twitter-image.svg' },
-  ];
-}
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
@@ -243,8 +212,30 @@ export function Landing({ loaderData }: Route.ComponentProps) {
       : `/profile/${profile.id}`
     : '/login';
 
+  const origin = getSiteOrigin();
+  const pageTitle = '1 Trick — Destiny 2 PvP Loadout & Session Tracker';
+  const pageDescription =
+    'Track your Destiny 2 PvP performance across game modes, analyze real-time sessions, and inspect community loadout snapshots.';
+  const canonicalUrl = 'https://d2onetrick.com/';
+
   return (
     <div className="flex h-full flex-col justify-between gap-12">
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:image" content={`${origin}/og-image.png`} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
+      <link rel="canonical" href={canonicalUrl} />
+
       {/* Hero Section */}
       <div className="container mx-auto flex flex-col gap-4 px-4 pt-4 text-center">
         <Logo className="mx-auto mb-2 h-16 w-auto" alt="D2 One Trick logo" />

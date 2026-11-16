@@ -183,6 +183,11 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   if (!session) {
     return (
       <div className="flex flex-col gap-4">
+        <title>Session Not Found | 1 Trick</title>
+        <meta
+          name="description"
+          content="We couldn't load this session on 1 Trick."
+        />
         <Empty
           title="No Session Found"
           description="Error loading this session. Please try again later."
@@ -199,6 +204,11 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
     });
     return (
       <div>
+        <title>Error Loading Session | 1 Trick</title>
+        <meta
+          name="description"
+          content="Error loading this session on 1 Trick."
+        />
         <Empty
           title="Error loading Session"
           description="Error loading this session. Please try again later."
@@ -211,30 +221,8 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   const gamesRecorded = session.aggregateIds?.length ?? 0;
   const showActiveNotice = isCurrent && gamesRecorded < 3;
 
-  const sessionName = session.name || 'Session';
-  const displayName = profile?.displayName;
-  const sessionNameText = session.name ? ` ${session.name}` : '';
-
-  const pageTitle = displayName
-    ? `${sessionName} - ${displayName} | 1 Trick`
-    : `${sessionName} | 1 Trick`;
-
-  const pageDescription =
-    session.description ||
-    `View games, metrics, and details for ${displayName ?? 'player'}'s session${sessionNameText} on 1 Trick.`;
-
   return (
     <div className="flex flex-col gap-4">
-      <title>{pageTitle}</title>
-      <meta name="description" content={pageDescription} />
-      <meta property="og:title" content={pageTitle} />
-      <meta property="og:description" content={pageDescription} />
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={path} />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={pageTitle} />
-      <meta name="twitter:description" content={pageDescription} />
-      <link rel="canonical" href={path} />
       <div className="flex w-full flex-col gap-4">
         {showActiveNotice && (
           <Alert className="border-blue-500/40 bg-blue-500/10 text-blue-950 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-100">

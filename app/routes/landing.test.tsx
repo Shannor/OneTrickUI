@@ -137,4 +137,42 @@ describe('Landing Component', () => {
     expect(link.tagName).toBe('A');
     expect(link.closest('button')).toBeNull();
   });
+
+  it('hoists JSX <title>, <meta>, and <link rel="canonical"> into document.head', () => {
+    const props = {
+      loaderData: {
+        activeCount: 0,
+        activeSessions: [],
+        recent: [],
+        todayCount: 0,
+        weekCount: 0,
+        auth: undefined,
+        profile: null,
+        recentProfiles: {},
+      },
+    } as unknown as ComponentProps<typeof Landing>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Landing {...props} />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(document.title).toBe(
+      '1 Trick — Destiny 2 PvP Loadout & Session Tracker',
+    );
+    expect(
+      document.head
+        .querySelector('meta[name="description"]')
+        ?.getAttribute('content'),
+    ).toContain('Track your Destiny 2 PvP performance');
+    expect(
+      document.head
+        .querySelector('link[rel="canonical"]')
+        ?.getAttribute('href'),
+    ).toBe('https://d2onetrick.com/');
+  });
 });

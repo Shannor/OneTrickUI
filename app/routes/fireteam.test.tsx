@@ -56,6 +56,7 @@ describe('Fireteam Route Component', () => {
     render(<RouterProvider router={router} />);
 
     expect(screen.getByText('You are currently offline.')).toBeInTheDocument();
+    expect(document.title).toBe('Fireteam | 1 Trick');
   });
 
   it('renders fireteam header and member cards when members exist', () => {

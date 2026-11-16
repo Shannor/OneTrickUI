@@ -15,6 +15,31 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-16',
+    date: 'November 16, 2026',
+    title: 'Rich Social Link Previews & Dynamic Page Metadata',
+    summary:
+      'Share sessions, loadouts, activities, and character profiles on Discord, X/Twitter, and iMessage with custom visual stat cards, map artwork, and accurate page titles.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Share any Session link to automatically display a rich visual summary card featuring your Guardian emblem, session status, total matches, win rate, K/D ratio, and efficiency.',
+      },
+      {
+        type: 'feature',
+        text: 'Share any Loadout link to showcase a custom visual build card highlighting your subclass, Kinetic, Energy, and Power weapons, and Exotic armor.',
+      },
+      {
+        type: 'improvement',
+        text: 'Shared Activity and Character Overview links now display the Crucible map artwork and your Guardian emblem banner in social previews.',
+      },
+      {
+        type: 'fix',
+        text: 'Browser tab titles, descriptions, and shared link previews now update accurately as you navigate across every page and tab.',
+      },
+    ],
+  },
+  {
     id: '2026-11-15',
     date: 'November 15, 2026',
     title: 'Similar Loadouts Comparison, Multi-Merge & Faster Mobile Loading',

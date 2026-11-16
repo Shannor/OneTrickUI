@@ -20,7 +20,7 @@ import { Performance } from '~/organisims/performance';
 import type { Route } from './+types/session-metrics';
 
 export default function SessionMetrics({ params }: Route.ComponentProps) {
-  const { aggregates, snapshots, session } = useSessionData();
+  const { aggregates, snapshots, session, path } = useSessionData();
   const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id } = params;
 
@@ -36,21 +36,53 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
     session?.description ||
     `View per-loadout performance metrics for ${displayName ?? 'player'}'s session${sessionNameText} on 1 Trick.`;
 
+  const canonicalUrl = path ? `${path}/metrics` : '';
+  const origin = path ? new URL(path).origin : 'https://d2onetrick.com';
+  const ogImageUrl = session?.id
+    ? `${origin}/og/session/${session.id}.png`
+    : `${origin}/og-image.png`;
+
+  const metaTags = (
+    <>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      <meta property="og:image" content={ogImageUrl} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={ogImageUrl} />
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    </>
+  );
+
   if (!aggregates || aggregates.length === 0) {
     return (
-      <Empty
-        title="Get in the Crucible!"
-        description="Play some games so we can get new information!"
-      />
+      <>
+        {metaTags}
+        <Empty
+          title="Get in the Crucible!"
+          description="Play some games so we can get new information!"
+        />
+      </>
     );
   }
 
   if (!snapshots || Object.keys(snapshots).length === 0) {
     return (
-      <Empty
-        title="Get in the Crucible!"
-        description="Play some games so we can get new information!"
-      />
+      <>
+        {metaTags}
+        <Empty
+          title="Get in the Crucible!"
+          description="Play some games so we can get new information!"
+        />
+      </>
     );
   }
 
@@ -62,10 +94,7 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
 
   return (
     <div className="mt-8 flex flex-col gap-16">
-      <title>{pageTitle}</title>
-      <meta property="og:title" content={pageTitle} />
-      <meta name="description" content={pageDescription} />
-      <meta property="og:description" content={pageDescription} />
+      {metaTags}
       <div className="flex flex-col gap-6">
         <h4 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight">
           Session Metrics

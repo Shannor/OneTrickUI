@@ -19,7 +19,7 @@ import { Performance, type StatItem } from '~/organisims/performance';
 import type { Route } from './+types/session-games';
 
 export function SessionGames({ params }: Route.ComponentProps) {
-  const { session, aggregates, snapshots } = useSessionData();
+  const { session, aggregates, snapshots, path } = useSessionData();
   const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id } = params;
   const navigate = useNavigate();
@@ -36,40 +36,71 @@ export function SessionGames({ params }: Route.ComponentProps) {
     session?.description ||
     `Browse games, loadouts, and performance details for ${displayName ?? 'player'}'s session${sessionNameText} on 1 Trick.`;
 
+  const origin = path ? new URL(path).origin : 'https://d2onetrick.com';
+  const ogImageUrl = session?.id
+    ? `${origin}/og/session/${session.id}.png`
+    : `${origin}/og-image.png`;
+
+  const metaTags = (
+    <>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      {path && <meta property="og:url" content={path} />}
+      <meta property="og:image" content={ogImageUrl} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={ogImageUrl} />
+      {path && <link rel="canonical" href={path} />}
+    </>
+  );
+
   const totalRecordedGames = session?.aggregateIds?.length ?? 0;
 
   if (!aggregates || aggregates?.length === 0) {
     if (totalRecordedGames > 0) {
       return (
-        <Empty
-          title="Processing Match Data"
-          description="Your game was recorded! Stats and match details are currently processing."
-        />
+        <>
+          {metaTags}
+          <Empty
+            title="Processing Match Data"
+            description="Your game was recorded! Stats and match details are currently processing."
+          />
+        </>
       );
     }
     return (
-      <Empty
-        title="Get in the Crucible!"
-        description="Play some games so we can get new information!"
-      />
+      <>
+        {metaTags}
+        <Empty
+          title="Get in the Crucible!"
+          description="Play some games so we can get new information!"
+        />
+      </>
     );
   }
 
   if (!snapshots) {
     return (
-      <Empty
-        title="Get in the Crucible!"
-        description="Play some games so we can get new information!"
-      />
+      <>
+        {metaTags}
+        <Empty
+          title="Get in the Crucible!"
+          description="Play some games so we can get new information!"
+        />
+      </>
     );
   }
 
   return (
     <div className="flex flex-col gap-8 md:gap-6">
-      <title>{pageTitle}</title>
-      <meta name="description" content={pageDescription} />
-      <meta property="og:title" content={pageTitle} />
-      <meta property="og:description" content={pageDescription} />
+      {metaTags}
       {aggregates
         .sort(
           (a, b) =>

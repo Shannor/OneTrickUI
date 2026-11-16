@@ -4,34 +4,67 @@ import { Empty } from '~/components/empty';
 import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
 import { Weapon } from '~/components/weapon';
 import { getDetailWeapons, useClassStats } from '~/hooks/use-loadout';
-import { useLoadoutData } from '~/hooks/use-route-loaders';
+import {
+  useLoadoutData,
+  useOptionalProfileData,
+} from '~/hooks/use-route-loaders';
 import { SubClassProvider } from '~/providers/sub-class-provider';
 
 export function LoadoutDetails() {
-  const { snapshot, error } = useLoadoutData();
+  const { snapshot, error, path } = useLoadoutData();
+  const { profile } = useOptionalProfileData() ?? {};
   const values = useClassStats(snapshot);
   const data = getDetailWeapons(snapshot?.loadout);
 
+  const loadoutName = snapshot?.name || 'Loadout';
+  const displayName = profile?.displayName;
+  const pageTitle = displayName
+    ? `${loadoutName} - ${displayName} | 1 Trick`
+    : `${loadoutName} | 1 Trick`;
+  const pageDescription =
+    snapshot?.description ||
+    `View armor stats, subclass, and weapon details for ${displayName ? `${displayName}'s ` : ''}${loadoutName} on 1 Trick.`;
+
+  const origin = path ? new URL(path).origin : 'https://d2onetrick.com';
+  const ogImageUrl = snapshot?.id
+    ? `${origin}/og/loadout/${snapshot.id}.png`
+    : `${origin}/og-image.png`;
+
+  const metaTags = (
+    <>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      {path && <meta property="og:url" content={path} />}
+      <meta property="og:image" content={ogImageUrl} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={ogImageUrl} />
+      {path && <link rel="canonical" href={path} />}
+    </>
+  );
+
   if (!snapshot || error) {
     return (
-      <Empty
-        title="No Loadout Details Found"
-        description="Unable to load gear and subclass details for this loadout."
-      />
+      <>
+        {metaTags}
+        <Empty
+          title="No Loadout Details Found"
+          description="Unable to load gear and subclass details for this loadout."
+        />
+      </>
     );
   }
 
   return (
     <div className="flex flex-col gap-20">
-      <title>{`${snapshot.name ?? 'Loadout'} - Details`}</title>
-      <meta
-        property="og:title"
-        content={`${snapshot.name ?? 'Loadout'} - Details`}
-      />
-      <meta
-        name="description"
-        content={`View armor stats and gear details for ${snapshot.name ?? 'this loadout'}.`}
-      />
+      {metaTags}
       <div className="flex flex-col gap-10 lg:flex-row">
         <SubClassProvider snapshot={snapshot}>
           <div className="flex flex-col gap-4">
