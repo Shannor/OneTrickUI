@@ -20,7 +20,7 @@ describe('dev-worktree.server', () => {
   });
 
   describe('resolveDevWorktreeConfig', () => {
-    it('uses Worktrunk hash_port and git branch by default with isolated local HMR', () => {
+    it('uses Worktrunk hash_port and git branch by default', () => {
       const execCommand = vi.fn((cmd: string) => {
         if (cmd.includes('git rev-parse')) {
           return 'feat/similar-loadouts\n';
@@ -39,7 +39,6 @@ describe('dev-worktree.server', () => {
       expect(config).toEqual({
         branch: 'feat/similar-loadouts',
         port: 16957,
-        hmr: undefined,
       });
     });
 
@@ -58,26 +57,6 @@ describe('dev-worktree.server', () => {
 
       expect(config.port).toBe(4321);
       expect(config.branch).toBe('feat/custom-port');
-      expect(config.hmr).toBeUndefined();
-    });
-
-    it('enables ngrok HMR configuration on port 5173 when NGROK=true', () => {
-      const execCommand = vi.fn(() => 'feat/oauth-test\n');
-
-      const config = resolveDevWorktreeConfig({
-        env: { NGROK: 'true' },
-        execCommand,
-      });
-
-      expect(config).toEqual({
-        branch: 'feat/oauth-test',
-        port: 5173,
-        hmr: {
-          host: 'local.d2onetrick.ngrok.app',
-          port: 5173,
-          clientPort: 443,
-        },
-      });
     });
 
     it('falls back to deterministic branch hash port when wt CLI is unavailable', () => {
@@ -97,7 +76,6 @@ describe('dev-worktree.server', () => {
       expect(config.port).toBe(
         hashBranchToPort('fix/session-overview-loadout'),
       );
-      expect(config.hmr).toBeUndefined();
     });
 
     it('falls back to port 5173 and null branch when in detached HEAD without wt', () => {
@@ -116,7 +94,6 @@ describe('dev-worktree.server', () => {
       expect(config).toEqual({
         branch: null,
         port: 5173,
-        hmr: undefined,
       });
     });
 

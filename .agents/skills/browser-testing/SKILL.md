@@ -41,11 +41,11 @@ Recommend and use the appropriate tool among the 3 based on the specific task at
 
 ## 3. Local Dev Authentication Bypass (`/action/dev-login`)
 
-Both `http://localhost:5173` and `https://local.d2onetrick.ngrok.app` support a development-only authentication route (`NODE_ENV !== 'production'`) that sets a valid signed `__auth_session` cookie without requiring interactive Bungie OAuth:
+`http://localhost:<port>` (e.g., `http://localhost:5173` or the branch-specific Worktrunk port) supports a development-only authentication route (`NODE_ENV !== 'production'`) that sets a valid signed `__auth_session` cookie without requiring interactive Bungie OAuth:
 
 - **Default test user (`Zone 6 Weegee`, `TTXWDT9pzDEA0XiO1iAc`)**:
   ```
-  https://local.d2onetrick.ngrok.app/action/dev-login?redirectTo=/profile/TTXWDT9pzDEA0XiO1iAc/c/2305843009261519028/loadouts
+  http://localhost:5173/action/dev-login?redirectTo=/profile/TTXWDT9pzDEA0XiO1iAc/c/2305843009261519028/loadouts
   ```
 - **Custom user**:
   ```
@@ -89,7 +89,7 @@ Requires `chrome://inspect/#remote-debugging` enabled in Chrome. Do **not** set 
 Always pin commands with `--target <word-pair>` from `list-pages` or `navigate` output:
 ```bash
 # Navigate and wait for text
-$CDT --target <target> navigate "https://local.d2onetrick.ngrok.app/action/dev-login?redirectTo=/profile/TTXWDT9pzDEA0XiO1iAc/c/2305843009261519028/loadouts?hasSimilar=true" --viewport 1440x900
+$CDT --target <target> navigate "http://localhost:5173/action/dev-login?redirectTo=/profile/TTXWDT9pzDEA0XiO1iAc/c/2305843009261519028/loadouts?hasSimilar=true" --viewport 1440x900
 $CDT --target <target> wait-for "Similar" --timeout 5000
 
 # Click by CSS selector (e.g. data-testid)
@@ -125,7 +125,7 @@ Uses the local `chrome-devtools-mcp` package installed in `package.json`.
 ### Start & Authenticate
 ```bash
 ./node_modules/.bin/chrome-devtools start --headless
-./node_modules/.bin/chrome-devtools navigate_page 1 --type=url --url="https://local.d2onetrick.ngrok.app/action/dev-login?redirectTo=/profile/TTXWDT9pzDEA0XiO1iAc/c/2305843009261519028/loadouts"
+./node_modules/.bin/chrome-devtools navigate_page 1 --type=url --url="http://localhost:5173/action/dev-login?redirectTo=/profile/TTXWDT9pzDEA0XiO1iAc/c/2305843009261519028/loadouts"
 ```
 
 ### Emulate 3G / 4G Network & CPU Throttling
@@ -163,7 +163,7 @@ Uses the local `@playwright/cli` package installed in `package.json`. Writes ful
 
 ```bash
 # 1. Open and authenticate
-./node_modules/.bin/playwright-cli open "https://local.d2onetrick.ngrok.app/action/dev-login?redirectTo=/profile/TTXWDT9pzDEA0XiO1iAc/c/2305843009261519028/loadouts"
+./node_modules/.bin/playwright-cli open "http://localhost:5173/action/dev-login?redirectTo=/profile/TTXWDT9pzDEA0XiO1iAc/c/2305843009261519028/loadouts"
 
 # 2. Search the page snapshot for specific text (very low token output)
 ./node_modules/.bin/playwright-cli find "Similar"

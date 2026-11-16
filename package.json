@@ -5,7 +5,6 @@
   "scripts": {
     "build": "NODE_ENV=production react-router build",
     "dev": "react-router dev",
-    "dev:ngrok": "NGROK=true react-router dev",
     "start": "NODE_ENV=production node ./server.js",
     "typecheck": "react-router typegen && tsc",
     "gen-api": "openapi-ts",
