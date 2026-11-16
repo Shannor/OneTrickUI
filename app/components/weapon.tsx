@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Button } from '~/components/ui/button';
 import { WeaponKills } from '~/components/weapon-kills';
 import { WeaponStats } from '~/components/weapon-stats';
-import { cn, setBungieUrl } from '~/lib/utils';
+import { cn, getItemIconUrl } from '~/lib/utils';
 
 interface WeaponSockets {
   intrinsic: Socket | null;
@@ -133,7 +133,7 @@ export const Weapon: React.FC<Props> = ({
     weaponSockets.originTrait,
   ].filter(Boolean) as Socket[];
 
-  const icon = setBungieUrl(display?.icon ?? properties?.baseInfo?.icon);
+  const icon = getItemIconUrl(properties, display?.icon);
   const name = properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun';
   const isExotic = properties?.baseInfo?.tierTypeName === 'Exotic';
   const itemType = properties?.baseInfo?.itemTypeDisplayName;

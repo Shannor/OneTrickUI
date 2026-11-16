@@ -8,24 +8,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { cn, setBungieUrl } from '~/lib/utils';
+import { cn, getItemIconUrl } from '~/lib/utils';
 
 export interface ArmorProps extends ItemSnapshotType {
   className?: string;
   hideInlineStats?: boolean;
 }
 
-interface ArmorSockets {
-  mod: Socket[];
-  shader: Socket | null;
-  ornament: Socket | null;
-}
-
 const isMod = (itemTypeDisplayName: string): boolean =>
   itemTypeDisplayName.toLowerCase().includes('mod');
-
-const isOrnament = (itemTypeDisplayName: string): boolean =>
-  itemTypeDisplayName.toLowerCase().includes('ornament');
 
 export const Armor: React.FC<ArmorProps> = (props) => {
   const { details, className, hideInlineStats = true } = props;
@@ -35,37 +26,18 @@ export const Armor: React.FC<ArmorProps> = (props) => {
   if (!sockets || sockets.length === 0) return null;
 
   const isExotic = baseInfo.tierTypeName?.toLowerCase() === 'exotic';
-  const iconUrl = setBungieUrl(baseInfo.icon);
+  const iconUrl = getItemIconUrl(details);
   const name = baseInfo.name || 'Armor Piece';
   const typeName =
     baseInfo.itemTypeDisplayName || (isExotic ? 'Exotic Armor' : 'Armor');
 
-  const weaponSockets: ArmorSockets =
-    sockets?.reduce(
-      (acc, socket) => {
-        if (
-          !socket.itemTypeDisplayName ||
-          !socket.isVisible ||
-          !socket.isEnabled
-        ) {
-          return acc;
-        }
-
-        const displayName = socket.itemTypeDisplayName;
-
-        if (isMod(displayName)) {
-          acc.mod.push(socket);
-        } else if (isOrnament(displayName)) {
-          acc.ornament = socket;
-        }
-        return acc;
-      },
-      {
-        mod: [],
-        shader: null,
-        ornament: null,
-      } as ArmorSockets,
-    ) ?? {};
+  const modSockets: Socket[] = sockets.filter(
+    (socket) =>
+      Boolean(socket.itemTypeDisplayName) &&
+      Boolean(socket.isVisible) &&
+      Boolean(socket.isEnabled) &&
+      isMod(socket.itemTypeDisplayName!),
+  );
 
   return (
     <Tooltip open={open} onOpenChange={setOpen}>
@@ -117,9 +89,9 @@ export const Armor: React.FC<ArmorProps> = (props) => {
 
           {!hideInlineStats && stats && <ArmorStats stats={stats} />}
 
-          {weaponSockets.mod.length > 0 && (
+          {modSockets.length > 0 && (
             <Sockets
-              sockets={weaponSockets.mod}
+              sockets={modSockets}
               displayMode="iconOnly"
               className="flex-row flex-wrap items-center border-t border-border/40 pt-1"
             />
