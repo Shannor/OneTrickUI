@@ -18,11 +18,13 @@ describe('SessionGames Route Component', () => {
     mockUseSessionData.mockReturnValue({
       session: {
         id: 'session-1',
+        name: 'Crucible Warmup',
         aggregateIds: [],
         status: 'pending',
       },
       aggregates: [],
       snapshots: {},
+      path: 'https://d2onetrick.com/profile/user-1/c/char-1/sessions/session-1',
     });
 
     const props = {
@@ -42,6 +44,12 @@ describe('SessionGames Route Component', () => {
     expect(
       screen.getByText('Play some games so we can get new information!'),
     ).toBeInTheDocument();
+    expect(document.title).toBe('Crucible Warmup | 1 Trick');
+    expect(
+      document.head
+        .querySelector('link[rel="canonical"]')
+        ?.getAttribute('href'),
+    ).toBe('https://d2onetrick.com/profile/user-1/c/char-1/sessions/session-1');
   });
 
   it('renders "Processing Match Data" empty state when game is recorded but aggregates are empty', () => {

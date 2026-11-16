@@ -6,6 +6,7 @@ import { LoadoutCard } from '~/components/loadout-card';
 import { SessionCard } from '~/components/session-card';
 import { Button } from '~/components/ui/button';
 import { useProfileData } from '~/hooks/use-route-loaders';
+import { getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/home';
 
@@ -54,23 +55,48 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   }
 }
 
-export default function Home({ loaderData }: Route.ComponentProps) {
+export default function Home({ loaderData, params }: Route.ComponentProps) {
   const navigate = useNavigate();
   const data = useProfileData();
   const { sessions = [], loadouts, error } = loaderData ?? {};
+  const { id, characterId } = params ?? {};
 
   if (!data) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <title>Overview | 1 Trick</title>
+        <meta
+          name="description"
+          content="View Destiny 2 PvP sessions and top loadouts on 1 Trick."
+        />
+        Loading...
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <Empty title="Unexpected Error" description="Failed to load home page" />
+      <>
+        <title>Overview | 1 Trick</title>
+        <meta
+          name="description"
+          content="View Destiny 2 PvP sessions and top loadouts on 1 Trick."
+        />
+        <Empty title="Unexpected Error" description="Failed to load home page" />
+      </>
     );
   }
 
   if (data.type === 'error') {
-    return null;
+    return (
+      <>
+        <title>Profile Not Found | 1 Trick</title>
+        <meta
+          name="description"
+          content="Unable to load Guardian profile on 1 Trick."
+        />
+      </>
+    );
   }
 
   if (data.type === 'viewer' || data.type === 'owner') {
@@ -87,17 +113,33 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     const featuredSession = activeSession ?? lastSession;
     const displayedSessions = featuredSession ? [featuredSession] : [];
 
+    const origin = getSiteOrigin();
+    const pageTitle = `${profile.displayName} - ${character?.class ?? 'Home'} | 1 Trick`;
+    const pageDescription = `View ${profile.displayName}'s Destiny 2 PvP overview, sessions, and top loadouts on 1 Trick.`;
+    const canonicalUrl =
+      id && characterId
+        ? `https://d2onetrick.com/profile/${id}/c/${characterId}`
+        : '';
+    const shareImageUrl = character?.emblemBackgroundURL
+      ? character.emblemBackgroundURL.startsWith('http')
+        ? character.emblemBackgroundURL
+        : `https://www.bungie.net${character.emblemBackgroundURL}`
+      : `${origin}/og-image.png`;
+
     return (
       <div>
-        <title>{`${profile.displayName} - ${character?.class ?? 'Home'}`}</title>
-        <meta
-          property="og:title"
-          content={`${profile.displayName} - ${character?.class ?? 'Home'}`}
-        />
-        <meta
-          name="description"
-          content={`Home page for ${profile.displayName}`}
-        />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="website" />
+        {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+        <meta property="og:image" content={shareImageUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={shareImageUrl} />
+        {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
         <div className="flex flex-col gap-8">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             {type === 'viewer' ? 'Viewing' : 'Welcome'} {profile.displayName}!

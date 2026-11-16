@@ -16,6 +16,7 @@ import {
 } from '~/components/ui/select';
 import { slimSnapshotForCard } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
+import { getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/loadouts';
 
@@ -172,22 +173,35 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
     return query ? `?${query}` : '?';
   };
 
-  const pageTitle = profile?.displayName
+  const origin = getSiteOrigin();
+  const headingTitle = profile?.displayName
     ? `${profile.displayName}'s Loadouts`
     : 'Loadouts';
+  const pageTitle = `${headingTitle} | 1 Trick`;
+  const pageDescription = `Explore ${profile?.displayName ?? 'Guardian'}'s loadouts with filters for mode and minimum games on 1 Trick.`;
+  const canonicalUrl = `https://d2onetrick.com${location.pathname}`;
 
   return (
     <div className="flex w-full flex-col gap-4">
       <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
       <meta property="og:title" content={pageTitle} />
-      <meta
-        name="description"
-        content={`Explore ${profile?.displayName ?? 'Guardian'}'s loadouts with filters for mode and minimum games.`}
-      />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:image" content={`${origin}/og-image.png`} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
+      <link rel="canonical" href={canonicalUrl} />
       <div className="flex flex-row justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-            {pageTitle}
+            {headingTitle}
           </h2>
         </div>
       </div>

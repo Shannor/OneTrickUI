@@ -44,6 +44,14 @@ export default [
   // SEO / Crawlers
   route('robots.txt', 'routes/robots.txt.ts'),
   route('sitemap.xml', 'routes/sitemap.xml.ts'),
+  route(
+    'og/session/:sessionId.png',
+    'routes/og.session.$sessionId.png.ts',
+  ),
+  route(
+    'og/loadout/:snapshotId.png',
+    'routes/og.loadout.$snapshotId.png.ts',
+  ),
   // Favicon & Icons
   route('favicon.ico', 'routes/favicon.ico.ts', { id: 'favicon-ico' }),
   route('apple-touch-icon.png', 'routes/apple-touch-icon.png.ts', {

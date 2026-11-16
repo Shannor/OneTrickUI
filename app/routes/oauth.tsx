@@ -4,6 +4,7 @@ import { getRequestLogger } from '~/.server/logger';
 import { login } from '~/api';
 import { AuthRetryCard } from '~/components/auth-retry';
 import { extractRequestMeta, maskCode } from '~/lib/request-logger';
+import { getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/oauth';
 
@@ -105,10 +106,25 @@ export default function OAuth() {
   const loaderData = useLoaderData<typeof loader>();
   const error = loaderData?.error;
 
+  const origin = getSiteOrigin();
+  const pageTitle = 'Sign In Status | 1 Trick';
+  const pageDescription = 'Sign in status page for 1 Trick.';
+
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-      <title>Sign In Status — One Trick</title>
-      <meta name="description" content="Sign in status page for One Trick." />
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content={`${origin}/og-image.png`} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
       <div className="w-full max-w-md">
         <AuthRetryCard error={error} />
       </div>

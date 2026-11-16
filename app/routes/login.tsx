@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { buttonVariants } from '~/components/ui/button';
 import { getBungieAuthUrl } from '~/lib/auth-utils';
 import { extractRequestMeta } from '~/lib/request-logger';
-import { cn, isDev } from '~/lib/utils';
+import { cn, getSiteOrigin, isDev } from '~/lib/utils';
 
 import type { Route } from './+types/login';
 
@@ -47,14 +47,29 @@ export default function Login() {
   const showDevLogin = loaderData?.showDevLogin;
   const href = getBungieAuthUrl();
 
+  const origin = getSiteOrigin();
+  const pageTitle = 'Login | 1 Trick';
+  const pageDescription =
+    'Sign in to 1 Trick using Bungie SSO to view your Destiny 2 stats and sessions.';
+  const canonicalUrl = 'https://d2onetrick.com/login';
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      <title>Login | 1 Trick</title>
-      <meta property="og:title" content="Login | 1 Trick" />
-      <meta
-        name="description"
-        content="Sign in to 1 Trick using Bungie SSO to view your Destiny 2 stats and sessions."
-      />
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:image" content={`${origin}/og-image.png`} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
+      <link rel="canonical" href={canonicalUrl} />
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <Link to="/" className="flex items-center gap-2">

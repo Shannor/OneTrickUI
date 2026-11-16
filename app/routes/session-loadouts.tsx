@@ -11,9 +11,47 @@ import { useProfileData, useSessionData } from '~/hooks/use-route-loaders';
 import type { Route } from './+types/session-loadouts';
 
 export default function SessionLoadouts({ params }: Route.ComponentProps) {
-  const { snapshots } = useSessionData();
-  const { type } = useProfileData();
+  const { snapshots, session, path } = useSessionData();
+  const { profile, type } = useProfileData();
   const isOwner = type === 'owner';
+
+  const sessionName = session?.name || 'Session';
+  const displayName = profile?.displayName;
+  const sessionNameText = session?.name ? ` ${session.name}` : '';
+
+  const pageTitle = displayName
+    ? `${sessionName} - ${displayName} Loadouts | 1 Trick`
+    : `${sessionName} Loadouts | 1 Trick`;
+
+  const pageDescription =
+    session?.description ||
+    `Inspect loadouts used in ${displayName ?? 'player'}'s session${sessionNameText} on 1 Trick.`;
+
+  const canonicalUrl = path ? `${path}/loadouts` : '';
+  const origin = path ? new URL(path).origin : 'https://d2onetrick.com';
+  const ogImageUrl = session?.id
+    ? `${origin}/og/session/${session.id}.png`
+    : `${origin}/og-image.png`;
+
+  const metaTags = (
+    <>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      <meta property="og:image" content={ogImageUrl} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={ogImageUrl} />
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    </>
+  );
 
   const allSnapshots = useMemo(
     () => (snapshots ? Object.values(snapshots) : []),
@@ -31,15 +69,19 @@ export default function SessionLoadouts({ params }: Route.ComponentProps) {
 
   if (allSnapshots.length === 0) {
     return (
-      <Empty
-        title="Get in the Crucible!"
-        description="Play some games so we can get new information!"
-      />
+      <>
+        {metaTags}
+        <Empty
+          title="Get in the Crucible!"
+          description="Play some games so we can get new information!"
+        />
+      </>
     );
   }
 
   return (
     <div className="w-full">
+      {metaTags}
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {allSnapshots.map((snapshot) => {
           const compatibleSnapshots = compatibleById[snapshot.id] ?? [];

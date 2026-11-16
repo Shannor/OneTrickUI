@@ -5,7 +5,7 @@ import { getRequestLogger } from '~/.server/logger';
 import { type Profile, type Session, getSessions } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
 import { Button, buttonVariants } from '~/components/ui/button';
-import { cn } from '~/lib/utils';
+import { cn, getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/community-sessions';
 
@@ -183,6 +183,8 @@ export function CommunitySessionsPage() {
     return query ? `?${query}` : '?';
   };
 
+  const origin = getSiteOrigin();
+
   return (
     <div className="flex w-full flex-1 flex-col justify-start gap-8">
       <title>Sessions — 1 Trick</title>
@@ -197,6 +199,17 @@ export function CommunitySessionsPage() {
       />
       <meta property="og:type" content="website" />
       <meta property="og:url" content="https://d2onetrick.com/sessions" />
+      <meta property="og:image" content={`${origin}/og-image.png`} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Sessions — 1 Trick" />
+      <meta
+        name="twitter:description"
+        content="Browse Destiny 2 PvP tracking sessions. View live player stats, loadouts, and game logs."
+      />
+      <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
       <link rel="canonical" href="https://d2onetrick.com/sessions" />
       <CommunitySessionsHeader
         actionUrl={actionUrl}

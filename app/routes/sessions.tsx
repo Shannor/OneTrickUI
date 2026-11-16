@@ -12,7 +12,7 @@ import { LoadingButton } from '~/components/loading-button';
 import { SessionCard } from '~/components/session-card';
 import { Button } from '~/components/ui/button';
 import { useProfileData } from '~/hooks/use-route-loaders';
-import { cn } from '~/lib/utils';
+import { cn, getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/sessions';
 
@@ -84,19 +84,38 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
   const isSubmitting = state === 'submitting';
   const hasCurrentSession = Boolean(current?.id);
 
-  const pageTitle = isOwner
+  const origin = getSiteOrigin();
+  const headingTitle = isOwner
     ? 'My Sessions'
     : `${profile?.displayName ?? 'Guardian'}'s Sessions`;
+  const pageTitle = `${headingTitle} | 1 Trick`;
+  const pageDescription = `View and manage ${profile?.displayName ?? 'Guardian'}'s Destiny 2 PvP sessions on 1 Trick.`;
+  const canonicalUrl =
+    userId && characterId
+      ? `https://d2onetrick.com/profile/${userId}/c/${characterId}/sessions`
+      : '';
 
   return (
     <div className="flex w-full max-w-full flex-col gap-8 overflow-hidden">
-      <title>{`${pageTitle} - 1 Trick`}</title>
-      <meta property="og:title" content={`${pageTitle} - 1 Trick`} />
-      <meta name="description" content="View and manage 1 Trick sessions." />
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      <meta property="og:image" content={`${origin}/og-image.png`} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
       <div className="flex flex-col justify-between gap-4 md:flex-row">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-            {pageTitle}
+            {headingTitle}
           </h2>
         </div>
         {isOwner && (

@@ -349,4 +349,55 @@ describe('Session Page Route Component', () => {
       errorCallback!(new Error('Connection lost'));
     }).not.toThrow();
   });
+
+  it('does not render a parent <title> when session is loaded so child route <title> in <Outlet /> is the first title in document.head', () => {
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-done',
+          name: 'Weekend Trials',
+          status: 'complete' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: ['game-1'],
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'https://d2onetrick.com/profile/user-1/c/char-1/sessions/session-done',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          element: <Session {...props} />,
+          children: [
+            {
+              path: 'metrics',
+              element: (
+                <div>
+                  <title>Weekend Trials - Guardian Metrics | 1 Trick</title>
+                </div>
+              ),
+            },
+          ],
+        },
+      ],
+      { initialEntries: ['/metrics'] },
+    );
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    const titles = Array.from(document.head.querySelectorAll('title')).map(
+      (el) => el.textContent,
+    );
+    expect(titles).toEqual(['Weekend Trials - Guardian Metrics | 1 Trick']);
+    expect(document.title).toBe('Weekend Trials - Guardian Metrics | 1 Trick');
+  });
 });

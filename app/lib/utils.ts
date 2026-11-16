@@ -10,6 +10,17 @@ export function isDev() {
   return import.meta.env.MODE === 'development';
 }
 
+export function getSiteOrigin(): string {
+  if (
+    import.meta.env.MODE === 'development' &&
+    typeof window !== 'undefined' &&
+    window.location?.origin
+  ) {
+    return window.location.origin;
+  }
+  return 'https://d2onetrick.com';
+}
+
 export function isEmptyObject(obj: object): boolean {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }

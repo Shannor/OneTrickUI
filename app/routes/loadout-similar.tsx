@@ -97,20 +97,35 @@ export function LoadoutSimilar({ loaderData, params }: Route.ComponentProps) {
     : `${loadoutName} Similar Loadouts | 1 Trick`;
   const pageDescription = `Compare and merge similar loadouts into ${loadoutName} on 1 Trick.`;
   const canonicalUrl = path ? `${path}/similar` : '';
+  const origin = path ? new URL(path).origin : 'https://d2onetrick.com';
+  const ogImageUrl = snapshot?.id
+    ? `${origin}/og/loadout/${snapshot.id}.png`
+    : `${origin}/og-image.png`;
+
+  const metaTags = (
+    <>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      <meta property="og:image" content={ogImageUrl} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={ogImageUrl} />
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    </>
+  );
 
   if (!isOwner) {
     return (
       <div className="flex flex-col gap-4">
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:type" content="website" />
-        {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+        {metaTags}
         <Empty
           title="Owner Access Required"
           description="Only the owner of this profile can compare and merge similar loadouts."
@@ -121,16 +136,7 @@ export function LoadoutSimilar({ loaderData, params }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <title>{pageTitle}</title>
-      <meta name="description" content={pageDescription} />
-      <meta property="og:title" content={pageTitle} />
-      <meta property="og:description" content={pageDescription} />
-      <meta property="og:type" content="website" />
-      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={pageTitle} />
-      <meta name="twitter:description" content={pageDescription} />
-      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+      {metaTags}
 
       <SimilarLoadoutsView
         initialData={similarData}

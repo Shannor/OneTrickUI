@@ -8,6 +8,7 @@ import { Empty } from '~/components/empty';
 import { FireteamHeader } from '~/components/fireteam-header';
 import { FireteamMemberCard } from '~/components/fireteam-member-card';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
+import { getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/fireteam';
 
@@ -117,28 +118,56 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   );
 }
 
-export default function Fireteam({ loaderData }: Route.ComponentProps) {
+export default function Fireteam({ loaderData, params }: Route.ComponentProps) {
   const { members, sessions, fireteamMemWithCharacters } = loaderData;
   const [isSubmitting] = useIsNavigating();
+  const { id, characterId } = params ?? {};
+
+  const origin = getSiteOrigin();
+  const pageTitle = 'Fireteam | 1 Trick';
+  const pageDescription =
+    'View your current fireteam and manage active character selections on 1 Trick.';
+  const canonicalUrl =
+    id && characterId
+      ? `https://d2onetrick.com/profile/${id}/c/${characterId}/fireteam`
+      : '';
+
+  const metaTags = (
+    <>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      <meta property="og:image" content={`${origin}/og-image.png`} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    </>
+  );
 
   if (members.length === 0) {
     return (
-      <Empty
-        title="You are currently offline."
-        description="Refresh once you're signed in to Destiny 2 and have chosen your character."
-        icon={<Users className="h-16 w-16 self-center text-muted-foreground" />}
-      />
+      <>
+        {metaTags}
+        <Empty
+          title="You are currently offline."
+          description="Refresh once you're signed in to Destiny 2 and have chosen your character."
+          icon={<Users className="h-16 w-16 self-center text-muted-foreground" />}
+        />
+      </>
     );
   }
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <title>Fireteam | 1 Trick</title>
-      <meta property="og:title" content="Fireteam | 1 Trick" />
-      <meta
-        name="description"
-        content="View your current fireteam and manage active character selections."
-      />
+      {metaTags}
 
       <FireteamHeader memberCount={members.length} />
 

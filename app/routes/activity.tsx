@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { isEmptyObject } from '~/lib/utils';
+import { getSiteOrigin, isEmptyObject } from '~/lib/utils';
 
 import type { Route } from './+types/activity';
 
@@ -45,11 +45,17 @@ const crucibleReportUrl = 'https://crucible.report/pgcr';
 
 export function Activity({ loaderData, params }: Route.ComponentProps) {
   const { activityDetails, error } = loaderData;
-  const { characterId, id } = params;
+  const { characterId, id, instanceId } = params;
+  const origin = getSiteOrigin();
 
   if (!activityDetails || error) {
     return (
       <div className="flex flex-col gap-4">
+        <title>Activity Not Found | 1 Trick</title>
+        <meta
+          name="description"
+          content="We couldn't find this activity report on 1 Trick."
+        />
         <Empty
           title="No Activity Found"
           description="We couldn't find this activity report. It may still be processing or no longer exists."
@@ -76,17 +82,32 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
     },
   );
 
+  const pageTitle = `${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''} | 1 Trick`;
+  const pageDescription = `Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location} on 1 Trick.`;
+  const canonicalUrl =
+    id && characterId && instanceId
+      ? `https://d2onetrick.com/profile/${id}/c/${characterId}/activities/${instanceId}`
+      : '';
+  const shareImageUrl = activity.imageUrl
+    ? activity.imageUrl.startsWith('http')
+      ? activity.imageUrl
+      : `https://www.bungie.net${activity.imageUrl}`
+    : `${origin}/og-image.png`;
+
   return (
     <div className="flex flex-col gap-4">
-      <title>{`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}</title>
-      <meta
-        property="og:title"
-        content={`${activity.location} - ${activity.activity}${activity.mode ? ` • ${activity.mode}` : ''}`}
-      />
-      <meta
-        name="description"
-        content={`Post-game report for ${activity.activity}${activity.mode ? ` in ${activity.mode}` : ''} at ${activity.location}.`}
-      />
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+      <meta property="og:image" content={shareImageUrl} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={shareImageUrl} />
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
       <Card className="overflow-hidden border">
         <div className="relative min-h-[14rem] w-full">
           <img
