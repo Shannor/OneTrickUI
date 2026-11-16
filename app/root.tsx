@@ -21,6 +21,7 @@ import { evlogMiddleware, getRequestLogger } from '~/.server/logger';
 import { themeSessionResolver } from '~/.server/sessions';
 import type { Character } from '~/api';
 import { client } from '~/api/client.gen';
+import { DevWorktreeBadge } from '~/components/dev-worktree-badge';
 import { ErrorBoundaryContent } from '~/components/error-boundary-content';
 import { ModeToggle } from '~/components/mode-toggle';
 import { Toaster } from '~/components/ui/sonner';
@@ -264,6 +265,7 @@ export function App() {
       </head>
       <body className="min-h-screen w-full max-w-full overflow-x-hidden bg-background font-sans text-foreground antialiased">
         <Outlet />
+        {import.meta.env.DEV ? <DevWorktreeBadge /> : null}
         <Toaster />
         <ScrollRestoration />
         <Scripts />
