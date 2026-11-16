@@ -7,6 +7,8 @@ import tailwindcss from 'tailwindcss';
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
+import { resolveDevWorktreeConfig } from './app/lib/dev-worktree.server';
+
 const editor = {
   name: 'WebStorm',
   open(path: any, lineNumber: any) {
@@ -18,26 +20,36 @@ const editor = {
     );
   },
 };
-export default defineConfig({
-  server: {
-    allowedHosts: ['local.d2onetrick.ngrok.app'],
-    hmr: {
-      host: 'local.d2onetrick.ngrok.app',
-      port: 5173,
-      clientPort: 443,
+
+export default defineConfig(({ command }) => {
+  const worktree =
+    command === 'serve'
+      ? resolveDevWorktreeConfig()
+      : { branch: null, port: 5173, hmr: undefined };
+
+  return {
+    define: {
+      'import.meta.env.VITE_DEV_GIT_BRANCH': JSON.stringify(
+        worktree.branch ?? '',
+      ),
     },
-  },
-  css: {
-    postcss: {
-      plugins: [tailwindcss, autoprefixer],
+    server: {
+      port: worktree.port,
+      allowedHosts: ['local.d2onetrick.ngrok.app'],
+      ...(worktree.hmr ? { hmr: worktree.hmr } : {}),
     },
-  },
-  plugins: [
-    evlog(),
-    reactRouterDevTools({
-      editor,
-    } as any),
-    reactRouter(),
-    tsconfigPaths(),
-  ],
+    css: {
+      postcss: {
+        plugins: [tailwindcss, autoprefixer],
+      },
+    },
+    plugins: [
+      evlog(),
+      reactRouterDevTools({
+        editor,
+      } as any),
+      reactRouter(),
+      tsconfigPaths(),
+    ],
+  };
 });
