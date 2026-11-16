@@ -1,15 +1,8 @@
 import { execSync } from 'node:child_process';
 
-export interface DevWorktreeHmrConfig {
-  host: string;
-  port: number;
-  clientPort: number;
-}
-
 export interface DevWorktreeConfig {
   branch: string | null;
   port: number;
-  hmr: DevWorktreeHmrConfig | undefined;
 }
 
 export interface ResolveDevWorktreeOptions {
@@ -18,7 +11,6 @@ export interface ResolveDevWorktreeOptions {
 }
 
 const DEFAULT_DEV_PORT = 5173;
-const NGROK_HOST = 'local.d2onetrick.ngrok.app';
 
 function defaultExecCommand(command: string): string {
   const existingPath = process.env.PATH ?? '';
@@ -97,14 +89,11 @@ export function resolveDevWorktreeConfig(
   const execCommand = options.execCommand ?? defaultExecCommand;
 
   const branch = resolveGitBranch(env, execCommand);
-  const useNgrok = env.NGROK === 'true' || env.NGROK === '1';
   const explicitPort = parseValidPort(env.PORT);
 
   let port: number;
   if (explicitPort !== null) {
     port = explicitPort;
-  } else if (useNgrok) {
-    port = DEFAULT_DEV_PORT;
   } else {
     const wtPort = resolveWorktrunkPort(execCommand);
     if (wtPort !== null) {
@@ -116,17 +105,8 @@ export function resolveDevWorktreeConfig(
     }
   }
 
-  const hmr: DevWorktreeHmrConfig | undefined = useNgrok
-    ? {
-        host: NGROK_HOST,
-        port,
-        clientPort: 443,
-      }
-    : undefined;
-
   return {
     branch,
     port,
-    hmr,
   };
 }

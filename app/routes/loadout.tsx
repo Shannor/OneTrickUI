@@ -31,9 +31,12 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   });
 
   const sharablePath = `profile/${id}/c/${characterId}/loadouts/${snapshotId}`;
+  const devOrigin = request
+    ? new URL(request.url).origin
+    : 'http://localhost:5173';
   const path =
     process.env.NODE_ENV === 'development'
-      ? `https://local.d2onetrick.ngrok.app/${sharablePath}`
+      ? `${devOrigin}/${sharablePath}`
       : `https://d2onetrick.com/${sharablePath}`;
 
   const auth = request ? await getAuth(request) : undefined;

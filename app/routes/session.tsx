@@ -18,7 +18,7 @@ import { db } from '~/lib/firebaseConfig';
 
 import type { Route } from './+types/session';
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ request, params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
   const { sessionId, id, characterId } = params;
   log.set({
@@ -43,12 +43,13 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   }
 
   const sharablePath = `profile/${id}/c/${characterId}/sessions/${sessionId}`;
-  let path: string;
-  if (process.env.NODE_ENV === 'development') {
-    path = `https://local.d2onetrick.ngrok.app/${sharablePath}`;
-  } else {
-    path = `https://d2onetrick.com/${sharablePath}`;
-  }
+  const devOrigin = request
+    ? new URL(request.url).origin
+    : 'http://localhost:5173';
+  const path =
+    process.env.NODE_ENV === 'development'
+      ? `${devOrigin}/${sharablePath}`
+      : `https://d2onetrick.com/${sharablePath}`;
   if (!aggRes.data) {
     return {
       session: res.data,

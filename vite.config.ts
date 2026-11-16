@@ -25,7 +25,7 @@ export default defineConfig(({ command }) => {
   const worktree =
     command === 'serve'
       ? resolveDevWorktreeConfig()
-      : { branch: null, port: 5173, hmr: undefined };
+      : { branch: null, port: 5173 };
 
   return {
     define: {
@@ -35,8 +35,6 @@ export default defineConfig(({ command }) => {
     },
     server: {
       port: worktree.port,
-      allowedHosts: ['local.d2onetrick.ngrok.app'],
-      ...(worktree.hmr ? { hmr: worktree.hmr } : {}),
     },
     css: {
       postcss: {
