@@ -75,7 +75,7 @@ type FirestoreSessionData = NonNullable<ISession['data']> & {
 
 export function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
-  const { session, aggregates, snapshots, error, path } = loaderData;
+  const { session, aggregates, error, path } = loaderData;
   const { characterId } = params;
   const isOwner = type === 'owner';
   const revalidator = useRevalidator();
@@ -292,7 +292,6 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
         <SessionOverview
           session={session}
           aggregates={aggregates}
-          snapshots={snapshots}
           characterId={characterId}
         />
 
