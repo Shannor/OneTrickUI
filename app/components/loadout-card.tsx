@@ -9,7 +9,7 @@ import {
 import type { CharacterSnapshot } from '~/api';
 import { ArmorStats } from '~/components/armor-stats';
 import { FormattedDate } from '~/components/formatted-date';
-import { GearItemPill } from '~/components/gear-item-pill';
+import { GearItemPill, hasArmorStats } from '~/components/gear-item-pill';
 import { SubClassHeader } from '~/components/sub-class/header';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
@@ -18,7 +18,6 @@ import { WeaponStats } from '~/components/weapon-stats';
 import { getDetailWeapons, getExotic, isExoticItem } from '~/hooks/use-loadout';
 import { cn } from '~/lib/utils';
 import { SubClassProvider } from '~/providers/sub-class-provider';
-
 
 export interface LoadoutCardProps {
   snapshot: CharacterSnapshot;
@@ -44,13 +43,24 @@ export function LoadoutCard({
   className,
 }: LoadoutCardProps) {
   return (
-    <TooltipProvider font-sans>
+    <TooltipProvider>
       <Card
+        tabIndex={onClick ? 0 : undefined}
         className={cn(
-          'group w-full min-w-0 cursor-pointer overflow-hidden border transition-all duration-200 hover:border-primary hover:shadow-lg',
+          'group w-full min-w-0 cursor-pointer overflow-hidden border transition-all duration-200 hover:border-primary hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
           className,
         )}
         onClick={onClick}
+        onKeyDown={(e) => {
+          if (
+            onClick &&
+            e.target === e.currentTarget &&
+            (e.key === 'Enter' || e.key === ' ')
+          ) {
+            e.preventDefault();
+            onClick();
+          }
+        }}
       >
         <CardContent className="flex w-full min-w-0 flex-col gap-4 p-4 sm:p-5 md:p-6 lg:p-7">
           <LoadoutCardHeader
@@ -235,7 +245,7 @@ export function LoadoutCardGear({ snapshot }: { snapshot: CharacterSnapshot }) {
                     {name}
                   </span>
                   {item.details?.stats &&
-                    ('armor' in item ? (
+                    (hasArmorStats(item) ? (
                       <ArmorStats stats={item.details.stats} />
                     ) : (
                       <WeaponStats stats={item.details.stats} />

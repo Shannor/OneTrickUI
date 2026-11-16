@@ -1,5 +1,7 @@
+import type { ShouldRevalidateFunctionArgs } from 'react-router';
+import { getAuth } from '~/.server/auth';
 import { getRequestLogger } from '~/.server/logger';
-import { getSimilarSnapshots } from '~/api';
+import { getCachedSimilarSnapshots } from '~/.server/snapshots';
 import { Empty } from '~/components/empty';
 import { SimilarLoadoutsView } from '~/components/similar-loadouts';
 import { slimSimilarSnapshotPage } from '~/hooks/use-loadout';
@@ -10,41 +12,80 @@ import {
 
 import type { Route } from './+types/loadout-similar';
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ request, params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
-  const { snapshotId } = params;
+  const { id, snapshotId } = params;
   log.set({ route: 'routes/loadout-similar', snapshot: { id: snapshotId } });
 
-  const { data, error } = await getSimilarSnapshots({
-    path: { snapshotId },
-    query: { includeStats: true },
-  });
+  if (request) {
+    const auth = await getAuth(request);
+    if (!auth?.id || auth.id !== id) {
+      log.set({ snapshot: { id: snapshotId, skippedNonOwner: true } });
+      return {
+        similarData: null,
+        error: null,
+      };
+    }
+  }
 
-  if (error || !data) {
-    log.error('Failed to fetch similar snapshots in loader', {
-      snapshot: { id: snapshotId, error },
+  try {
+    const { data, error } = await getCachedSimilarSnapshots(
+      request,
+      snapshotId,
+      { includeStats: true },
+    );
+
+    if (error || !data) {
+      log.error('Failed to fetch similar snapshots in loader', {
+        snapshot: { id: snapshotId, error },
+      });
+      return {
+        similarData: null,
+        error:
+          (error as { message?: string })?.message ||
+          'Failed to load similar loadouts',
+      };
+    }
+
+    log.set({
+      snapshot: { id: snapshotId, similarCount: data.items?.length ?? 0 },
     });
+
+    return {
+      similarData: slimSimilarSnapshotPage(data),
+      error: null,
+    };
+  } catch (err) {
+    log.error(
+      err instanceof Error ? err : 'Failed to fetch similar snapshots in loader',
+      { snapshot: { id: snapshotId } },
+    );
     return {
       similarData: null,
       error:
-        (error as { message?: string })?.message ||
-        'Failed to load similar loadouts',
+        err instanceof Error ? err.message : 'Failed to load similar loadouts',
     };
   }
+}
 
-  log.set({
-    snapshot: { id: snapshotId, similarCount: data.items?.length ?? 0 },
-  });
-
-  return {
-    similarData: slimSimilarSnapshotPage(data),
-    error: null,
-  };
+export function shouldRevalidate({
+  actionResult,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+  if (
+    actionResult &&
+    typeof actionResult === 'object' &&
+    'ok' in actionResult &&
+    actionResult.ok === false
+  ) {
+    return false;
+  }
+  return defaultShouldRevalidate;
 }
 
 export function LoadoutSimilar({ loaderData, params }: Route.ComponentProps) {
   const { similarData, error } = loaderData;
-  const { id, characterId, snapshotId } = params;
+  const { id, characterId } = params;
   const { profile, type } = useOptionalProfileData() ?? {};
   const { snapshot, path } = useLoadoutData();
   const isOwner = type === 'owner';
@@ -92,13 +133,11 @@ export function LoadoutSimilar({ loaderData, params }: Route.ComponentProps) {
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 
       <SimilarLoadoutsView
-        snapshotId={snapshotId}
         initialData={similarData}
         initialError={error}
         showPageHeader={true}
         userId={id}
         characterId={characterId}
-        isDetailPage={true}
       />
     </div>
   );

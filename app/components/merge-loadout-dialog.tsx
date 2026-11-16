@@ -1,5 +1,5 @@
 import { AlertCircle, Loader2 } from 'lucide-react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFetcher } from 'react-router';
 import type { CharacterSnapshot } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { toast } from '~/components/ui/sonner';
 import { areSnapshotsCompatible } from '~/hooks/use-loadout';
 
 interface MergeLoadoutDialogProps {
@@ -35,15 +36,29 @@ export function MergeLoadoutDialog({
   onOpenChange,
 }: MergeLoadoutDialogProps) {
   const fetcher = useFetcher<{ ok: boolean; error?: string }>();
+  const [selectedSourceId, setSelectedSourceId] = useState('');
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const isMerging = fetcher.state !== 'idle';
 
-  // Effect to close the modal on successful submission
   useEffect(() => {
-    if (fetcher.state === 'idle' && fetcher.data?.ok) {
+    setSelectedSourceId('');
+    setHasSubmitted(false);
+  }, [isOpen, baseSnapshot?.id]);
+
+  // Close the modal only when the current dialog session's submission succeeds
+  useEffect(() => {
+    if (!hasSubmitted || fetcher.state !== 'idle' || !fetcher.data) {
+      return;
+    }
+
+    if (fetcher.data.ok) {
+      setHasSubmitted(false);
+      setSelectedSourceId('');
+      toast.success('Loadouts merged successfully');
       onOpenChange(false);
     }
-  }, [fetcher.state, fetcher.data, onOpenChange]);
+  }, [hasSubmitted, fetcher.state, fetcher.data, onOpenChange]);
 
   if (!baseSnapshot) {
     return null;
@@ -55,11 +70,9 @@ export function MergeLoadoutDialog({
   );
 
   const errorMessage =
-    fetcher.state === 'idle' && fetcher.data?.ok === false
+    hasSubmitted && fetcher.state === 'idle' && fetcher.data?.ok === false
       ? fetcher.data.error
-      : fetcher.state === 'idle'
-        ? fetcher.data?.error
-        : undefined;
+      : undefined;
 
   return (
     <Dialog
@@ -84,11 +97,21 @@ export function MergeLoadoutDialog({
             action cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        <fetcher.Form method="post" action="/action/merge-loadout">
+        <fetcher.Form
+          method="post"
+          action="/action/merge-loadout"
+          onSubmit={() => setHasSubmitted(true)}
+        >
           {/* Hidden input to pass the base loadout ID */}
           <input type="hidden" name="baseLoadoutId" value={baseSnapshot.id} />
 
-          <Select name="sourceSnapshotIds" required disabled={isMerging}>
+          <Select
+            name="sourceSnapshotIds"
+            value={selectedSourceId}
+            onValueChange={setSelectedSourceId}
+            required
+            disabled={isMerging}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select a loadout to merge..." />
             </SelectTrigger>
@@ -143,7 +166,11 @@ export function MergeLoadoutDialog({
             </Button>
             <LoadingButton
               type="submit"
-              disabled={isMerging || compatibleSnapshots.length === 0}
+              disabled={
+                isMerging ||
+                compatibleSnapshots.length === 0 ||
+                !selectedSourceId
+              }
               isLoading={isMerging}
               loadingText={
                 fetcher.state === 'loading' ? 'Refreshing...' : 'Merging...'
@@ -157,5 +184,3 @@ export function MergeLoadoutDialog({
     </Dialog>
   );
 }
-
-

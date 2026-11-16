@@ -1,7 +1,7 @@
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { useMemo } from 'react';
+import { Link } from 'react-router';
 import type {
-  CharacterSnapshot,
   ItemSnapshot,
   PlayerStats,
   SimilarSnapshotItem,
@@ -21,8 +21,8 @@ export interface SimilarLoadoutCandidateCardProps {
   targetExoticArmor?: ItemSnapshot;
   targetPowerWeapon?: ItemSnapshot;
   targetClassStatMap: Record<string, number>;
+  loadoutHref?: string;
   onToggleSelect: (id: string) => void;
-  onSwapPrimary: (snapshot: CharacterSnapshot) => void;
 }
 
 export function SimilarLoadoutCandidateCard({
@@ -34,8 +34,8 @@ export function SimilarLoadoutCandidateCard({
   targetExoticArmor,
   targetPowerWeapon,
   targetClassStatMap,
+  loadoutHref,
   onToggleSelect,
-  onSwapPrimary,
 }: SimilarLoadoutCandidateCardProps) {
   const { snapshot } = item;
   const candidateStats = useMemo(
@@ -80,17 +80,26 @@ export function SimilarLoadoutCandidateCard({
           </div>
         </label>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={isMerging}
-          onClick={() => onSwapPrimary(snapshot)}
-          className="h-7 gap-1.5 px-2.5 text-xs"
-        >
-          <ArrowLeftRight className="h-3.5 w-3.5" />
-          <span>Swap Primary</span>
-        </Button>
+        {loadoutHref && (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className={cn(
+              'h-7 gap-1.5 px-2.5 text-xs',
+              isMerging && 'pointer-events-none opacity-50',
+            )}
+          >
+            <Link
+              to={loadoutHref}
+              aria-disabled={isMerging}
+              tabIndex={isMerging ? -1 : undefined}
+            >
+              <span>View Loadout</span>
+              <ArrowUpRight className="!h-3.5 !w-3.5" />
+            </Link>
+          </Button>
+        )}
       </div>
 
       <SimilarLoadoutCandidateDiffBadges

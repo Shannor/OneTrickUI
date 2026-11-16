@@ -49,7 +49,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             .filter(Boolean);
         }),
     ),
-  );
+  ).filter((id) => id !== baseLoadoutId);
 
   if (!baseLoadoutId || sourceSnapshotIds.length === 0) {
     return { ok: false, error: 'Invalid submission' };
@@ -63,27 +63,44 @@ export async function action({ request, context }: Route.ActionArgs) {
     },
   });
 
-  const result = await mergeSnapshots({
-    path: {
-      snapshotId: baseLoadoutId,
-    },
-    body: {
-      sourceSnapshotIds,
-    },
-    headers: {
-      Authorization: `Bearer ${auth.accessToken}`,
-      'X-User-ID': auth.id,
-    },
-  });
+  try {
+    const result = await mergeSnapshots({
+      path: {
+        snapshotId: baseLoadoutId,
+      },
+      body: {
+        sourceSnapshotIds,
+      },
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        'X-User-ID': auth.id,
+      },
+    });
 
-  if (result?.error) {
+    if (result?.error) {
+      const errorMessage =
+        (result.error as { message?: string })?.message ||
+        'Failed to merge loadouts';
+      log.error('Failed to merge loadouts', {
+        loadoutMerge: {
+          baseLoadoutId,
+          error: result.error,
+        },
+      });
+      return {
+        ok: false,
+        error: errorMessage,
+      };
+    }
+
+    return { ok: true };
+  } catch (err) {
     const errorMessage =
-      (result.error as { message?: string })?.message ||
-      'Failed to merge loadouts';
-    log.error('Failed to merge loadouts', {
+      err instanceof Error ? err.message : 'Failed to merge loadouts';
+    log.error(err instanceof Error ? err : errorMessage, {
       loadoutMerge: {
         baseLoadoutId,
-        error: result.error,
+        sourceSnapshotIds,
       },
     });
     return {
@@ -91,7 +108,17 @@ export async function action({ request, context }: Route.ActionArgs) {
       error: errorMessage,
     };
   }
+}
 
-  return { ok: true };
+export async function clientAction({ serverAction }: Route.ClientActionArgs) {
+  try {
+    return await serverAction();
+  } catch {
+    return {
+      ok: false,
+      error:
+        'Network error while merging loadouts. Please check your connection and try again.',
+    };
+  }
 }
 

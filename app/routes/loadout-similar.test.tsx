@@ -3,12 +3,22 @@ import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { type CharacterSnapshot, getSimilarSnapshots } from '~/api';
+import { getAuth } from '~/.server/auth';
+import {
+  type CharacterSnapshot,
+  getSimilarSnapshots,
+  getSnapshot,
+} from '~/api';
 
+import { loader as loadoutLoader } from './loadout';
 import { LoadoutSimilar, loader } from './loadout-similar';
 
 const mockUseOptionalProfileData = vi.fn();
 const mockUseLoadoutData = vi.fn();
+
+vi.mock('~/.server/auth', () => ({
+  getAuth: vi.fn(),
+}));
 
 vi.mock('~/hooks/use-route-loaders', () => ({
   useOptionalProfileData: () => mockUseOptionalProfileData(),
@@ -19,6 +29,7 @@ vi.mock('~/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/api')>();
   return {
     ...actual,
+    getSnapshot: vi.fn(),
     getSimilarSnapshots: vi.fn(),
   };
 });
@@ -48,7 +59,12 @@ describe('loadout-similar route loader and component', () => {
     });
   });
 
-  it('fetches similar snapshots in loader with includeStats: true', async () => {
+  it('deduplicates getSimilarSnapshots across parent loadout and child loadout-similar loaders on the same request', async () => {
+    vi.mocked(getAuth).mockResolvedValue({ id: 'user-1' } as any);
+    vi.mocked(getSnapshot).mockResolvedValueOnce({
+      data: targetSnapshot,
+      error: undefined,
+    } as any);
     vi.mocked(getSimilarSnapshots).mockResolvedValueOnce({
       data: {
         target: targetSnapshot,
@@ -66,7 +82,47 @@ describe('loadout-similar route loader and component', () => {
       error: undefined,
     } as any);
 
+    const sharedRequest = new Request(
+      'http://localhost/profile/user-1/c/char-1/loadouts/snap-target/similar',
+    );
+    const params = {
+      id: 'user-1',
+      characterId: 'char-1',
+      snapshotId: 'snap-target',
+    };
+
+    const [parentRes, childRes] = await Promise.all([
+      loadoutLoader({
+        request: sharedRequest,
+        params,
+        context: new Map(),
+      } as any),
+      loader({
+        request: sharedRequest,
+        params,
+        context: new Map(),
+      } as any),
+    ]);
+
+    expect(getSimilarSnapshots).toHaveBeenCalledTimes(1);
+    expect(getSimilarSnapshots).toHaveBeenCalledWith({
+      path: { snapshotId: 'snap-target' },
+      query: { includeStats: true },
+    });
+    expect((parentRes as any).similarCount).toBe(1);
+    expect(childRes.error).toBeNull();
+    expect(childRes.similarData?.target.id).toBe('snap-target');
+    expect(childRes.similarData?.items).toHaveLength(1);
+  });
+
+  it('skips getSimilarSnapshots in loader when viewer is not the owner', async () => {
+    vi.mocked(getAuth).mockResolvedValueOnce({ id: 'someone-else' } as any);
+
+    const request = new Request(
+      'http://localhost/profile/user-1/c/char-1/loadouts/snap-target/similar',
+    );
     const result = await loader({
+      request,
       params: {
         id: 'user-1',
         characterId: 'char-1',
@@ -75,13 +131,8 @@ describe('loadout-similar route loader and component', () => {
       context: new Map(),
     } as any);
 
-    expect(getSimilarSnapshots).toHaveBeenCalledWith({
-      path: { snapshotId: 'snap-target' },
-      query: { includeStats: true },
-    });
-    expect(result.error).toBeNull();
-    expect(result.similarData?.target.id).toBe('snap-target');
-    expect(result.similarData?.items).toHaveLength(1);
+    expect(getSimilarSnapshots).not.toHaveBeenCalled();
+    expect(result).toEqual({ similarData: null, error: null });
   });
 
   it('renders SimilarLoadoutsView when user is owner', () => {

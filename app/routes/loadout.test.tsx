@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getAuth } from '~/.server/auth';
 import {
   type CharacterSnapshot,
   getSimilarSnapshots,
@@ -13,6 +14,10 @@ import { TooltipProvider } from '~/components/ui/tooltip';
 import { Loadout, loader } from './loadout';
 
 const mockUseProfileData = vi.fn();
+
+vi.mock('~/.server/auth', () => ({
+  getAuth: vi.fn(),
+}));
 
 vi.mock('~/hooks/use-route-loaders', () => ({
   useProfileData: () => mockUseProfileData(),
@@ -49,6 +54,7 @@ describe('loadout route loader and component', () => {
   });
 
   it('redirects to target loadout route when snapshot.mergedIntoId is present', async () => {
+    vi.mocked(getAuth).mockResolvedValueOnce(undefined);
     vi.mocked(getSnapshot).mockResolvedValueOnce({
       data: {
         ...mockSnapshot,
@@ -57,7 +63,11 @@ describe('loadout route loader and component', () => {
       error: undefined,
     } as any);
 
+    const request = new Request(
+      'http://localhost/profile/user-1/c/char-1/loadouts/snap-archived',
+    );
     const response = (await loader({
+      request,
       params: {
         id: 'user-1',
         characterId: 'char-1',
@@ -71,14 +81,15 @@ describe('loadout route loader and component', () => {
     expect(response.headers.get('Location')).toBe(
       '/profile/user-1/c/char-1/loadouts/snap-target-999',
     );
+    expect(getSimilarSnapshots).not.toHaveBeenCalled();
   });
 
-  it('returns snapshot and similarCount when snapshot is active', async () => {
+  it('returns snapshot and similarCount when viewer is the owner, and skips getSimilarSnapshots for non-owners', async () => {
+    vi.mocked(getAuth).mockResolvedValueOnce({ id: 'user-1' } as any);
     vi.mocked(getSnapshot).mockResolvedValueOnce({
       data: mockSnapshot,
       error: undefined,
     } as any);
-
     vi.mocked(getSimilarSnapshots).mockResolvedValueOnce({
       data: {
         target: mockSnapshot,
@@ -87,7 +98,11 @@ describe('loadout route loader and component', () => {
       error: undefined,
     } as any);
 
+    const ownerReq = new Request(
+      'http://localhost/profile/user-1/c/char-1/loadouts/snap-archived',
+    );
     const result = (await loader({
+      request: ownerReq,
       params: {
         id: 'user-1',
         characterId: 'char-1',
@@ -98,6 +113,29 @@ describe('loadout route loader and component', () => {
 
     expect(result.snapshot).toEqual(mockSnapshot);
     expect(result.similarCount).toBe(1);
+    expect(getSimilarSnapshots).toHaveBeenCalledTimes(1);
+
+    vi.mocked(getAuth).mockResolvedValueOnce({ id: 'other-viewer' } as any);
+    vi.mocked(getSnapshot).mockResolvedValueOnce({
+      data: mockSnapshot,
+      error: undefined,
+    } as any);
+
+    const viewerReq = new Request(
+      'http://localhost/profile/user-1/c/char-1/loadouts/snap-archived',
+    );
+    const viewerResult = (await loader({
+      request: viewerReq,
+      params: {
+        id: 'user-1',
+        characterId: 'char-1',
+        snapshotId: 'snap-archived',
+      },
+      context: new Map(),
+    } as any)) as any;
+
+    expect(viewerResult.similarCount).toBe(0);
+    expect(getSimilarSnapshots).toHaveBeenCalledTimes(1);
   });
 
   it('renders "Similar" tab with count for owner and hides for non-owner', () => {

@@ -269,4 +269,71 @@ describe('effectiveInstanceId & SessionLoadouts compatibility filtering', () => 
     });
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
+
+  it('does not immediately auto-close when opened a second time after a successful merge', async () => {
+    const snapA = makeSnapshot({ id: 'snap-a', name: 'Session Loadout A' });
+    const snapB = makeSnapshot({ id: 'snap-b', name: 'Session Loadout B' });
+    const snapC = makeSnapshot({ id: 'snap-c', name: 'Session Loadout C' });
+
+    mockUseSessionData.mockReturnValue({
+      snapshots: {
+        'snap-a': snapA,
+        'snap-b': snapB,
+        'snap-c': snapC,
+      },
+    });
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <SessionLoadouts
+            {...({
+              params: {
+                id: 'user-1',
+                characterId: 'char-1',
+                sessionId: 'sess-1',
+              },
+            } as any)}
+          />
+        ),
+      },
+      {
+        path: '/action/merge-loadout',
+        action: async () => ({ ok: true }),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    // Open MergeLoadoutDialog on snap-a and submit a successful merge
+    const mergeButtons = screen.getAllByRole('button', {
+      name: /merge loadout/i,
+    });
+    fireEvent.click(mergeButtons[0]);
+
+    expect(
+      screen.getByText('Merge with Session Loadout A'),
+    ).toBeInTheDocument();
+
+    const submitBtn = screen.getByRole('button', { name: /confirm merge/i });
+    expect(submitBtn).toBeDisabled();
+
+    fireEvent.submit(submitBtn.closest('form')!);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Merge with Session Loadout A'),
+      ).not.toBeInTheDocument();
+    });
+
+    // Now open MergeLoadoutDialog on snap-b — it must stay open!
+    fireEvent.click(
+      screen.getAllByRole('button', { name: /merge loadout/i })[1],
+    );
+
+    expect(
+      screen.getByText('Merge with Session Loadout B'),
+    ).toBeInTheDocument();
+  });
 });

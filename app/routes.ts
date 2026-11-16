@@ -88,8 +88,9 @@ export default [
   route('action/update-loadout', 'actions/update-loadout.ts'),
   route('action/delete-session', 'actions/delete-session.ts'),
   route('action/delete-snapshot', 'actions/delete-snapshot.ts'),
-  route('action/similar-snapshots', 'actions/similar-snapshots.ts'),
-  route('action/dev-login', 'actions/dev-login.ts'),
+  ...(process.env.NODE_ENV !== 'production'
+    ? [route('action/dev-login', 'actions/dev-login.ts')]
+    : []),
 ] satisfies RouteConfig;
 
 

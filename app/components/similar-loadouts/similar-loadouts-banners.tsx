@@ -1,5 +1,4 @@
 import { GlobeIcon, InfoIcon, LayersIcon, Loader2 } from 'lucide-react';
-import { Skeleton } from '~/components/ui/skeleton';
 
 export function SimilarLoadoutsScopeNotice() {
   return (
@@ -25,26 +24,6 @@ export function SimilarLoadoutsPageHeader() {
   );
 }
 
-export function SimilarLoadoutsLoadingState() {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="flex flex-col gap-4 py-4"
-    >
-      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-        <span>Loading similar loadouts...</span>
-      </div>
-      <Skeleton className="h-36 w-full rounded-lg" />
-      <div className="flex flex-col gap-2.5">
-        <Skeleton className="h-24 w-full rounded-lg" />
-        <Skeleton className="h-24 w-full rounded-lg" />
-      </div>
-    </div>
-  );
-}
-
 export function SimilarLoadoutsMergeBanner({
   statusText,
 }: {
@@ -61,7 +40,7 @@ export function SimilarLoadoutsMergeBanner({
       <div className="flex flex-col">
         <span className="font-semibold">{statusText}</span>
         <span className="text-xs text-muted-foreground">
-          Please keep this window open until the merge completes.
+          Please stay on this page until the merge completes.
         </span>
       </div>
     </div>

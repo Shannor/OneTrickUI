@@ -49,11 +49,11 @@ export default function Login() {
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      <title>Login - One Trick</title>
-      <meta property="og:title" content="Login - One Trick" />
+      <title>Login | 1 Trick</title>
+      <meta property="og:title" content="Login | 1 Trick" />
       <meta
         name="description"
-        content="Sign in to One Trick using Bungie SSO to view your Destiny 2 stats and sessions."
+        content="Sign in to 1 Trick using Bungie SSO to view your Destiny 2 stats and sessions."
       />
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">

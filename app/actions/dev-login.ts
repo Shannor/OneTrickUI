@@ -1,14 +1,22 @@
-import { redirect } from 'react-router';
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  redirect,
+} from 'react-router';
 import { getCachedUser, setAuth } from '~/.server/auth';
 import { getRequestLogger } from '~/.server/logger';
 import type { AuthResponse } from '~/api';
 
-import type { Route } from './+types/dev-login';
-
 const DEFAULT_DEV_USER_ID = 'TTXWDT9pzDEA0XiO1iAc';
 
 async function handleDevLogin(request: Request, userIdParam?: string | null) {
-  if (process.env.NODE_ENV === 'production') {
+  const isAllowedDevEnv =
+    import.meta.env.DEV &&
+    (!process.env.NODE_ENV ||
+      process.env.NODE_ENV === 'development' ||
+      process.env.NODE_ENV === 'test');
+
+  if (!isAllowedDevEnv) {
     throw new Response('Not Found', { status: 404 });
   }
 
@@ -42,9 +50,12 @@ async function handleDevLogin(request: Request, userIdParam?: string | null) {
     timestamp: new Date(),
   };
 
-
   const response = await setAuth(request, fakeAuth);
-  if (redirectTo && redirectTo.startsWith('/')) {
+  if (
+    redirectTo &&
+    redirectTo.startsWith('/') &&
+    !redirectTo.startsWith('//')
+  ) {
     return redirect(redirectTo, {
       headers: response.headers,
     });
@@ -52,13 +63,13 @@ async function handleDevLogin(request: Request, userIdParam?: string | null) {
   return response;
 }
 
-export async function loader({ request, context }: Route.LoaderArgs) {
+export async function loader({ request, context }: LoaderFunctionArgs) {
   const log = getRequestLogger(context);
   log.set({ action: 'action/dev-login', method: 'GET' });
   return handleDevLogin(request);
 }
 
-export async function action({ request, context }: Route.ActionArgs) {
+export async function action({ request, context }: ActionFunctionArgs) {
   const log = getRequestLogger(context);
   log.set({ action: 'action/dev-login', method: 'POST' });
   const formData = await request.formData();

@@ -41,6 +41,7 @@ export function SimilarLoadoutCandidateDiffBadges({
     ? getGearItemName(targetExoticArmor)
     : 'No Exotic Armor';
 
+  const bothLackExoticArmor = !candidateExotic && !targetExoticArmor;
   const isSameExoticNameDiffRoll =
     !item.exoticArmorMatch &&
     !!candidateExotic &&
@@ -73,11 +74,14 @@ export function SimilarLoadoutCandidateDiffBadges({
         <TooltipTrigger asChild>
           {item.exoticArmorMatch ? (
             <Badge
+              tabIndex={0}
               variant="secondary"
-              className="cursor-help gap-1 font-medium"
+              className="cursor-help gap-1 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-              <span>Exotic Armor Match</span>
+              <span>
+                {bothLackExoticArmor ? 'No Exotic Armor' : 'Exotic Armor Match'}
+              </span>
               {isSameExoticDiffInstance && (
                 <span className="text-[10px] text-muted-foreground">
                   (Different Roll)
@@ -86,8 +90,9 @@ export function SimilarLoadoutCandidateDiffBadges({
             </Badge>
           ) : (
             <Badge
+              tabIndex={0}
               variant="outline"
-              className="cursor-help gap-1.5 border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              className="cursor-help gap-1.5 border-amber-500/50 bg-amber-500/10 text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-amber-400"
             >
               <ShieldIcon className="h-3 w-3" />
               <span>Exotic: {candidateExoticName}</span>
@@ -99,13 +104,15 @@ export function SimilarLoadoutCandidateDiffBadges({
         </TooltipTrigger>
         <TooltipContent className="flex max-w-sm flex-col gap-3 p-3">
           <div className="border-b border-border/60 pb-1.5 text-xs font-semibold">
-            {item.exoticArmorMatch
-              ? isSameExoticDiffInstance
-                ? `Same Exotic Armor (${candidateExoticName}), different armor roll`
-                : `Same Exotic Armor as Primary (${candidateExoticName})`
-              : isSameExoticNameDiffRoll
-                ? `Different version / stat roll of ${candidateExoticName}`
-                : `Different Exotic Armor than Primary (${targetExoticName})`}
+            {bothLackExoticArmor
+              ? 'Neither loadout has Exotic Armor equipped'
+              : item.exoticArmorMatch
+                ? isSameExoticDiffInstance
+                  ? `Same Exotic Armor (${candidateExoticName}), different armor roll`
+                  : `Same Exotic Armor as Primary (${candidateExoticName})`
+                : isSameExoticNameDiffRoll
+                  ? `Different version / stat roll of ${candidateExoticName}`
+                  : `Different Exotic Armor than Primary (${targetExoticName})`}
           </div>
           <div className="grid grid-cols-1 gap-3">
             <GearItemDetailsSummary
@@ -128,16 +135,18 @@ export function SimilarLoadoutCandidateDiffBadges({
         <TooltipTrigger asChild>
           {item.powerWeaponMatch ? (
             <Badge
+              tabIndex={0}
               variant="secondary"
-              className="cursor-help gap-1 font-medium"
+              className="cursor-help gap-1 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <CheckCircle2 className="h-3 w-3 text-emerald-500" />
               <span>Same Power Weapon</span>
             </Badge>
           ) : (
             <Badge
+              tabIndex={0}
               variant="outline"
-              className="cursor-help gap-1.5 border-primary/40 bg-primary/10 text-foreground"
+              className="cursor-help gap-1.5 border-primary/40 bg-primary/10 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <SwordsIcon className="h-3 w-3 text-primary" />
               <span>Power: {candidatePowerName}</span>
@@ -185,9 +194,10 @@ export function SimilarLoadoutCandidateDiffBadges({
             <Tooltip key={statName}>
               <TooltipTrigger asChild>
                 <Badge
+                  tabIndex={0}
                   variant="outline"
                   className={cn(
-                    'cursor-help font-mono text-xs',
+                    'cursor-help font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                     delta > 0
                       ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       : 'border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-400',

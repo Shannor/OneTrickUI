@@ -132,8 +132,9 @@ export function GearItemPill({
     <Tooltip>
       <TooltipTrigger asChild>
         <div
+          tabIndex={0}
           className={cn(
-            'flex min-w-0 items-center gap-2 rounded-md border text-xs transition-colors',
+            'flex min-w-0 items-center gap-2 rounded-md border text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
             size === 'md' ? 'gap-2.5 rounded-lg p-2 font-medium' : 'px-2.5 py-1.5',
             isExotic
               ? 'border-amber-500/40 bg-amber-500/10 text-foreground hover:bg-amber-500/20 dark:bg-amber-500/15'

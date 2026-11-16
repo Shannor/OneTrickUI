@@ -9,8 +9,10 @@ import {
   useLocation,
   useParams,
 } from 'react-router';
+import { getAuth } from '~/.server/auth';
 import { getRequestLogger } from '~/.server/logger';
-import { getSimilarSnapshots, getSnapshot } from '~/api';
+import { getCachedSimilarSnapshots } from '~/.server/snapshots';
+import { getSnapshot } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadoutHeaderActions } from '~/components/loadout-header-actions';
 import { LoadoutUpdateForm } from '~/components/loadout-update-form';
@@ -20,7 +22,7 @@ import { useProfileData } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/loadout';
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ request, params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
   const { snapshotId, id, characterId } = params;
   log.set({
@@ -34,9 +36,18 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       ? `https://local.d2onetrick.ngrok.app/${sharablePath}`
       : `https://d2onetrick.com/${sharablePath}`;
 
-  const { data: snapshot, error } = await getSnapshot({
-    path: { snapshotId },
-  });
+  const auth = request ? await getAuth(request) : undefined;
+  const isOwner = Boolean(auth?.id && auth.id === id);
+
+  const [{ data: snapshot, error }, similarRes] = await Promise.all([
+    getSnapshot({
+      path: { snapshotId },
+    }),
+    isOwner
+      ? getCachedSimilarSnapshots(request, snapshotId).catch(() => null)
+      : Promise.resolve(null),
+  ]);
+
   if (error) {
     log.error('Failed to fetch snapshot in loadout loader', {
       snapshot: { id: snapshotId, error },
@@ -64,15 +75,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     );
   }
 
-  let similarCount = 0;
-  try {
-    const similarRes = await getSimilarSnapshots({
-      path: { snapshotId },
-    });
-    similarCount = similarRes?.data?.items?.length ?? 0;
-  } catch {
-    similarCount = 0;
-  }
+  const similarCount = similarRes?.data?.items?.length ?? 0;
 
   return {
     snapshot,
@@ -87,9 +90,18 @@ export function shouldRevalidate({
   currentParams,
   nextParams,
   formMethod,
+  actionResult,
   defaultShouldRevalidate,
 }: ShouldRevalidateFunctionArgs) {
   if (formMethod && formMethod !== 'GET') {
+    if (
+      actionResult &&
+      typeof actionResult === 'object' &&
+      'ok' in actionResult &&
+      actionResult.ok === false
+    ) {
+      return false;
+    }
     return defaultShouldRevalidate;
   }
   return currentParams.snapshotId !== nextParams.snapshotId;
@@ -119,6 +131,11 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
   if (!snapshot || error) {
     return (
       <div className="flex flex-col gap-4">
+        <title>Loadout Not Found | 1 Trick</title>
+        <meta
+          name="description"
+          content="We couldn't load this loadout snapshot on 1 Trick."
+        />
         <Empty
           title="No Loadout Found"
           description="We couldn't load this loadout snapshot. Please try again later."
@@ -135,18 +152,6 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <title>{`${snapshot.name ?? 'Snapshot'} - Loadout & Metrics`}</title>
-      <meta
-        property="og:title"
-        content={`${snapshot.name ?? 'Snapshot'} - Loadout & Metrics`}
-      />
-      <meta
-        name="description"
-        content={
-          snapshot.description ??
-          `View the loadout and performance metrics for ${snapshot.name ?? 'this snapshot'}.`
-        }
-      />
       <div className="flex w-full flex-col gap-4">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">

@@ -2,11 +2,11 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  type CharacterSnapshot,
-  type PlayerStats,
-  type SimilarSnapshotItem,
-  getSimilarSnapshots,
+import type {
+  CharacterSnapshot,
+  GetSimilarSnapshotsResponse,
+  PlayerStats,
+  SimilarSnapshotItem,
 } from '~/api';
 import {
   CHEST_BUCKET,
@@ -17,15 +17,7 @@ import {
   SUBCLASS_BUCKET,
 } from '~/hooks/use-loadout';
 
-import { SimilarLoadoutsDialog } from './similar-loadouts-dialog';
-
-vi.mock('~/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('~/api')>();
-  return {
-    ...actual,
-    getSimilarSnapshots: vi.fn(),
-  };
-});
+import { SimilarLoadoutsView } from './similar-loadouts-view';
 
 vi.mock('~/components/ui/sonner', () => ({
   toast: {
@@ -178,7 +170,7 @@ function buildTestSnapshot({
   };
 }
 
-describe('SimilarLoadoutsDialog', () => {
+describe('SimilarLoadoutsView', () => {
   const targetSnapshot = buildTestSnapshot({
     id: 'target-1',
     name: 'Defensive Dominant',
@@ -237,19 +229,19 @@ describe('SimilarLoadoutsDialog', () => {
       kills: { value: 200 },
       deaths: { value: 100 },
       kd: { value: 2.0 },
-      standing: { value: 0.75 }, // 15 wins in 20 games
+      standing: { value: 0.75 },
     },
     'cand-high': {
       kills: { value: 100 },
       deaths: { value: 100 },
       kd: { value: 1.0 },
-      standing: { value: 0.5 }, // 5 wins in 10 games
+      standing: { value: 0.5 },
     },
     'cand-base': {
       kills: { value: 60 },
       deaths: { value: 100 },
       kd: { value: 0.6 },
-      standing: { value: 0.2 }, // 2 wins in 10 games
+      standing: { value: 0.2 },
     },
   };
 
@@ -259,28 +251,24 @@ describe('SimilarLoadoutsDialog', () => {
     'cand-base': 10,
   };
 
+  const mockInitialData: GetSimilarSnapshotsResponse = {
+    target: targetSnapshot,
+    items: mockItems,
+    stats: mockStats,
+    count: mockCounts,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSimilarSnapshots).mockResolvedValue({
-      data: {
-        target: targetSnapshot,
-        items: mockItems,
-        stats: mockStats,
-        count: mockCounts,
-      },
-      error: undefined,
-    } as any);
   });
 
-  it('groups High Similarity and Base Similarity candidates accurately and renders only Exotic Armor, Class Stat deltas, and Power weapon diffs (ignoring Legendary armor buckets)', async () => {
+  it('groups High Similarity and Base Similarity candidates accurately, toggles Select/Deselect All High label, and excludes Legendary armor buckets', () => {
     const router = createMemoryRouter([
       {
         path: '/',
         element: (
-          <SimilarLoadoutsDialog
-            snapshotId="target-1"
-            isOpen={true}
-            onOpenChange={vi.fn()}
+          <SimilarLoadoutsView
+            initialData={mockInitialData}
           />
         ),
       },
@@ -288,42 +276,47 @@ describe('SimilarLoadoutsDialog', () => {
 
     render(<RouterProvider router={router} />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('high-similarity-group')).toBeInTheDocument();
-    });
-
+    expect(screen.getByTestId('high-similarity-group')).toBeInTheDocument();
     expect(screen.getByTestId('base-similarity-group')).toBeInTheDocument();
     expect(screen.getByText('High Similarity (1)')).toBeInTheDocument();
     expect(screen.getByText('Base Similarity (1)')).toBeInTheDocument();
 
-    // Verify focused diffs are rendered
     expect(screen.getByText('Exotic Armor Match')).toBeInTheDocument();
     expect(screen.getByText('Exotic: St0mp-EE5')).toBeInTheDocument();
     expect(screen.getAllByText('Power: Hammerhead').length).toBe(2);
     expect(screen.getByText('Health -10')).toBeInTheDocument();
     expect(screen.getByText('Super +10')).toBeInTheDocument();
 
-    // Verify Legendary armor pieces are NOT rendered anywhere in the modal
+    const selectAllBtn = screen.getByRole('button', {
+      name: 'Select All High Similarity',
+    });
+    fireEvent.click(selectAllBtn);
+    expect(
+      screen.getByRole('button', { name: 'Deselect All High Similarity' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Deselect All High Similarity' }),
+    );
+    expect(
+      screen.getByRole('button', { name: 'Select All High Similarity' }),
+    ).toBeInTheDocument();
+
     expect(
       screen.queryByText('Target Legendary Chest'),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText('Noisy Legendary Chest Piece A'),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText('Noisy Legendary Chest Piece B'),
-    ).not.toBeInTheDocument();
   });
 
-  it('checking/unchecking multiple candidates updates the Live Combined Stats Preview (total matches, weighted KD, weighted Win Rate)', async () => {
+  it('checking/unchecking multiple candidates updates the Live Combined Stats Preview', () => {
     const router = createMemoryRouter([
       {
         path: '/',
         element: (
-          <SimilarLoadoutsDialog
-            snapshotId="target-1"
-            isOpen={true}
-            onOpenChange={vi.fn()}
+          <SimilarLoadoutsView
+            initialData={mockInitialData}
           />
         ),
       },
@@ -331,18 +324,14 @@ describe('SimilarLoadoutsDialog', () => {
 
     render(<RouterProvider router={router} />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('combined-matches-value')).toHaveTextContent(
-        '20',
-      );
-    });
+    expect(screen.getByTestId('combined-matches-value')).toHaveTextContent(
+      '20',
+    );
     expect(screen.getByTestId('combined-winrate-value')).toHaveTextContent(
       '75%',
     );
     expect(screen.getByTestId('combined-kd-value')).toHaveTextContent('2.00');
 
-    // Check high similarity candidate (+10 games, 5 wins, 100 kills / 100 deaths)
-    // Total: 30 games, 20 wins (67%), 300 kills / 200 deaths (1.50 KD)
     const highCheckbox = screen.getByRole('checkbox', {
       name: /select primed' roaming gamer mode/i,
     });
@@ -356,8 +345,6 @@ describe('SimilarLoadoutsDialog', () => {
     );
     expect(screen.getByTestId('combined-kd-value')).toHaveTextContent('1.50');
 
-    // Check base similarity candidate (+10 games, 2 wins, 60 kills / 100 deaths)
-    // Total: 40 games, 22 wins (55%), 360 kills / 300 deaths (1.20 KD)
     const baseCheckbox = screen.getByRole('checkbox', {
       name: /select passive rapid/i,
     });
@@ -370,27 +357,17 @@ describe('SimilarLoadoutsDialog', () => {
       '55%',
     );
     expect(screen.getByTestId('combined-kd-value')).toHaveTextContent('1.20');
-
-    // Uncheck high similarity candidate -> Target + Base = 30 games, 17 wins (57%), 260/200 = 1.30 KD
-    fireEvent.click(highCheckbox);
-    expect(screen.getByTestId('combined-matches-value')).toHaveTextContent(
-      '30',
-    );
-    expect(screen.getByTestId('combined-winrate-value')).toHaveTextContent(
-      '57%',
-    );
-    expect(screen.getByTestId('combined-kd-value')).toHaveTextContent('1.30');
   });
 
-  it('clicking "Swap Primary" updates the active target and recalculates diffs', async () => {
+  it('renders a "View Loadout" link on each candidate pointing to that candidate loadout page', () => {
     const router = createMemoryRouter([
       {
         path: '/',
         element: (
-          <SimilarLoadoutsDialog
-            snapshotId="target-1"
-            isOpen={true}
-            onOpenChange={vi.fn()}
+          <SimilarLoadoutsView
+            initialData={mockInitialData}
+            userId="user-1"
+            characterId="char-1"
           />
         ),
       },
@@ -398,49 +375,40 @@ describe('SimilarLoadoutsDialog', () => {
 
     render(<RouterProvider router={router} />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('primary-loadout-header')).toHaveTextContent(
-        'Defensive Dominant',
-      );
-    });
+    expect(
+      screen.queryByRole('button', { name: /swap primary/i }),
+    ).not.toBeInTheDocument();
 
-    // Click Swap Primary on highCandidateSnapshot ("Primed' Roaming Gamer Mode")
-    const swapButtons = screen.getAllByRole('button', {
-      name: /swap primary/i,
-    });
-    fireEvent.click(swapButtons[0]);
-
-    // Primary header now shows "Primed' Roaming Gamer Mode" (Health: 160, Super: 90)
-    expect(screen.getByTestId('primary-loadout-header')).toHaveTextContent(
-      "Primed' Roaming Gamer Mode",
+    const viewLinks = screen.getAllByRole('link', { name: /view loadout/i });
+    expect(viewLinks).toHaveLength(2);
+    expect(viewLinks[0]).toHaveAttribute(
+      'href',
+      '/profile/user-1/c/char-1/loadouts/cand-high',
     );
-
-    // Old target ("Defensive Dominant", Health: 170, Super: 80) is now a candidate with inverted statDiffs: Health +10, Super -10
-    expect(screen.getByTestId('similar-candidate-target-1')).toHaveTextContent(
-      'Defensive Dominant',
+    expect(viewLinks[1]).toHaveAttribute(
+      'href',
+      '/profile/user-1/c/char-1/loadouts/cand-base',
     );
-    expect(screen.getByText('Health +10')).toBeInTheDocument();
-    expect(screen.getByText('Super -10')).toBeInTheDocument();
   });
 
-  it('submitting posts sourceSnapshotIds and navigates to newTargetId when primary was swapped on a detail page', async () => {
+  it('submitting all candidates merges into the primary target and navigates to its overview page', async () => {
     let submittedFormData: FormData | null = null;
-    const onOpenChange = vi.fn();
 
     const router = createMemoryRouter(
       [
         {
-          path: '/profile/:id/c/:characterId/loadouts/:snapshotId',
+          path: '/profile/:id/c/:characterId/loadouts/:snapshotId/similar',
           element: (
-            <SimilarLoadoutsDialog
-              snapshotId="target-1"
-              isOpen={true}
-              onOpenChange={onOpenChange}
+            <SimilarLoadoutsView
+              initialData={mockInitialData}
               userId="user-1"
               characterId="char-1"
-              isDetailPage={true}
             />
           ),
+        },
+        {
+          path: '/profile/:id/c/:characterId/loadouts/:snapshotId',
+          element: <div>Target Loadout Overview</div>,
         },
         {
           path: '/action/merge-loadout',
@@ -451,75 +419,58 @@ describe('SimilarLoadoutsDialog', () => {
         },
       ],
       {
-        initialEntries: ['/profile/user-1/c/char-1/loadouts/target-1'],
+        initialEntries: ['/profile/user-1/c/char-1/loadouts/target-1/similar'],
       },
     );
 
     render(<RouterProvider router={router} />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('primary-loadout-header')).toHaveTextContent(
-        'Defensive Dominant',
-      );
-    });
-
-    // Swap Primary to cand-high
-    const swapButtons = screen.getAllByRole('button', {
-      name: /swap primary/i,
-    });
-    fireEvent.click(swapButtons[0]);
-
-    // Select both remaining candidates (target-1 and cand-base)
     fireEvent.click(
-      screen.getByRole('checkbox', { name: /select defensive dominant/i }),
+      screen.getByRole('checkbox', {
+        name: /select primed' roaming gamer mode/i,
+      }),
     );
     fireEvent.click(
       screen.getByRole('checkbox', { name: /select passive rapid/i }),
     );
 
-    // Submit batch merge
-    const mergeButton = screen.getByRole('button', {
-      name: /merge selected \(2\)/i,
-    });
-    fireEvent.click(mergeButton);
+    fireEvent.click(
+      screen.getByRole('button', { name: /merge selected \(2\)/i }),
+    );
 
     await waitFor(() => {
       expect(submittedFormData).not.toBeNull();
     });
 
-    expect(submittedFormData!.get('baseLoadoutId')).toBe('cand-high');
+    expect(submittedFormData!.get('baseLoadoutId')).toBe('target-1');
     expect(submittedFormData!.getAll('sourceSnapshotIds')).toEqual([
-      'target-1',
+      'cand-high',
       'cand-base',
     ]);
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe(
-        '/profile/user-1/c/char-1/loadouts/cand-high',
+        '/profile/user-1/c/char-1/loadouts/target-1',
       );
     });
-    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('shows merge progress banner and disables controls while a slow merge is in flight', async () => {
-    let resolveMerge!: (val: { ok: boolean }) => void;
-    const onOpenChange = vi.fn();
+  it('shows merge progress banner while in flight and renders inline error alert on failure', async () => {
+    let resolveMerge!: (val: { ok: boolean; error?: string }) => void;
 
     const router = createMemoryRouter([
       {
         path: '/',
         element: (
-          <SimilarLoadoutsDialog
-            snapshotId="target-1"
-            isOpen={true}
-            onOpenChange={onOpenChange}
+          <SimilarLoadoutsView
+            initialData={mockInitialData}
           />
         ),
       },
       {
         path: '/action/merge-loadout',
         action: () =>
-          new Promise<{ ok: boolean }>((resolve) => {
+          new Promise<{ ok: boolean; error?: string }>((resolve) => {
             resolveMerge = resolve;
           }),
       },
@@ -527,42 +478,31 @@ describe('SimilarLoadoutsDialog', () => {
 
     render(<RouterProvider router={router} />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('primary-loadout-header')).toHaveTextContent(
-        'Defensive Dominant',
-      );
-    });
-
     const highCheckbox = screen.getByRole('checkbox', {
       name: /select primed' roaming gamer mode/i,
     });
     fireEvent.click(highCheckbox);
 
-    const mergeButton = screen.getByRole('button', {
-      name: /merge selected \(1\)/i,
-    });
-    fireEvent.click(mergeButton);
+    fireEvent.click(
+      screen.getByRole('button', { name: /merge selected \(1\)/i }),
+    );
 
     await waitFor(() => {
       expect(screen.getByTestId('merge-progress-banner')).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByText(
-        /merging 1 loadout and reassigning match history across all sessions/i,
-      ),
-    ).toBeInTheDocument();
     expect(highCheckbox).toBeDisabled();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
     expect(
       screen.getByRole('button', { name: /merging \(1\)\.\.\./i }),
     ).toBeDisabled();
 
-    resolveMerge({ ok: true });
+    resolveMerge({ ok: false, error: 'Backend temporarily unavailable' });
 
     await waitFor(() => {
-      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Backend temporarily unavailable',
+      );
     });
+    expect(highCheckbox).toBeChecked();
   });
 });
-

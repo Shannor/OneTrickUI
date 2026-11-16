@@ -1,6 +1,5 @@
 import type React from 'react';
 import type {
-  CharacterSnapshot,
   ItemSnapshot,
   PlayerStats,
   SimilarSnapshotItem,
@@ -21,8 +20,8 @@ export interface SimilarLoadoutCandidateGroupProps {
   targetPowerWeapon?: ItemSnapshot;
   targetClassStatMap: Record<string, number>;
   actionButton?: React.ReactNode;
+  getLoadoutHref?: (snapshotId: string) => string | undefined;
   onToggleSelect: (id: string) => void;
-  onSwapPrimary: (snapshot: CharacterSnapshot) => void;
 }
 
 export function SimilarLoadoutCandidateGroup({
@@ -38,8 +37,8 @@ export function SimilarLoadoutCandidateGroup({
   targetPowerWeapon,
   targetClassStatMap,
   actionButton,
+  getLoadoutHref,
   onToggleSelect,
-  onSwapPrimary,
 }: SimilarLoadoutCandidateGroupProps) {
   if (items.length === 0) return null;
 
@@ -66,8 +65,8 @@ export function SimilarLoadoutCandidateGroup({
             targetExoticArmor={targetExoticArmor}
             targetPowerWeapon={targetPowerWeapon}
             targetClassStatMap={targetClassStatMap}
+            loadoutHref={getLoadoutHref?.(item.snapshot.id)}
             onToggleSelect={onToggleSelect}
-            onSwapPrimary={onSwapPrimary}
           />
         ))}
       </div>

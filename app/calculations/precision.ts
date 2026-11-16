@@ -47,10 +47,14 @@ export function calculateCombinedStats(
       acc.wins += winRatio * games;
       acc.weightedKdSum += kdVal * games;
 
-      if (s?.kills?.value !== undefined || s?.deaths?.value !== undefined) {
+      const hasRawKillsOrDeaths =
+        s?.kills?.value !== undefined || s?.deaths?.value !== undefined;
+      if (hasRawKillsOrDeaths) {
         acc.hasKillDeathTotals = true;
         acc.kills += s?.kills?.value ?? 0;
         acc.deaths += s?.deaths?.value ?? 0;
+      } else if (games > 0) {
+        acc.missingKillDeathTotals = true;
       }
 
       return acc;
@@ -61,6 +65,7 @@ export function calculateCombinedStats(
       kills: 0,
       deaths: 0,
       hasKillDeathTotals: false,
+      missingKillDeathTotals: false,
       weightedKdSum: 0,
     },
   );
@@ -73,7 +78,7 @@ export function calculateCombinedStats(
       : 0;
 
   let kd = 0;
-  if (totals.hasKillDeathTotals) {
+  if (totals.hasKillDeathTotals && !totals.missingKillDeathTotals) {
     kd = calculateRatio(totals.kills, totals.deaths);
   } else if (totals.matches > 0) {
     kd = calculateRatio(totals.weightedKdSum, totals.matches);
