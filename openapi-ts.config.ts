@@ -11,6 +11,7 @@ export default defineConfig({
     {
       name: '@hey-api/client-fetch',
       baseUrl: false,
+      runtimeConfigPath: '../lib/api-config',
     },
     {
       dates: true,

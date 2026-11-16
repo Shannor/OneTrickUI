@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayersIcon } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshots } from '~/api';
@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { slimSnapshotForCard } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
 
 import type { Route } from './+types/loadouts';
@@ -38,6 +39,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   const minParams = url.searchParams.get('minimum');
   const sortParam = (url.searchParams.get('sortBy') ??
     'created_at') as SortByOption;
+  const hasSimilar = url.searchParams.get('hasSimilar') === 'true';
 
   let minimumGames = DEFAULT_MINIMUM_GAMES;
   if (minParams !== null && minParams !== '') {
@@ -52,6 +54,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       page: apiPage,
       ...(mode && mode !== 'allGameModes' ? { gameMode: mode } : {}),
       ...(minimumGames > 0 ? { minimumGames } : {}),
+      ...(hasSimilar ? { hasSimilar: true } : {}),
       includeStats: true,
       sortBy: sortParam,
     },
@@ -66,6 +69,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       mode,
       minimumGames,
       sortBy: sortParam,
+      hasSimilar,
     },
   });
 
@@ -78,22 +82,36 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         items: [],
         count: {},
         stats: {},
+        similarCounts: {},
       },
       gameMode: mode,
       minimumGames,
       sortBy: sortParam,
+      hasSimilar,
       page,
     };
   }
 
   return {
-    loadouts: loadoutsData ?? { items: [], count: {}, stats: {} },
+    loadouts: loadoutsData
+      ? {
+          ...loadoutsData,
+          items: (loadoutsData.items ?? []).map(slimSnapshotForCard),
+        }
+      : {
+          items: [],
+          count: {},
+          stats: {},
+          similarCounts: {},
+        },
     gameMode: mode,
     minimumGames,
     sortBy: sortParam,
+    hasSimilar,
     page,
   };
 }
+
 
 export function Loadouts({ loaderData }: Route.ComponentProps) {
   const {
@@ -101,11 +119,17 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
     gameMode = 'allGameModes',
     minimumGames = DEFAULT_MINIMUM_GAMES,
     sortBy = 'created_at',
+    hasSimilar,
     page = 1,
   } = loaderData;
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile } = useProfileData();
+  const { profile, type } = useProfileData();
+  const isOwner = type === 'owner';
+
+  const isHasSimilarActive =
+    hasSimilar ??
+    new URLSearchParams(location.search).get('hasSimilar') === 'true';
 
   const rawItems = loadouts?.items ?? [];
   const displayLoadouts =
@@ -124,7 +148,8 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
     const isDefaultValue =
       (key === 'mode' && val === 'allGameModes') ||
       (key === 'minimum' && val === DEFAULT_MINIMUM_GAMES.toString()) ||
-      (key === 'sortBy' && val === 'created_at');
+      (key === 'sortBy' && val === 'created_at') ||
+      (key === 'hasSimilar' && (val === 'false' || val === ''));
 
     if (val !== undefined && val !== '' && !isDefaultValue) {
       params.set(key, val);
@@ -195,7 +220,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
           </div>
         </RadioGroup>
 
-        <div className="flex flex-col gap-4 md:flex-row">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start">
           <div>
             <FormLabel htmlFor="minimum">Minimum Games</FormLabel>
             <Select
@@ -236,6 +261,29 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               </SelectContent>
             </Select>
           </div>
+          {isOwner && (
+            <div className="flex flex-col">
+              <span className="mb-2 block text-sm font-medium leading-none">
+                Cleanup
+              </span>
+              <Button
+                id="has-similar-filter"
+                type="button"
+                variant={isHasSimilarActive ? 'default' : 'outline'}
+                aria-pressed={isHasSimilarActive}
+                onClick={() =>
+                  handleFilterChange(
+                    'hasSimilar',
+                    isHasSimilarActive ? '' : 'true',
+                  )
+                }
+                className="flex items-center gap-2"
+              >
+                <LayersIcon className="h-4 w-4" />
+                <span>Has Similar Loadouts</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -253,6 +301,10 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
             snapshot={snapshot}
             stats={loadouts?.stats?.[snapshot.id]}
             gamesCount={loadouts?.count?.[snapshot.id] ?? 0}
+            similarCount={
+              isOwner ? (loadouts?.similarCounts?.[snapshot.id] ?? 0) : 0
+            }
+            onSimilarClick={(snap) => navigate(`${snap.id}/similar`)}
             onClick={() => navigate(`${snapshot.id}`)}
           />
         ))}

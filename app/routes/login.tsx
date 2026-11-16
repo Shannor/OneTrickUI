@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { buttonVariants } from '~/components/ui/button';
 import { getBungieAuthUrl } from '~/lib/auth-utils';
 import { extractRequestMeta } from '~/lib/request-logger';
-import { cn } from '~/lib/utils';
+import { cn, isDev } from '~/lib/utils';
 
 import type { Route } from './+types/login';
 
@@ -38,21 +38,22 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     });
   }
 
-  return { error };
+  return { error, showDevLogin: isDev() };
 }
 
 export default function Login() {
   const loaderData = useLoaderData<typeof loader>();
   const error = loaderData?.error;
+  const showDevLogin = loaderData?.showDevLogin;
   const href = getBungieAuthUrl();
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
-      <title>Login - One Trick</title>
-      <meta property="og:title" content="Login - One Trick" />
+      <title>Login | 1 Trick</title>
+      <meta property="og:title" content="Login | 1 Trick" />
       <meta
         name="description"
-        content="Sign in to One Trick using Bungie SSO to view your Destiny 2 stats and sessions."
+        content="Sign in to 1 Trick using Bungie SSO to view your Destiny 2 stats and sessions."
       />
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
@@ -99,6 +100,19 @@ export default function Login() {
                 >
                   {error ? 'Retry Sign In with Bungie' : 'Login with Bungie'}
                 </Link>
+
+                {showDevLogin && (
+                  <Link
+                    to="/action/dev-login"
+                    reloadDocument
+                    className={cn(
+                      buttonVariants({ variant: 'secondary' }),
+                      'h-auto min-h-[2.5rem] w-full justify-center whitespace-normal border border-dashed px-4 py-2 text-center',
+                    )}
+                  >
+                    Dev Login (Local Test User)
+                  </Link>
+                )}
 
                 <Link
                   to="/"
