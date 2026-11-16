@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { Aggregate, CharacterSnapshot, Session } from '~/api';
+import type { Aggregate, Session } from '~/api';
 
 import { SessionOverview } from './session-overview';
 
@@ -26,53 +26,6 @@ const mockSession: Session = {
   status: 'complete',
   aggregateIds: ['agg-1'],
 };
-
-const mockSnapshot = {
-  id: 'snap-1',
-  name: 'Solar Hunter PvP',
-  loadout: {
-    3284755031: {
-      itemHash: 3284755031n,
-      name: 'Solar Hunter',
-      details: {
-        baseInfo: {
-          name: 'Solar Hunter',
-          icon: '/solar.png',
-          tierTypeName: 'Basic',
-        },
-        sockets: [
-          {
-            itemTypeDisplayName: 'Super',
-            isVisible: true,
-            isEnabled: true,
-            name: 'Golden Gun',
-            icon: '/goldengun.png',
-          },
-        ],
-      },
-    },
-    3448274439: {
-      instanceId: 'helm-1',
-      itemHash: 3448274439n,
-      details: {
-        baseInfo: {
-          name: 'Knucklehead Radar',
-          icon: '/knucklehead.png',
-          tierTypeName: 'Exotic',
-        },
-        sockets: [],
-        stats: {
-          Mobility: { name: 'Mobility', value: 20, hash: 1 },
-          Recovery: { name: 'Recovery', value: 15, hash: 2 },
-        },
-      },
-    },
-  },
-  stats: {
-    Mobility: { name: 'Mobility', value: 80 },
-    Resilience: { name: 'Resilience', value: 100 },
-  },
-} as unknown as CharacterSnapshot;
 
 const mockAggregate = {
   id: 'agg-1',
@@ -110,7 +63,6 @@ describe('SessionOverview', () => {
       <SessionOverview
         session={mockSession}
         aggregates={[mockAggregate]}
-        snapshots={{ 'snap-1': mockSnapshot }}
         characterId="char-1"
       />,
     );
@@ -129,26 +81,24 @@ describe('SessionOverview', () => {
     expect(screen.getByText('2.50')).toBeInTheDocument();
   });
 
-  it('renders performance graph wrapper and class armor details without nested card containers', () => {
+  it('renders performance graph wrapper without class or armor loadout details', () => {
     render(
       <SessionOverview
         session={mockSession}
         aggregates={[mockAggregate]}
-        snapshots={{ 'snap-1': mockSnapshot }}
         characterId="char-1"
       />,
     );
 
-    const classArmorHeading = screen.getByText('Class & Armor Loadout');
-    expect(classArmorHeading).toBeInTheDocument();
-    expect(screen.getByText('Solar Hunter')).toBeInTheDocument();
-    expect(screen.getByText('Class Stats Overview')).toBeInTheDocument();
-
-    const armorHeading = screen.getByText('Armor Pieces & Mods');
-    expect(armorHeading).toBeInTheDocument();
-
-    // Ensure neither Class & Armor Loadout nor Armor Pieces & Mods are wrapped in nested border containers
-    expect(classArmorHeading.closest('.border.bg-card')).toBeNull();
-    expect(armorHeading.parentElement).not.toHaveClass('border');
+    expect(screen.getByText('Session Performance Graph')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Class & Armor Loadout'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Class Stats Overview'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Armor Pieces & Mods'),
+    ).not.toBeInTheDocument();
   });
 });

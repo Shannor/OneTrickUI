@@ -1,31 +1,23 @@
 import {
   CrosshairIcon,
   Gamepad2Icon,
-  ShieldIcon,
   SwordsIcon,
   TrophyIcon,
 } from 'lucide-react';
 import { useMemo } from 'react';
-import type { Aggregate, CharacterSnapshot, Session } from '~/api';
+import type { Aggregate, Session } from '~/api';
 import { ChartWrapper } from '~/charts/ChartWrapper';
-import { ClassStats } from '~/charts/ClassStats';
-import { ClassStatsRadar } from '~/charts/ClassStatsRadar';
 import { KDPerformance } from '~/charts/KDPerformance';
-import { ArmorSet } from '~/components/armor-set';
-import { SubClassHeader } from '~/components/sub-class/header';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import { useClassStats } from '~/hooks/use-loadout';
 import {
   generateKDAResultsForTimeWindow,
   timeWindowToCustom,
 } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
-import { SubClassProvider } from '~/providers/sub-class-provider';
 
 export interface SessionOverviewProps {
   session: Session;
   aggregates?: Aggregate[];
-  snapshots?: Record<string, CharacterSnapshot>;
   characterId: string;
   className?: string;
 }
@@ -33,7 +25,6 @@ export interface SessionOverviewProps {
 export function SessionOverview({
   session,
   aggregates = [],
-  snapshots = {},
   characterId,
   className,
 }: SessionOverviewProps) {
@@ -62,29 +53,6 @@ export function SessionOverview({
       { kills: 0, deaths: 0, assists: 0, wins: 0, games: 0 },
     );
   }, [aggregates, characterId]);
-
-  const activeSnapshot = useMemo(() => {
-    if (!snapshots || Object.keys(snapshots).length === 0) return null;
-    if (aggregates && aggregates.length > 0) {
-      const sorted = [...aggregates].sort(
-        (a, b) =>
-          new Date(b.activityDetails.period).getTime() -
-          new Date(a.activityDetails.period).getTime(),
-      );
-      for (const agg of sorted) {
-        const link = agg.snapshotLinks[characterId];
-        if (link?.snapshotId && snapshots[link.snapshotId]) {
-          return snapshots[link.snapshotId];
-        }
-      }
-    }
-    return Object.values(snapshots)[0];
-  }, [aggregates, snapshots, characterId]);
-
-  const classStatValues = useMemo(() => {
-    if (!activeSnapshot) return [];
-    return useClassStats(activeSnapshot);
-  }, [activeSnapshot]);
 
   const gamesCount = summary?.games ?? session.aggregateIds?.length ?? 0;
   const wins = summary?.wins ?? 0;
@@ -129,13 +97,6 @@ export function SessionOverview({
               className="max-h-[300px]"
             />
           </ChartWrapper>
-        )}
-
-        {activeSnapshot && (
-          <SessionOverviewClassDetails
-            snapshot={activeSnapshot}
-            classStatValues={classStatValues}
-          />
         )}
       </div>
     </TooltipProvider>
@@ -220,48 +181,6 @@ export function SessionOverviewStats({
             {kda.toFixed(2)}
           </span>
         </div>
-      </div>
-    </div>
-  );
-}
-
-export function SessionOverviewClassDetails({
-  snapshot,
-  classStatValues,
-}: {
-  snapshot: CharacterSnapshot;
-  classStatValues: { stat: string; value: number }[];
-}) {
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        <ShieldIcon className="h-4 w-4 text-primary" />
-        Class & Armor Loadout
-      </div>
-
-      <SubClassProvider snapshot={snapshot}>
-        <SubClassHeader />
-      </SubClassProvider>
-
-      {classStatValues.length > 0 && (
-        <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 sm:p-5">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <ShieldIcon className="h-4 w-4 text-primary" />
-            Class Stats Overview
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-center">
-            <ClassStats data={classStatValues} compact={false} />
-            <ClassStatsRadar data={classStatValues} className="max-h-[220px]" />
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <ShieldIcon className="h-4 w-4 text-primary" />
-          Armor Pieces & Mods
-        </div>
-        <ArmorSet snapshot={snapshot} />
       </div>
     </div>
   );
