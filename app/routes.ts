@@ -31,6 +31,9 @@ export default [
           route('metrics', 'routes/loadout-metrics.tsx', {
             id: 'loadout-metrics',
           }),
+          route('similar', 'routes/loadout-similar.tsx', {
+            id: 'loadout-similar',
+          }),
         ]),
         route('fireteam', 'routes/fireteam.tsx'),
       ]),
@@ -85,4 +88,8 @@ export default [
   route('action/update-loadout', 'actions/update-loadout.ts'),
   route('action/delete-session', 'actions/delete-session.ts'),
   route('action/delete-snapshot', 'actions/delete-snapshot.ts'),
+  route('action/similar-snapshots', 'actions/similar-snapshots.ts'),
+  route('action/dev-login', 'actions/dev-login.ts'),
 ] satisfies RouteConfig;
+
+

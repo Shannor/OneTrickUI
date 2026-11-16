@@ -10,6 +10,7 @@ import type {
   GetSessionAggregatesResponse,
   GetSessionResponse,
   GetSessionsResponse,
+  GetSimilarSnapshotsResponse,
   GetSnapshotAggregatesResponse,
   GetSnapshotResponse,
   GetSnapshotsResponse,
@@ -100,6 +101,9 @@ export const startUserSessionResponseTransformer = async (
 const characterSnapshotSchemaResponseTransformer = (data: any) => {
   data.createdAt = new Date(data.createdAt);
   data.updatedAt = new Date(data.updatedAt);
+  if (data.mergedAt) {
+    data.mergedAt = new Date(data.mergedAt);
+  }
   return data;
 };
 
@@ -130,6 +134,21 @@ export const updateSnapshotResponseTransformer = async (
   data: any,
 ): Promise<UpdateSnapshotResponse> => {
   data = characterSnapshotSchemaResponseTransformer(data);
+  return data;
+};
+
+const similarSnapshotItemSchemaResponseTransformer = (data: any) => {
+  data.snapshot = characterSnapshotSchemaResponseTransformer(data.snapshot);
+  return data;
+};
+
+export const getSimilarSnapshotsResponseTransformer = async (
+  data: any,
+): Promise<GetSimilarSnapshotsResponse> => {
+  data.target = characterSnapshotSchemaResponseTransformer(data.target);
+  data.items = data.items.map((item: any) =>
+    similarSnapshotItemSchemaResponseTransformer(item),
+  );
   return data;
 };
 

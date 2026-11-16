@@ -128,6 +128,12 @@ export function generateBreadcrumbs(
           crumbs.push({ label: 'Metrics' });
           i += 3;
           continue;
+        } else if (segments[i + 2] === 'similar') {
+          const loadoutUrl = `${loadoutsUrl}/${nextSeg}`;
+          crumbs.push({ label: loadoutLabel, url: loadoutUrl });
+          crumbs.push({ label: 'Similar' });
+          i += 3;
+          continue;
         } else {
           crumbs.push({ label: loadoutLabel });
           i += 2;

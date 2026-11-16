@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
-import { describe, expect, it, vi } from 'vitest';
-import type { CharacterSnapshot } from '~/api';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type CharacterSnapshot, getSnapshots } from '~/api';
 
-import { Loadouts } from './loadouts';
+import { Loadouts, loader } from './loadouts';
 
 if (typeof window !== 'undefined' && !window.ResizeObserver) {
   class ResizeObserver {
@@ -17,18 +17,34 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
   global.ResizeObserver = ResizeObserver;
 }
 
+const mockUseProfileData = vi.fn();
+
 vi.mock('~/hooks/use-route-loaders', () => ({
-  useProfileData: () => ({
-    type: 'owner',
-    profile: {
-      id: 'user-1',
-      displayName: 'TestGuardian',
-    },
-    character: { id: 'char-1', class: 'Hunter' },
-  }),
+  useProfileData: () => mockUseProfileData(),
 }));
 
+vi.mock('~/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/api')>();
+  return {
+    ...actual,
+    getSnapshots: vi.fn(),
+    getSimilarSnapshots: vi.fn(),
+  };
+});
+
 describe('Loadouts Route Component', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseProfileData.mockReturnValue({
+      type: 'owner',
+      profile: {
+        id: 'user-1',
+        displayName: 'TestGuardian',
+      },
+      character: { id: 'char-1', class: 'Hunter' },
+    });
+  });
+
   const olderSnapshot: CharacterSnapshot = {
     id: 'snap-1',
     name: 'Older Loadout',
@@ -182,4 +198,153 @@ describe('Loadouts Route Component', () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it('renders "Has Similar Loadouts" filter and "X Similar" card badges when type === "owner"', () => {
+    const props = {
+      loaderData: {
+        loadouts: {
+          items: [olderSnapshot, newerSnapshot],
+          count: { 'snap-1': 5, 'snap-2': 10 },
+          stats: {},
+          similarCounts: { 'snap-1': 3, 'snap-2': 0 },
+        },
+        gameMode: 'allGameModes' as const,
+        minimumGames: 5,
+        hasSimilar: false,
+        page: 1,
+      },
+    } as unknown as ComponentProps<typeof Loadouts>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Loadouts {...props} />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(
+      screen.getByRole('button', { name: /has similar loadouts/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /3 similar/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /0 similar/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides "Has Similar Loadouts" filter and "X Similar" badges when type !== "owner"', () => {
+    mockUseProfileData.mockReturnValue({
+      type: 'public',
+      profile: {
+        id: 'user-1',
+        displayName: 'TestGuardian',
+      },
+      character: { id: 'char-1', class: 'Hunter' },
+    });
+
+    const props = {
+      loaderData: {
+        loadouts: {
+          items: [olderSnapshot, newerSnapshot],
+          count: { 'snap-1': 5, 'snap-2': 10 },
+          stats: {},
+          similarCounts: { 'snap-1': 3, 'snap-2': 2 },
+        },
+        gameMode: 'allGameModes' as const,
+        minimumGames: 5,
+        hasSimilar: false,
+        page: 1,
+      },
+    } as unknown as ComponentProps<typeof Loadouts>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Loadouts {...props} />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(
+      screen.queryByRole('button', { name: /has similar loadouts/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /3 similar/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('updates URL query params (?hasSimilar=true and resets page) when toggling Has Similar filter', () => {
+    const props = {
+      loaderData: {
+        loadouts: {
+          items: [olderSnapshot],
+          count: { 'snap-1': 5 },
+          stats: {},
+          similarCounts: { 'snap-1': 2 },
+        },
+        gameMode: 'allGameModes' as const,
+        minimumGames: 5,
+        hasSimilar: false,
+        page: 3,
+      },
+    } as unknown as ComponentProps<typeof Loadouts>;
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/loadouts',
+          element: <Loadouts {...props} />,
+        },
+      ],
+      {
+        initialEntries: ['/loadouts?page=3&minimum=0'],
+      },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    const filterBtn = screen.getByRole('button', {
+      name: /has similar loadouts/i,
+    });
+    fireEvent.click(filterBtn);
+
+    expect(router.state.location.search).toBe('?minimum=0&hasSimilar=true');
+  });
+
+  it('passes hasSimilar=true to getSnapshots in loader when ?hasSimilar=true is set', async () => {
+    vi.mocked(getSnapshots).mockResolvedValueOnce({
+      data: {
+        items: [olderSnapshot],
+        count: { 'snap-1': 5 },
+        stats: {},
+        similarCounts: { 'snap-1': 2 },
+      },
+      error: undefined,
+    } as any);
+
+    const request = new Request(
+      'http://localhost/profile/user-1/c/char-1/loadouts?hasSimilar=true&page=1',
+    );
+    const result = await loader({
+      params: { id: 'user-1', characterId: 'char-1' },
+      request,
+      context: new Map(),
+    } as any);
+
+    expect(getSnapshots).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({
+          userId: 'user-1',
+          characterId: 'char-1',
+          hasSimilar: true,
+        }),
+      }),
+    );
+    expect(result.hasSimilar).toBe(true);
+  });
 });
+

@@ -2,9 +2,7 @@
 
 export type ClientOptions = {
   baseUrl:
-    | 'http://localhost:8080'
-    | 'https://api.d2onetrick.com'
-    | (string & {});
+    'http://localhost:8080' | 'https://api.d2onetrick.com' | (string & {});
 };
 
 export type Pong = {
@@ -59,9 +57,7 @@ export type FireteamMember = {
 };
 
 export type InternalError =
-  | 'DestinyServerDown'
-  | 'InternalSystemDown'
-  | 'UnknownError';
+  'DestinyServerDown' | 'InternalSystemDown' | 'UnknownError';
 
 export type Profile = {
   id: string;
@@ -148,11 +144,7 @@ export type Session = {
 };
 
 export type GameMode =
-  | 'allGameModes'
-  | 'quickplay'
-  | 'competitive'
-  | 'trials'
-  | 'ironBanner';
+  'allGameModes' | 'quickplay' | 'competitive' | 'trials' | 'ironBanner';
 
 export type BaseItemInfo = {
   name: string;
@@ -312,6 +304,18 @@ export type CharacterSnapshot = {
    */
   updatedAt: Date;
   loadout: Loadout;
+  /**
+   * If this snapshot was soft-merged into another snapshot, stores the target snapshot ID. Excluded from active loadout lists by default.
+   */
+  mergedIntoId?: string;
+  /**
+   * Timestamp for when this snapshot was merged into mergedIntoId
+   */
+  mergedAt?: Date;
+  /**
+   * List of source snapshot IDs that have been merged into this snapshot
+   */
+  mergedFromIds?: Array<string>;
 };
 
 export type StatsValuePair = {
@@ -378,6 +382,33 @@ export type OneTrickError = {
   status: InternalError;
 };
 
+/**
+ * Similarity tier relative to a target snapshot. 'high' requires matching Kinetic + Energy + Subclass + Exotic Armor; 'base' requires matching Kinetic + Energy + Subclass with differing Exotic Armor.
+ */
+export type SimilarityTier = 'high' | 'base';
+
+/**
+ * A candidate similar snapshot with diff metadata relative to a target snapshot
+ */
+export type SimilarSnapshotItem = {
+  snapshot: CharacterSnapshot;
+  tier: SimilarityTier;
+  /**
+   * True when both snapshots have the same Exotic armor equipped (or neither has Exotic armor)
+   */
+  exoticArmorMatch: boolean;
+  /**
+   * True when both snapshots have the same Power weapon equipped
+   */
+  powerWeaponMatch: boolean;
+  /**
+   * Non-zero class stat differences (candidate value minus target value) keyed by stat name or hash
+   */
+  statDiffs?: {
+    [key: string]: number;
+  };
+};
+
 export type ActivityHistory = {
   location: string;
   activity: string;
@@ -405,14 +436,11 @@ export type ActivityHistory = {
    * Name
    */
   mode?: string;
+  estimatedGameMode?: GameMode;
 };
 
 export type ConfidenceLevel =
-  | 'notFound'
-  | 'noMatch'
-  | 'low'
-  | 'medium'
-  | 'high';
+  'notFound' | 'noMatch' | 'low' | 'medium' | 'high';
 
 export type ConfidenceSource = 'system' | 'user';
 
@@ -501,10 +529,7 @@ export type Aggregate = {
 };
 
 export type ActivityMode =
-  | 'competitive'
-  | 'quickplay'
-  | 'allPvP'
-  | 'ironBanner';
+  'competitive' | 'quickplay' | 'allPvP' | 'ironBanner';
 
 export type DetailActivity = {
   activity: ActivityHistory;
@@ -851,6 +876,10 @@ export type GetSnapshotsData = {
     minimumGames?: number;
     includeStats?: boolean;
     sortBy?: 'created_at' | 'win_rate' | 'kd_ratio' | 'matches_played';
+    /**
+     * When true, filters returned snapshots to those with at least one active mergeable similar snapshot
+     */
+    hasSimilar?: boolean;
   };
   url: '/snapshots';
 };
@@ -871,6 +900,12 @@ export type GetSnapshotsResponses = {
      * Map of snapshot ID to total matches played
      */
     count?: {
+      [key: string]: number;
+    };
+    /**
+     * Map of snapshot ID to count of active similar loadouts on this character
+     */
+    similarCounts?: {
       [key: string]: number;
     };
   };
@@ -1034,15 +1069,22 @@ export type UpdateSnapshotResponse =
   UpdateSnapshotResponses[keyof UpdateSnapshotResponses];
 
 export type MergeSnapshotsData = {
-  body?: {
-    sourceSnapshotId: string;
+  body: {
+    /**
+     * Single source snapshot ID to merge into snapshotId (backwards-compatible)
+     */
+    sourceSnapshotId?: string;
+    /**
+     * One or more source snapshot IDs to batch-merge into snapshotId
+     */
+    sourceSnapshotIds?: Array<string>;
   };
   headers: {
     'X-User-ID': string;
   };
   path: {
     /**
-     * The unique identifier for the snapshot.
+     * The unique identifier for the target snapshot to merge into.
      */
     snapshotId: string;
   };
@@ -1052,11 +1094,21 @@ export type MergeSnapshotsData = {
 
 export type MergeSnapshotsErrors = {
   /**
+   * Invalid or incompatible snapshots for merge
+   */
+  400: OneTrickError;
+  /**
+   * Unauthorized user
+   */
+  401: OneTrickError;
+  /**
+   * Snapshot not found
+   */
+  404: OneTrickError;
+  /**
    * Error merging snapshots
    */
-  500: {
-    message: string;
-  };
+  500: OneTrickError;
 };
 
 export type MergeSnapshotsError =
@@ -1064,13 +1116,77 @@ export type MergeSnapshotsError =
 
 export type MergeSnapshotsResponses = {
   /**
-   * Merged snapshot
+   * Snapshots merged successfully
    */
   200: boolean;
 };
 
 export type MergeSnapshotsResponse =
   MergeSnapshotsResponses[keyof MergeSnapshotsResponses];
+
+export type GetSimilarSnapshotsData = {
+  body?: never;
+  path: {
+    /**
+     * The unique identifier for the target snapshot.
+     */
+    snapshotId: string;
+  };
+  query?: {
+    /**
+     * Optional game mode filter for stats context
+     */
+    gameMode?: GameMode;
+    /**
+     * Whether to include match stats and counts for the target and similar snapshots
+     */
+    includeStats?: boolean;
+    /**
+     * Filter similar candidates to all mergeable snapshots or only high-similarity snapshots
+     */
+    tier?: 'all' | 'high';
+  };
+  url: '/snapshots/{snapshotId}/similar';
+};
+
+export type GetSimilarSnapshotsErrors = {
+  /**
+   * Target snapshot not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal Server Error
+   */
+  500: OneTrickError;
+};
+
+export type GetSimilarSnapshotsError =
+  GetSimilarSnapshotsErrors[keyof GetSimilarSnapshotsErrors];
+
+export type GetSimilarSnapshotsResponses = {
+  /**
+   * Target snapshot and list of mergeable similar snapshots with stats and counts
+   */
+  200: {
+    target: CharacterSnapshot;
+    items: Array<SimilarSnapshotItem>;
+    /**
+     * Map of snapshot ID to all-mode PlayerStats
+     */
+    stats?: {
+      [key: string]: PlayerStats;
+    };
+    /**
+     * Map of snapshot ID to all-mode total matches played
+     */
+    count?: {
+      [key: string]: number;
+    };
+  };
+};
+
+export type GetSimilarSnapshotsResponse =
+  GetSimilarSnapshotsResponses[keyof GetSimilarSnapshotsResponses];
 
 export type GetSnapshotAggregatesData = {
   body?: never;

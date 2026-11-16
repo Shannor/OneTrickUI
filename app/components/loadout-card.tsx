@@ -2,24 +2,23 @@ import {
   ArrowRightIcon,
   CrosshairIcon,
   Gamepad2Icon,
+  LayersIcon,
   SwordsIcon,
   TrophyIcon,
 } from 'lucide-react';
 import type { CharacterSnapshot } from '~/api';
 import { ArmorStats } from '~/components/armor-stats';
 import { FormattedDate } from '~/components/formatted-date';
+import { GearItemPill } from '~/components/gear-item-pill';
 import { SubClassHeader } from '~/components/sub-class/header';
+import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
+import { TooltipProvider } from '~/components/ui/tooltip';
 import { WeaponStats } from '~/components/weapon-stats';
-import { getDetailWeapons, getExotic } from '~/hooks/use-loadout';
-import { cn, setBungieUrl } from '~/lib/utils';
+import { getDetailWeapons, getExotic, isExoticItem } from '~/hooks/use-loadout';
+import { cn } from '~/lib/utils';
 import { SubClassProvider } from '~/providers/sub-class-provider';
+
 
 export interface LoadoutCardProps {
   snapshot: CharacterSnapshot;
@@ -29,6 +28,8 @@ export interface LoadoutCardProps {
     standing?: { value?: number };
   };
   gamesCount?: number;
+  similarCount?: number;
+  onSimilarClick?: (snapshot: CharacterSnapshot) => void;
   onClick?: () => void;
   className?: string;
 }
@@ -37,6 +38,8 @@ export function LoadoutCard({
   snapshot,
   stats,
   gamesCount = 0,
+  similarCount = 0,
+  onSimilarClick,
   onClick,
   className,
 }: LoadoutCardProps) {
@@ -50,7 +53,11 @@ export function LoadoutCard({
         onClick={onClick}
       >
         <CardContent className="flex w-full min-w-0 flex-col gap-4 p-4 sm:p-5 md:p-6 lg:p-7">
-          <LoadoutCardHeader snapshot={snapshot} />
+          <LoadoutCardHeader
+            snapshot={snapshot}
+            similarCount={similarCount}
+            onSimilarClick={onSimilarClick}
+          />
           <LoadoutCardSummary stats={stats} gamesCount={gamesCount} />
           <LoadoutCardGear snapshot={snapshot} />
           <LoadoutCardFooter />
@@ -62,8 +69,12 @@ export function LoadoutCard({
 
 export function LoadoutCardHeader({
   snapshot,
+  similarCount = 0,
+  onSimilarClick,
 }: {
   snapshot: CharacterSnapshot;
+  similarCount?: number;
+  onSimilarClick?: (snapshot: CharacterSnapshot) => void;
 }) {
   return (
     <div className="flex w-full min-w-0 flex-col gap-3 border-b border-border/50 pb-3.5">
@@ -72,14 +83,32 @@ export function LoadoutCardHeader({
           <h3 className="truncate text-lg font-bold tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-xl lg:text-2xl">
             {snapshot.name || 'Loadout'}
           </h3>
-          {snapshot.createdAt && (
-            <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
-              <FormattedDate
-                date={snapshot.createdAt}
-                formatStr="MMM d, yyyy"
-              />
-            </span>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {similarCount > 0 && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                data-testid="similar-loadouts-trigger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSimilarClick?.(snapshot);
+                }}
+                className="h-7 gap-1.5 rounded-full px-2.5 text-xs font-semibold"
+              >
+                <LayersIcon className="h-3.5 w-3.5 text-primary" />
+                <span>{similarCount} Similar</span>
+              </Button>
+            )}
+            {snapshot.createdAt && (
+              <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
+                <FormattedDate
+                  date={snapshot.createdAt}
+                  formatStr="MMM d, yyyy"
+                />
+              </span>
+            )}
+          </div>
         </div>
         {snapshot.description && (
           <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm lg:text-base">
@@ -189,71 +218,35 @@ export function LoadoutCardGear({ snapshot }: { snapshot: CharacterSnapshot }) {
       </span>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {gearItems.map((item) => {
-          const isExotic =
-            item.details?.baseInfo?.tierTypeName?.toLowerCase() === 'exotic';
-          const iconUrl = setBungieUrl(item.details?.baseInfo?.icon);
+          const isExotic = isExoticItem(item);
           const name = item.details?.baseInfo?.name || 'Gear Item';
-          const typeName =
-            item.details?.baseInfo?.itemTypeDisplayName ||
-            (isExotic ? 'Exotic' : 'Gear');
 
           return (
-            <Tooltip key={`${item.itemHash}-${name}`}>
-              <TooltipTrigger asChild>
-                <div
-                  className={cn(
-                    'flex min-w-0 items-center gap-2.5 rounded-lg border p-2 text-xs font-medium transition-colors',
-                    isExotic
-                      ? 'border-amber-500/40 bg-amber-500/10 dark:bg-amber-500/15'
-                      : 'border-border/60 bg-muted/20 hover:bg-muted/40',
-                  )}
-                >
-                  {iconUrl ? (
-                    <img
-                      src={iconUrl}
-                      alt={name}
-                      className={cn(
-                        'h-8 w-8 shrink-0 rounded border object-cover',
-                        isExotic ? 'border-amber-400' : 'border-border/60',
-                      )}
-                    />
-                  ) : (
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border bg-muted font-bold text-muted-foreground">
-                      {name.charAt(0)}
-                    </div>
-                  )}
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span
-                      className={cn(
-                        'truncate text-xs font-bold sm:text-sm',
-                        isExotic
-                          ? 'text-amber-500 dark:text-amber-400'
-                          : 'text-foreground',
-                      )}
-                    >
-                      {name}
-                    </span>
-                    <span className="truncate text-[10px] text-muted-foreground sm:text-xs">
-                      {typeName}
-                    </span>
-                  </div>
+            <GearItemPill
+              key={`${item.itemHash}-${name}`}
+              item={item}
+              size="md"
+              highlight={isExotic}
+              tooltipContent={
+                <div className="flex flex-col gap-2">
+                  <span
+                    className={cn('font-bold', isExotic && 'text-amber-400')}
+                  >
+                    {name}
+                  </span>
+                  {item.details?.stats &&
+                    ('armor' in item ? (
+                      <ArmorStats stats={item.details.stats} />
+                    ) : (
+                      <WeaponStats stats={item.details.stats} />
+                    ))}
                 </div>
-              </TooltipTrigger>
-              <TooltipContent className="flex flex-col gap-2">
-                <span className={cn('font-bold', isExotic && 'text-amber-400')}>
-                  {name}
-                </span>
-                {item.details?.stats &&
-                  ('armor' in item ? (
-                    <ArmorStats stats={item.details.stats} />
-                  ) : (
-                    <WeaponStats stats={item.details.stats} />
-                  ))}
-              </TooltipContent>
-            </Tooltip>
+              }
+            />
           );
         })}
       </div>
+
     </div>
   );
 }

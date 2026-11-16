@@ -12,6 +12,7 @@ import {
   getSessionAggregatesResponseTransformer,
   getSessionResponseTransformer,
   getSessionsResponseTransformer,
+  getSimilarSnapshotsResponseTransformer,
   getSnapshotAggregatesResponseTransformer,
   getSnapshotResponseTransformer,
   getSnapshotsResponseTransformer,
@@ -62,6 +63,9 @@ import type {
   GetSessionResponses,
   GetSessionsData,
   GetSessionsResponses,
+  GetSimilarSnapshotsData,
+  GetSimilarSnapshotsErrors,
+  GetSimilarSnapshotsResponses,
   GetSnapshotAggregatesData,
   GetSnapshotAggregatesResponses,
   GetSnapshotData,
@@ -329,7 +333,7 @@ export const updateSnapshot = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Merge two snapshots into a single snapshot
+ * Merge one or more compatible source snapshots into a target snapshot
  */
 export const mergeSnapshots = <ThrowOnError extends boolean = false>(
   options: Options<MergeSnapshotsData, ThrowOnError>,
@@ -345,6 +349,22 @@ export const mergeSnapshots = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Returns active mergeable similar snapshots for a target snapshot with tier and diff metadata
+ */
+export const getSimilarSnapshots = <ThrowOnError extends boolean = false>(
+  options: Options<GetSimilarSnapshotsData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetSimilarSnapshotsResponses,
+    GetSimilarSnapshotsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getSimilarSnapshotsResponseTransformer,
+    url: '/snapshots/{snapshotId}/similar',
+    ...options,
   });
 
 /**

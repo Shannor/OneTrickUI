@@ -25,8 +25,8 @@ import { ErrorBoundaryContent } from '~/components/error-boundary-content';
 import { ModeToggle } from '~/components/mode-toggle';
 import { Toaster } from '~/components/ui/sonner';
 import { useToastNotification } from '~/hooks/use-toast-notification';
+import { getDefaultBaseUrl } from '~/lib/api-config';
 import { trackUserSession } from '~/lib/tracking';
-import { isDev } from '~/lib/utils';
 
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
@@ -38,7 +38,7 @@ if (typeof window !== 'undefined') {
 }
 
 client.setConfig({
-  baseUrl: isDev() ? 'http://localhost:8080' : 'https://api.d2onetrick.com',
+  baseUrl: getDefaultBaseUrl(),
 });
 
 export const meta = () => [

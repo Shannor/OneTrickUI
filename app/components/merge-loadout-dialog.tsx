@@ -1,3 +1,4 @@
+import { AlertCircle, Loader2 } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useFetcher } from 'react-router';
 import type { CharacterSnapshot } from '~/api';
@@ -18,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { areSnapshotsCompatible } from '~/hooks/use-loadout';
 
 interface MergeLoadoutDialogProps {
   baseSnapshot: CharacterSnapshot | null;
@@ -32,9 +34,9 @@ export function MergeLoadoutDialog({
   isOpen,
   onOpenChange,
 }: MergeLoadoutDialogProps) {
-  const fetcher = useFetcher<{ ok: boolean }>();
+  const fetcher = useFetcher<{ ok: boolean; error?: string }>();
 
-  const isSubmitting = fetcher.state === 'submitting';
+  const isMerging = fetcher.state !== 'idle';
 
   // Effect to close the modal on successful submission
   useEffect(() => {
@@ -47,51 +49,105 @@ export function MergeLoadoutDialog({
     return null;
   }
 
-  // Filter out the base snapshot from the list of available snapshots to merge
-  const otherSnapshots = availableSnapshots.filter(
-    (s) => s.id !== baseSnapshot.id,
+  // Filter to compatible snapshots (matching Kinetic instanceId + Energy instanceId + Subclass itemHash)
+  const compatibleSnapshots = availableSnapshots.filter((s) =>
+    areSnapshotsCompatible(baseSnapshot, s),
   );
 
+  const errorMessage =
+    fetcher.state === 'idle' && fetcher.data?.ok === false
+      ? fetcher.data.error
+      : fetcher.state === 'idle'
+        ? fetcher.data?.error
+        : undefined;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (isMerging) return;
+        onOpenChange(open);
+      }}
+    >
+      <DialogContent
+        onEscapeKeyDown={(e) => {
+          if (isMerging) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if (isMerging) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Merge with {baseSnapshot.name}</DialogTitle>
           <DialogDescription>
-            Select another loadout to merge into this one. This action cannot be
-            undone.
+            Select another compatible loadout to merge into this one. This
+            action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <fetcher.Form method="post" action="/action/merge-loadout">
           {/* Hidden input to pass the base loadout ID */}
           <input type="hidden" name="baseLoadoutId" value={baseSnapshot.id} />
 
-          <Select name="targetLoadoutId" required>
+          <Select name="sourceSnapshotIds" required disabled={isMerging}>
             <SelectTrigger>
               <SelectValue placeholder="Select a loadout to merge..." />
             </SelectTrigger>
             <SelectContent>
-              {otherSnapshots.map((snapshot) => (
+              {compatibleSnapshots.map((snapshot) => (
                 <SelectItem key={snapshot.id} value={snapshot.id}>
                   {snapshot.name}
                 </SelectItem>
               ))}
-              {otherSnapshots.length === 0 && (
+              {compatibleSnapshots.length === 0 && (
                 <SelectItem value="none" disabled>
-                  No other loadouts to merge
+                  No compatible loadouts to merge
                 </SelectItem>
               )}
             </SelectContent>
           </Select>
+
+          {isMerging && (
+            <div
+              role="status"
+              aria-live="polite"
+              data-testid="merge-progress-banner"
+              className="mt-3 flex items-center gap-2.5 rounded-md border border-primary/40 bg-primary/10 p-2.5 text-xs text-foreground"
+            >
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+              <span>
+                {fetcher.state === 'loading'
+                  ? 'Refreshing session loadouts...'
+                  : 'Merging loadouts and updating match history...'}
+              </span>
+            </div>
+          )}
+
+          {errorMessage && (
+            <div
+              role="alert"
+              className="mt-3 flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2.5 text-sm text-destructive"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           <DialogFooter className="mt-4 flex flex-row justify-end gap-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isMerging}
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <LoadingButton
               type="submit"
-              disabled={isSubmitting}
-              isLoading={isSubmitting}
-              loadingText="Merging..."
+              disabled={isMerging || compatibleSnapshots.length === 0}
+              isLoading={isMerging}
+              loadingText={
+                fetcher.state === 'loading' ? 'Refreshing...' : 'Merging...'
+              }
             >
               Confirm Merge
             </LoadingButton>
@@ -101,3 +157,5 @@ export function MergeLoadoutDialog({
     </Dialog>
   );
 }
+
+

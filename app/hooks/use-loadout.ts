@@ -1,28 +1,149 @@
 import type {
   CharacterSnapshot,
+  GetSimilarSnapshotsResponse,
+  GunStat,
   InstancePerformance,
   ItemSnapshot,
   Loadout,
+  Perk,
+  Socket,
   UniqueStatValue,
 } from '~/api';
 import { calculatePercentage } from '~/calculations/precision';
 
+
+
 const PRECISION_KILLS_KEY = 'uniqueWeaponPrecisionKills';
 const UNIQUE_KILLS_KEY = 'uniqueWeaponKills';
 
-const Kinetic = 1498876634;
-const Energy = 2465295065;
-const Power = 953998645;
+export const KINETIC_BUCKET = 1498876634;
+export const ENERGY_BUCKET = 2465295065;
+export const POWER_BUCKET = 953998645;
+export const SUBCLASS_BUCKET = 3284755031;
 
-const HelmetArmor = 3448274439;
-const GauntletsArmor = 3551918588;
-const ChestArmor = 14239492;
-const LegArmor = 20886954;
-const ClassArmor = 1585787867;
+export const HELMET_BUCKET = 3448274439;
+export const GAUNTLETS_BUCKET = 3551918588;
+export const CHEST_BUCKET = 14239492;
+export const LEG_BUCKET = 20886954;
+export const CLASS_ARMOR_BUCKET = 1585787867;
+
+export const ARMOR_BUCKETS = [
+  HELMET_BUCKET,
+  GAUNTLETS_BUCKET,
+  CHEST_BUCKET,
+  LEG_BUCKET,
+  CLASS_ARMOR_BUCKET,
+] as const;
+
+const Kinetic = KINETIC_BUCKET;
+const Energy = ENERGY_BUCKET;
+const Power = POWER_BUCKET;
+
+const HelmetArmor = HELMET_BUCKET;
+const GauntletsArmor = GAUNTLETS_BUCKET;
+const ChestArmor = CHEST_BUCKET;
+const LegArmor = LEG_BUCKET;
+const ClassArmor = CLASS_ARMOR_BUCKET;
 
 interface Stats {
   precisionKills: number;
   kills: number;
+}
+
+export type ItemSnapshotWithLegacyProps = ItemSnapshot & {
+  itemProperties?: {
+    baseInfo?: {
+      instanceId?: string;
+      tierType?: number;
+      tierTypeName?: string;
+    };
+  };
+};
+
+export function effectiveInstanceId(
+  item?: ItemSnapshotWithLegacyProps,
+): string {
+  if (!item) return '';
+  const hashStr = item.itemHash ? String(item.itemHash) : '';
+  const detailsBaseId = item.details?.baseInfo?.instanceId ?? '';
+  const propsBaseId = item.itemProperties?.baseInfo?.instanceId ?? '';
+  const baseId =
+    detailsBaseId && detailsBaseId !== hashStr
+      ? detailsBaseId
+      : propsBaseId || detailsBaseId;
+  const topId = item.instanceId ?? '';
+  if (baseId && baseId !== hashStr) return baseId;
+  if (topId && topId !== hashStr) return topId;
+  return baseId || topId;
+}
+
+export function getSnapshotCompatibilityKey(
+  snapshot?: CharacterSnapshot | null,
+): string | null {
+  if (!snapshot?.loadout) return null;
+
+  const kineticId = effectiveInstanceId(snapshot.loadout[KINETIC_BUCKET]);
+  if (!kineticId) return null;
+
+  const energyId = effectiveInstanceId(snapshot.loadout[ENERGY_BUCKET]);
+  if (!energyId) return null;
+
+  const subclassHash = snapshot.loadout[SUBCLASS_BUCKET]?.itemHash;
+  if (!subclassHash || String(subclassHash) === '0') return null;
+
+  return `${kineticId}:${energyId}:${String(subclassHash)}`;
+}
+
+export function areSnapshotsCompatible(
+  base?: CharacterSnapshot | null,
+  candidate?: CharacterSnapshot | null,
+): boolean {
+  if (!base || !candidate || base.id === candidate.id) return false;
+  const baseKey = getSnapshotCompatibilityKey(base);
+  if (!baseKey) return false;
+  return baseKey === getSnapshotCompatibilityKey(candidate);
+}
+
+export function groupSnapshotsByCompatibility(
+  snapshots: CharacterSnapshot[],
+): Record<string, CharacterSnapshot[]> {
+  const groups = new Map<string, CharacterSnapshot[]>();
+
+  for (const snapshot of snapshots) {
+    const key = getSnapshotCompatibilityKey(snapshot);
+    if (!key) continue;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.push(snapshot);
+    } else {
+      groups.set(key, [snapshot]);
+    }
+  }
+
+  const compatibleById: Record<string, CharacterSnapshot[]> = {};
+  for (const snapshot of snapshots) {
+    const key = getSnapshotCompatibilityKey(snapshot);
+    if (!key) {
+      compatibleById[snapshot.id] = [];
+      continue;
+    }
+    const group = groups.get(key) ?? [];
+    compatibleById[snapshot.id] = group.filter(
+      (other) => other.id !== snapshot.id,
+    );
+  }
+
+  return compatibleById;
+}
+
+
+export function isExoticItem(item?: ItemSnapshotWithLegacyProps): boolean {
+  if (!item) return false;
+  const baseInfo = item.details?.baseInfo ?? item.itemProperties?.baseInfo;
+  if (!baseInfo) return false;
+  return (
+    baseInfo.tierType === 6 || baseInfo.tierTypeName?.toLowerCase() === 'exotic'
+  );
 }
 
 export function getWeapons(loadout?: Loadout): ItemSnapshot[] {
@@ -56,14 +177,8 @@ export function getExotic(loadout?: Loadout): {
 
   const weapons = [kinetic, energy, power];
   const armor = [helmet, gauntlets, chest, leg, classArmor];
-  const exoticWeapon = weapons.find(
-    (item) =>
-      !!item && item.details.baseInfo.tierTypeName.toLowerCase() === 'exotic',
-  );
-  const exoticArmor = armor.find(
-    (item) =>
-      !!item && item.details.baseInfo.tierTypeName.toLowerCase() === 'exotic',
-  );
+  const exoticWeapon = weapons.find((item) => isExoticItem(item));
+  const exoticArmor = armor.find((item) => isExoticItem(item));
   return { weapon: exoticWeapon, armor: exoticArmor };
 }
 
@@ -151,3 +266,150 @@ export function useClassStats(snapshot?: CharacterSnapshot) {
     }))
     .filter((it) => it.stat !== 'Power');
 }
+
+function slimItemSnapshot(
+  item: ItemSnapshot,
+  isSubclass: boolean,
+): ItemSnapshot {
+  const baseInfo = item.details?.baseInfo;
+  const slimStats: Record<string, GunStat> = {};
+
+  if (!isSubclass && item.details?.stats) {
+    for (const [key, stat] of Object.entries(item.details.stats)) {
+      if (stat) {
+        slimStats[key] = {
+          hash: stat.hash,
+          name: stat.name,
+          value: stat.value,
+          description: '',
+        };
+      }
+    }
+  }
+
+  const slimPerks: Perk[] =
+    !isSubclass && item.details?.perks
+      ? item.details.perks
+          .filter((perk) => Boolean(perk?.name))
+          .slice(0, 4)
+          .map((perk) => ({
+            hash: perk.hash,
+            name: perk.name,
+            iconPath: perk.iconPath,
+            description: '',
+          }))
+      : [];
+
+  const slimSockets: Socket[] =
+    isSubclass && item.details?.sockets
+      ? item.details.sockets
+          .filter(
+            (socket) =>
+              socket.isVisible &&
+              socket.isEnabled &&
+              socket.itemTypeDisplayName?.toLowerCase().includes('super'),
+          )
+          .map((socket) => ({
+            name: socket.name,
+            icon: socket.icon,
+            isVisible: socket.isVisible,
+            isEnabled: socket.isEnabled,
+            itemTypeDisplayName: socket.itemTypeDisplayName,
+            itemTypeTieredDisplayName: socket.itemTypeTieredDisplayName ?? '',
+            plugHash: socket.plugHash,
+            description: '',
+          }))
+      : [];
+
+  return {
+    itemHash: item.itemHash,
+    instanceId: item.instanceId,
+    name: item.name,
+    details: {
+      baseInfo: baseInfo
+        ? {
+            bucketHash: baseInfo.bucketHash,
+            icon: baseInfo.icon,
+            instanceId: baseInfo.instanceId,
+            itemHash: baseInfo.itemHash,
+            itemTypeAndTierDisplayName: baseInfo.itemTypeAndTierDisplayName,
+            itemTypeDisplayName: baseInfo.itemTypeDisplayName,
+            name: baseInfo.name,
+            tierType: baseInfo.tierType,
+            tierTypeName: baseInfo.tierTypeName,
+          }
+        : (undefined as unknown as ItemSnapshot['details']['baseInfo']),
+      stats: slimStats,
+      perks: slimPerks,
+      sockets: slimSockets,
+    },
+  };
+}
+
+/**
+ * Strips unused Legendary armor buckets and verbose Bungie manifest descriptions/sockets
+ * before serializing snapshots in list loaders or comparison modals (~88% payload reduction).
+ */
+export function slimSnapshotForCard(
+  snapshot: CharacterSnapshot,
+): CharacterSnapshot {
+  const slimLoadout: Loadout = {};
+
+  if (snapshot.loadout) {
+    for (const bucket of [
+      SUBCLASS_BUCKET,
+      KINETIC_BUCKET,
+      ENERGY_BUCKET,
+      POWER_BUCKET,
+    ]) {
+      const item = snapshot.loadout[bucket];
+      if (item) {
+        slimLoadout[bucket] = slimItemSnapshot(
+          item,
+          bucket === SUBCLASS_BUCKET,
+        );
+      }
+    }
+
+    for (const armorBucket of ARMOR_BUCKETS) {
+      const armorItem = snapshot.loadout[armorBucket];
+      if (armorItem && isExoticItem(armorItem)) {
+        slimLoadout[armorBucket] = slimItemSnapshot(armorItem, false);
+      }
+    }
+  }
+
+  let slimClassStats: CharacterSnapshot['stats'];
+  if (snapshot.stats) {
+    slimClassStats = {};
+    for (const [key, stat] of Object.entries(snapshot.stats)) {
+      if (stat?.name && stat.name !== 'Power') {
+        slimClassStats[key] = {
+          ...stat,
+          description: '',
+        };
+      }
+    }
+  }
+
+  return {
+    ...snapshot,
+    loadout: slimLoadout,
+    ...(slimClassStats ? { stats: slimClassStats } : {}),
+  };
+}
+
+export function slimSimilarSnapshotPage(
+  page: GetSimilarSnapshotsResponse,
+): GetSimilarSnapshotsResponse {
+  return {
+    ...page,
+    target: slimSnapshotForCard(page.target),
+    items: page.items.map((item) => ({
+      ...item,
+      snapshot: slimSnapshotForCard(item.snapshot),
+    })),
+  };
+}
+
+

@@ -14,9 +14,6 @@ export function CharacterPlate({ character, options }: Props) {
   return (
     <div
       style={{
-        backgroundImage: `url(${character.emblemBackgroundURL})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'left center',
         height: options?.isCompact ? 45 : 75,
         filter:
           !options?.isChecked && options?.shouldGrayOut
@@ -30,7 +27,19 @@ export function CharacterPlate({ character, options }: Props) {
           : 'contrast-90 border-transparent opacity-50 grayscale hover:border-muted-foreground/40 hover:opacity-90 hover:grayscale-0',
       )}
     >
+      {character.emblemBackgroundURL && (
+        <img
+          src={character.emblemBackgroundURL}
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+          decoding="async"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-left"
+        />
+      )}
+
       <div className="relative z-10 my-auto flex min-w-0 flex-1 flex-col justify-center pr-2">
+
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="truncate text-base font-bold leading-tight tracking-wider text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] sm:text-lg">
             {character.class}

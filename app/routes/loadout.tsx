@@ -5,11 +5,12 @@ import {
   NavLink,
   Outlet,
   type ShouldRevalidateFunctionArgs,
+  redirect,
   useLocation,
   useParams,
 } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
-import { getSnapshot } from '~/api';
+import { getSimilarSnapshots, getSnapshot } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadoutHeaderActions } from '~/components/loadout-header-actions';
 import { LoadoutUpdateForm } from '~/components/loadout-update-form';
@@ -44,6 +45,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       snapshot: undefined,
       error: 'Failed to load loadout',
       path,
+      similarCount: 0,
     };
   }
   if (!snapshot) {
@@ -52,13 +54,31 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       snapshot: undefined,
       error: 'Loadout Not Found',
       path,
+      similarCount: 0,
     };
+  }
+
+  if (snapshot.mergedIntoId) {
+    return redirect(
+      `/profile/${id}/c/${characterId}/loadouts/${snapshot.mergedIntoId}`,
+    );
+  }
+
+  let similarCount = 0;
+  try {
+    const similarRes = await getSimilarSnapshots({
+      path: { snapshotId },
+    });
+    similarCount = similarRes?.data?.items?.length ?? 0;
+  } catch {
+    similarCount = 0;
   }
 
   return {
     snapshot,
     error: undefined,
     path,
+    similarCount,
   };
 }
 
@@ -76,7 +96,7 @@ export function shouldRevalidate({
 }
 
 export function Loadout({ loaderData }: Route.ComponentProps) {
-  const { snapshot, error, path } = loaderData;
+  const { snapshot, error, path, similarCount = 0 } = loaderData;
   const { profile, type } = useProfileData();
   const { id, characterId } = useParams();
   const isOwner = type === 'owner';
@@ -85,6 +105,7 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
   const currentTab = React.useMemo(() => {
     const tabPatterns = {
       metrics: /\/metrics\/?$/,
+      similar: /\/similar\/?$/,
       loadout: /.*/,
     };
 
@@ -170,6 +191,18 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
           <TabsTrigger value="metrics" asChild>
             <NavLink to="metrics">Metrics</NavLink>
           </TabsTrigger>
+          {isOwner && (
+            <TabsTrigger value="similar" asChild>
+              <NavLink to="similar" className="flex items-center gap-1.5">
+                <span>Similar</span>
+                {similarCount > 0 && (
+                  <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary">
+                    {similarCount}
+                  </span>
+                )}
+              </NavLink>
+            </TabsTrigger>
+          )}
         </TabsList>
       </Tabs>
       <Outlet />

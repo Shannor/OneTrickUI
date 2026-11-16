@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { buttonVariants } from '~/components/ui/button';
 import { getBungieAuthUrl } from '~/lib/auth-utils';
 import { extractRequestMeta } from '~/lib/request-logger';
-import { cn } from '~/lib/utils';
+import { cn, isDev } from '~/lib/utils';
 
 import type { Route } from './+types/login';
 
@@ -38,12 +38,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     });
   }
 
-  return { error };
+  return { error, showDevLogin: isDev() };
 }
 
 export default function Login() {
   const loaderData = useLoaderData<typeof loader>();
   const error = loaderData?.error;
+  const showDevLogin = loaderData?.showDevLogin;
   const href = getBungieAuthUrl();
 
   return (
@@ -99,6 +100,19 @@ export default function Login() {
                 >
                   {error ? 'Retry Sign In with Bungie' : 'Login with Bungie'}
                 </Link>
+
+                {showDevLogin && (
+                  <Link
+                    to="/action/dev-login"
+                    reloadDocument
+                    className={cn(
+                      buttonVariants({ variant: 'secondary' }),
+                      'h-auto min-h-[2.5rem] w-full justify-center whitespace-normal border border-dashed px-4 py-2 text-center',
+                    )}
+                  >
+                    Dev Login (Local Test User)
+                  </Link>
+                )}
 
                 <Link
                   to="/"

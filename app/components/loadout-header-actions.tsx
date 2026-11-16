@@ -48,6 +48,7 @@ export function LoadoutHeaderActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+
       {shareUrl && (
         <Tooltip open={copyStatus ? true : undefined}>
           <TooltipTrigger asChild>
@@ -95,3 +96,4 @@ export function LoadoutHeaderActions({
     </div>
   );
 }
+

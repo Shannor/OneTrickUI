@@ -15,6 +15,35 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-15',
+    date: 'November 15, 2026',
+    title: 'Similar Loadouts Comparison, Multi-Merge & Faster Mobile Loading',
+    summary:
+      'Easily find, compare, and batch-merge similar loadouts into a single primary build, inspect gear rolls and stat differences on hover, and enjoy faster page loads on mobile connections.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Filter your loadouts with the new "Has Similar Loadouts" toggle and see at a glance how many similar builds exist directly on each loadout card.',
+      },
+      {
+        type: 'feature',
+        text: 'See loadouts that are similar in the new "Similar" tab and merge them together so your stats are more easily tracked—complete with High and Base Similarity groups, one-click Primary target swapping, and a live preview of your combined Matches, Win Rate, and K/D.',
+      },
+      {
+        type: 'improvement',
+        text: 'Hover over any gear item, Exotic armor badge, Power weapon badge, or class stat difference to compare weapon perks, armor stat rolls, and stat totals side by side.',
+      },
+      {
+        type: 'improvement',
+        text: 'Streamlined session loadout merging to only list compatible builds sharing the same weapons and subclass, with clear status feedback while match history is reassigned.',
+      },
+      {
+        type: 'improvement',
+        text: 'Significantly faster Loadouts page and character banner loading on 3G and 4G mobile networks.',
+      },
+    ],
+  },
+  {
     id: '2026-08-29',
     date: 'August 29, 2026',
     title: 'Session & Loadout Management & Non-Blocking Updates',
