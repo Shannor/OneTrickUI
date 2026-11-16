@@ -5,6 +5,7 @@
 # React Router
 /.react-router/
 /.evlog/
+/.worktrees/
 /build/
 
 .idea
