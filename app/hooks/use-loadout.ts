@@ -10,6 +10,7 @@ import type {
   UniqueStatValue,
 } from '~/api';
 import { calculatePercentage } from '~/calculations/precision';
+import { getItemIconUrl } from '~/lib/utils';
 
 
 
@@ -329,7 +330,7 @@ function slimItemSnapshot(
       baseInfo: baseInfo
         ? {
             bucketHash: baseInfo.bucketHash,
-            icon: baseInfo.icon,
+            icon: getItemIconUrl(item.details) || baseInfo.icon,
             instanceId: baseInfo.instanceId,
             itemHash: baseInfo.itemHash,
             itemTypeAndTierDisplayName: baseInfo.itemTypeAndTierDisplayName,

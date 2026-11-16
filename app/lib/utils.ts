@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { BaseItemInfo, Socket } from '~/api';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,6 +16,39 @@ export function isEmptyObject(obj: object): boolean {
 
 const DestinyURL = 'https://www.bungie.net';
 export function setBungieUrl(url?: string) {
-  if (!url) return '';
+  if (!url || url === DestinyURL) return '';
   return url.includes(DestinyURL) ? url : `${DestinyURL}${url}`;
+}
+
+export function getItemIconUrl(
+  properties?: {
+    baseInfo?: Partial<
+      Pick<BaseItemInfo, 'icon' | 'itemTypeDisplayName' | 'styleBasicInfo'>
+    >;
+    sockets?: Socket[];
+  } | null,
+  fallbackIcon?: string,
+): string {
+  const baseInfo = properties?.baseInfo;
+  const styleIcon = setBungieUrl(baseInfo?.styleBasicInfo?.icon);
+  if (styleIcon) {
+    return styleIcon;
+  }
+
+  const ornamentSocket = properties?.sockets?.find((socket) => {
+    if (!socket.isEnabled || !socket.isVisible) return false;
+    if (!setBungieUrl(socket.icon)) return false;
+    const socketType = socket.itemTypeDisplayName ?? '';
+    if (socketType.toLowerCase().includes('ornament')) return true;
+    return Boolean(
+      baseInfo?.itemTypeDisplayName &&
+        socketType === baseInfo.itemTypeDisplayName,
+    );
+  });
+
+  if (ornamentSocket?.icon) {
+    return setBungieUrl(ornamentSocket.icon);
+  }
+
+  return setBungieUrl(baseInfo?.icon) || setBungieUrl(fallbackIcon);
 }

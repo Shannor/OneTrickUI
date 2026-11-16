@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { setBungieUrl } from '~/lib/utils';
+import { getItemIconUrl } from '~/lib/utils';
 
 interface Props {
   item: ItemSnapshotType;
@@ -16,6 +16,7 @@ interface Props {
 
 export const ItemSnapshot: React.FC<Props> = ({ item, children }) => {
   const { baseInfo } = item.details;
+  const iconUrl = getItemIconUrl(item.details);
 
   return (
     <div className="flex flex-row items-center gap-2">
@@ -25,17 +26,14 @@ export const ItemSnapshot: React.FC<Props> = ({ item, children }) => {
             <AvatarFallback className="rounded-sm">
               {baseInfo.name.charAt(0).toUpperCase()}
             </AvatarFallback>
-            <AvatarImage
-              src={setBungieUrl(baseInfo.icon)}
-              alt={baseInfo.name}
-            />
+            <AvatarImage src={iconUrl} alt={baseInfo.name} />
           </Avatar>
         </TooltipTrigger>
         <TooltipContent className="flex flex-col gap-4">
           {children ?? <Label>{baseInfo.name}</Label>}
         </TooltipContent>
       </Tooltip>
-      {!baseInfo.icon && <Label className="truncate">{baseInfo.name}</Label>}
+      {!iconUrl && <Label className="truncate">{baseInfo.name}</Label>}
     </div>
   );
 };

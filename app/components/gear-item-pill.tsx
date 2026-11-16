@@ -8,7 +8,7 @@ import {
 } from '~/components/ui/tooltip';
 import { WeaponStats } from '~/components/weapon-stats';
 import { isExoticItem } from '~/hooks/use-loadout';
-import { cn, setBungieUrl } from '~/lib/utils';
+import { cn, getItemIconUrl } from '~/lib/utils';
 
 export function getGearItemName(item?: ItemSnapshot): string {
   return item?.details?.baseInfo?.name || item?.name || 'None';
@@ -122,7 +122,7 @@ export function GearItemPill({
 }: GearItemPillProps) {
   const isExotic = highlight ?? isExoticItem(item);
   const name = getGearItemName(item);
-  const iconUrl = setBungieUrl(item?.details?.baseInfo?.icon);
+  const iconUrl = getItemIconUrl(item?.details);
   const resolvedSubtitle =
     subtitle ??
     item?.details?.baseInfo?.itemTypeDisplayName ??

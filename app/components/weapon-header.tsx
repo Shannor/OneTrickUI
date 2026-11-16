@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { cn, setBungieUrl } from '~/lib/utils';
+import { cn, getItemIconUrl } from '~/lib/utils';
 
 interface Props extends WeaponInstanceMetrics {
   className?: string;
@@ -18,7 +18,7 @@ export const WeaponHeader: React.FC<Props> = ({
   className,
   onlyIcon,
 }) => {
-  const icon = setBungieUrl(properties?.baseInfo?.icon ?? display?.icon);
+  const icon = getItemIconUrl(properties, display?.icon);
   const name = properties?.baseInfo?.name ?? display?.name;
 
   return (

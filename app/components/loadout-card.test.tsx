@@ -62,6 +62,10 @@ const mockSnapshot = {
           icon: '/gjallarhorn.png',
           tierTypeName: 'Exotic',
           itemTypeDisplayName: 'Rocket Launcher',
+          styleBasicInfo: {
+            name: 'Gjallarfoam',
+            icon: '/gjallarfoam.png',
+          },
         },
       },
     },
@@ -113,6 +117,14 @@ describe('LoadoutCard', () => {
     expect(screen.getByText('Rose')).toBeInTheDocument();
     expect(screen.getByText('Matador 64')).toBeInTheDocument();
     expect(screen.getByText('Gjallarhorn')).toBeInTheDocument();
+    expect(screen.getByAltText('Rose')).toHaveAttribute(
+      'src',
+      'https://www.bungie.net/rose.png',
+    );
+    expect(screen.getByAltText('Gjallarhorn')).toHaveAttribute(
+      'src',
+      'https://www.bungie.net/gjallarfoam.png',
+    );
   });
 
   it('triggers onClick handler when card is clicked', () => {
