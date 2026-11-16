@@ -74,7 +74,7 @@ export function ChangelogModal({
           <Button
             variant="ghost"
             size="sm"
-            className="relative gap-2 text-xs text-muted-foreground hover:text-foreground"
+            className="relative gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <Sparkles className="h-4 w-4 text-primary" />
             <span>What's New</span>
@@ -90,11 +90,11 @@ export function ChangelogModal({
 
       <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-4 sm:max-w-2xl">
         <DialogHeader className="shrink-0 border-b pb-3">
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <Sparkles className="h-5 w-5 text-primary" />
+          <DialogTitle className="flex items-center gap-2 text-3xl font-bold">
+            <Sparkles className="h-6 w-6 text-primary" />
             What's New in 1 Trick
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
+          <DialogDescription className="text-base text-muted-foreground">
             Release updates, feature improvements, and recent bug fixes.
           </DialogDescription>
         </DialogHeader>
@@ -114,17 +114,17 @@ export function ChangelogModal({
                 key={release.id}
                 className="flex flex-col gap-4 pt-4 first:pt-0"
               >
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="text-base font-bold text-foreground">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-2xl font-bold text-foreground">
                     {release.title}
                   </h3>
-                  <span className="text-xs font-semibold text-primary">
+                  <span className="text-base font-semibold text-primary">
                     {release.date}
                   </span>
                 </div>
 
                 {release.summary && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-base text-muted-foreground">
                     {release.summary}
                   </p>
                 )}
@@ -132,10 +132,10 @@ export function ChangelogModal({
                 <div className="flex flex-col gap-4 pt-1">
                   {features.length > 0 && (
                     <div className="flex flex-col gap-2">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-primary">
+                      <h4 className="text-lg font-bold uppercase tracking-wider text-primary">
                         Features
                       </h4>
-                      <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs text-foreground/90">
+                      <ul className="flex list-disc flex-col gap-2 pl-5 text-sm leading-relaxed text-foreground/90">
                         {features.map((item, idx) => (
                           <li key={idx}>{item.text}</li>
                         ))}
@@ -145,10 +145,10 @@ export function ChangelogModal({
 
                   {improvements.length > 0 && (
                     <div className="flex flex-col gap-2">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <h4 className="text-lg font-bold uppercase tracking-wider text-muted-foreground">
                         Improvements
                       </h4>
-                      <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs text-foreground/90">
+                      <ul className="flex list-disc flex-col gap-2 pl-5 text-sm leading-relaxed text-foreground/90">
                         {improvements.map((item, idx) => (
                           <li key={idx}>{item.text}</li>
                         ))}
@@ -158,10 +158,10 @@ export function ChangelogModal({
 
                   {fixes.length > 0 && (
                     <div className="flex flex-col gap-2">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400">
+                      <h4 className="text-lg font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400">
                         Fixes
                       </h4>
-                      <ul className="flex list-disc flex-col gap-1.5 pl-4 text-xs text-foreground/90">
+                      <ul className="flex list-disc flex-col gap-2 pl-5 text-sm leading-relaxed text-foreground/90">
                         {fixes.map((item, idx) => (
                           <li key={idx}>{item.text}</li>
                         ))}
