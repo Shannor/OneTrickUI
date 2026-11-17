@@ -39,6 +39,10 @@ export const CHANGELOG: ReleaseNote[] = [
         text: 'Share any Loadout link to showcase a custom visual build card highlighting your subclass, Kinetic, Energy, and Power weapons, and Exotic armor.',
       },
       {
+        type: 'feature',
+        text: 'Copy a ready-to-paste Destiny Item Manager (DIM) search query for all of your equipped weapons and armor directly from any Loadout page to quickly highlight and equip your exact build in DIM.',
+      },
+      {
         type: 'improvement',
         text: 'Compare your top 3 performing loadouts side by side on desktop in a streamlined horizontal layout with a clear "All Modes · Min. 10 Games" qualification badge.',
       },

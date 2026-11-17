@@ -167,6 +167,7 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
             characterId={characterId}
             userId={profile?.id}
             shareUrl={path}
+            loadout={snapshot.loadout}
           />
         </div>
 
