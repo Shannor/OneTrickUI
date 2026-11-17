@@ -36,6 +36,13 @@ export const ARMOR_BUCKETS = [
   CLASS_ARMOR_BUCKET,
 ] as const;
 
+export const GEAR_BUCKETS = [
+  KINETIC_BUCKET,
+  ENERGY_BUCKET,
+  POWER_BUCKET,
+  ...ARMOR_BUCKETS,
+] as const;
+
 const Kinetic = KINETIC_BUCKET;
 const Energy = ENERGY_BUCKET;
 const Power = POWER_BUCKET;
@@ -76,6 +83,21 @@ export function effectiveInstanceId(
   if (baseId && baseId !== hashStr) return baseId;
   if (topId && topId !== hashStr) return topId;
   return baseId || topId;
+}
+
+export function buildDimSearchQuery(loadout?: Loadout): string {
+  if (!loadout) return '';
+
+  const queries: string[] = [];
+  for (const bucket of GEAR_BUCKETS) {
+    const item = loadout[bucket];
+    if (!item) continue;
+    const id = effectiveInstanceId(item);
+    if (!id || id === '0' || id === String(item.itemHash)) continue;
+    queries.push(`(id:'${id}')`);
+  }
+
+  return queries.join(' OR ');
 }
 
 export function getSnapshotCompatibilityKey(
