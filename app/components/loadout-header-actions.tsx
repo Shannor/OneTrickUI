@@ -83,7 +83,9 @@ export function LoadoutHeaderActions({
               <span>Copy DIM Query</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>{dimCopyStatus || 'Copy DIM Query'}</TooltipContent>
+          <TooltipContent>
+            {dimCopyStatus || 'Paste in the search bar in DIM'}
+          </TooltipContent>
         </Tooltip>
       )}
 
