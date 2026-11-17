@@ -1,9 +1,16 @@
-import { Link, useNavigate } from 'react-router';
+import { RadioIcon, SwordsIcon } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { getBestPerformingLoadouts, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadoutCard } from '~/components/loadout-card';
+import {
+  DirectSessionStartForm,
+  OverviewHeader,
+  RecentFormPulse,
+} from '~/components/overview-pulse';
 import { SessionCard } from '~/components/session-card';
+import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { getSiteOrigin } from '~/lib/utils';
@@ -55,11 +62,13 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   }
 }
 
-export default function Home({ loaderData, params }: Route.ComponentProps) {
+export function Home({ loaderData, params }: Route.ComponentProps) {
   const navigate = useNavigate();
+  const routeParams = useParams();
   const data = useProfileData();
   const { sessions = [], loadouts, error } = loaderData ?? {};
-  const { id, characterId } = params ?? {};
+  const resolvedUserId = params?.id ?? routeParams.id;
+  const resolvedCharacterId = params?.characterId ?? routeParams.characterId;
 
   if (!data) {
     return (
@@ -101,6 +110,9 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
 
   if (data.type === 'viewer' || data.type === 'owner') {
     const { profile, type, character } = data;
+    const isOwner = type === 'owner';
+    const characterId = resolvedCharacterId ?? character?.id;
+    const userId = resolvedUserId ?? profile.id;
     const topLoadouts = loadouts?.items ?? [];
     const statsRecord = (loadouts?.stats ?? {}) as Record<
       string,
@@ -117,8 +129,8 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
     const pageTitle = `${profile.displayName} - ${character?.class ?? 'Home'} | 1 Trick`;
     const pageDescription = `View ${profile.displayName}'s Destiny 2 PvP overview, sessions, and top loadouts on 1 Trick.`;
     const canonicalUrl =
-      id && characterId
-        ? `https://d2onetrick.com/profile/${id}/c/${characterId}`
+      userId && characterId
+        ? `https://d2onetrick.com/profile/${userId}/c/${characterId}`
         : '';
     const shareImageUrl = character?.emblemBackgroundURL
       ? character.emblemBackgroundURL.startsWith('http')
@@ -141,9 +153,20 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
         <meta name="twitter:image" content={shareImageUrl} />
         {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
         <div className="flex flex-col gap-8">
-          <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
-            {type === 'viewer' ? 'Viewing' : 'Welcome'} {profile.displayName}!
-          </h2>
+          <OverviewHeader
+            profile={profile}
+            character={character}
+            isOwner={isOwner}
+            activeSession={activeSession}
+            hasSessions={displayedSessions.length > 0}
+            characterId={characterId}
+            userId={userId}
+          />
+
+          <RecentFormPulse
+            sessions={sessions}
+            onSelectSession={(sessionId) => navigate(`sessions/${sessionId}`)}
+          />
 
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -172,21 +195,48 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
               </div>
             ) : (
               <Empty
+                icon={
+                  <RadioIcon className="h-12 w-12 self-center text-muted-foreground/60" />
+                }
                 title="No Sessions Recorded"
-                description="Start a tracking session to monitor your Destiny 2 stats!"
+                description={
+                  isOwner
+                    ? 'Start a live tracking session before queueing into the Crucible to automatically track matches and loadout snapshots.'
+                    : 'This Guardian has not recorded any Crucible sessions on this character yet.'
+                }
               >
-                <Button asChild>
-                  <Link to="sessions">Start Session</Link>
-                </Button>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  {isOwner && (
+                    <DirectSessionStartForm
+                      characterId={characterId}
+                      userId={userId}
+                      label="Start First Session"
+                    />
+                  )}
+                  <Button
+                    asChild
+                    variant={isOwner ? 'outline' : 'default'}
+                  >
+                    <Link to="/sessions">Browse Community Sessions</Link>
+                  </Button>
+                </div>
               </Empty>
             )}
           </section>
 
           <section className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-                Top Loadouts
-              </h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
+                  Top Loadouts
+                </h3>
+                <Badge
+                  variant="secondary"
+                  className="text-xs font-medium uppercase tracking-wider"
+                >
+                  All Modes · Min. 10 Games
+                </Badge>
+              </div>
               {topLoadouts.length > 0 && (
                 <Link
                   to="loadouts"
@@ -198,25 +248,42 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
             </div>
 
             {topLoadouts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 {topLoadouts.map((snapshot) => (
                   <LoadoutCard
                     key={snapshot.id}
                     snapshot={snapshot}
                     stats={statsRecord[snapshot.id]}
                     gamesCount={countRecord[snapshot.id] ?? 0}
+                    compact
                     onClick={() => navigate(`loadouts/${snapshot.id}`)}
                   />
                 ))}
               </div>
             ) : (
               <Empty
-                title="Get in the Crucible!"
-                description="Play more games so your top loadouts will start showing up!"
+                icon={
+                  <SwordsIcon className="h-12 w-12 self-center text-muted-foreground/60" />
+                }
+                title={
+                  isOwner ? 'Get in the Crucible!' : 'No Top Loadouts Yet'
+                }
+                description={
+                  isOwner
+                    ? 'Play at least 10 games with a loadout so your top builds will start showing up!'
+                    : 'This Guardian has not recorded 10 or more games with a single loadout on this character yet.'
+                }
               >
-                <Button asChild>
-                  <Link to="sessions">Start Session</Link>
-                </Button>
+                {displayedSessions.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <Button
+                      asChild
+                      variant={isOwner ? 'outline' : 'default'}
+                    >
+                      <Link to="loadouts?minimum=1">Browse All Loadouts</Link>
+                    </Button>
+                  </div>
+                )}
               </Empty>
             )}
           </section>
@@ -227,3 +294,7 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
 
   return null;
 }
+
+export default Home;
+
+

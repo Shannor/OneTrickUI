@@ -30,6 +30,7 @@ export interface LoadoutCardProps {
   similarCount?: number;
   onSimilarClick?: (snapshot: CharacterSnapshot) => void;
   onClick?: () => void;
+  compact?: boolean;
   className?: string;
 }
 
@@ -40,6 +41,7 @@ export function LoadoutCard({
   similarCount = 0,
   onSimilarClick,
   onClick,
+  compact = false,
   className,
 }: LoadoutCardProps) {
   return (
@@ -47,7 +49,7 @@ export function LoadoutCard({
       <Card
         tabIndex={onClick ? 0 : undefined}
         className={cn(
-          'group w-full min-w-0 cursor-pointer overflow-hidden border transition-all duration-200 hover:border-primary hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+          'group flex h-full w-full min-w-0 cursor-pointer flex-col overflow-hidden border transition-all duration-200 hover:border-primary hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
           className,
         )}
         onClick={onClick}
@@ -62,14 +64,28 @@ export function LoadoutCard({
           }
         }}
       >
-        <CardContent className="flex w-full min-w-0 flex-col gap-4 p-4 sm:p-5 md:p-6 lg:p-7">
-          <LoadoutCardHeader
-            snapshot={snapshot}
-            similarCount={similarCount}
-            onSimilarClick={onSimilarClick}
-          />
-          <LoadoutCardSummary stats={stats} gamesCount={gamesCount} />
-          <LoadoutCardGear snapshot={snapshot} />
+        <CardContent
+          className={cn(
+            'flex h-full w-full min-w-0 flex-1 flex-col justify-between',
+            compact
+              ? 'gap-3.5 p-4 sm:p-5'
+              : 'gap-4 p-4 sm:p-5 md:p-6 lg:p-7',
+          )}
+        >
+          <div className="flex w-full min-w-0 flex-col gap-3.5">
+            <LoadoutCardHeader
+              snapshot={snapshot}
+              similarCount={similarCount}
+              onSimilarClick={onSimilarClick}
+              compact={compact}
+            />
+            <LoadoutCardSummary
+              stats={stats}
+              gamesCount={gamesCount}
+              compact={compact}
+            />
+            <LoadoutCardGear snapshot={snapshot} compact={compact} />
+          </div>
           <LoadoutCardFooter />
         </CardContent>
       </Card>
@@ -81,16 +97,23 @@ export function LoadoutCardHeader({
   snapshot,
   similarCount = 0,
   onSimilarClick,
+  compact = false,
 }: {
   snapshot: CharacterSnapshot;
   similarCount?: number;
   onSimilarClick?: (snapshot: CharacterSnapshot) => void;
+  compact?: boolean;
 }) {
   return (
-    <div className="flex w-full min-w-0 flex-col gap-3 border-b border-border/50 pb-3.5">
+    <div className="flex w-full min-w-0 flex-col gap-2.5 border-b border-border/50 pb-3">
       <div className="flex min-w-0 flex-col gap-0.5">
         <div className="flex w-full items-center justify-between gap-2">
-          <h3 className="truncate text-lg font-bold tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-xl lg:text-2xl">
+          <h3
+            className={cn(
+              'truncate font-bold tracking-tight text-foreground transition-colors group-hover:text-primary',
+              compact ? 'text-base sm:text-lg' : 'text-lg sm:text-xl lg:text-2xl',
+            )}
+          >
             {snapshot.name || 'Loadout'}
           </h3>
           <div className="flex shrink-0 items-center gap-2">
@@ -111,7 +134,7 @@ export function LoadoutCardHeader({
               </Button>
             )}
             {snapshot.createdAt && (
-              <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
+              <span className="shrink-0 text-xs text-muted-foreground">
                 <FormattedDate
                   date={snapshot.createdAt}
                   formatStr="MMM d, yyyy"
@@ -121,7 +144,7 @@ export function LoadoutCardHeader({
           </div>
         </div>
         {snapshot.description && (
-          <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm lg:text-base">
+          <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm">
             {snapshot.description}
           </p>
         )}
@@ -136,6 +159,7 @@ export function LoadoutCardHeader({
 export function LoadoutCardSummary({
   stats,
   gamesCount,
+  compact = false,
 }: {
   stats?: {
     kd?: { value?: number };
@@ -143,6 +167,7 @@ export function LoadoutCardSummary({
     standing?: { value?: number };
   };
   gamesCount: number;
+  compact?: boolean;
 }) {
   const kd = stats?.kd?.value ?? 0;
   const kda = stats?.kda?.value ?? 0;
@@ -151,31 +176,46 @@ export function LoadoutCardSummary({
   const isPositiveWinRate = winRatio >= 0.5;
 
   return (
-    <div className="grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4 md:divide-x md:divide-border/60">
-      <div className="flex min-w-0 flex-col gap-1 md:pr-4 lg:pr-6">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
-          <Gamepad2Icon className="h-3.5 w-3.5 shrink-0 text-primary lg:h-4 lg:w-4" />
+    <div
+      className={cn(
+        'grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-2.5',
+        !compact && 'sm:grid-cols-4 md:divide-x md:divide-border/60',
+      )}
+    >
+      <div className={cn('flex min-w-0 flex-col gap-0.5', !compact && 'md:pr-4 lg:pr-6')}>
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Gamepad2Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
           Games
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
+          <span
+            className={cn(
+              'font-heading font-extrabold tracking-wide text-foreground',
+              compact ? 'text-xl sm:text-2xl' : 'text-xl sm:text-2xl lg:text-3xl',
+            )}
+          >
             {gamesCount}
           </span>
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-1 md:px-4 lg:px-6">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
-          <TrophyIcon className="h-3.5 w-3.5 shrink-0 text-primary lg:h-4 lg:w-4" />
+      <div className={cn('flex min-w-0 flex-col gap-0.5', !compact && 'md:px-4 lg:px-6')}>
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <TrophyIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
           Win Rate
         </span>
-        <div className="flex flex-wrap items-baseline gap-2">
-          <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
+        <div className="flex flex-wrap items-baseline gap-1.5">
+          <span
+            className={cn(
+              'font-heading font-extrabold tracking-wide text-foreground',
+              compact ? 'text-xl sm:text-2xl' : 'text-xl sm:text-2xl lg:text-3xl',
+            )}
+          >
             {winPercentage}%
           </span>
           <span
             className={cn(
-              'text-xs font-semibold lg:text-sm',
+              'text-xs font-semibold',
               isPositiveWinRate
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : 'text-amber-600 dark:text-amber-400',
@@ -186,25 +226,35 @@ export function LoadoutCardSummary({
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-1 md:px-4 lg:px-6">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
-          <CrosshairIcon className="h-3.5 w-3.5 shrink-0 text-primary lg:h-4 lg:w-4" />
+      <div className={cn('flex min-w-0 flex-col gap-0.5', !compact && 'md:px-4 lg:px-6')}>
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <CrosshairIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
           K / D
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
+          <span
+            className={cn(
+              'font-heading font-extrabold tracking-wide text-foreground',
+              compact ? 'text-xl sm:text-2xl' : 'text-xl sm:text-2xl lg:text-3xl',
+            )}
+          >
             {kd.toFixed(2)}
           </span>
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-1 md:px-4 lg:px-6">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
-          <SwordsIcon className="h-3.5 w-3.5 shrink-0 text-primary lg:h-4 lg:w-4" />
+      <div className={cn('flex min-w-0 flex-col gap-0.5', !compact && 'md:px-4 lg:px-6')}>
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <SwordsIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
           Efficiency
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
+          <span
+            className={cn(
+              'font-heading font-extrabold tracking-wide text-foreground',
+              compact ? 'text-xl sm:text-2xl' : 'text-xl sm:text-2xl lg:text-3xl',
+            )}
+          >
             {kda.toFixed(2)}
           </span>
         </div>
@@ -213,7 +263,13 @@ export function LoadoutCardSummary({
   );
 }
 
-export function LoadoutCardGear({ snapshot }: { snapshot: CharacterSnapshot }) {
+export function LoadoutCardGear({
+  snapshot,
+  compact = false,
+}: {
+  snapshot: CharacterSnapshot;
+  compact?: boolean;
+}) {
   const weapons = getDetailWeapons(snapshot.loadout);
   const { armor: exoticArmor } = getExotic(snapshot.loadout);
 
@@ -222,11 +278,16 @@ export function LoadoutCardGear({ snapshot }: { snapshot: CharacterSnapshot }) {
   if (gearItems.length === 0) return null;
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2 border-t border-border/50 pt-3.5">
-      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
+    <div className="flex w-full min-w-0 flex-col gap-2 border-t border-border/50 pt-3">
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Gear & Weapons
       </span>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div
+        className={cn(
+          'grid grid-cols-1 gap-2 sm:grid-cols-2',
+          !compact && 'lg:grid-cols-4',
+        )}
+      >
         {gearItems.map((item) => {
           const isExotic = isExoticItem(item);
           const name = item.details?.baseInfo?.name || 'Gear Item';
@@ -235,7 +296,7 @@ export function LoadoutCardGear({ snapshot }: { snapshot: CharacterSnapshot }) {
             <GearItemPill
               key={`${item.itemHash}-${name}`}
               item={item}
-              size="md"
+              size={compact ? 'sm' : 'md'}
               highlight={isExotic}
               tooltipContent={
                 <div className="flex flex-col gap-2">
@@ -256,7 +317,6 @@ export function LoadoutCardGear({ snapshot }: { snapshot: CharacterSnapshot }) {
           );
         })}
       </div>
-
     </div>
   );
 }
@@ -269,3 +329,4 @@ export function LoadoutCardFooter() {
     </div>
   );
 }
+

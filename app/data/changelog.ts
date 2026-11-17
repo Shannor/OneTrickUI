@@ -17,10 +17,19 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-11-16',
     date: 'November 16, 2026',
-    title: 'Rich Social Link Previews & Dynamic Page Metadata',
+    title:
+      'One-Click Session Controls, Recent Form Trends & Rich Social Link Previews',
     summary:
-      'Share sessions, loadouts, activities, and character profiles on Discord, X/Twitter, and iMessage with custom visual stat cards, map artwork, and accurate page titles.',
+      'Start or stop live Crucible sessions directly from your Overview page, track your recent win rate and K/D momentum at a glance, compare your top loadouts side by side, and share rich visual preview cards across Discord, X/Twitter, and iMessage.',
     changes: [
+      {
+        type: 'feature',
+        text: 'Start or stop live Crucible tracking sessions with a single click directly from your Overview page without leaving your dashboard.',
+      },
+      {
+        type: 'feature',
+        text: 'See your recent Crucible momentum at a glance with the new Recent Form summary, complete with win rate and K/D trend indicators and quick links to previous sessions.',
+      },
       {
         type: 'feature',
         text: 'Share any Session link to automatically display a rich visual summary card featuring your Guardian emblem, session status, total matches, win rate, K/D ratio, and efficiency.',
@@ -28,6 +37,14 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'feature',
         text: 'Share any Loadout link to showcase a custom visual build card highlighting your subclass, Kinetic, Energy, and Power weapons, and Exotic armor.',
+      },
+      {
+        type: 'improvement',
+        text: 'Compare your top 3 performing loadouts side by side on desktop in a streamlined horizontal layout with a clear "All Modes · Min. 10 Games" qualification badge.',
+      },
+      {
+        type: 'improvement',
+        text: 'Switch between Guardians more easily on mobile with a compact character header and jump straight to your Fireteam from the Overview page.',
       },
       {
         type: 'improvement',
