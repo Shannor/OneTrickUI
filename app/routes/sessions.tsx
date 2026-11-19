@@ -10,6 +10,7 @@ import { type Session, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadingButton } from '~/components/loading-button';
 import { SessionCard } from '~/components/session-card';
+import { StartSessionDialog } from '~/components/start-session-dialog';
 import { Button } from '~/components/ui/button';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { cn, getSiteOrigin } from '~/lib/utils';
@@ -140,24 +141,15 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
                 </LoadingButton>
               </Form>
             ) : (
-              <Form
-                method="post"
-                action="/action/start-session"
-                className="w-full"
-              >
-                <input type="hidden" name="characterId" value={characterId} />
-                <input type="hidden" name="userId" value={userId} />
-                <LoadingButton
-                  type="submit"
-                  variant="default"
-                  disabled={!characterId || isSubmitting}
-                  isLoading={isSubmitting}
-                  className={cn('w-full lg:w-auto')}
-                >
-                  <PlusIcon className="h-4 w-4" />
-                  Start Session
-                </LoadingButton>
-              </Form>
+              <StartSessionDialog
+                characterId={characterId}
+                userId={userId}
+                triggerLabel="Start Session"
+                triggerIcon={<PlusIcon className="h-4 w-4" />}
+                triggerClassName="w-full lg:w-auto"
+                disabled={!characterId || isSubmitting}
+                isLoading={isSubmitting}
+              />
             )}
           </div>
         )}
@@ -177,24 +169,15 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
             }
           >
             {!current && isOwner && (
-              <Form
-                method="post"
-                action="/action/start-session"
-                className="w-full"
-              >
-                <input type="hidden" name="characterId" value={characterId} />
-                <input type="hidden" name="userId" value={userId} />
-                <LoadingButton
-                  type="submit"
-                  variant="default"
-                  disabled={!characterId || isSubmitting}
-                  isLoading={isSubmitting}
-                  className="mt-8 w-full"
-                >
-                  <PlusIcon className="h-4 w-4" />
-                  Start First Session
-                </LoadingButton>
-              </Form>
+              <StartSessionDialog
+                characterId={characterId}
+                userId={userId}
+                triggerLabel="Start First Session"
+                triggerIcon={<PlusIcon className="h-4 w-4" />}
+                triggerClassName="mt-8 w-full"
+                disabled={!characterId || isSubmitting}
+                isLoading={isSubmitting}
+              />
             )}
           </Empty>
         )}

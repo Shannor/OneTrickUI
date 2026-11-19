@@ -42,6 +42,9 @@ import type {
   DeleteSnapshotData,
   DeleteSnapshotErrors,
   DeleteSnapshotResponses,
+  FinalizeSessionsCompData,
+  FinalizeSessionsCompErrors,
+  FinalizeSessionsCompResponses,
   GetActivitiesData,
   GetActivitiesResponses,
   GetActivityData,
@@ -509,6 +512,25 @@ export const getSessionAggregates = <ThrowOnError extends boolean = false>(
     responseTransformer: getSessionAggregatesResponseTransformer,
     url: '/sessions/{sessionId}/aggregates',
     ...options,
+  });
+
+/**
+ * Finalize Competitive rank and score delta for one or more sessions
+ */
+export const finalizeSessionsComp = <ThrowOnError extends boolean = false>(
+  options: Options<FinalizeSessionsCompData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    FinalizeSessionsCompResponses,
+    FinalizeSessionsCompErrors,
+    ThrowOnError
+  >({
+    url: '/internal/sessions/finalize-comp',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
 export const getBestPerformingLoadouts = <ThrowOnError extends boolean = false>(

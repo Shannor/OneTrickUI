@@ -76,10 +76,32 @@ export const refreshTokenResponseTransformer = async (
   return data;
 };
 
+const compRankSnapshotSchemaResponseTransformer = (data: any) => {
+  if (data.recordedAt) {
+    data.recordedAt = new Date(data.recordedAt);
+  }
+  return data;
+};
+
+const compTrackingSchemaResponseTransformer = (data: any) => {
+  if (data.start) {
+    data.start = compRankSnapshotSchemaResponseTransformer(data.start);
+  }
+  if (data.end) {
+    data.end = compRankSnapshotSchemaResponseTransformer(data.end);
+  }
+  return data;
+};
+
 const sessionSchemaResponseTransformer = (data: any) => {
   data.startedAt = new Date(data.startedAt);
   if (data.completedAt) {
     data.completedAt = new Date(data.completedAt);
+  }
+  if (data.compTracking) {
+    data.compTracking = compTrackingSchemaResponseTransformer(
+      data.compTracking,
+    );
   }
   return data;
 };
