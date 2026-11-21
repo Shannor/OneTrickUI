@@ -9,15 +9,6 @@ export type Pong = {
   ping: string;
 };
 
-export type SearchUserResult = {
-  displayName: string;
-  bungieId?: string;
-  primaryMembershipId: string;
-  uniqueName: string;
-  objectId: string;
-  alternateNames: Array<string>;
-};
-
 export type Color = {
   red: number;
   green: number;
@@ -49,15 +40,60 @@ export type Character = {
   };
 };
 
+export type SearchUserResult = {
+  /**
+   * True when this Guardian has recorded data in 1 Trick; false when found only via Bungie search.
+   */
+  isRecorded: boolean;
+  /**
+   * 1 Trick user document ID when isRecorded is true.
+   */
+  userId?: string;
+  /**
+   * Bungie.net GeneralUser membership ID if available.
+   */
+  bungieNetMembershipId?: string;
+  /**
+   * Primary Destiny 2 platform membership ID (cross-save primary or first Destiny membership).
+   */
+  primaryMembershipId: string;
+  /**
+   * BungieMembershipType for primaryMembershipId (1=Xbox, 2=PSN, 3=Steam, 6=Epic, etc.).
+   */
+  primaryMembershipType?: bigint;
+  displayName: string;
+  /**
+   * Full Bungie Name with discriminator (e.g. Guardian#1234) when available.
+   */
+  uniqueName: string;
+  iconPath?: string;
+  alternateNames: Array<string>;
+  /**
+   * Cached Destiny 2 characters when isRecorded is true.
+   */
+  characters?: Array<Character>;
+};
+
+export type InternalError =
+  'DestinyServerDown' | 'InternalSystemDown' | 'UnknownError';
+
+/**
+ * Known errors for the one trick API
+ */
+export type OneTrickError = {
+  /**
+   * User friendly description of the error
+   */
+  message: string;
+  status: InternalError;
+};
+
 export type FireteamMember = {
   id: string;
   membershipId: string;
   displayName: string;
   characters: Array<Character>;
 };
-
-export type InternalError =
-  'DestinyServerDown' | 'InternalSystemDown' | 'UnknownError';
 
 export type Profile = {
   id: string;
@@ -388,17 +424,6 @@ export type PlayerStats = {
 };
 
 /**
- * Known errors for the one trick API
- */
-export type OneTrickError = {
-  /**
-   * User friendly description of the error
-   */
-  message: string;
-  status: InternalError;
-};
-
-/**
  * Similarity tier relative to a target snapshot. 'high' requires matching Kinetic + Energy + Subclass + Exotic Armor; 'base' requires matching Kinetic + Energy + Subclass with differing Exotic Armor.
  */
 export type SimilarityTier = 'high' | 'base';
@@ -689,7 +714,7 @@ export type BackfillAggregateDataResponse =
   BackfillAggregateDataResponses[keyof BackfillAggregateDataResponses];
 
 export type SearchData = {
-  body?: {
+  body: {
     prefix: string;
     page: number;
   };
@@ -697,6 +722,21 @@ export type SearchData = {
   query?: never;
   url: '/search';
 };
+
+export type SearchErrors = {
+  /**
+   * Invalid request body
+   */
+  400: {
+    message: string;
+  };
+  /**
+   * Internal server error
+   */
+  500: OneTrickError;
+};
+
+export type SearchError = SearchErrors[keyof SearchErrors];
 
 export type SearchResponses = {
   /**

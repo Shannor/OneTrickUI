@@ -20,6 +20,7 @@ import {
   getUserSessionsResponseTransformer,
   loginResponseTransformer,
   refreshTokenResponseTransformer,
+  searchResponseTransformer,
   startSessionResponseTransformer,
   startUserSessionResponseTransformer,
   updateSessionResponseTransformer,
@@ -88,6 +89,7 @@ import type {
   RefreshTokenData,
   RefreshTokenResponses,
   SearchData,
+  SearchErrors,
   SearchResponses,
   StartSessionData,
   StartSessionErrors,
@@ -157,17 +159,18 @@ export const backfillAggregateData = <ThrowOnError extends boolean = false>(
   >({ url: '/admin/backfill-aggregate-data', ...options });
 
 /**
- * return a list from bungie of matching users
+ * Search for recorded 1 Trick users and Bungie Destiny 2 players
  */
 export const search = <ThrowOnError extends boolean = false>(
-  options?: Options<SearchData, ThrowOnError>,
+  options: Options<SearchData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).post<SearchResponses, unknown, ThrowOnError>({
+  (options.client ?? client).post<SearchResponses, SearchErrors, ThrowOnError>({
+    responseTransformer: searchResponseTransformer,
     url: '/search',
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...options.headers,
     },
   });
 

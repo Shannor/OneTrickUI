@@ -8,6 +8,7 @@ import {
   Hourglass,
   Loader2,
   LogIn,
+  Search,
   SquareLibrary,
   UsersRound,
 } from 'lucide-react';
@@ -151,6 +152,12 @@ export function Sidebar() {
       title: 'Sessions',
       url: '/sessions',
       icon: Activity,
+    },
+    {
+      name: 'Search',
+      title: 'Search',
+      url: '/search',
+      icon: Search,
     },
   ];
 

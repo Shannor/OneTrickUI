@@ -165,6 +165,8 @@ export type {
   RefreshTokenResponse,
   RefreshTokenResponses,
   SearchData,
+  SearchError,
+  SearchErrors,
   SearchResponse,
   SearchResponses,
   SearchUserResult,

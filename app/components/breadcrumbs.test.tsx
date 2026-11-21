@@ -38,6 +38,11 @@ describe('generateBreadcrumbs', () => {
     ]);
   });
 
+  it('generates breadcrumbs for public search path', () => {
+    const crumbs = generateBreadcrumbs('/search', {});
+    expect(crumbs).toEqual([{ label: 'Home', url: '/' }, { label: 'Search' }]);
+  });
+
   it('generates breadcrumbs for profile overview', () => {
     const crumbs = generateBreadcrumbs(
       '/profile/user-1/c/char-1',

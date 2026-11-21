@@ -15,6 +15,27 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-21',
+    date: 'November 21, 2026',
+    title: 'Search Guardians by Bungie Name',
+    summary:
+      'Find any Destiny 2 Guardian directly from the sidebar—jump straight into recorded 1 Trick profiles and character overviews, or share 1 Trick with friends who have not started recording yet.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Search for Guardians by Bungie Name (such as Guardian#1234) directly from the Search link in the sidebar, whether you are signed in or browsing as a guest.',
+      },
+      {
+        type: 'feature',
+        text: 'Jump straight into recorded 1 Trick profiles and individual Hunter, Titan, or Warlock character pages directly from search results.',
+      },
+      {
+        type: 'feature',
+        text: 'Invite friends who have not recorded on 1 Trick yet with one-click Share 1 Trick and Start Recording prompts on unrecorded Guardian results.',
+      },
+    ],
+  },
+  {
     id: '2026-11-17',
     date: 'November 17, 2026',
     title: 'Competitive Division & Score Tracking Across Sessions',
