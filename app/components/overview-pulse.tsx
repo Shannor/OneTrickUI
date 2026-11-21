@@ -6,8 +6,6 @@ import {
   PlusIcon,
   RadioIcon,
   StopCircleIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
   TrophyIcon,
   UsersRoundIcon,
 } from 'lucide-react';
@@ -17,6 +15,7 @@ import {
   formatCompPointDelta,
   getCompPointDelta,
 } from '~/components/comp-tracking';
+import { DeltaBadge } from '~/components/delta-badge';
 import { LoadingButton } from '~/components/loading-button';
 import { StartSessionDialog } from '~/components/start-session-dialog';
 import { Badge } from '~/components/ui/badge';
@@ -424,23 +423,12 @@ function TrendDeltaIndicator({
   delta: number;
   formattedDelta: string;
 }) {
-  const isPositive = delta > 0;
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 text-xs font-semibold sm:text-sm',
-        isPositive
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : 'text-amber-600 dark:text-amber-400',
-      )}
-    >
-      {isPositive ? (
-        <TrendingUpIcon className="h-3.5 w-3.5 shrink-0" />
-      ) : (
-        <TrendingDownIcon className="h-3.5 w-3.5 shrink-0" />
-      )}
-      <span>{formattedDelta} latest</span>
-    </span>
+    <DeltaBadge
+      delta={delta}
+      label={`${formattedDelta} latest`}
+      className="text-xs sm:text-sm"
+    />
   );
 }
 
@@ -480,18 +468,11 @@ function PreviousSessionsStrip({
                 {kd == null ? '' : ` · ${kd.toFixed(2)} KD`}
               </span>
               {compDelta != null && (
-                <span
-                  className={cn(
-                    'font-semibold',
-                    compDelta > 0
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : compDelta < 0
-                        ? 'text-amber-600 dark:text-amber-400'
-                        : 'text-muted-foreground',
-                  )}
-                >
-                  · {formatCompPointDelta(compDelta)}
-                </span>
+                <DeltaBadge
+                  delta={compDelta}
+                  label={`· ${formatCompPointDelta(compDelta)}`}
+                  showIcon={false}
+                />
               )}
             </Button>
           );

@@ -1,10 +1,6 @@
-import {
-  ArrowRightIcon,
-  ShieldIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
-} from 'lucide-react';
+import { ArrowRightIcon, SwordsIcon } from 'lucide-react';
 import type { CompRankSnapshot, CompTracking } from '~/api';
+import { DeltaBadge } from '~/components/delta-badge';
 import { Badge } from '~/components/ui/badge';
 import { cn, setBungieUrl } from '~/lib/utils';
 
@@ -93,7 +89,7 @@ export function CompDivisionSnapshot({
           className="h-4 w-4 shrink-0 rounded-sm object-contain sm:h-5 sm:w-5"
         />
       ) : (
-        <ShieldIcon className="h-3.5 w-3.5 shrink-0 text-primary sm:h-4 sm:w-4" />
+        <SwordsIcon className="h-3.5 w-3.5 shrink-0 text-primary sm:h-4 sm:w-4" />
       )}
       {showPointsWithUnit ? (
         <span className="truncate">
@@ -120,25 +116,12 @@ export function CompPointDeltaBadge({
   delta: number;
   className?: string;
 }) {
-  const isPositive = delta > 0;
-  const isNegative = delta < 0;
-
   return (
-    <span
-      className={cn(
-        'inline-flex shrink-0 items-center gap-1 text-xs font-bold tracking-wide sm:text-sm',
-        isPositive
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : isNegative
-            ? 'text-amber-600 dark:text-amber-400'
-            : 'text-muted-foreground',
-        className,
-      )}
-    >
-      {isPositive && <TrendingUpIcon className="h-3.5 w-3.5 shrink-0" />}
-      {isNegative && <TrendingDownIcon className="h-3.5 w-3.5 shrink-0" />}
-      <span>{formatCompPointDelta(delta)}</span>
-    </span>
+    <DeltaBadge
+      delta={delta}
+      label={formatCompPointDelta(delta)}
+      className={cn('text-xs font-bold tracking-wide sm:text-sm', className)}
+    />
   );
 }
 
@@ -176,7 +159,7 @@ export function SessionCompTrackingBanner({
       >
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-            <ShieldIcon className="h-3.5 w-3.5 shrink-0" />
+            <SwordsIcon className="h-3.5 w-3.5 shrink-0" />
             <span>Tracking Competitive</span>
           </span>
           {start && (
@@ -207,7 +190,7 @@ export function SessionCompTrackingBanner({
     >
       <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <ShieldIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
+          <SwordsIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
           <span>Competitive:</span>
         </span>
 

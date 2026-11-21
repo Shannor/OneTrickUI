@@ -5,7 +5,7 @@ import {
   Crosshair,
   Gamepad2,
   Radio,
-  ShieldIcon,
+  SwordsIcon,
   Trophy,
 } from 'lucide-react';
 import { Link } from 'react-router';
@@ -128,7 +128,7 @@ export function ActiveSessionCard({
                   />
                 ) : (
                   <span className="flex items-center gap-1.5 uppercase tracking-wider text-muted-foreground">
-                    <ShieldIcon className="h-3.5 w-3.5 text-primary" />
+                    <SwordsIcon className="h-3.5 w-3.5 text-primary" />
                     Competitive
                   </span>
                 )}

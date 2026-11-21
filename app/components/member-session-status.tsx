@@ -1,4 +1,4 @@
-import { Activity, Gamepad2, Play, ShieldIcon } from 'lucide-react';
+import { Activity, Gamepad2, Play, SwordsIcon } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import type { CompTracking } from '~/api';
 import { CompDivisionSnapshot } from '~/components/comp-tracking';
@@ -65,7 +65,7 @@ export function MemberSessionStatus({
         {compTracking?.enabled && (
           <div className="flex items-center justify-between gap-2 text-xs">
             <span className="flex items-center gap-1.5 font-semibold uppercase tracking-wider text-primary">
-              <ShieldIcon className="h-3.5 w-3.5 shrink-0" />
+              <SwordsIcon className="h-3.5 w-3.5 shrink-0" />
               <span>Comp</span>
             </span>
             {compTracking.start ? (

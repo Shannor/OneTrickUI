@@ -1,4 +1,4 @@
-import { PlusIcon, ShieldIcon } from 'lucide-react';
+import { PlusIcon, SwordsIcon } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
@@ -122,7 +122,7 @@ export function StartSessionDialog({
             />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                <ShieldIcon className="h-4 w-4 shrink-0 text-primary" />
+                <SwordsIcon className="h-4 w-4 shrink-0 text-primary" />
                 <span>Track Competitive Score</span>
               </span>
               <span className="text-xs leading-relaxed text-muted-foreground">
