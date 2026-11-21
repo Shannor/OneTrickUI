@@ -101,4 +101,67 @@ describe('SessionOverview', () => {
       screen.queryByText('Armor Pieces & Mods'),
     ).not.toBeInTheDocument();
   });
+
+  it('renders Tracking Competitive status and starting division on active sessions with compTracking', () => {
+    const activeCompSession: Session = {
+      ...mockSession,
+      status: 'pending',
+      compTracking: {
+        enabled: true,
+        start: {
+          divisionName: 'Ascendant III',
+          points: 8950,
+          stepIndex: 25,
+          icon: '/common/destiny2_content/icons/ascendant.png',
+        },
+      },
+    };
+
+    render(
+      <SessionOverview
+        session={activeCompSession}
+        aggregates={[]}
+        characterId="char-1"
+      />,
+    );
+
+    expect(screen.getByText('Tracking Competitive')).toBeInTheDocument();
+    expect(
+      screen.getByText('Start: Ascendant III · 8,950 pts'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders start -> end rank progression and pointDelta on completed sessions with compTracking', () => {
+    const completedCompSession: Session = {
+      ...mockSession,
+      status: 'complete',
+      compTracking: {
+        enabled: true,
+        start: {
+          divisionName: 'Platinum III',
+          points: 5820,
+          stepIndex: 21,
+        },
+        end: {
+          divisionName: 'Platinum II',
+          points: 6045,
+          stepIndex: 22,
+        },
+        pointDelta: 225,
+      },
+    };
+
+    render(
+      <SessionOverview
+        session={completedCompSession}
+        aggregates={[mockAggregate]}
+        characterId="char-1"
+      />,
+    );
+
+    expect(screen.getByText('(5,820)')).toBeInTheDocument();
+    expect(screen.getByText('(6,045)')).toBeInTheDocument();
+    expect(screen.getByText('Promoted')).toBeInTheDocument();
+    expect(screen.getByText('+225 pts')).toBeInTheDocument();
+  });
 });

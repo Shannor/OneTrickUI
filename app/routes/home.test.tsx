@@ -25,7 +25,7 @@ describe('Home Page Route Component', () => {
     });
   });
 
-  it('renders recent sessions, direct Start Session CTA, and hides RecentFormPulse when only 1 session exists', () => {
+  it('renders RecentFormPulse with session pill, direct Start Session CTA, and hides completed SessionCard when only completed sessions exist', () => {
     const mockSession = {
       id: 'session-1',
       name: 'Trials Run 1',
@@ -59,22 +59,23 @@ describe('Home Page Route Component', () => {
       },
     ]);
 
-    const { container } = render(<RouterProvider router={router} />);
+    render(<RouterProvider router={router} />);
 
     expect(screen.getByText(/welcome testguardian/i)).toBeInTheDocument();
-    expect(screen.queryByText(/recent form/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/recent session/i)).toBeInTheDocument();
-    expect(screen.getByText('Trials Run 1')).toBeInTheDocument();
+    expect(screen.getByText(/recent form \(1 session\)/i)).toBeInTheDocument();
+    expect(screen.queryByText(/recent session/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /trials run 1/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/all modes · min\. 10 games/i)).toBeInTheDocument();
     expect(screen.getByText('Get in the Crucible!')).toBeInTheDocument();
 
-    const startForms = container.querySelectorAll(
-      'form[action="/action/start-session"]',
-    );
-    expect(startForms).toHaveLength(1);
+    expect(
+      screen.getByRole('button', { name: /^start session$/i }),
+    ).toBeInTheDocument();
   });
 
-  it('renders RecentFormPulse when 2 or more sessions exist', () => {
+  it('renders RecentFormPulse with all recent sessions up to 5 when multiple sessions exist', () => {
     const mockSessions = [
       {
         id: 'session-1',
@@ -130,11 +131,14 @@ describe('Home Page Route Component', () => {
 
     expect(screen.getByText(/recent form \(2 sessions\)/i)).toBeInTheDocument();
     expect(
+      screen.getByRole('button', { name: /trials run 1/i }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole('button', { name: /control warmup/i }),
     ).toBeInTheDocument();
   });
 
-  it('renders empty sessions state with a single primary Start Session CTA in the header', () => {
+  it('renders empty sessions state with a single primary Start First Session CTA in the empty card', () => {
     const props = {
       loaderData: {
         sessions: [],
@@ -151,18 +155,23 @@ describe('Home Page Route Component', () => {
       },
     ]);
 
-    const { container } = render(<RouterProvider router={router} />);
+    render(<RouterProvider router={router} />);
 
+    expect(
+      screen.getByRole('heading', { name: 'Sessions' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Active Session' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText('No Sessions Recorded')).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /browse community sessions/i }),
     ).toBeInTheDocument();
     expect(screen.getByText('Get in the Crucible!')).toBeInTheDocument();
 
-    const startForms = container.querySelectorAll(
-      'form[action="/action/start-session"]',
-    );
-    expect(startForms).toHaveLength(1);
+    expect(
+      screen.getByRole('button', { name: /start first session/i }),
+    ).toBeInTheDocument();
   });
 
   it('renders Stop Session CTA when owner has an active pending session', () => {
@@ -232,7 +241,7 @@ describe('Home Page Route Component', () => {
 
     expect(screen.getByText(/viewing testguardian/i)).toBeInTheDocument();
     expect(
-      container.querySelector('form[action="/action/start-session"]'),
+      screen.queryByRole('button', { name: /start.*session/i }),
     ).not.toBeInTheDocument();
     expect(
       container.querySelector('form[action="/action/end-session"]'),

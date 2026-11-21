@@ -3,7 +3,7 @@ import { data } from 'react-router';
 import { getFireteamData } from '~/.server/fireteam';
 import { getRequestLogger } from '~/.server/logger';
 import { setPreferences } from '~/.server/preferences';
-import { getUserSessions } from '~/api';
+import { type CompTracking, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import { FireteamHeader } from '~/components/fireteam-header';
 import { FireteamMemberCard } from '~/components/fireteam-member-card';
@@ -22,6 +22,7 @@ type FireteamSession = {
     aggregateIds?: string[];
     userId: string;
     characterId: string;
+    compTracking?: CompTracking;
   };
 };
 
@@ -87,6 +88,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
               aggregateIds: s.aggregateIds ? [...s.aggregateIds] : [],
               userId: s.userId,
               characterId: s.characterId,
+              compTracking: s.compTracking,
             }
           : undefined;
         return {

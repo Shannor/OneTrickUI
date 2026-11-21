@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
@@ -54,7 +54,14 @@ describe('Sessions page component', () => {
     });
     expect(startButton).toBeInTheDocument();
 
-    const form = startButton.closest('form');
+    fireEvent.click(startButton);
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: /track competitive score/i,
+    });
+    expect(checkbox).toBeInTheDocument();
+
+    const form = checkbox.closest('form');
     expect(form).toHaveAttribute('action', '/action/start-session');
     expect(form).toHaveAttribute('method', 'post');
   });

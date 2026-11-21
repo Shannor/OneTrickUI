@@ -5,10 +5,16 @@ import {
   Crosshair,
   Gamepad2,
   Radio,
+  SwordsIcon,
   Trophy,
 } from 'lucide-react';
 import { Link } from 'react-router';
 import type { Profile, Session } from '~/api';
+import {
+  CompDivisionSnapshot,
+  CompPointDeltaBadge,
+  getCompPointDelta,
+} from '~/components/comp-tracking';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { useHydrated } from '~/hooks/use-hydrated';
@@ -32,6 +38,11 @@ export function ActiveSessionCard({
   const character = profile?.characters?.find(
     (c) => c.id === session.characterId,
   );
+  const compTracking = session.compTracking;
+  const compDelta = getCompPointDelta(compTracking);
+  const compSnapshot = isPending
+    ? compTracking?.start
+    : (compTracking?.end ?? compTracking?.start);
 
   return (
     <Link
@@ -69,7 +80,7 @@ export function ActiveSessionCard({
           </div>
         )}
 
-        <CardContent className="flex flex-1 flex-col justify-between space-y-4 p-4">
+        <CardContent className="flex flex-1 flex-col gap-4 p-4">
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
@@ -107,7 +118,33 @@ export function ActiveSessionCard({
             )}
           </div>
 
-          <div className="space-y-2 border-t pt-3 text-xs">
+          <div className="flex flex-1 flex-col gap-2 border-t pt-3 text-xs">
+            {compTracking?.enabled && (
+              <div className="flex items-center justify-between gap-2 pb-1">
+                {compSnapshot ? (
+                  <CompDivisionSnapshot
+                    snapshot={compSnapshot}
+                    className="text-xs sm:text-xs"
+                  />
+                ) : (
+                  <span className="flex items-center gap-1.5 uppercase tracking-wider text-muted-foreground">
+                    <SwordsIcon className="h-3.5 w-3.5 text-primary" />
+                    Competitive
+                  </span>
+                )}
+                {isPending ? (
+                  <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Tracking
+                  </span>
+                ) : compDelta != null ? (
+                  <CompPointDeltaBadge
+                    delta={compDelta}
+                    className="text-xs sm:text-xs"
+                  />
+                ) : null}
+              </div>
+            )}
+
             <div className="flex items-center justify-between text-muted-foreground">
               <span className="flex items-center gap-1.5 uppercase tracking-wider">
                 <Gamepad2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -190,7 +227,8 @@ export function ActiveSessionCard({
                 </div>
               )}
 
-            {isPending && startTime && (
+            <div className="mt-auto space-y-2 pt-2">
+              {isPending && startTime && (
               <div className="text-muted-foreground">
                 Started{' '}
                 {isHydrated
@@ -223,9 +261,12 @@ export function ActiveSessionCard({
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-1 font-medium text-primary opacity-90 transition-opacity group-hover:underline group-hover:opacity-100">
-              <span>{isPending ? 'View Active Session' : 'View Session'}</span>
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              <div className="flex items-center justify-end gap-1 font-medium text-primary opacity-90 transition-opacity group-hover:underline group-hover:opacity-100">
+                <span>
+                  {isPending ? 'View Active Session' : 'View Session'}
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
             </div>
           </div>
         </CardContent>

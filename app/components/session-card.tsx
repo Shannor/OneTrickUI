@@ -8,6 +8,7 @@ import {
   TrophyIcon,
 } from 'lucide-react';
 import type { Session, SessionSummary, SessionWeaponSummary } from '~/api';
+import { SessionCompTrackingBanner } from '~/components/comp-tracking';
 import { SessionDate } from '~/components/session-date';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
@@ -39,6 +40,12 @@ export function SessionCard({ session, classname, onClick }: SessionCardProps) {
     >
       <CardContent className="flex w-full min-w-0 flex-col gap-4 p-4 sm:p-5 md:p-6 lg:p-7">
         <SessionCardHeader session={session} isPending={isPending} />
+
+        <SessionCompTrackingBanner
+          compTracking={session.compTracking}
+          isPending={isPending}
+          variant="inline"
+        />
 
         {hasSummary && session.summary ? (
           <SessionCardSummary summary={session.summary} />

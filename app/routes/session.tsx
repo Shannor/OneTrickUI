@@ -104,9 +104,16 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
 
   const sessionId = session?.id;
   const sessionStatus = session?.status;
+  const isCompFinalizing =
+    sessionStatus === 'complete' &&
+    Boolean(session?.compTracking?.enabled) &&
+    Boolean(session?.compTracking?.start) &&
+    !session?.compTracking?.end;
 
   useEffect(() => {
-    if (!sessionId || sessionStatus !== 'pending') return;
+    if (!sessionId || (sessionStatus !== 'pending' && !isCompFinalizing)) {
+      return;
+    }
 
     let isInitial = true;
     const unsubscribe = onSnapshot(
@@ -125,8 +132,15 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           const activityChanged =
             Boolean(newData.lastSeenActivityId) &&
             newData.lastSeenActivityId !== current?.lastSeenActivityId;
+          const compFinalized =
+            Boolean(newData.compTracking?.end) && !current?.compTracking?.end;
 
-          if (statusChanged || newCount !== currentCount || activityChanged) {
+          if (
+            statusChanged ||
+            newCount !== currentCount ||
+            activityChanged ||
+            compFinalized
+          ) {
             revalidator
               .revalidate()
               .then(() =>
@@ -178,7 +192,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
     return () => {
       unsubscribe();
     };
-  }, [sessionId, sessionStatus, revalidator]);
+  }, [sessionId, sessionStatus, isCompFinalizing, revalidator]);
 
   if (!session) {
     return (
