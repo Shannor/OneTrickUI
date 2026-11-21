@@ -301,12 +301,18 @@ export function RecentFormPulse({
   sessions,
   onSelectSession,
 }: RecentFormPulseProps) {
-  if (sessions.length === 0) {
+  const completedRecentSessions = sessions
+    .filter((s) => s.status !== 'pending')
+    .slice(0, 5);
+  const stats = computeRecentFormStats(sessions);
+
+  if (
+    sessions.length === 0 ||
+    (completedRecentSessions.length === 0 && stats.totalMatches === 0)
+  ) {
     return null;
   }
 
-  const stats = computeRecentFormStats(sessions);
-  const recentSessions = sessions.slice(0, 5);
   const isPositiveWinRate = (stats.winRate ?? 0) >= 50;
 
   return (
@@ -406,9 +412,9 @@ export function RecentFormPulse({
         </div>
       </div>
 
-      {recentSessions.length > 0 && (
+      {completedRecentSessions.length > 0 && (
         <PreviousSessionsStrip
-          sessions={recentSessions}
+          sessions={completedRecentSessions}
           onSelectSession={onSelectSession}
         />
       )}

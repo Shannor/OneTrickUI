@@ -269,11 +269,83 @@ describe('RecentFormPulse', () => {
     expect(screen.getByText(/4 matches/i)).toBeInTheDocument();
     expect(screen.getByText(/\+225 pts/i)).toBeInTheDocument();
 
+    expect(screen.getByText('Previous Sessions:')).toBeInTheDocument();
     const prevPill = screen.getByRole('button', {
       name: /iron banner night/i,
     });
     fireEvent.click(prevPill);
     expect(onSelectSession).toHaveBeenCalledWith('s2');
+  });
+
+  it('excludes pending active session from pills strip under Previous Sessions label and hides pulse when only session is a 0-match pending session', () => {
+    const onSelectSession = vi.fn();
+    const firstLiveOnly: Session[] = [
+      {
+        id: 'live-0',
+        name: 'Fresh Live Run',
+        userId: 'user-1',
+        characterId: 'char-1',
+        startedAt: new Date('2026-11-16T10:00:00Z'),
+        status: 'pending',
+        aggregateIds: [],
+      },
+    ];
+
+    const emptyRouter = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <RecentFormPulse
+            sessions={firstLiveOnly}
+            onSelectSession={onSelectSession}
+          />
+        ),
+      },
+    ]);
+
+    const { unmount } = render(<RouterProvider router={emptyRouter} />);
+    expect(screen.queryByLabelText('Recent Form')).not.toBeInTheDocument();
+    unmount();
+
+    const mixedSessions: Session[] = [
+      ...firstLiveOnly,
+      {
+        id: 'done-1',
+        name: 'Prior Comp Run',
+        userId: 'user-1',
+        characterId: 'char-1',
+        startedAt: new Date('2026-11-15T10:00:00Z'),
+        status: 'complete',
+        aggregateIds: [],
+        summary: {
+          totalMatches: 5,
+          wins: 3,
+          losses: 2,
+          kdRatio: 1.35,
+        },
+      },
+    ];
+
+    const mixedRouter = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <RecentFormPulse
+            sessions={mixedSessions}
+            onSelectSession={onSelectSession}
+          />
+        ),
+      },
+    ]);
+
+    render(<RouterProvider router={mixedRouter} />);
+    expect(screen.getByText('Previous Sessions:')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /fresh live run/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /prior comp run/i }),
+    ).toBeInTheDocument();
   });
 });
 

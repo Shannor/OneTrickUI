@@ -157,6 +157,12 @@ describe('Home Page Route Component', () => {
 
     render(<RouterProvider router={router} />);
 
+    expect(
+      screen.getByRole('heading', { name: 'Sessions' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Active Session' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText('No Sessions Recorded')).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /browse community sessions/i }),

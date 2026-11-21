@@ -1,9 +1,17 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { RouterProvider, createMemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { RouterProvider, createMemoryRouter, redirect } from 'react-router';
+import { describe, expect, it, vi } from 'vitest';
+import { toast } from '~/components/ui/sonner';
 
 import { StartSessionDialog } from './start-session-dialog';
+
+vi.mock('~/components/ui/sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
 
 describe('StartSessionDialog', () => {
   it('opens dialog when trigger is clicked and renders Track Competitive Score toggle unchecked by default', () => {
@@ -73,5 +81,82 @@ describe('StartSessionDialog', () => {
     expect(
       screen.getByRole('button', { name: /start session/i }),
     ).toBeDisabled();
+  });
+
+  it('displays an error alert and toast while keeping dialog open when /action/start-session returns an error', async () => {
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <StartSessionDialog
+            characterId="char-100"
+            userId="user-1"
+            triggerLabel="Start First Session"
+          />
+        ),
+      },
+      {
+        path: '/action/start-session',
+        action: async () => ({ error: 'Session already active' }),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /start first session/i }),
+    );
+
+    const submitButtons = screen.getAllByRole('button', {
+      name: /^start session$/i,
+    });
+    fireEvent.click(submitButtons[submitButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Session already active',
+      );
+    });
+    expect(toast.error).toHaveBeenCalledWith('Session already active');
+  });
+
+  it('closes dialog automatically after successful same-route redirect submission', async () => {
+    const router = createMemoryRouter([
+      {
+        path: '/fireteam',
+        loader: async () => ({ ok: true }),
+        element: (
+          <StartSessionDialog
+            characterId="char-100"
+            userId="user-1"
+            redirectTo="/fireteam"
+            triggerLabel="Start a Session"
+          />
+        ),
+      },
+      {
+        path: '/action/start-session',
+        action: async () => redirect('/fireteam'),
+      },
+    ], {
+      initialEntries: ['/fireteam'],
+    });
+
+    render(<RouterProvider router={router} />);
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: /start a session/i }),
+    );
+    expect(
+      screen.getByText(/configure tracking options before queueing/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^start session$/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/configure tracking options before queueing/i),
+      ).not.toBeInTheDocument();
+    });
   });
 });

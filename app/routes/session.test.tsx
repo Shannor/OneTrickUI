@@ -194,6 +194,73 @@ describe('Session Page Route Component', () => {
     expect(onSnapshot).not.toHaveBeenCalled();
   });
 
+  it('keeps Firestore onSnapshot active for a completed session while compTracking.end is finalizing', () => {
+    let snapshotCallback:
+      | ((snapshot: { data: () => unknown }) => void)
+      | undefined;
+    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
+      snapshotCallback = next as never;
+      return vi.fn();
+    });
+
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-comp-finalizing',
+          name: 'Comp Run',
+          status: 'complete' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: ['game-1'],
+          compTracking: {
+            enabled: true,
+            start: {
+              divisionName: 'Platinum III',
+              points: 5820,
+              stepIndex: 21,
+            },
+          },
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Session {...props} />,
+      },
+    ]);
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    expect(onSnapshot).toHaveBeenCalledTimes(1);
+    expect(snapshotCallback).toBeDefined();
+
+    snapshotCallback!({
+      data: () => ({
+        id: 'session-comp-finalizing',
+        status: 'complete',
+        aggregateIds: ['game-1'],
+        compTracking: {
+          enabled: true,
+          start: { divisionName: 'Platinum III', points: 5820, stepIndex: 21 },
+          end: { divisionName: 'Platinum II', points: 6045, stepIndex: 22 },
+          pointDelta: 225,
+        },
+      }),
+    });
+
+    expect(mockRevalidate).toHaveBeenCalledTimes(1);
+  });
+
   it('revalidates when Firestore sends a subsequent real-time update', () => {
     let snapshotCallback:
       | ((snapshot: { data: () => unknown }) => void)

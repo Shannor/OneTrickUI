@@ -175,7 +175,7 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
             <section className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-                  Active Session
+                  {activeSession ? 'Active Session' : 'Sessions'}
                 </h3>
                 {sessions.length > 0 && (
                   <Link
