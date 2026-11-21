@@ -8,7 +8,8 @@
     "start": "NODE_ENV=production node ./server.js",
     "typecheck": "react-router typegen && tsc",
     "gen-api": "openapi-ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "worktree-ports": "node ./scripts/worktree-ports.mjs"
   },
   "dependencies": {
     "@fontsource/iceland": "^5.3.0",
