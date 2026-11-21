@@ -121,9 +121,6 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
     const countRecord = (loadouts?.count ?? {}) as Record<string, number>;
 
     const activeSession = sessions.find((s) => s.status === 'pending');
-    const lastSession = sessions[0];
-    const featuredSession = activeSession ?? lastSession;
-    const displayedSessions = featuredSession ? [featuredSession] : [];
 
     const origin = getSiteOrigin();
     const pageTitle = `${profile.displayName} - ${character?.class ?? 'Home'} | 1 Trick`;
@@ -158,71 +155,87 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
             character={character}
             isOwner={isOwner}
             activeSession={activeSession}
-            hasSessions={displayedSessions.length > 0}
+            hasSessions={sessions.length > 0}
             characterId={characterId}
             userId={userId}
           />
 
           <RecentFormPulse
             sessions={sessions}
-            onSelectSession={(sessionId) => navigate(`sessions/${sessionId}`)}
+            onSelectSession={(sessionId) =>
+              navigate(
+                userId && characterId
+                  ? `/profile/${userId}/c/${characterId}/sessions/${sessionId}`
+                  : `sessions/${sessionId}`,
+              )
+            }
           />
 
-          <section className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-                {activeSession ? 'Active Session' : 'Recent Session'}
-              </h3>
-              {sessions.length > 0 && (
-                <Link
-                  to="sessions"
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  View all sessions
-                </Link>
-              )}
-            </div>
-
-            {displayedSessions.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
-                {displayedSessions.map((s) => (
-                  <SessionCard
-                    key={s.id}
-                    onClick={() => navigate(`sessions/${s.id}`)}
-                    session={s}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Empty
-                icon={
-                  <RadioIcon className="h-12 w-12 self-center text-muted-foreground/60" />
-                }
-                title="No Sessions Recorded"
-                description={
-                  isOwner
-                    ? 'Start a live tracking session before queueing into the Crucible to automatically track matches and loadout snapshots.'
-                    : 'This Guardian has not recorded any Crucible sessions on this character yet.'
-                }
-              >
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  {isOwner && (
-                    <DirectSessionStartForm
-                      characterId={characterId}
-                      userId={userId}
-                      label="Start First Session"
-                    />
-                  )}
-                  <Button
-                    asChild
-                    variant={isOwner ? 'outline' : 'default'}
+          {(activeSession || sessions.length === 0) && (
+            <section className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
+                  Active Session
+                </h3>
+                {sessions.length > 0 && (
+                  <Link
+                    to={
+                      userId && characterId
+                        ? `/profile/${userId}/c/${characterId}/sessions`
+                        : 'sessions'
+                    }
+                    className="text-sm font-medium text-primary hover:underline"
                   >
-                    <Link to="/sessions">Browse Community Sessions</Link>
-                  </Button>
+                    View all sessions
+                  </Link>
+                )}
+              </div>
+
+              {activeSession ? (
+                <div className="grid grid-cols-1 gap-4">
+                  <SessionCard
+                    key={activeSession.id}
+                    onClick={() =>
+                      navigate(
+                        userId && characterId
+                          ? `/profile/${userId}/c/${characterId}/sessions/${activeSession.id}`
+                          : `sessions/${activeSession.id}`,
+                      )
+                    }
+                    session={activeSession}
+                  />
                 </div>
-              </Empty>
-            )}
-          </section>
+              ) : (
+                <Empty
+                  icon={
+                    <RadioIcon className="h-12 w-12 self-center text-muted-foreground/60" />
+                  }
+                  title="No Sessions Recorded"
+                  description={
+                    isOwner
+                      ? 'Start a live tracking session before queueing into the Crucible to automatically track matches and loadout snapshots.'
+                      : 'This Guardian has not recorded any Crucible sessions on this character yet.'
+                  }
+                >
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    {isOwner && (
+                      <DirectSessionStartForm
+                        characterId={characterId}
+                        userId={userId}
+                        label="Start First Session"
+                      />
+                    )}
+                    <Button
+                      asChild
+                      variant={isOwner ? 'outline' : 'default'}
+                    >
+                      <Link to="/sessions">Browse Community Sessions</Link>
+                    </Button>
+                  </div>
+                </Empty>
+              )}
+            </section>
+          )}
 
           <section className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -239,7 +252,11 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
               </div>
               {topLoadouts.length > 0 && (
                 <Link
-                  to="loadouts"
+                  to={
+                    userId && characterId
+                      ? `/profile/${userId}/c/${characterId}/loadouts`
+                      : 'loadouts'
+                  }
                   className="text-sm font-medium text-primary hover:underline"
                 >
                   View all loadouts
@@ -256,7 +273,13 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
                     stats={statsRecord[snapshot.id]}
                     gamesCount={countRecord[snapshot.id] ?? 0}
                     compact
-                    onClick={() => navigate(`loadouts/${snapshot.id}`)}
+                    onClick={() =>
+                      navigate(
+                        userId && characterId
+                          ? `/profile/${userId}/c/${characterId}/loadouts/${snapshot.id}`
+                          : `loadouts/${snapshot.id}`,
+                      )
+                    }
                   />
                 ))}
               </div>
@@ -274,7 +297,7 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
                     : 'This Guardian has not recorded 10 or more games with a single loadout on this character yet.'
                 }
               >
-                {displayedSessions.length > 0 && (
+                {sessions.length > 0 && (
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <Button
                       asChild

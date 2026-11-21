@@ -15,6 +15,23 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-17',
+    date: 'November 17, 2026',
+    title: 'Competitive Division & Score Tracking Across Sessions',
+    summary:
+      'Opt in to track your Competitive Division rank and score whenever you start a session, and see your starting rank, ending rank, promotions, and net point gain or loss across active and completed sessions.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Enable "Track Competitive Score" when starting a session from your Overview, Sessions, or Fireteam page to automatically snapshot your current Competitive Division rank and points.',
+      },
+      {
+        type: 'feature',
+        text: 'See your starting Competitive Division badge and score while your session is live, and review your full start-to-end rank progression, promotions or relegations, and net point delta (+ / - pts) once the session completes.',
+      },
+    ],
+  },
+  {
     id: '2026-11-16',
     date: 'November 16, 2026',
     title:

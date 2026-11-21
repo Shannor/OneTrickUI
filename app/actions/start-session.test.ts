@@ -130,6 +130,7 @@ describe('start-session action', () => {
       body: {
         characterId: 'char-456',
         userId: 'user-123',
+        trackComp: false,
       },
       headers: {
         Authorization: 'Bearer token-abc',
@@ -141,6 +142,52 @@ describe('start-session action', () => {
     expect(response.status).toBe(302);
     expect(response.headers.get('Location')).toBe(
       '/profile/user-123/c/char-456/sessions/sess-created-999',
+    );
+  });
+
+  it('forwards trackComp: true when trackComp is enabled in form data', async () => {
+    vi.mocked(getAuth).mockResolvedValueOnce({
+      id: 'user-123',
+      accessToken: 'token-abc',
+      primaryMembershipId: 'mem-789',
+    } as never);
+
+    vi.mocked(startSession).mockResolvedValueOnce({
+      data: {
+        id: 'sess-comp-999',
+        userId: 'user-123',
+        characterId: 'char-456',
+      },
+      error: undefined,
+    } as never);
+
+    const formData = new FormData();
+    formData.append('characterId', 'char-456');
+    formData.append('userId', 'user-123');
+    formData.append('trackComp', 'true');
+    const request = new Request('http://localhost/action/start-session', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const response = (await action({ request } as never)) as Response;
+
+    expect(startSession).toHaveBeenCalledWith({
+      body: {
+        characterId: 'char-456',
+        userId: 'user-123',
+        trackComp: true,
+      },
+      headers: {
+        Authorization: 'Bearer token-abc',
+        'X-Membership-ID': 'mem-789',
+        'X-User-ID': 'user-123',
+      },
+    });
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe(
+      '/profile/user-123/c/char-456/sessions/sess-comp-999',
     );
   });
 

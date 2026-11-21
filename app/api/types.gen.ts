@@ -125,6 +125,21 @@ export type SessionSummary = {
   topWeapons?: Array<SessionWeaponSummary>;
 };
 
+export type CompRankSnapshot = {
+  points: number;
+  stepIndex?: number;
+  divisionName?: string;
+  icon?: string;
+  recordedAt?: Date;
+};
+
+export type CompTracking = {
+  enabled: boolean;
+  start?: CompRankSnapshot;
+  end?: CompRankSnapshot;
+  pointDelta?: number;
+};
+
 export type Session = {
   id: string;
   startedAt: Date;
@@ -141,6 +156,7 @@ export type Session = {
    */
   aggregateIds: Array<string>;
   summary?: SessionSummary;
+  compTracking?: CompTracking;
 };
 
 export type GameMode =
@@ -589,6 +605,7 @@ export type SessionWritable = {
   lastSeenActivityId?: string;
   lastSeenTimestamp?: Date;
   summary?: SessionSummary;
+  compTracking?: CompTracking;
 };
 
 export type XUserId = string;
@@ -830,6 +847,7 @@ export type StartUserSessionData = {
   body: {
     characterId: string;
     userId: string;
+    trackComp?: boolean;
   };
   headers: {
     'X-User-ID': string;
@@ -1325,6 +1343,7 @@ export type StartSessionData = {
   body: {
     characterId: string;
     userId: string;
+    trackComp?: boolean;
   };
   headers: {
     'X-User-ID': string;
@@ -1499,6 +1518,50 @@ export type GetSessionAggregatesResponses = {
 
 export type GetSessionAggregatesResponse =
   GetSessionAggregatesResponses[keyof GetSessionAggregatesResponses];
+
+export type FinalizeSessionsCompData = {
+  body: {
+    sessionIds: Array<string>;
+  };
+  headers?: {
+    'X-Internal-API-Key'?: string;
+  };
+  path?: never;
+  query?: never;
+  url: '/internal/sessions/finalize-comp';
+};
+
+export type FinalizeSessionsCompErrors = {
+  /**
+   * Invalid request body
+   */
+  400: OneTrickError;
+  /**
+   * Missing or invalid internal API key
+   */
+  401: OneTrickError;
+  /**
+   * Session not found
+   */
+  404: OneTrickError;
+  /**
+   * Error finalizing Competitive sessions
+   */
+  500: OneTrickError;
+};
+
+export type FinalizeSessionsCompError =
+  FinalizeSessionsCompErrors[keyof FinalizeSessionsCompErrors];
+
+export type FinalizeSessionsCompResponses = {
+  /**
+   * Competitive session tracking finalized
+   */
+  204: void;
+};
+
+export type FinalizeSessionsCompResponse =
+  FinalizeSessionsCompResponses[keyof FinalizeSessionsCompResponses];
 
 export type GetBestPerformingLoadoutsData = {
   body?: never;

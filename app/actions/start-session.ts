@@ -12,6 +12,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const characterId = formData.get('characterId');
   const userId = formData.get('userId');
   const redirectTo = formData.get('redirectTo');
+  const trackComp = formData.get('trackComp') === 'true';
 
   if (!characterId) {
     return { error: 'No character id' };
@@ -26,13 +27,14 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   log.set({
     user: { id: auth.id },
-    session: { characterId: characterId.toString() },
+    session: { characterId: characterId.toString(), trackComp },
   });
 
   const { data, error } = await startSession({
     body: {
       characterId: characterId.toString(),
       userId: userId.toString(),
+      trackComp,
     },
     headers: {
       Authorization: `Bearer ${auth.accessToken}`,

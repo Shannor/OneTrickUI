@@ -6,14 +6,18 @@ import {
   PlusIcon,
   RadioIcon,
   StopCircleIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
   TrophyIcon,
   UsersRoundIcon,
 } from 'lucide-react';
 import { Link, useFetcher } from 'react-router';
 import type { Character, Profile, Session } from '~/api';
+import {
+  formatCompPointDelta,
+  getCompPointDelta,
+} from '~/components/comp-tracking';
+import { DeltaBadge } from '~/components/delta-badge';
 import { LoadingButton } from '~/components/loading-button';
+import { StartSessionDialog } from '~/components/start-session-dialog';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { cn } from '~/lib/utils';
@@ -158,29 +162,14 @@ export function DirectSessionStartForm({
   label = 'Start Session',
   className,
 }: DirectSessionStartFormProps) {
-  const { state, Form } = useFetcher();
-  const isSubmitting = state === 'submitting';
-  const isDisabled = !characterId || !userId || isSubmitting;
-
   return (
-    <Form
-      method="post"
-      action="/action/start-session"
-      className={cn('w-full sm:w-auto', className)}
-    >
-      <input type="hidden" name="characterId" value={characterId ?? ''} />
-      <input type="hidden" name="userId" value={userId ?? ''} />
-      <LoadingButton
-        type="submit"
-        variant="default"
-        disabled={isDisabled}
-        isLoading={isSubmitting}
-        className="w-full justify-center gap-2 sm:w-auto"
-      >
-        <PlusIcon className="h-4 w-4" />
-        <span>{label}</span>
-      </LoadingButton>
-    </Form>
+    <StartSessionDialog
+      characterId={characterId}
+      userId={userId}
+      triggerLabel={label}
+      triggerIcon={<PlusIcon className="h-4 w-4" />}
+      triggerClassName={className}
+    />
   );
 }
 
@@ -312,12 +301,12 @@ export function RecentFormPulse({
   sessions,
   onSelectSession,
 }: RecentFormPulseProps) {
-  if (sessions.length < 2) {
+  if (sessions.length === 0) {
     return null;
   }
 
   const stats = computeRecentFormStats(sessions);
-  const previousSessions = sessions.slice(1, 5);
+  const recentSessions = sessions.slice(0, 5);
   const isPositiveWinRate = (stats.winRate ?? 0) >= 50;
 
   return (
@@ -417,9 +406,9 @@ export function RecentFormPulse({
         </div>
       </div>
 
-      {previousSessions.length > 0 && (
+      {recentSessions.length > 0 && (
         <PreviousSessionsStrip
-          sessions={previousSessions}
+          sessions={recentSessions}
           onSelectSession={onSelectSession}
         />
       )}
@@ -434,23 +423,12 @@ function TrendDeltaIndicator({
   delta: number;
   formattedDelta: string;
 }) {
-  const isPositive = delta > 0;
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 text-xs font-semibold sm:text-sm',
-        isPositive
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : 'text-amber-600 dark:text-amber-400',
-      )}
-    >
-      {isPositive ? (
-        <TrendingUpIcon className="h-3.5 w-3.5 shrink-0" />
-      ) : (
-        <TrendingDownIcon className="h-3.5 w-3.5 shrink-0" />
-      )}
-      <span>{formattedDelta} latest</span>
-    </span>
+    <DeltaBadge
+      delta={delta}
+      label={`${formattedDelta} latest`}
+      className="text-xs sm:text-sm"
+    />
   );
 }
 
@@ -462,7 +440,7 @@ function PreviousSessionsStrip({
   onSelectSession: (sessionId: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:gap-3">
+    <div className="flex flex-col gap-2 pt-1">
       <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Previous Sessions:
       </span>
@@ -472,6 +450,7 @@ function PreviousSessionsStrip({
             session.summary?.totalMatches ?? session.aggregateIds?.length ?? 0;
           const matchLabel = matches === 1 ? '1 Match' : `${matches} Matches`;
           const kd = session.summary?.kdRatio;
+          const compDelta = getCompPointDelta(session.compTracking);
           return (
             <Button
               key={session.id}
@@ -488,6 +467,13 @@ function PreviousSessionsStrip({
                 · {matchLabel}
                 {kd == null ? '' : ` · ${kd.toFixed(2)} KD`}
               </span>
+              {compDelta != null && (
+                <DeltaBadge
+                  delta={compDelta}
+                  label={`· ${formatCompPointDelta(compDelta)}`}
+                  showIcon={false}
+                />
+              )}
             </Button>
           );
         })}

@@ -77,4 +77,35 @@ describe('ActiveSessionCard', () => {
     expect(screen.getByText('Hunter')).toBeInTheDocument();
     expect(screen.getByText('2010')).toBeInTheDocument();
   });
+
+  it('renders Competitive division and point delta when compTracking is enabled', () => {
+    const compSession: Session = {
+      ...mockSession,
+      status: 'complete',
+      compTracking: {
+        enabled: true,
+        start: {
+          divisionName: 'Platinum II',
+          points: 6910,
+          stepIndex: 22,
+        },
+        end: {
+          divisionName: 'Platinum I',
+          points: 7135,
+          stepIndex: 23,
+        },
+        pointDelta: 225,
+      },
+    };
+
+    render(
+      <MemoryRouter>
+        <ActiveSessionCard session={compSession} profile={mockProfile} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/Platinum I/)).toBeInTheDocument();
+    expect(screen.getByText('(7,135)')).toBeInTheDocument();
+    expect(screen.getByText('+225 pts')).toBeInTheDocument();
+  });
 });

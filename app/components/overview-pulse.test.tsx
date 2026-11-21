@@ -99,7 +99,7 @@ describe('computeRecentFormStats', () => {
 });
 
 describe('OverviewHeader', () => {
-  it('renders Start Session form and Fireteam link for idle owner', () => {
+  it('renders Start Session trigger and opens StartSessionDialog for idle owner', () => {
     const router = createMemoryRouter([
       {
         path: '/',
@@ -115,18 +115,25 @@ describe('OverviewHeader', () => {
       },
     ]);
 
-    const { container } = render(<RouterProvider router={router} />);
+    render(<RouterProvider router={router} />);
 
     expect(
       screen.getByRole('heading', { name: /welcome zone 6 weegee!/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /start session/i }),
-    ).toBeInTheDocument();
+    const startBtn = screen.getByRole('button', { name: /start session/i });
+    expect(startBtn).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /fireteam/i })).toBeInTheDocument();
 
-    const form = container.querySelector('form[action="/action/start-session"]');
-    expect(form).toBeInTheDocument();
+    fireEvent.click(startBtn);
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: /track competitive score/i,
+    });
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox.closest('form')).toHaveAttribute(
+      'action',
+      '/action/start-session',
+    );
   });
 
   it('renders Open Live Session and Stop Session form when owner has an active session', () => {
@@ -202,7 +209,7 @@ describe('OverviewHeader', () => {
 });
 
 describe('RecentFormPulse', () => {
-  it('renders recent form summary with win rate and K/D trend deltas and Matches label', () => {
+  it('renders recent form summary with win rate, K/D trend deltas, and Competitive pointDelta in previous sessions strip', () => {
     const onSelectSession = vi.fn();
     const sessions: Session[] = [
       {
@@ -234,6 +241,10 @@ describe('RecentFormPulse', () => {
           losses: 2,
           kdRatio: 1.1,
         },
+        compTracking: {
+          enabled: true,
+          pointDelta: 225,
+        },
       },
     ];
 
@@ -256,6 +267,7 @@ describe('RecentFormPulse', () => {
     expect(screen.getByText(/\+17% latest/i)).toBeInTheDocument();
     expect(screen.getByText(/\+0\.30 latest/i)).toBeInTheDocument();
     expect(screen.getByText(/4 matches/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+225 pts/i)).toBeInTheDocument();
 
     const prevPill = screen.getByRole('button', {
       name: /iron banner night/i,

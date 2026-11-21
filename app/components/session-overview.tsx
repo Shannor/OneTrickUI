@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import type { Aggregate, Session } from '~/api';
 import { ChartWrapper } from '~/charts/ChartWrapper';
 import { KDPerformance } from '~/charts/KDPerformance';
+import { SessionCompTrackingBanner } from '~/components/comp-tracking';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import {
   generateKDAResultsForTimeWindow,
@@ -69,10 +70,16 @@ export function SessionOverview({
       ? (summary.kills + summary.assists) / summary.deaths
       : summary.kills + summary.assists
     : 0;
+  const isPending = session.status === 'pending';
 
   return (
     <TooltipProvider font-sans>
       <div className={cn('flex w-full flex-col gap-6', className)}>
+        <SessionCompTrackingBanner
+          compTracking={session.compTracking}
+          isPending={isPending}
+        />
+
         {summary && (
           <SessionOverviewStats
             gamesCount={gamesCount}

@@ -109,4 +109,105 @@ describe('SessionCard', () => {
       expect(handleClick).toHaveBeenCalledTimes(1);
     }
   });
+
+  it('renders starting Competitive division, icon, and points for active sessions with compTracking enabled', () => {
+    const activeCompSession: Session = {
+      ...mockActiveSession,
+      compTracking: {
+        enabled: true,
+        start: {
+          divisionName: 'Platinum III',
+          points: 5820,
+          stepIndex: 21,
+          icon: '/common/destiny2_content/icons/plat3.png',
+        },
+      },
+    };
+
+    render(<SessionCard session={activeCompSession} onClick={vi.fn()} />);
+
+    expect(screen.getByText('Tracking Competitive')).toBeInTheDocument();
+    expect(
+      screen.getByText('Start: Platinum III · 5,820 pts'),
+    ).toBeInTheDocument();
+    const divisionImg = screen.getByAltText('Platinum III');
+    expect(divisionImg).toHaveAttribute(
+      'src',
+      'https://www.bungie.net/common/destiny2_content/icons/plat3.png',
+    );
+  });
+
+  it('renders start -> end Competitive progression, promotion badge, and positive pointDelta for completed sessions', () => {
+    const completedCompSession: Session = {
+      ...mockCompletedSession,
+      compTracking: {
+        enabled: true,
+        start: {
+          divisionName: 'Platinum III',
+          points: 5820,
+          stepIndex: 21,
+          icon: '/common/destiny2_content/icons/plat3.png',
+        },
+        end: {
+          divisionName: 'Platinum II',
+          points: 6045,
+          stepIndex: 22,
+          icon: '/common/destiny2_content/icons/plat2.png',
+        },
+        pointDelta: 225,
+      },
+    };
+
+    render(<SessionCard session={completedCompSession} onClick={vi.fn()} />);
+
+    expect(screen.getByText('(5,820)')).toBeInTheDocument();
+    expect(screen.getByText('(6,045)')).toBeInTheDocument();
+    expect(screen.getByText('Promoted')).toBeInTheDocument();
+    expect(screen.getByText('+225 pts')).toBeInTheDocument();
+  });
+
+  it('renders negative pointDelta and Relegated badge when division drops', () => {
+    const relegatedSession: Session = {
+      ...mockCompletedSession,
+      compTracking: {
+        enabled: true,
+        start: {
+          divisionName: 'Platinum III',
+          points: 5510,
+          stepIndex: 21,
+        },
+        end: {
+          divisionName: 'Gold I',
+          points: 5400,
+          stepIndex: 20,
+        },
+        pointDelta: -110,
+      },
+    };
+
+    render(<SessionCard session={relegatedSession} onClick={vi.fn()} />);
+
+    expect(screen.getByText('Relegated')).toBeInTheDocument();
+    expect(screen.getByText('-110 pts')).toBeInTheDocument();
+  });
+
+  it('handles completed session when end snapshot is still pending gracefully', () => {
+    const finalizingSession: Session = {
+      ...mockCompletedSession,
+      compTracking: {
+        enabled: true,
+        start: {
+          divisionName: 'Platinum III',
+          points: 5820,
+        },
+      },
+    };
+
+    render(<SessionCard session={finalizingSession} onClick={vi.fn()} />);
+
+    expect(
+      screen.getByText('Start: Platinum III · 5,820 pts'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/finalizing rank/i)).toBeInTheDocument();
+  });
 });
