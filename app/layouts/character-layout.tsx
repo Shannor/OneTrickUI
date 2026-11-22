@@ -1,10 +1,37 @@
-import { Link, Outlet, useParams } from 'react-router';
-import { CharacterItem } from '~/components/character-item';
+import { Outlet, useLocation, useParams } from 'react-router';
+import { CharacterSwitcher } from '~/components/character-switcher';
 import { useProfileData } from '~/hooks/use-route-loaders';
-import { cn } from '~/lib/utils';
+
+const PRESERVED_SUB_ROUTES = new Set(['loadouts', 'sessions', 'fireteam']);
+
+export function buildCharacterSwitchHref(
+  profileId: string,
+  currentCharacterId: string | undefined,
+  nextCharacterId: string,
+  pathname: string,
+  search: string,
+): string {
+  const basePrefix = `/profile/${profileId}/c/${currentCharacterId}`;
+  let suffix = '';
+
+  if (currentCharacterId && pathname.startsWith(basePrefix)) {
+    const rest = pathname.slice(basePrefix.length).replace(/^\//, '');
+    const topSegment = rest.split('/')[0];
+    if (
+      topSegment &&
+      PRESERVED_SUB_ROUTES.has(topSegment) &&
+      !rest.includes('/')
+    ) {
+      suffix = `/${topSegment}`;
+    }
+  }
+
+  return `/profile/${profileId}/c/${nextCharacterId}${suffix}${search}`;
+}
 
 export function CharacterLayout() {
   const { characterId } = useParams();
+  const location = useLocation();
   const response = useProfileData();
 
   if (response.type === 'error') {
@@ -13,45 +40,27 @@ export function CharacterLayout() {
 
   const { profile } = response;
   const characters = profile.characters ?? [];
-  const hasSingleUnchecked = characters.length === 2;
+
+  const buildCharacterHref = (nextCharacterId: string) =>
+    buildCharacterSwitchHref(
+      profile.id,
+      characterId,
+      nextCharacterId,
+      location.pathname,
+      location.search,
+    );
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
-      <div
-        className={cn(
-          'grid w-full grid-cols-2 gap-2.5 sm:gap-3',
-          characters.length === 2 ? 'xl:grid-cols-2' : 'xl:grid-cols-3',
-        )}
-      >
-        {characters.map((character) => {
-          const isChecked = characterId === character.id;
-          return (
-            <Link
-              key={character.id}
-              to={`/profile/${profile.id}/c/${character.id}`}
-              className={cn(
-                'block w-full min-w-0',
-                isChecked
-                  ? 'order-first col-span-2 xl:order-none xl:col-span-1'
-                  : hasSingleUnchecked
-                    ? 'col-span-2 xl:col-span-1'
-                    : 'col-span-1',
-              )}
-            >
-              <CharacterItem
-                character={character}
-                isChecked={isChecked}
-                compactWhenUnchecked
-              />
-            </Link>
-          );
-        })}
-      </div>
+      <CharacterSwitcher
+        characters={characters}
+        activeCharacterId={characterId}
+        buildCharacterHref={buildCharacterHref}
+      />
+
       <Outlet />
     </div>
   );
 }
 
 export default CharacterLayout;
-
-

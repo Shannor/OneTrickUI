@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CharacterLayout } from './character-layout';
+import { CharacterLayout, buildCharacterSwitchHref } from './character-layout';
 
 vi.mock('~/hooks/use-route-loaders', () => ({
   useProfileData: () => ({
@@ -25,7 +25,7 @@ vi.mock('~/hooks/use-route-loaders', () => ({
           id: 'char-2',
           class: 'Warlock',
           race: 'Awoken',
-          light: 2000n,
+          light: 1995n,
           emblemURL: '/logo.svg',
           emblemBackgroundURL: '/hero-landing.svg',
           currentTitle: 'Conqueror',
@@ -35,8 +35,44 @@ vi.mock('~/hooks/use-route-loaders', () => ({
   }),
 }));
 
+describe('buildCharacterSwitchHref', () => {
+  it('preserves top-level loadouts, sessions, and fireteam sub-routes with search params', () => {
+    expect(
+      buildCharacterSwitchHref(
+        'user-123',
+        'char-1',
+        'char-2',
+        '/profile/user-123/c/char-1/loadouts',
+        '?mode=trials',
+      ),
+    ).toBe('/profile/user-123/c/char-2/loadouts?mode=trials');
+
+    expect(
+      buildCharacterSwitchHref(
+        'user-123',
+        'char-1',
+        'char-2',
+        '/profile/user-123/c/char-1/sessions',
+        '',
+      ),
+    ).toBe('/profile/user-123/c/char-2/sessions');
+  });
+
+  it('falls back to the character overview when switching from a nested detail page', () => {
+    expect(
+      buildCharacterSwitchHref(
+        'user-123',
+        'char-1',
+        'char-2',
+        '/profile/user-123/c/char-1/loadouts/loadout-99',
+        '',
+      ),
+    ).toBe('/profile/user-123/c/char-2');
+  });
+});
+
 describe('CharacterLayout', () => {
-  it('renders character selector pills for each character', () => {
+  it('renders the active character banner, stepped crest tab, and swap popover', () => {
     const router = createMemoryRouter(
       [
         {
@@ -51,7 +87,12 @@ describe('CharacterLayout', () => {
 
     render(<RouterProvider router={router} />);
 
-    expect(screen.getByText('Hunter')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Hunter' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Switch to Warlock (1995)' }),
+    ).toHaveAttribute('href', '/profile/user-123/c/char-2');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Swap Guardian' }));
     expect(screen.getByText('Warlock')).toBeInTheDocument();
   });
 });

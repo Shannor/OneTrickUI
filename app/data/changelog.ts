@@ -15,6 +15,23 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-22',
+    date: 'November 22, 2026',
+    title: 'Compact Guardian Switcher & Seamless Tab Swapping',
+    summary:
+      'Keep the spotlight on your active Guardian with a compact emblem header, one-tap crest tabs, and a quick-swap menu that keeps your place across Loadouts, Sessions, and Fireteam.',
+    changes: [
+      {
+        type: 'improvement',
+        text: 'Focus on your active Guardian emblem while keeping your other characters one tap away via stepped crest tabs or the quick Swap menu on desktop and mobile.',
+      },
+      {
+        type: 'improvement',
+        text: 'Stay right where you are when switching Guardians—swapping characters from Loadouts, Sessions, or Fireteam now keeps you on that same view instead of resetting to Overview.',
+      },
+    ],
+  },
+  {
     id: '2026-11-21',
     date: 'November 21, 2026',
     title: 'Search Guardians by Bungie Name',
