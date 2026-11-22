@@ -347,5 +347,84 @@ describe('RecentFormPulse', () => {
       screen.getByRole('button', { name: /prior comp run/i }),
     ).toBeInTheDocument();
   });
-});
 
+  it('stacks form metrics one per line and stretches previous session items full width on mobile', () => {
+    const onSelectSession = vi.fn();
+    const sessions: Session[] = [
+      {
+        id: 's1',
+        name: 'Short',
+        userId: 'user-1',
+        characterId: 'char-1',
+        startedAt: new Date('2026-11-16T10:00:00Z'),
+        status: 'complete',
+        aggregateIds: [],
+        summary: {
+          totalMatches: 3,
+          wins: 2,
+          losses: 1,
+          kdRatio: 1.5,
+        },
+      },
+      {
+        id: 's2',
+        name: 'Long Competitive Session Name',
+        userId: 'user-1',
+        characterId: 'char-1',
+        startedAt: new Date('2026-11-15T10:00:00Z'),
+        status: 'complete',
+        aggregateIds: [],
+        summary: {
+          totalMatches: 18,
+          wins: 12,
+          losses: 6,
+          kdRatio: 1.62,
+        },
+        compTracking: {
+          enabled: true,
+          pointDelta: 225,
+        },
+      },
+    ];
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <RecentFormPulse
+            sessions={sessions}
+            onSelectSession={onSelectSession}
+          />
+        ),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    const section = screen.getByLabelText('Recent Form');
+    const statsGrid = section.querySelector('.grid-cols-1');
+    expect(statsGrid).not.toBeNull();
+    expect(statsGrid).toHaveClass('sm:grid-cols-3');
+
+    const firstSessionBtn = screen.getByRole('button', { name: /short/i });
+    const secondSessionBtn = screen.getByRole('button', {
+      name: /long competitive session name/i,
+    });
+
+    expect(firstSessionBtn).toHaveClass(
+      'w-full',
+      'justify-between',
+      'lg:w-auto',
+    );
+    expect(secondSessionBtn).toHaveClass(
+      'w-full',
+      'justify-between',
+      'lg:w-auto',
+    );
+    expect(firstSessionBtn.parentElement).toHaveClass(
+      'w-full',
+      'flex-col',
+      'lg:flex-row',
+    );
+  });
+});

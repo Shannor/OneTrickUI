@@ -37,8 +37,7 @@ function getSessionWinRatePercentage(session?: Session): number | null {
   const summary = session?.summary;
   if (!summary) return null;
 
-  const matchCount =
-    summary.totalMatches ?? session?.aggregateIds?.length ?? 0;
+  const matchCount = summary.totalMatches ?? session?.aggregateIds?.length ?? 0;
 
   if (summary.winRate != null) {
     return summary.winRate <= 1
@@ -337,13 +336,13 @@ export function RecentFormPulse({
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 md:divide-x md:divide-border/60">
-        <div className="flex min-w-0 flex-col gap-1 md:pr-6">
+      <div className="grid grid-cols-1 divide-y divide-border/40 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-4 sm:divide-y-0 md:divide-x md:divide-border/60">
+        <div className="flex min-w-0 items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0 sm:flex-col sm:items-start sm:justify-start sm:gap-1 sm:py-0 md:pr-6">
           <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <Gamepad2Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
             Recent Matches
           </span>
-          <div className="flex flex-wrap items-baseline gap-2.5">
+          <div className="flex flex-wrap items-baseline justify-end gap-2 sm:justify-start sm:gap-2.5">
             <span className="font-heading text-2xl font-extrabold tracking-wide text-foreground sm:text-3xl">
               {stats.totalMatches}
             </span>
@@ -355,12 +354,12 @@ export function RecentFormPulse({
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-1 md:px-6">
+        <div className="flex min-w-0 items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0 sm:flex-col sm:items-start sm:justify-start sm:gap-1 sm:py-0 md:px-6">
           <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <TrophyIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
             Recent Win Rate
           </span>
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:justify-start sm:gap-2.5">
             <span className="font-heading text-2xl font-extrabold tracking-wide text-foreground sm:text-3xl">
               {stats.winRate == null ? '--' : `${stats.winRate}%`}
             </span>
@@ -389,12 +388,12 @@ export function RecentFormPulse({
           </div>
         </div>
 
-        <div className="col-span-2 flex min-w-0 flex-col gap-1 sm:col-span-1 md:pl-6">
+        <div className="flex min-w-0 items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0 sm:flex-col sm:items-start sm:justify-start sm:gap-1 sm:py-0 md:pl-6">
           <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <CrosshairIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
             Avg K / D
           </span>
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:justify-start sm:gap-2.5">
             <span className="font-heading text-2xl font-extrabold tracking-wide text-foreground sm:text-3xl">
               {stats.avgKd == null ? '--' : stats.avgKd.toFixed(2)}
             </span>
@@ -422,7 +421,7 @@ export function RecentFormPulse({
   );
 }
 
-function TrendDeltaIndicator({
+export function TrendDeltaIndicator({
   delta,
   formattedDelta,
 }: {
@@ -438,7 +437,7 @@ function TrendDeltaIndicator({
   );
 }
 
-function PreviousSessionsStrip({
+export function PreviousSessionsStrip({
   sessions,
   onSelectSession,
 }: {
@@ -446,11 +445,11 @@ function PreviousSessionsStrip({
   onSelectSession: (sessionId: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2 pt-1">
+    <div className="flex w-full flex-col gap-2 pt-1">
       <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Previous Sessions:
       </span>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
         {sessions.map((session) => {
           const matches =
             session.summary?.totalMatches ?? session.aggregateIds?.length ?? 0;
@@ -464,22 +463,27 @@ function PreviousSessionsStrip({
               variant="secondary"
               size="sm"
               onClick={() => onSelectSession(session.id)}
-              className="h-7 max-w-full gap-1.5 rounded-full px-3 text-xs font-medium"
+              className="h-auto min-h-9 w-full justify-between gap-3 rounded-lg px-3.5 py-2 text-xs font-medium lg:h-8 lg:min-h-0 lg:w-auto lg:justify-center lg:gap-1.5 lg:rounded-full lg:px-3 lg:py-0"
             >
-              <span className="max-w-[140px] truncate font-semibold">
+              <span className="min-w-0 flex-1 truncate text-left font-semibold lg:max-w-[160px] lg:flex-initial">
                 {session.name || 'Session'}
               </span>
-              <span className="text-muted-foreground">
-                · {matchLabel}
-                {kd == null ? '' : ` · ${kd.toFixed(2)} KD`}
+              <span className="flex shrink-0 items-center gap-1.5 tabular-nums text-muted-foreground">
+                <span className="hidden lg:inline" aria-hidden="true">
+                  ·
+                </span>
+                <span>
+                  {matchLabel}
+                  {kd == null ? '' : ` · ${kd.toFixed(2)} KD`}
+                </span>
+                {compDelta != null && (
+                  <DeltaBadge
+                    delta={compDelta}
+                    label={`· ${formatCompPointDelta(compDelta)}`}
+                    showIcon={false}
+                  />
+                )}
               </span>
-              {compDelta != null && (
-                <DeltaBadge
-                  delta={compDelta}
-                  label={`· ${formatCompPointDelta(compDelta)}`}
-                  showIcon={false}
-                />
-              )}
             </Button>
           );
         })}
