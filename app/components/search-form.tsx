@@ -47,7 +47,7 @@ export function SearchForm({ query, isLoading = false }: SearchFormProps) {
             aria-label="Search Guardians by Bungie Name"
             autoComplete="off"
             spellCheck={false}
-            className="pl-9 pr-9"
+            className="pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
           />
           {value && (
             <Button

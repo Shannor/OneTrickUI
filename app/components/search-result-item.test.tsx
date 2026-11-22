@@ -139,7 +139,7 @@ describe('UnrecordedPlayerResult', () => {
     expect(container.textContent).not.toMatch(EMOJI_PATTERN);
   });
 
-  it('renders explanatory note and CTAs for signed-in viewer with zero profile links and zero emojis', () => {
+  it('renders explanatory note and Share 1 Trick CTA without /login for signed-in viewer', () => {
     const { container } = render(
       <MemoryRouter>
         <UnrecordedPlayerResult result={unrecordedResult} isSignedIn={true} />
@@ -154,13 +154,9 @@ describe('UnrecordedPlayerResult', () => {
       screen.getByRole('button', { name: /share 1 trick/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /start recording/i }),
-    ).toHaveAttribute('href', '/login');
-
-    const allLinks = screen.getAllByRole('link');
-    for (const link of allLinks) {
-      expect(link.getAttribute('href')).not.toMatch(/^\/profile\//);
-    }
+      screen.queryByRole('link', { name: /start recording/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
 
     expect(container.textContent).not.toMatch(EMOJI_PATTERN);
   });

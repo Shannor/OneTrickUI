@@ -6,7 +6,7 @@ import type { Route } from './+types/character-select';
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
-  const [auth, { data: profile, error }] = await Promise.all([
+  const [auth, { data: profile, error, response }] = await Promise.all([
     getAuth(request),
     getCachedUser(request, params.id),
   ]);
@@ -15,12 +15,16 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     profile: { userId: params.id, viewerId: auth?.id },
   });
   if (error || !profile) {
+    const status = response?.status;
     log.error('Failed to fetch user profile in profile-state loader', {
-      profile: { userId: params.id, error },
+      profile: { userId: params.id, status, error },
     });
     return {
       type: 'error',
       error: error?.message ?? 'Profile not found',
+      status,
+      isNotFound: status === 404,
+      isSignedIn: Boolean(auth),
     } as const;
   }
 

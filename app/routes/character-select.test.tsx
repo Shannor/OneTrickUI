@@ -82,10 +82,13 @@ describe('CharacterSelect Route', () => {
     expect(pickLink).toHaveAttribute('href', '/c/char-1');
   });
 
-  it('renders unrecorded Guardian fallback with Start Recording, Share 1 Trick, and Search actions on error', () => {
+  it('renders unrecorded Guardian fallback with Start Recording, Share 1 Trick, and Search actions on 404 when signed out', () => {
     mockUseProfileData.mockReturnValue({
       type: 'error',
       error: 'Profile not found',
+      status: 404,
+      isNotFound: true,
+      isSignedIn: false,
     });
 
     const router = createMemoryRouter(
@@ -109,6 +112,75 @@ describe('CharacterSelect Route', () => {
     ).toHaveAttribute('href', '/login');
     expect(
       screen.getByRole('button', { name: /share 1 trick/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /search guardians/i }),
+    ).toHaveAttribute('href', '/search');
+  });
+
+  it('hides Start Recording /login CTA on 404 unrecorded fallback when signed in', () => {
+    mockUseProfileData.mockReturnValue({
+      type: 'error',
+      error: 'Profile not found',
+      status: 404,
+      isNotFound: true,
+      isSignedIn: true,
+    });
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/profile/unknown-id',
+          element: <CharacterSelect />,
+        },
+      ],
+      { initialEntries: ['/profile/unknown-id'] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    expect(
+      screen.queryByRole('link', { name: /start recording/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /share 1 trick/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /search guardians/i }),
+    ).toHaveAttribute('href', '/search');
+  });
+
+  it('renders transient unavailable state on 503 errors without showing Guardian Not Recorded', () => {
+    mockUseProfileData.mockReturnValue({
+      type: 'error',
+      error: 'Destiny servers are temporarily down for maintenance.',
+      status: 503,
+      isNotFound: false,
+      isSignedIn: true,
+    });
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/profile/user-123',
+          element: <CharacterSelect />,
+        },
+      ],
+      { initialEntries: ['/profile/user-123'] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByText('Unable to Load Profile')).toBeInTheDocument();
+    expect(
+      screen.getByText('Destiny servers are temporarily down for maintenance.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Guardian Not Recorded')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /start recording/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /try again/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /search guardians/i }),

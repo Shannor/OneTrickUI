@@ -1,15 +1,16 @@
 import { AlertCircle, LogIn, Search as SearchIcon, Users } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useNavigation } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { getRequestLogger } from '~/.server/logger';
 import { type SearchUserResult, search } from '~/api';
-import { NavLoading } from '~/components/nav-loading';
 import { SearchForm } from '~/components/search-form';
-import { SearchPagination } from '~/components/search-pagination';
+import {
+  SearchPagination,
+  buildSearchPageUrl,
+} from '~/components/search-pagination';
 import { SearchResultItem } from '~/components/search-result-item';
 import { ShareSiteButton } from '~/components/share-site-button';
 import { Button } from '~/components/ui/button';
-import { useIsNavigating } from '~/hooks/use-route-loaders';
 import { getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/search';
@@ -90,13 +91,22 @@ export async function loader({
         hasMore: false,
       },
     });
-    log.error('Player search request failed', {
-      search: {
-        page,
-        queryLength: query.length,
-        status: searchResponse?.response?.status,
+    const searchError = searchResponse?.error;
+    log.error(
+      searchError instanceof Error
+        ? searchError
+        : 'Player search request failed',
+      {
+        search: {
+          page,
+          queryLength: query.length,
+          status: searchResponse?.response?.status,
+          ...(searchError && !(searchError instanceof Error)
+            ? { apiError: searchError }
+            : {}),
+        },
       },
-    });
+    );
     return {
       query,
       page,
@@ -122,7 +132,8 @@ export async function loader({
       hasDiscriminator: query.includes('#'),
       page,
       resultCount: results.length,
-      recordedCount: results.filter((r) => r.isRecorded).length,
+      recordedCount: results.filter((r) => r.isRecorded && Boolean(r.userId))
+        .length,
       hasMore,
     },
   });
@@ -188,9 +199,11 @@ export function SearchInitialPrompt({ isSignedIn }: { isSignedIn: boolean }) {
 export function SearchErrorBanner({
   message,
   query,
+  page = 0,
 }: {
   message: string;
   query: string;
+  page?: number;
 }) {
   return (
     <div
@@ -208,7 +221,7 @@ export function SearchErrorBanner({
           size="sm"
           className="w-full shrink-0 border-destructive/30 text-foreground sm:w-auto"
         >
-          <Link to={`/search?q=${encodeURIComponent(query)}`}>Try Again</Link>
+          <Link to={buildSearchPageUrl(query, page)}>Try Again</Link>
         </Button>
       )}
     </div>
@@ -237,17 +250,19 @@ export function SearchNoResults({
         Guardians who have recorded their data in our system.
       </p>
       <div className="mt-6 flex w-full flex-col items-center justify-center gap-2 sm:w-auto sm:flex-row">
-        <Button
-          asChild
-          variant={isSignedIn ? 'outline' : 'default'}
-          size="sm"
-          className="w-full sm:w-auto"
-        >
-          <Link to="/login">
-            <LogIn className="h-4 w-4" />
-            <span>Start Recording</span>
-          </Link>
-        </Button>
+        {!isSignedIn && (
+          <Button
+            asChild
+            variant="default"
+            size="sm"
+            className="w-full sm:w-auto"
+          >
+            <Link to="/login">
+              <LogIn className="h-4 w-4" />
+              <span>Start Recording</span>
+            </Link>
+          </Button>
+        )}
         <ShareSiteButton
           variant={isSignedIn ? 'default' : 'outline'}
           size="sm"
@@ -289,7 +304,9 @@ export function SearchResultsSummary({
 export function Search({ loaderData }: Route.ComponentProps) {
   const { query, page, results, hasMore, isSignedIn, errorMessage } =
     loaderData;
-  const [isLoading] = useIsNavigating();
+  const navigation = useNavigation();
+  const isSearching =
+    navigation.state !== 'idle' && navigation.location?.pathname === '/search';
 
   const origin = getSiteOrigin();
   const pageTitle = query
@@ -320,32 +337,30 @@ export function Search({ loaderData }: Route.ComponentProps) {
       <SearchPageHeader />
 
       <div className="w-full max-w-2xl">
-        <SearchForm query={query} isLoading={isLoading} />
+        <SearchForm query={query} isLoading={isSearching} />
       </div>
 
-      <NavLoading>
-        {errorMessage ? (
-          <SearchErrorBanner message={errorMessage} query={query} />
-        ) : !query ? (
-          <SearchInitialPrompt isSignedIn={isSignedIn} />
-        ) : results.length === 0 ? (
-          <SearchNoResults query={query} isSignedIn={isSignedIn} />
-        ) : (
-          <div className="flex flex-col gap-4">
-            <SearchResultsSummary query={query} results={results} page={page} />
-            <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
-              {results.map((result, idx) => (
-                <SearchResultItem
-                  key={`${result.userId ?? result.primaryMembershipId}-${result.uniqueName || result.displayName}-${idx}`}
-                  result={result}
-                  isSignedIn={isSignedIn}
-                />
-              ))}
-            </div>
-            <SearchPagination query={query} page={page} hasMore={hasMore} />
+      {errorMessage ? (
+        <SearchErrorBanner message={errorMessage} query={query} page={page} />
+      ) : !query ? (
+        <SearchInitialPrompt isSignedIn={isSignedIn} />
+      ) : results.length === 0 ? (
+        <SearchNoResults query={query} isSignedIn={isSignedIn} />
+      ) : (
+        <div className="flex flex-col gap-4">
+          <SearchResultsSummary query={query} results={results} page={page} />
+          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
+            {results.map((result, idx) => (
+              <SearchResultItem
+                key={`${result.userId ?? result.primaryMembershipId}-${result.uniqueName || result.displayName}-${idx}`}
+                result={result}
+                isSignedIn={isSignedIn}
+              />
+            ))}
           </div>
-        )}
-      </NavLoading>
+          <SearchPagination query={query} page={page} hasMore={hasMore} />
+        </div>
+      )}
     </div>
   );
 }

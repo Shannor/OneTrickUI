@@ -26,10 +26,6 @@ vi.mock('~/api', () => ({
   search: (...args: unknown[]) => mockSearch(...args),
 }));
 
-vi.mock('~/hooks/use-route-loaders', () => ({
-  useIsNavigating: () => [false],
-}));
-
 const recordedUser: SearchUserResult = {
   isRecorded: true,
   userId: 'TTXWDT9pzDEA0XiO1iAc',
@@ -171,12 +167,12 @@ describe('Search route loader', () => {
     expect(result.page).toBe(0);
   });
 
-  it('handles backend errors gracefully and logs error event', async () => {
+  it('handles backend errors gracefully and logs structured API error payload', async () => {
     mockGetAuth.mockResolvedValue(null);
     mockSearch.mockResolvedValue({
       data: undefined,
-      error: { message: 'Internal error' },
-      response: { status: 500 },
+      error: { message: 'Internal error', status: 'DestinyServerDown' },
+      response: { status: 503 },
     });
 
     const result = await loader(
@@ -191,7 +187,30 @@ describe('Search route loader', () => {
       search: {
         page: 0,
         queryLength: 8,
-        status: 500,
+        status: 503,
+        apiError: { message: 'Internal error', status: 'DestinyServerDown' },
+      },
+    });
+  });
+
+  it('preserves thrown Error instances in evlog when search request rejects', async () => {
+    const networkError = new Error('fetch failed');
+    mockGetAuth.mockResolvedValue(null);
+    mockSearch.mockRejectedValue(networkError);
+
+    const result = await loader(
+      createLoaderArgs('http://localhost:5173/search?q=Guardian'),
+    );
+
+    expect(result.results).toEqual([]);
+    expect(result.errorMessage).toBe(
+      'Unable to search Guardians right now. Please try again.',
+    );
+    expect(mockLogError).toHaveBeenCalledWith(networkError, {
+      search: {
+        page: 0,
+        queryLength: 8,
+        status: undefined,
       },
     });
   });
@@ -241,13 +260,31 @@ describe('Search route component', () => {
     );
   });
 
-  it('renders zero-results state with Start Recording and Share 1 Trick CTAs', () => {
+  it('renders zero-results state with Share 1 Trick and hides /login when signed in', () => {
     renderSearchPage({
       query: 'NoSuchGuardian',
       page: 0,
       results: [],
       hasMore: false,
       isSignedIn: true,
+    });
+
+    expect(screen.getByText(/no guardians found for/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /start recording/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /share 1 trick/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders zero-results state with Start Recording and Share 1 Trick CTAs when signed out', () => {
+    renderSearchPage({
+      query: 'NoSuchGuardian',
+      page: 0,
+      results: [],
+      hasMore: false,
+      isSignedIn: false,
     });
 
     expect(screen.getByText(/no guardians found for/i)).toBeInTheDocument();
@@ -259,10 +296,10 @@ describe('Search route component', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders error banner when backend search fails', () => {
+  it('renders error banner preserving page on Try Again when backend search fails', () => {
     renderSearchPage({
       query: 'Guardian',
-      page: 0,
+      page: 2,
       results: [],
       hasMore: false,
       isSignedIn: false,
@@ -274,7 +311,7 @@ describe('Search route component', () => {
     );
     expect(screen.getByRole('link', { name: /try again/i })).toHaveAttribute(
       'href',
-      '/search?q=Guardian',
+      '/search?q=Guardian&page=2',
     );
   });
 });

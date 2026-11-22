@@ -273,30 +273,17 @@ export function UnrecordedPlayerResult({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
             {isSignedIn
-              ? 'Share 1 Trick to invite them, or sign in with that Bungie account if it is an alt.'
+              ? 'Share 1 Trick to invite them to start recording their Crucible stats.'
               : 'Is this you? Sign in with Bungie to start recording.'}
           </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             {isSignedIn ? (
-              <>
-                <ShareSiteButton
-                  playerName={playerName}
-                  variant="default"
-                  size="sm"
-                  className="w-full sm:w-auto"
-                />
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="w-full sm:w-auto"
-                >
-                  <Link to="/login">
-                    <LogIn className="h-4 w-4" />
-                    <span>Start Recording</span>
-                  </Link>
-                </Button>
-              </>
+              <ShareSiteButton
+                playerName={playerName}
+                variant="default"
+                size="sm"
+                className="w-full sm:w-auto"
+              />
             ) : (
               <>
                 <Button
