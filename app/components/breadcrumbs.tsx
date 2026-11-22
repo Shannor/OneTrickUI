@@ -48,6 +48,12 @@ export function generateBreadcrumbs(
       continue;
     }
 
+    if (seg === 'search' && i === 0) {
+      crumbs.push({ label: 'Search' });
+      i++;
+      continue;
+    }
+
     if (seg === 'profile') {
       const userId = segments[i + 1];
       if (userId) {

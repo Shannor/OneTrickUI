@@ -18,6 +18,7 @@ import type {
   GetUserSessionsResponse,
   LoginResponse,
   RefreshTokenResponse,
+  SearchResponse,
   StartSessionResponse,
   StartUserSessionResponse,
   UpdateSessionResponse,
@@ -26,6 +27,27 @@ import type {
 
 const characterSchemaResponseTransformer = (data: any) => {
   data.light = BigInt(data.light.toString());
+  return data;
+};
+
+const searchUserResultSchemaResponseTransformer = (data: any) => {
+  if (data.primaryMembershipType) {
+    data.primaryMembershipType = BigInt(data.primaryMembershipType.toString());
+  }
+  if (data.characters) {
+    data.characters = data.characters.map((item: any) =>
+      characterSchemaResponseTransformer(item),
+    );
+  }
+  return data;
+};
+
+export const searchResponseTransformer = async (
+  data: any,
+): Promise<SearchResponse> => {
+  data.results = data.results.map((item: any) =>
+    searchUserResultSchemaResponseTransformer(item),
+  );
   return data;
 };
 
