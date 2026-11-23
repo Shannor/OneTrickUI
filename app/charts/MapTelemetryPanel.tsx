@@ -26,14 +26,14 @@ const PAGE_SIZE = 7;
 export function MapSignalPill({ signal }: { signal: MapSignal }) {
   if (signal === 'strong') {
     return (
-      <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+      <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
         Strong
       </span>
     );
   }
   if (signal === 'swap') {
     return (
-      <span className="inline-flex items-center rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+      <span className="inline-flex items-center rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">
         Swap
       </span>
     );
@@ -70,7 +70,7 @@ export function MapInsightsStrip({
   return (
     <div className="grid grid-cols-1 gap-3 border-b border-border/80 pb-3.5 md:grid-cols-2 md:gap-0 md:bg-secondary/20 md:pb-0">
       <div className="border-l-2 border-emerald-500 pl-3 md:border-r md:border-r-border/70 md:px-5 md:py-3">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
           Strong Maps (2+ Matches · Keep Equipped)
         </div>
         {strongMaps.length > 0 ? (
@@ -78,7 +78,7 @@ export function MapInsightsStrip({
             {strongMaps.slice(0, 4).map((m) => (
               <span key={m.location} className="inline-flex items-center gap-1">
                 <span className="font-semibold">{m.location}</span>
-                <span className="font-semibold tabular-nums text-emerald-400">
+                <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
                   {m.kd.toFixed(2)}
                 </span>
                 <span className="text-muted-foreground">
@@ -96,7 +96,7 @@ export function MapInsightsStrip({
       </div>
 
       <div className="border-l-2 border-red-500 pl-3 md:px-5 md:py-3">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
           Problem / Swap Candidates (2+ Matches · Low K/D or Win %)
         </div>
         {swapMaps.length > 0 ? (
@@ -107,7 +107,9 @@ export function MapInsightsStrip({
                 <span
                   className={cn(
                     'font-semibold tabular-nums',
-                    m.kd < 1 ? 'text-red-400' : 'text-amber-400',
+                    m.kd < 1
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-amber-600 dark:text-amber-400',
                   )}
                 >
                   {m.kd.toFixed(2)}
@@ -250,7 +252,9 @@ export function MapDesktopTable({
                   <span
                     className={cn(
                       'w-10 font-semibold',
-                      m.winPct >= 50 ? 'text-emerald-400' : 'text-red-400',
+                      m.winPct >= 50
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-red-600 dark:text-red-400',
                     )}
                   >
                     {m.winPct}%
@@ -266,14 +270,16 @@ export function MapDesktopTable({
                   <span
                     className={cn(
                       'font-bold',
-                      m.kd >= 1 ? 'text-emerald-400' : 'text-red-400',
+                      m.kd >= 1
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-red-600 dark:text-red-400',
                     )}
                   >
                     {m.kd.toFixed(2)}
                   </span>
                 </div>
               </td>
-              <td className="px-3 py-2.5 font-bold text-amber-400">
+              <td className="px-3 py-2.5 font-bold text-amber-600 dark:text-amber-400">
                 {m.kda.toFixed(2)}
               </td>
               <td className="px-5 py-2.5 text-xs">
@@ -291,8 +297,8 @@ export function MapDesktopTable({
                           className={cn(
                             'font-semibold',
                             m.bestLoadout.kd >= 1
-                              ? 'text-emerald-400'
-                              : 'text-red-400',
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-red-600 dark:text-red-400',
                           )}
                         >
                           ({m.bestLoadout.kd.toFixed(2)})
@@ -349,13 +355,15 @@ export function MapMobileList({
               <span
                 className={cn(
                   'font-bold',
-                  m.kd >= 1 ? 'text-emerald-400' : 'text-red-400',
+                  m.kd >= 1
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-red-400',
                 )}
               >
                 {m.kd.toFixed(2)}
               </span>{' '}
               <span className="text-muted-foreground">K/D ·</span>{' '}
-              <span className="font-semibold text-amber-400">
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
                 {m.kda.toFixed(2)}
               </span>
             </div>
@@ -366,7 +374,9 @@ export function MapMobileList({
               {m.wins}W–{m.loses}L (
               <span
                 className={
-                  m.winPct >= 50 ? 'text-emerald-400' : 'text-red-400'
+                  m.winPct >= 50
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-red-400'
                 }
               >
                 {m.winPct}%

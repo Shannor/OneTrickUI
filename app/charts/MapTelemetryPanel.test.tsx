@@ -80,6 +80,10 @@ describe('MapTelemetryPanel', () => {
     expect(
       screen.getByText(/Strong Maps \(2\+ Matches/i),
     ).toBeInTheDocument();
+    expect(screen.getAllByText('Strong')[0]).toHaveClass(
+      'text-emerald-600',
+      'dark:text-emerald-400',
+    );
     expect(
       screen.getByText(/Problem \/ Swap Candidates/i),
     ).toBeInTheDocument();

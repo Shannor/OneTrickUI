@@ -153,6 +153,119 @@ describe('character-metrics route loader and component', () => {
     );
   });
 
+  it('backfills snapshotLinks on an unlinked session aggregate when confirmed by getSnapshotAggregates', async () => {
+    const unlinkedSessionAgg = makeAggregate('agg-3', 'Endless Vale', 20, 8, 0);
+    const snapshotConfirmedAgg = makeAggregate(
+      'agg-3',
+      'Endless Vale',
+      20,
+      8,
+      0,
+    );
+
+    vi.mocked(getUserSessions)
+      .mockResolvedValueOnce({
+        data: [{ id: 'sess-1' }],
+        error: undefined,
+      } as any)
+      .mockResolvedValueOnce({
+        data: [],
+        error: undefined,
+      } as any);
+
+    vi.mocked(getSnapshots).mockResolvedValueOnce({
+      data: {
+        items: [{ id: 'snap-b', name: 'Solar Pulse Build' }],
+      },
+      error: undefined,
+    } as any);
+
+    vi.mocked(getSessionAggregates).mockResolvedValueOnce({
+      data: {
+        aggregates: [unlinkedSessionAgg],
+        snapshots: {},
+      },
+      error: undefined,
+    } as any);
+
+    vi.mocked(getSnapshotAggregates).mockResolvedValueOnce({
+      data: [snapshotConfirmedAgg],
+      error: undefined,
+    } as any);
+
+    const res = await loader({
+      params: { id: 'user-1', characterId: 'char-1' },
+      context: new Map(),
+      request: new Request('http://localhost/profile/user-1/c/char-1/metrics'),
+    } as any);
+
+    expect(res.aggregates).toHaveLength(1);
+    expect(res.aggregates[0].snapshotLinks['char-1']?.snapshotId).toBe(
+      'snap-b',
+    );
+    expect(res.partialFailure).toBe(false);
+  });
+
+  it('flags partialFailure and bounds fan-out concurrency when upstream aggregate calls fail', async () => {
+    const validAgg = makeAggregate('agg-1', 'Javelin-4', 18, 9, 0, 'snap-a');
+
+    vi.mocked(getUserSessions)
+      .mockResolvedValueOnce({
+        data: Array.from({ length: 12 }, (_, idx) => ({ id: `sess-${idx}` })),
+        error: undefined,
+      } as any)
+      .mockResolvedValueOnce({
+        data: undefined,
+        error: { message: 'timeout' },
+      } as any);
+
+    vi.mocked(getSnapshots).mockResolvedValueOnce({
+      data: {
+        items: [{ id: 'snap-a', name: 'Prismatic HC' }],
+      },
+      error: undefined,
+    } as any);
+
+    let activeInFlight = 0;
+    let peakInFlight = 0;
+
+    vi.mocked(getSessionAggregates).mockImplementation(async ({ path }) => {
+      activeInFlight += 1;
+      peakInFlight = Math.max(peakInFlight, activeInFlight);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      activeInFlight -= 1;
+      if (path.sessionId === 'sess-0') {
+        return {
+          data: { aggregates: [validAgg], snapshots: {} },
+          error: undefined,
+        } as any;
+      }
+      if (path.sessionId === 'sess-1') {
+        return { data: undefined, error: { message: '502' } } as any;
+      }
+      return {
+        data: { aggregates: [], snapshots: {} },
+        error: undefined,
+      } as any;
+    });
+
+    vi.mocked(getSnapshotAggregates).mockResolvedValueOnce({
+      data: undefined,
+      error: { message: 'timeout' },
+    } as any);
+
+    const res = await loader({
+      params: { id: 'user-1', characterId: 'char-1' },
+      context: new Map(),
+      request: new Request('http://localhost/profile/user-1/c/char-1/metrics'),
+    } as any);
+
+    expect(peakInFlight).toBeLessThanOrEqual(8);
+    expect(res.partialFailure).toBe(true);
+    expect(res.error).toBeUndefined();
+    expect(res.aggregates).toHaveLength(1);
+  });
+
   it('renders CharacterMetrics trend panel, all-loadout map telemetry, and best loadout links', () => {
     const aggregates = [
       makeAggregate('agg-1', 'Javelin-4', 18, 9, 0, 'snap-a'),
@@ -170,6 +283,7 @@ describe('character-metrics route loader and component', () => {
               'snap-a': { id: 'snap-a', name: 'Prismatic HC' },
               'snap-b': { id: 'snap-b', name: 'Void SMG' },
             },
+            partialFailure: true,
             error: undefined,
           }}
           params={{ id: 'user-1', characterId: 'char-1' }}
@@ -180,6 +294,9 @@ describe('character-metrics route loader and component', () => {
 
     expect(
       screen.getByRole('heading', { name: 'Hunter Metrics' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Some recent sessions or loadouts timed out/i),
     ).toBeInTheDocument();
     expect(screen.getByText('All-Loadout Map Telemetry')).toBeInTheDocument();
     expect(
@@ -194,6 +311,7 @@ describe('character-metrics route loader and component', () => {
           loaderData={{
             aggregates: [],
             snapshots: {},
+            partialFailure: false,
             error: undefined,
           }}
           params={{ id: 'user-1', characterId: 'char-1' }}

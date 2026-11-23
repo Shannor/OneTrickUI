@@ -3,7 +3,6 @@ import type { Aggregate, CharacterSnapshot } from '~/api';
 
 import {
   classifyMapSignal,
-  generateKDAResultsForTimeWindow,
   generateMapTelemetry,
   generateMatchSeries,
   timeWindowToCustom,
@@ -90,10 +89,8 @@ describe('metrics telemetry helpers', () => {
 
     const window = timeWindowToCustom('all-time', aggs);
     const { points, summary } = generateMatchSeries(aggs, window, 'char-1');
-    const kdaBuckets = generateKDAResultsForTimeWindow(aggs, window, 'char-1');
 
     expect(points).toHaveLength(2);
-    expect(kdaBuckets).toHaveLength(2);
     expect(points[0].matchIndex).toBe(1);
     expect(points[1].matchIndex).toBe(2);
     expect(summary.games).toBe(2);

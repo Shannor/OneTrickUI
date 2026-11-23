@@ -150,4 +150,87 @@ describe('MetricsTrendPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Summary Only' }));
     expect(screen.queryByText('K/D Ratio by Match')).not.toBeInTheDocument();
   });
+
+  it('defaults high-volume hideKpiTabs panels to Last 25g and omits Summary Only preset', () => {
+    const highVolumePoints: MatchPoint[] = Array.from(
+      { length: 65 },
+      (_, idx) => ({
+        ...mockPoints[0],
+        matchIndex: idx + 1,
+        activityId: `act-${idx + 1}`,
+        shortLabel: `#${idx + 1}`,
+        fullLabel: `Match #${idx + 1}`,
+      }),
+    );
+
+    render(
+      <MetricsTrendPanel
+        points={highVolumePoints}
+        summary={{ ...mockSummary, games: 65 }}
+        hideKpiTabs
+        titleOverride="Session Performance Graph"
+      />,
+    );
+
+    expect(screen.getByText('Session Performance Graph')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Summary Only' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Last 25g' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Last 10g' }),
+    ).toBeInTheDocument();
+  });
+
+  it('compares Last 10g against the immediately preceding 10 matches instead of full career history', () => {
+    const careerPoints: MatchPoint[] = Array.from({ length: 30 }, (_, idx) => {
+      const kills = idx < 10 ? 4 : idx < 20 ? 12 : 17;
+      return {
+        ...mockPoints[0],
+        matchIndex: idx + 1,
+        activityId: `career-${idx + 1}`,
+        kills,
+        deaths: 10,
+        assists: 0,
+        kd: kills / 10,
+        kda: kills / 10,
+      };
+    });
+
+    render(
+      <MetricsTrendPanel
+        points={careerPoints}
+        summary={{ ...mockSummary, games: 30, kdDelta: null }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Last 10g' }));
+    expect(screen.getAllByText('+0.5').length).toBeGreaterThan(0);
+  });
+
+  it('resets windowPreset when switching to a distinct series of the same match count', () => {
+    const { rerender } = render(
+      <MetricsTrendPanel points={mockPoints} summary={mockSummary} />,
+    );
+
+    const last10Btn = screen.getByRole('button', { name: 'Last 10g' });
+    fireEvent.click(last10Btn);
+    expect(last10Btn).toHaveAttribute('aria-pressed', 'true');
+
+    const trialsPoints = mockPoints.map((pt, idx) => ({
+      ...pt,
+      activityId: `trials-${idx + 1}`,
+    }));
+
+    rerender(
+      <MetricsTrendPanel points={trialsPoints} summary={mockSummary} />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'All Matches' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
 });

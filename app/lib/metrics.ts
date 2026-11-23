@@ -1,18 +1,7 @@
 import {
   addMinutes,
-  differenceInDays,
-  eachDayOfInterval,
-  eachHourOfInterval,
-  eachMinuteOfInterval,
-  eachMonthOfInterval,
-  endOfHour,
   endOfToday,
   format,
-  isFirstDayOfMonth,
-  isLastDayOfMonth,
-  startOfDay,
-  startOfHour,
-  startOfMonth,
   startOfToday,
   subHours,
   subMinutes,
@@ -28,18 +17,6 @@ interface KDA {
   assists: number;
   gameCount: number;
   wins: number;
-}
-
-export interface KDAResult {
-  time: string;
-  avgKills: number;
-  avgDeaths: number;
-  avgAssists: number;
-  kd: number;
-  kda: number;
-  winRatio: number;
-  wins: number;
-  gameCount: number;
 }
 
 export interface MapResult {
@@ -506,121 +483,6 @@ export function generateMapTelemetry(
   });
 }
 
-export function generatePerformancePerMap(
-  aggregates: Aggregate[],
-  time: CustomTimeWindow,
-  characterId: string,
-  filterBy?: GameMode,
-): MapResult[] {
-  return generateMapTelemetry(aggregates, time, characterId, filterBy);
-}
-
-export function generateKDAResultsForTimeWindow(
-  aggregates: Aggregate[],
-  time: CustomTimeWindow,
-  characterId: string,
-  filterBy?: GameMode,
-): KDAResult[] {
-  const { intervalRate } = getTimes(time);
-  const aggs = sortAggregates(time, aggregates, filterBy);
-  const values = aggs.reduce<Record<string, KDA>>((acc, agg) => {
-    const p = agg.performance[characterId];
-    if (!p) {
-      return acc;
-    }
-    let day: Date;
-    switch (intervalRate) {
-      case 'minute': {
-        const d = new Date(agg.activityDetails.period);
-        const minutes = d.getMinutes();
-        const roundedMinutes = Math.floor(minutes / 15) * 15;
-        d.setMinutes(roundedMinutes, 0, 0);
-        day = d;
-        break;
-      }
-      case 'hour': {
-        day = startOfHour(new Date(agg.activityDetails.period));
-        break;
-      }
-      case 'day':
-        day = startOfDay(new Date(agg.activityDetails.period));
-        break;
-      case 'month': {
-        day = startOfMonth(new Date(agg.activityDetails.period));
-        break;
-      }
-    }
-    const key = day.toISOString();
-    if (!acc[key]) {
-      acc[key] = {
-        kills: p.playerStats.kills?.value ?? 0,
-        deaths: p.playerStats.deaths?.value ?? 0,
-        assists: p.playerStats.assists?.value ?? 0,
-        wins: p.playerStats.standing?.value === 0 ? 1 : 0,
-        gameCount: 1,
-      };
-    } else {
-      acc[key].kills += p.playerStats.kills?.value ?? 0;
-      acc[key].deaths += p.playerStats.deaths?.value ?? 0;
-      acc[key].assists += p.playerStats.assists?.value ?? 0;
-      acc[key].wins += p.playerStats.standing?.value === 0 ? 1 : 0;
-      acc[key].gameCount += 1;
-    }
-    return acc;
-  }, {});
-
-  return Object.entries(values)
-    .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-    .map(([int, value]) => ({
-      time: int,
-      avgKills: calculateRatio(value.kills, value.gameCount),
-      avgDeaths: calculateRatio(value.deaths, value.gameCount),
-      avgAssists: calculateRatio(value.assists, value.gameCount),
-      kd: calculateRatio(value.kills, value.deaths),
-      kda: calculateRatio(value.kills + value.assists, value.deaths),
-      winRatio: calculateRatio(value.wins, value.gameCount),
-      gameCount: value.gameCount,
-      wins: value.wins,
-    }));
-}
-
-function getTimes(time: CustomTimeWindow): {
-  intervals: Date[];
-  startDay: Date;
-  endDay: Date;
-  intervalRate: 'minute' | 'hour' | 'day' | 'month';
-} {
-  let intervalRate: 'minute' | 'hour' | 'day' | 'month' = 'hour';
-  const start = new Date(time.start);
-  const end = new Date(time.end);
-  const dayDifference = differenceInDays(end, start);
-
-  let intervals: Date[];
-  if (dayDifference < 1) {
-    intervals = eachMinuteOfInterval(
-      { start: startOfHour(start), end: endOfHour(end) },
-      { step: 15 },
-    );
-    intervalRate = 'minute';
-  } else if (dayDifference <= 2) {
-    intervals = eachHourOfInterval({ start, end });
-    intervalRate = 'hour';
-  } else if (dayDifference <= 31) {
-    intervals = eachDayOfInterval({ start, end });
-    intervalRate = 'day';
-  } else {
-    intervals = eachMonthOfInterval({ start, end });
-    intervalRate = 'month';
-  }
-
-  return {
-    intervals,
-    startDay: start,
-    endDay: end,
-    intervalRate,
-  };
-}
-
 function matchesGameMode(agg: Aggregate, filterBy?: GameMode): boolean {
   if (filterBy === undefined || filterBy === 'allGameModes') {
     return true;
@@ -654,74 +516,6 @@ function sortAggregates(
         new Date(b.activityDetails.period).getTime()
       );
     });
-}
-
-export function tickFormater(
-  value: string,
-  timeWindow: CustomTimeWindow,
-): string {
-  let rate: 'minute' | 'hour' | 'day' | 'month' = 'day';
-
-  const dayDifference = differenceInDays(timeWindow.end, timeWindow.start);
-  if (dayDifference < 1) {
-    rate = 'minute';
-  } else if (dayDifference <= 2) {
-    rate = 'hour';
-  } else if (dayDifference <= 31) {
-    rate = 'day';
-  } else {
-    rate = 'month';
-  }
-
-  switch (rate) {
-    case 'minute':
-      return format(new Date(value), 'h:mm aa');
-    case 'hour':
-      return format(new Date(value), 'h aa');
-    case 'day':
-      if (
-        isFirstDayOfMonth(new Date(value)) ||
-        isLastDayOfMonth(new Date(value))
-      ) {
-        return format(new Date(value), 'MMM d');
-      }
-      return format(new Date(value), 'd');
-    case 'month':
-      return format(new Date(value), 'MMM');
-    default:
-      return value;
-  }
-}
-
-export function labelFormater(
-  value: string,
-  timeWindow: CustomTimeWindow,
-): string {
-  let rate: 'minute' | 'hour' | 'day' | 'month' = 'day';
-
-  const dayDifference = differenceInDays(timeWindow.end, timeWindow.start);
-  if (dayDifference < 1) {
-    rate = 'minute';
-  } else if (dayDifference <= 2) {
-    rate = 'hour';
-  } else if (dayDifference <= 31) {
-    rate = 'day';
-  } else {
-    rate = 'month';
-  }
-
-  switch (rate) {
-    case 'minute':
-      return format(new Date(value), 'h:mm aa');
-    case 'hour':
-      return format(new Date(value), 'h aa');
-    case 'day':
-      return format(new Date(value), 'EEEE');
-    case 'month':
-      return format(new Date(value), 'MMMM do');
-    default:
-      return value;
-  }
 }
 
 function gameModeToActivityModes(gameMode: GameMode): string[] | null {

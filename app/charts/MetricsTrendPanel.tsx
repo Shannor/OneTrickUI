@@ -156,8 +156,8 @@ function TrendTooltipContent({
           className={cn(
             'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
             point.won
-              ? 'bg-emerald-500/15 text-emerald-400'
-              : 'bg-red-500/15 text-red-400',
+              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+              : 'bg-red-500/15 text-red-600 dark:text-red-400',
           )}
         >
           {point.won ? 'Win' : 'Loss'}
@@ -178,7 +178,7 @@ function TrendTooltipContent({
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">Your 5-Game Avg</span>
-              <span className="font-bold tabular-nums text-emerald-400">
+              <span className="font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                 {point.rollingKd.toFixed(2)}
               </span>
             </div>
@@ -200,7 +200,7 @@ function TrendTooltipContent({
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">Your 5-Game Avg</span>
-              <span className="font-bold tabular-nums text-amber-400">
+              <span className="font-bold tabular-nums text-amber-600 dark:text-amber-400">
                 {point.rollingKda.toFixed(2)}
               </span>
             </div>
@@ -221,8 +221,8 @@ function TrendTooltipContent({
                 className={cn(
                   'font-bold tabular-nums',
                   point.rollingWinPct >= 50
-                    ? 'text-emerald-400'
-                    : 'text-red-400',
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-red-400',
                 )}
               >
                 {point.rollingWinPct}%
@@ -389,7 +389,10 @@ function buildKpiItems(
       primaryValue: summary.kd.toFixed(2),
       subText: kdDeltaText,
       subPositive: (summary.kdDelta ?? 0) >= 0,
-      valueClassName: summary.kd >= 1 ? 'text-emerald-500' : 'text-red-500',
+      valueClassName:
+        summary.kd >= 1
+          ? 'text-emerald-600 dark:text-emerald-400'
+          : 'text-red-600 dark:text-red-400',
       activeBorderClassName: 'border-b-emerald-500 md:bg-emerald-500/[0.04]',
       sparkValues: sparkSource.map((p) => p.rollingKd),
       sparkColor: '#22c55e',
@@ -401,7 +404,7 @@ function buildKpiItems(
       primaryValue: summary.kda.toFixed(2),
       subText: kdaDeltaText,
       subPositive: (summary.kdaDelta ?? 0) >= 0,
-      valueClassName: 'text-amber-400',
+      valueClassName: 'text-amber-600 dark:text-amber-400',
       activeBorderClassName: 'border-b-amber-400 md:bg-amber-400/[0.04]',
       sparkValues: sparkSource.map((p) => p.rollingKda),
       sparkColor: '#eab308',
@@ -413,7 +416,9 @@ function buildKpiItems(
       primaryValue: `${summary.winPct}%`,
       subText: `${summary.wins}W–${summary.losses}L${winDeltaText ? ` (${winDeltaText})` : ''}`,
       subPositive: isPositiveWin,
-      valueClassName: isPositiveWin ? 'text-emerald-500' : 'text-red-500',
+      valueClassName: isPositiveWin
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-red-600 dark:text-red-400',
       activeBorderClassName: isPositiveWin
         ? 'border-b-emerald-500 md:bg-emerald-500/[0.04]'
         : 'border-b-red-500 md:bg-red-500/[0.04]',
@@ -470,8 +475,8 @@ function KpiStatCellContent({
                 item.key === 'combat' || item.key === 'winPct'
                   ? 'text-muted-foreground'
                   : item.subPositive
-                    ? 'text-emerald-500'
-                    : 'text-red-500',
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-red-400',
               )}
             >
               {item.subText}
@@ -554,6 +559,7 @@ export function TrendKpiTabs({
 interface WindowPresetPillsProps {
   totalMatches: number;
   isHighVolume: boolean;
+  allowSummaryPreset?: boolean;
   windowPreset: MatchWindowPreset;
   onSelectPreset: (preset: MatchWindowPreset) => void;
 }
@@ -561,6 +567,7 @@ interface WindowPresetPillsProps {
 function WindowPresetPills({
   totalMatches,
   isHighVolume,
+  allowSummaryPreset = true,
   windowPreset,
   onSelectPreset,
 }: WindowPresetPillsProps) {
@@ -570,7 +577,9 @@ function WindowPresetPills({
     min: number;
   }> = isHighVolume
     ? [
-        { value: 'summary', label: 'Summary Only', min: 0 },
+        ...(allowSummaryPreset
+          ? [{ value: 'summary' as const, label: 'Summary Only', min: 0 }]
+          : []),
         { value: '10', label: 'Last 10g', min: 11 },
         { value: '25', label: 'Last 25g', min: 26 },
       ]
@@ -649,6 +658,7 @@ interface TrendChartHeaderProps {
   activeMetric: TrendMetricKey;
   totalMatches: number;
   isHighVolume: boolean;
+  allowSummaryPreset?: boolean;
   windowPreset: MatchWindowPreset;
   onSelectPreset: (preset: MatchWindowPreset) => void;
   compactMetricPicker?: {
@@ -663,6 +673,7 @@ export function TrendChartHeader({
   activeMetric,
   totalMatches,
   isHighVolume,
+  allowSummaryPreset = true,
   windowPreset,
   onSelectPreset,
   compactMetricPicker,
@@ -711,6 +722,7 @@ export function TrendChartHeader({
           <WindowPresetPills
             totalMatches={totalMatches}
             isHighVolume={isHighVolume}
+            allowSummaryPreset={allowSummaryPreset}
             windowPreset={windowPreset}
             onSelectPreset={onSelectPreset}
           />
@@ -748,6 +760,16 @@ const METRIC_METADATA: Record<
   },
 };
 
+function getDefaultWindowPreset(
+  totalMatches: number,
+  hideKpiTabs: boolean,
+): MatchWindowPreset {
+  if (totalMatches > HIGH_VOLUME_MATCH_THRESHOLD) {
+    return hideKpiTabs ? '25' : 'summary';
+  }
+  return 'all';
+}
+
 export interface MetricsTrendPanelProps {
   points: MatchPoint[];
   summary: TelemetrySummary;
@@ -766,9 +788,13 @@ export function MetricsTrendPanel({
   className,
 }: MetricsTrendPanelProps) {
   const isHighVolume = points.length > HIGH_VOLUME_MATCH_THRESHOLD;
+  const seriesSignature = useMemo(
+    () => points.map((p) => `${p.activityId}:${p.time}`).join('|'),
+    [points],
+  );
   const [activeMetric, setActiveMetric] = useState<TrendMetricKey>('kd');
   const [windowPreset, setWindowPreset] = useState<MatchWindowPreset>(() =>
-    points.length > HIGH_VOLUME_MATCH_THRESHOLD ? 'summary' : 'all',
+    getDefaultWindowPreset(points.length, hideKpiTabs),
   );
   const [brushRange, setBrushRange] = useState<{
     startIndex: number;
@@ -779,14 +805,12 @@ export function MetricsTrendPanel({
   }));
 
   useEffect(() => {
-    const nextPreset: MatchWindowPreset =
-      points.length > HIGH_VOLUME_MATCH_THRESHOLD ? 'summary' : 'all';
-    setWindowPreset(nextPreset);
+    setWindowPreset(getDefaultWindowPreset(points.length, hideKpiTabs));
     setBrushRange({
       startIndex: 0,
       endIndex: Math.max(0, points.length - 1),
     });
-  }, [points.length]);
+  }, [seriesSignature, points.length, hideKpiTabs]);
 
   const visibleData = useMemo(() => {
     if (windowPreset === 'summary') {
@@ -807,7 +831,11 @@ export function MetricsTrendPanel({
       visibleData.length > 0 &&
       visibleData.length < points.length
     ) {
-      const priorSlice = points.slice(0, points.length - visibleData.length);
+      const cutoff = points.length - visibleData.length;
+      const priorSlice = points.slice(
+        Math.max(0, cutoff - visibleData.length),
+        cutoff,
+      );
       return summarizeMatchSamples(visibleData, priorSlice);
     }
     return summary;
@@ -824,7 +852,8 @@ export function MetricsTrendPanel({
     return null;
   }
 
-  const isSummaryOnly = isHighVolume && windowPreset === 'summary';
+  const isSummaryOnly =
+    !hideKpiTabs && isHighVolume && windowPreset === 'summary';
   const showBrush =
     !isHighVolume && windowPreset === 'all' && visibleData.length > 25;
   const meta = METRIC_METADATA[activeMetric];
@@ -860,6 +889,7 @@ export function MetricsTrendPanel({
             activeMetric={activeMetric}
             totalMatches={points.length}
             isHighVolume={isHighVolume}
+            allowSummaryPreset={!hideKpiTabs}
             windowPreset={windowPreset}
             onSelectPreset={setWindowPreset}
             compactMetricPicker={

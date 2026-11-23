@@ -27,11 +27,57 @@ import type { Route } from './+types/character-metrics';
 
 const MAX_SESSIONS_TO_AGGREGATE = 20;
 const MAX_SNAPSHOTS_TO_AGGREGATE = 15;
+const MAX_AGGREGATE_FETCH_CONCURRENCY = 8;
 
 export type SnapshotNameMap = Record<
   string,
   Pick<CharacterSnapshot, 'id' | 'name'>
 >;
+
+export async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(Math.max(1, concurrency), items.length);
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < items.length) {
+        const current = nextIndex++;
+        results[current] = await worker(items[current]);
+      }
+    }),
+  );
+  return results;
+}
+
+function ensureCharacterSnapshotLink(
+  agg: Aggregate,
+  characterId: string,
+  snapshotId: string,
+): Aggregate {
+  if (agg.snapshotLinks?.[characterId]?.snapshotId) {
+    return agg;
+  }
+  return {
+    ...agg,
+    snapshotLinks: {
+      ...agg.snapshotLinks,
+      [characterId]: {
+        characterId,
+        snapshotId,
+        confidenceLevel: 'high',
+        confidenceSource: 'system',
+        createdAt: agg.createdAt,
+      },
+    },
+  };
+}
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
@@ -77,13 +123,17 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       metrics: {
         userId,
         characterId,
-        sessionsError: completeSessionsRes.error,
-        snapshotsError: snapshotsRes.error,
+        upstreamErrors: {
+          completeSessions: Boolean(completeSessionsRes.error),
+          pendingSessions: Boolean(pendingSessionsRes.error),
+          snapshots: Boolean(snapshotsRes.error),
+        },
       },
     });
     return {
       aggregates: [] as Aggregate[],
       snapshots: {} as SnapshotNameMap,
+      partialFailure: false,
       error: 'Failed to load character metrics',
     };
   }
@@ -103,30 +153,61 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     snapshotMap[snap.id] = { id: snap.id, name: snap.name };
   }
 
-  const [sessionAggResults, snapshotAggResults] = await Promise.all([
-    Promise.all(
-      sessions.map((session) =>
-        getSessionAggregates({ path: { sessionId: session.id } }),
-      ),
-    ),
-    Promise.all(
-      snapshotItems.map(async (snap) => ({
-        snapshotId: snap.id,
-        res: await getSnapshotAggregates({ path: { snapshotId: snap.id } }),
-      })),
-    ),
-  ]);
+  type AggregateFetchTask =
+    | { kind: 'session'; sessionId: string }
+    | { kind: 'snapshot'; snapshotId: string };
+
+  const tasks: AggregateFetchTask[] = [
+    ...sessions.map((session) => ({
+      kind: 'session' as const,
+      sessionId: session.id,
+    })),
+    ...snapshotItems.map((snap) => ({
+      kind: 'snapshot' as const,
+      snapshotId: snap.id,
+    })),
+  ];
+
+  const taskResults = await mapWithConcurrency(
+    tasks,
+    MAX_AGGREGATE_FETCH_CONCURRENCY,
+    async (task) => {
+      if (task.kind === 'session') {
+        return {
+          kind: 'session' as const,
+          res: await getSessionAggregates({
+            path: { sessionId: task.sessionId },
+          }),
+        };
+      }
+      return {
+        kind: 'snapshot' as const,
+        snapshotId: task.snapshotId,
+        res: await getSnapshotAggregates({
+          path: { snapshotId: task.snapshotId },
+        }),
+      };
+    },
+  );
 
   const aggregateByKey = new Map<string, Aggregate>();
+  let failedSessionAggregates = 0;
+  let failedSnapshotAggregates = 0;
 
-  for (const sessionAgg of sessionAggResults) {
-    if (!sessionAgg.data) {
+  for (const item of taskResults) {
+    if (item.kind !== 'session') {
       continue;
     }
-    for (const [snapId, snap] of Object.entries(sessionAgg.data.snapshots ?? {})) {
+    if (item.res.error) {
+      failedSessionAggregates += 1;
+    }
+    if (!item.res.data) {
+      continue;
+    }
+    for (const [snapId, snap] of Object.entries(item.res.data.snapshots ?? {})) {
       snapshotMap[snapId] = { id: snap.id, name: snap.name };
     }
-    for (const agg of sessionAgg.data.aggregates ?? []) {
+    for (const agg of item.res.data.aggregates ?? []) {
       if (!agg.performance?.[characterId]) {
         continue;
       }
@@ -137,37 +218,56 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     }
   }
 
-  for (const { snapshotId, res } of snapshotAggResults) {
-    for (const agg of res.data ?? []) {
+  for (const item of taskResults) {
+    if (item.kind !== 'snapshot') {
+      continue;
+    }
+    if (item.res.error) {
+      failedSnapshotAggregates += 1;
+    }
+    for (const agg of item.res.data ?? []) {
       if (!agg.performance?.[characterId]) {
         continue;
       }
       const key = agg.id || agg.activityId;
-      if (!key || aggregateByKey.has(key)) {
+      if (!key) {
         continue;
       }
-      const existingLink = agg.snapshotLinks?.[characterId];
-      const normalizedAgg: Aggregate =
-        existingLink?.snapshotId
-          ? agg
-          : {
-              ...agg,
-              snapshotLinks: {
-                ...agg.snapshotLinks,
-                [characterId]: {
-                  characterId,
-                  snapshotId,
-                  confidenceLevel: 'high',
-                  confidenceSource: 'system',
-                  createdAt: agg.createdAt,
-                },
-              },
-            };
-      aggregateByKey.set(key, normalizedAgg);
+      const existingAgg = aggregateByKey.get(key);
+      if (existingAgg) {
+        if (!existingAgg.snapshotLinks?.[characterId]?.snapshotId) {
+          aggregateByKey.set(
+            key,
+            ensureCharacterSnapshotLink(
+              existingAgg,
+              characterId,
+              item.snapshotId,
+            ),
+          );
+        }
+        continue;
+      }
+      aggregateByKey.set(
+        key,
+        ensureCharacterSnapshotLink(agg, characterId, item.snapshotId),
+      );
     }
   }
 
   const aggregates = Array.from(aggregateByKey.values());
+  const upstreamErrors = {
+    completeSessions: Boolean(completeSessionsRes.error),
+    pendingSessions: Boolean(pendingSessionsRes.error),
+    snapshots: Boolean(snapshotsRes.error),
+    failedSessionAggregates,
+    failedSnapshotAggregates,
+  };
+  const degraded =
+    upstreamErrors.completeSessions ||
+    upstreamErrors.pendingSessions ||
+    upstreamErrors.snapshots ||
+    failedSessionAggregates > 0 ||
+    failedSnapshotAggregates > 0;
 
   log.set({
     route: 'routes/character-metrics',
@@ -177,18 +277,42 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       sessionCount: sessions.length,
       snapshotCount: Object.keys(snapshotMap).length,
       aggregateCount: aggregates.length,
+      degraded,
+      upstreamErrors,
     },
   });
+
+  if (aggregates.length === 0 && degraded) {
+    return {
+      aggregates,
+      snapshots: snapshotMap,
+      partialFailure: false,
+      error: 'Failed to load character metrics',
+    };
+  }
 
   return {
     aggregates,
     snapshots: snapshotMap,
+    partialFailure: degraded,
     error: undefined,
   };
 }
 
+export function PartialTelemetryNotice() {
+  return (
+    <div
+      role="status"
+      className="border-l-2 border-amber-500 pl-3 text-xs text-amber-700 dark:text-amber-400 md:rounded-lg md:border md:border-amber-500/30 md:bg-amber-500/10 md:px-3.5 md:py-2"
+    >
+      Some recent sessions or loadouts timed out while loading. Telemetry shown
+      below reflects available match history.
+    </div>
+  );
+}
+
 export function CharacterMetrics({ loaderData, params }: Route.ComponentProps) {
-  const { aggregates, snapshots, error } = loaderData;
+  const { aggregates, snapshots, partialFailure, error } = loaderData;
   const { id: userId, characterId } = params;
   const profileData = useOptionalProfileData();
   const profile = profileData?.profile;
@@ -283,6 +407,8 @@ export function CharacterMetrics({ loaderData, params }: Route.ComponentProps) {
         />
       ) : (
         <div className="flex flex-col gap-6">
+          {partialFailure && <PartialTelemetryNotice />}
+
           <MetricsFilterBar
             time={time}
             onTimeChange={setTime}
