@@ -1,3 +1,4 @@
+export * from './armor-set-bonus-diff-badge';
 export * from './similar-loadouts-banners';
 export * from './similar-loadouts-candidate-card';
 export * from './similar-loadouts-candidate-diff-badges';

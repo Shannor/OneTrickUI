@@ -246,6 +246,7 @@ export function SimilarLoadoutsView({
                 targetExoticArmor={targetExoticArmor}
                 targetPowerWeapon={targetPowerWeapon}
                 targetClassStatMap={targetClassStatMap}
+                targetArmorSetBonuses={target.armorSetBonuses}
                 actionButton={
                   <Button
                     type="button"
@@ -276,6 +277,7 @@ export function SimilarLoadoutsView({
                 targetExoticArmor={targetExoticArmor}
                 targetPowerWeapon={targetPowerWeapon}
                 targetClassStatMap={targetClassStatMap}
+                targetArmorSetBonuses={target.armorSetBonuses}
                 getLoadoutHref={getLoadoutHref}
                 onToggleSelect={handleToggleCandidate}
               />

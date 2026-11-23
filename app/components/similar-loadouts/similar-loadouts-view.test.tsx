@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
+  ArmorSetBonus,
   CharacterSnapshot,
   GetSimilarSnapshotsResponse,
   PlayerStats,
@@ -36,6 +37,7 @@ function buildTestSnapshot({
   powerHash = 3001n,
   healthStat = 170,
   superStat = 80,
+  armorSetBonuses,
 }: {
   id: string;
   name: string;
@@ -46,6 +48,7 @@ function buildTestSnapshot({
   powerHash?: bigint;
   healthStat?: number;
   superStat?: number;
+  armorSetBonuses?: ArmorSetBonus[];
 }): CharacterSnapshot {
   return {
     id,
@@ -55,6 +58,7 @@ function buildTestSnapshot({
     hash: `hash-${id}`,
     createdAt: new Date('2026-01-01T00:00:00Z'),
     updatedAt: new Date('2026-01-01T00:00:00Z'),
+    armorSetBonuses,
     stats: {
       '392767087': {
         name: 'Health',
@@ -213,6 +217,7 @@ describe('SimilarLoadoutsView', () => {
       tier: 'high',
       exoticArmorMatch: true,
       powerWeaponMatch: false,
+      armorSetBonusMatch: true,
       statDiffs: { Health: -10, Super: 10 },
     },
     {
@@ -220,6 +225,7 @@ describe('SimilarLoadoutsView', () => {
       tier: 'base',
       exoticArmorMatch: false,
       powerWeaponMatch: false,
+      armorSetBonusMatch: true,
       statDiffs: { Health: -1, Super: 5 },
     },
   ];
@@ -504,5 +510,404 @@ describe('SimilarLoadoutsView', () => {
       );
     });
     expect(highCheckbox).toBeChecked();
+  });
+
+  it('displays active Armor Set Bonuses on primary target header and renders match and diff badges on candidates', () => {
+    const electrumFourPc: ArmorSetBonus = {
+      setHash: 742845781n,
+      setName: 'Cruel Electrum',
+      activeCount: 4,
+      activePerks: [
+        {
+          requiredSetCount: 2,
+          hash: 2562518502n,
+          name: 'Primary Survivor',
+          description: 'Boosts Primary weapons when allies fall.',
+          iconPath: '/icons/survivor.png',
+        },
+        {
+          requiredSetCount: 4,
+          hash: 2562518503n,
+          name: 'Primary Phantom',
+          description: 'Primary final blows hide you from radar.',
+          iconPath: '/icons/phantom.png',
+        },
+      ],
+    };
+
+    const audaciaTwoPc: ArmorSetBonus = {
+      setHash: 2618364783n,
+      setName: 'Per Audacia',
+      activeCount: 2,
+      activePerks: [
+        {
+          requiredSetCount: 2,
+          hash: 3091068916n,
+          name: 'Primary Chain',
+          description: 'Primary kills grant stacking mobility and range.',
+          iconPath: '/icons/chain.png',
+        },
+      ],
+    };
+
+    const targetWithBonuses = buildTestSnapshot({
+      id: 'target-bonuses',
+      name: 'Electrum Main',
+      armorSetBonuses: [electrumFourPc],
+    });
+
+    const matchingCandidate = buildTestSnapshot({
+      id: 'cand-match',
+      name: 'Electrum Twin',
+      armorSetBonuses: [{ ...electrumFourPc, activeCount: 5 }],
+    });
+
+    const differingCandidate = buildTestSnapshot({
+      id: 'cand-diff',
+      name: 'Split Set Alt',
+      armorSetBonuses: [
+        {
+          ...electrumFourPc,
+          activeCount: 2,
+          activePerks: [electrumFourPc.activePerks[0]],
+        },
+        audaciaTwoPc,
+      ],
+    });
+
+    const noBonusCandidate = buildTestSnapshot({
+      id: 'cand-none',
+      name: 'Legacy Armor Alt',
+      armorSetBonuses: [],
+    });
+
+    const dataWithBonuses: GetSimilarSnapshotsResponse = {
+      target: targetWithBonuses,
+      items: [
+        {
+          snapshot: matchingCandidate,
+          tier: 'high',
+          exoticArmorMatch: true,
+          powerWeaponMatch: true,
+          armorSetBonusMatch: true,
+        },
+        {
+          snapshot: differingCandidate,
+          tier: 'high',
+          exoticArmorMatch: true,
+          powerWeaponMatch: true,
+          armorSetBonusMatch: false,
+        },
+        {
+          snapshot: noBonusCandidate,
+          tier: 'base',
+          exoticArmorMatch: false,
+          powerWeaponMatch: true,
+          armorSetBonusMatch: false,
+        },
+      ],
+      stats: {},
+      count: {
+        'target-bonuses': 12,
+        'cand-match': 5,
+        'cand-diff': 4,
+        'cand-none': 3,
+      },
+    };
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <SimilarLoadoutsView initialData={dataWithBonuses} />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    const primaryBonuses = screen.getByTestId('primary-armor-set-bonuses');
+    expect(primaryBonuses).toHaveTextContent('Cruel Electrum');
+    expect(primaryBonuses).toHaveTextContent('(4pc)');
+
+    const matchCard = screen.getByTestId('similar-candidate-cand-match');
+    expect(matchCard).toHaveTextContent('Set Bonus Match');
+
+    const diffCard = screen.getByTestId('similar-candidate-cand-diff');
+    expect(diffCard).toHaveTextContent(
+      'Set: Cruel Electrum (2pc) + Per Audacia (2pc)',
+    );
+
+    const noneCard = screen.getByTestId('similar-candidate-cand-none');
+    expect(noneCard).toHaveTextContent('Set: None');
+  });
+
+  it('renders No Set Bonuses badge and comparison tooltips when primary has no set bonuses, with tap-to-toggle support', () => {
+    const audaciaTwoPc: ArmorSetBonus = {
+      setHash: 2618364783n,
+      setName: 'Per Audacia',
+      activeCount: 2,
+      activePerks: [
+        {
+          requiredSetCount: 2,
+          hash: 3091068916n,
+          name: 'Primary Chain',
+          description: 'Primary kills grant stacking mobility and range.',
+          iconPath: '/icons/chain.png',
+        },
+      ],
+    };
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <SimilarLoadoutsView
+            initialData={{
+              target: buildTestSnapshot({
+                id: 'target-empty',
+                name: 'No Set Target',
+                armorSetBonuses: [],
+              }),
+              items: [
+                {
+                  snapshot: buildTestSnapshot({
+                    id: 'cand-empty',
+                    name: 'No Set Candidate',
+                    armorSetBonuses: [],
+                  }),
+                  tier: 'high',
+                  exoticArmorMatch: true,
+                  powerWeaponMatch: true,
+                  armorSetBonusMatch: true,
+                },
+                {
+                  snapshot: buildTestSnapshot({
+                    id: 'cand-active-vs-empty',
+                    name: 'Active Set Candidate',
+                    armorSetBonuses: [audaciaTwoPc],
+                  }),
+                  tier: 'base',
+                  exoticArmorMatch: true,
+                  powerWeaponMatch: true,
+                  armorSetBonusMatch: false,
+                },
+              ],
+              stats: {},
+              count: {
+                'target-empty': 8,
+                'cand-empty': 4,
+                'cand-active-vs-empty': 2,
+              },
+            }}
+          />
+        ),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    const bothNoneBadge = screen
+      .getByTestId('similar-candidate-cand-empty')
+      .querySelector(
+        '[data-testid="armor-set-bonus-diff-badge"]',
+      ) as HTMLElement;
+    expect(bothNoneBadge.tagName).toBe('BUTTON');
+    expect(bothNoneBadge).toHaveAttribute('type', 'button');
+    expect(bothNoneBadge).toHaveTextContent('No Set Bonuses');
+
+    fireEvent.pointerDown(bothNoneBadge);
+    fireEvent.click(bothNoneBadge);
+    expect(
+      screen.getAllByText('Neither loadout has active Armor Set Bonuses')
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("This Loadout's Set Bonuses").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByText("Primary Target's Set Bonuses"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.pointerDown(bothNoneBadge);
+    fireEvent.click(bothNoneBadge);
+    expect(
+      screen.queryByText('Neither loadout has active Armor Set Bonuses'),
+    ).not.toBeInTheDocument();
+
+    const activeVsEmptyBadge = screen
+      .getByTestId('similar-candidate-cand-active-vs-empty')
+      .querySelector(
+        '[data-testid="armor-set-bonus-diff-badge"]',
+      ) as HTMLElement;
+    fireEvent.pointerDown(activeVsEmptyBadge);
+    fireEvent.click(activeVsEmptyBadge);
+    expect(
+      screen.getAllByText('Active Armor Set Bonuses (Primary has none)').length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("This Loadout's Set Bonuses").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Primary Target's Set Bonuses").length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('renders matching, differing, and missing candidate comparison tooltips when primary has set bonuses', () => {
+    const electrumFourPc: ArmorSetBonus = {
+      setHash: 742845781n,
+      setName: 'Cruel Electrum',
+      activeCount: 4,
+      activePerks: [
+        {
+          requiredSetCount: 2,
+          hash: 2562518502n,
+          name: 'Primary Survivor',
+          description: 'Boosts Primary weapons when allies fall.',
+          iconPath: '/icons/survivor.png',
+        },
+        {
+          requiredSetCount: 4,
+          hash: 2562518503n,
+          name: 'Primary Phantom',
+          description: 'Primary final blows hide you from radar.',
+          iconPath: '/icons/phantom.png',
+        },
+      ],
+    };
+
+    const audaciaTwoPc: ArmorSetBonus = {
+      setHash: 2618364783n,
+      setName: 'Per Audacia',
+      activeCount: 2,
+      activePerks: [
+        {
+          requiredSetCount: 2,
+          hash: 3091068916n,
+          name: 'Primary Chain',
+          description: 'Primary kills grant stacking mobility and range.',
+          iconPath: '/icons/chain.png',
+        },
+      ],
+    };
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <SimilarLoadoutsView
+            initialData={{
+              target: buildTestSnapshot({
+                id: 'target-active',
+                name: 'Electrum Target',
+                armorSetBonuses: [electrumFourPc],
+              }),
+              items: [
+                {
+                  snapshot: buildTestSnapshot({
+                    id: 'cand-match-tooltip',
+                    name: 'Matching Set',
+                    armorSetBonuses: [electrumFourPc],
+                  }),
+                  tier: 'high',
+                  exoticArmorMatch: true,
+                  powerWeaponMatch: true,
+                  armorSetBonusMatch: true,
+                },
+                {
+                  snapshot: buildTestSnapshot({
+                    id: 'cand-diff-tooltip',
+                    name: 'Differing Set',
+                    armorSetBonuses: [audaciaTwoPc],
+                  }),
+                  tier: 'high',
+                  exoticArmorMatch: true,
+                  powerWeaponMatch: true,
+                  armorSetBonusMatch: false,
+                },
+                {
+                  snapshot: buildTestSnapshot({
+                    id: 'cand-none-tooltip',
+                    name: 'No Set vs Active Target',
+                    armorSetBonuses: [],
+                  }),
+                  tier: 'base',
+                  exoticArmorMatch: true,
+                  powerWeaponMatch: true,
+                  armorSetBonusMatch: false,
+                },
+              ],
+              stats: {},
+              count: {
+                'target-active': 10,
+                'cand-match-tooltip': 5,
+                'cand-diff-tooltip': 3,
+                'cand-none-tooltip': 2,
+              },
+            }}
+          />
+        ),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    const matchBadge = screen
+      .getByTestId('similar-candidate-cand-match-tooltip')
+      .querySelector(
+        '[data-testid="armor-set-bonus-diff-badge"]',
+      ) as HTMLElement;
+    fireEvent.pointerDown(matchBadge);
+    fireEvent.click(matchBadge);
+    expect(
+      screen.getAllByText(
+        'Same Armor Set Bonuses as Primary (Cruel Electrum (4pc))',
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("This Loadout's Set Bonuses").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByText("Primary Target's Set Bonuses"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.pointerDown(matchBadge);
+    fireEvent.click(matchBadge);
+
+    const diffBadge = screen
+      .getByTestId('similar-candidate-cand-diff-tooltip')
+      .querySelector(
+        '[data-testid="armor-set-bonus-diff-badge"]',
+      ) as HTMLElement;
+    fireEvent.pointerDown(diffBadge);
+    fireEvent.click(diffBadge);
+    expect(
+      screen.getAllByText(
+        'Different Armor Set Bonuses than Primary (Cruel Electrum (4pc))',
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("This Loadout's Set Bonuses").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Primary Target's Set Bonuses").length,
+    ).toBeGreaterThan(0);
+
+    fireEvent.pointerDown(diffBadge);
+    fireEvent.click(diffBadge);
+
+    const noneVsActiveBadge = screen
+      .getByTestId('similar-candidate-cand-none-tooltip')
+      .querySelector(
+        '[data-testid="armor-set-bonus-diff-badge"]',
+      ) as HTMLElement;
+    fireEvent.pointerDown(noneVsActiveBadge);
+    fireEvent.click(noneVsActiveBadge);
+    expect(
+      screen.getAllByText(
+        'No active Armor Set Bonuses (Primary has Cruel Electrum (4pc))',
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Primary Target's Set Bonuses").length,
+    ).toBeGreaterThan(0);
   });
 });

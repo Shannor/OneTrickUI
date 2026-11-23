@@ -1,5 +1,6 @@
 import type React from 'react';
 import type {
+  ArmorSetBonus,
   ItemSnapshot,
   PlayerStats,
   SimilarSnapshotItem,
@@ -19,6 +20,7 @@ export interface SimilarLoadoutCandidateGroupProps {
   targetExoticArmor?: ItemSnapshot;
   targetPowerWeapon?: ItemSnapshot;
   targetClassStatMap: Record<string, number>;
+  targetArmorSetBonuses?: ArmorSetBonus[];
   actionButton?: React.ReactNode;
   getLoadoutHref?: (snapshotId: string) => string | undefined;
   onToggleSelect: (id: string) => void;
@@ -36,6 +38,7 @@ export function SimilarLoadoutCandidateGroup({
   targetExoticArmor,
   targetPowerWeapon,
   targetClassStatMap,
+  targetArmorSetBonuses,
   actionButton,
   getLoadoutHref,
   onToggleSelect,
@@ -65,6 +68,7 @@ export function SimilarLoadoutCandidateGroup({
             targetExoticArmor={targetExoticArmor}
             targetPowerWeapon={targetPowerWeapon}
             targetClassStatMap={targetClassStatMap}
+            targetArmorSetBonuses={targetArmorSetBonuses}
             loadoutHref={getLoadoutHref?.(item.snapshot.id)}
             onToggleSelect={onToggleSelect}
           />

@@ -18,6 +18,7 @@ import type {
   GetUserSessionsResponse,
   LoginResponse,
   RefreshTokenResponse,
+  RunSessionTickResponse,
   SearchResponse,
   StartSessionResponse,
   StartUserSessionResponse,
@@ -142,11 +143,29 @@ export const startUserSessionResponseTransformer = async (
   return data;
 };
 
+const armorSetBonusPerkSchemaResponseTransformer = (data: any) => {
+  data.hash = BigInt(data.hash.toString());
+  return data;
+};
+
+const armorSetBonusSchemaResponseTransformer = (data: any) => {
+  data.setHash = BigInt(data.setHash.toString());
+  data.activePerks = data.activePerks.map((item: any) =>
+    armorSetBonusPerkSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
 const characterSnapshotSchemaResponseTransformer = (data: any) => {
   data.createdAt = new Date(data.createdAt);
   data.updatedAt = new Date(data.updatedAt);
   if (data.mergedAt) {
     data.mergedAt = new Date(data.mergedAt);
+  }
+  if (data.armorSetBonuses) {
+    data.armorSetBonuses = data.armorSetBonuses.map((item: any) =>
+      armorSetBonusSchemaResponseTransformer(item),
+    );
   }
   return data;
 };
@@ -284,6 +303,18 @@ export const getSessionAggregatesResponseTransformer = async (
   data.aggregates = data.aggregates.map((item: any) =>
     aggregateSchemaResponseTransformer(item),
   );
+  return data;
+};
+
+const sessionTickResponseSchemaResponseTransformer = (data: any) => {
+  data.durationMs = BigInt(data.durationMs.toString());
+  return data;
+};
+
+export const runSessionTickResponseTransformer = async (
+  data: any,
+): Promise<RunSessionTickResponse> => {
+  data = sessionTickResponseSchemaResponseTransformer(data);
   return data;
 };
 

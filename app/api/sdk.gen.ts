@@ -20,6 +20,7 @@ import {
   getUserSessionsResponseTransformer,
   loginResponseTransformer,
   refreshTokenResponseTransformer,
+  runSessionTickResponseTransformer,
   searchResponseTransformer,
   startSessionResponseTransformer,
   startUserSessionResponseTransformer,
@@ -88,6 +89,9 @@ import type {
   MergeSnapshotsResponses,
   RefreshTokenData,
   RefreshTokenResponses,
+  RunSessionTickData,
+  RunSessionTickErrors,
+  RunSessionTickResponses,
   SearchData,
   SearchErrors,
   SearchResponses,
@@ -529,6 +533,26 @@ export const finalizeSessionsComp = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: '/internal/sessions/finalize-comp',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Execute a synchronous session tick to refresh active sessions, capture loadouts, ingest activity history, and clean up stale sessions
+ */
+export const runSessionTick = <ThrowOnError extends boolean = false>(
+  options: Options<RunSessionTickData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    RunSessionTickResponses,
+    RunSessionTickErrors,
+    ThrowOnError
+  >({
+    responseTransformer: runSessionTickResponseTransformer,
+    url: '/internal/sessions/tick',
     ...options,
     headers: {
       'Content-Type': 'application/json',
