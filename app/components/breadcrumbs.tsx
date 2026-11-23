@@ -159,6 +159,12 @@ export function generateBreadcrumbs(
       continue;
     }
 
+    if (seg === 'metrics') {
+      crumbs.push({ label: 'Metrics' });
+      i++;
+      continue;
+    }
+
     if (seg === 'fireteam') {
       crumbs.push({ label: 'Fireteam' });
       i++;

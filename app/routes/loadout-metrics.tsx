@@ -1,18 +1,10 @@
 import { useMemo, useState } from 'react';
 import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshotAggregates } from '~/api';
-import { calculatePercentage } from '~/calculations/precision';
-import { AvgPerformance } from '~/charts/AvgPerformance';
-import { ChartWrapper } from '~/charts/ChartWrapper';
-import { KDPerformance } from '~/charts/KDPerformance';
-import { MapPerformance } from '~/charts/MapPerformance';
-import { MapWinRate } from '~/charts/MapWinRate';
-import { WinRatio } from '~/charts/WinRatio';
+import { MapTelemetryPanel } from '~/charts/MapTelemetryPanel';
+import { MetricsTrendPanel } from '~/charts/MetricsTrendPanel';
 import { Empty } from '~/components/empty';
-import { CardTitle } from '~/components/ui/card';
-import { DateRangePicker } from '~/components/ui/date-range-picker';
-import { FormLabel } from '~/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
+import { MetricsFilterBar } from '~/components/metrics-filter-bar';
 import {
   useLoadoutData,
   useOptionalProfileData,
@@ -20,11 +12,10 @@ import {
 import {
   type CustomTimeWindow,
   type TimeWindow,
-  generateKDAResultsForTimeWindow,
-  generatePerformancePerMap,
+  generateMapTelemetry,
+  generateMatchSeries,
   timeWindowToCustom,
 } from '~/lib/metrics';
-import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/loadout-metrics';
 
@@ -59,10 +50,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   };
 }
 
-export default function LoadoutMetrics({
-  loaderData,
-  params,
-}: Route.ComponentProps) {
+export function LoadoutMetrics({ loaderData, params }: Route.ComponentProps) {
   const { aggregates, error } = loaderData;
   const { characterId } = params;
   const { snapshot, path } = useLoadoutData();
@@ -107,7 +95,15 @@ export default function LoadoutMetrics({
 
   const customTime = useMemo(() => {
     return timeWindowToCustom(time, aggregates);
-  }, [time, snapshot, aggregates]);
+  }, [time, aggregates]);
+
+  const matchSeries = useMemo(() => {
+    return generateMatchSeries(aggregates, customTime, characterId, gameMode);
+  }, [aggregates, customTime, characterId, gameMode]);
+
+  const mapData = useMemo(() => {
+    return generateMapTelemetry(aggregates, customTime, characterId, gameMode);
+  }, [aggregates, customTime, characterId, gameMode]);
 
   if (error || aggregates.length === 0) {
     return (
@@ -125,135 +121,33 @@ export default function LoadoutMetrics({
     );
   }
 
-  const data = useMemo(() => {
-    return generateKDAResultsForTimeWindow(
-      aggregates,
-      customTime,
-      characterId,
-      gameMode,
-    );
-  }, [aggregates, customTime, gameMode, characterId]);
-
-  const mapData = useMemo(() => {
-    return generatePerformancePerMap(
-      aggregates,
-      customTime,
-      characterId,
-      gameMode,
-    );
-  }, [aggregates, customTime, gameMode, characterId]);
-
-  const ratio = data.reduce(
-    (state, current) => {
-      state.wins += current.wins;
-      state.games += current.gameCount;
-      return state;
-    },
-    { wins: 0, games: 0 },
-  );
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {metaTags}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
-          <DateRangePicker value={time} onValueChange={setTime} />
-          <RadioGroup
-            className="flex flex-col items-start gap-4 lg:flex-row lg:items-center"
-            name="game-mode"
-            value={gameMode}
-            onValueChange={(value) => {
-              setGameMode(value as GameMode);
-            }}
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="allGameModes" id="all" />
-              <FormLabel htmlFor="one">All</FormLabel>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="quickplay" id="quickplay" />
-              <FormLabel htmlFor="quickplay">Quickplay</FormLabel>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="competitive" id="comp" />
-              <FormLabel htmlFor="comp">Competitive</FormLabel>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="trials" id="trials" />
-              <FormLabel htmlFor="trials">Trials</FormLabel>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="ironBanner" id="ib" />
-              <FormLabel htmlFor="ib">Iron Banner</FormLabel>
-            </div>
-          </RadioGroup>
-        </div>
-        <div className="flex flex-col gap-4 xl:flex-row">
-          <ChartWrapper
-            title="Average Performance"
-            description="Shows the average kills/deaths/assists for the selected time window."
-          >
-            <AvgPerformance
-              data={data}
-              timeWindow={customTime}
-              syncId="performance"
-              className="lg:max-h-[200px] xl:max-h-[400px]"
-            />
-          </ChartWrapper>
+      <MetricsFilterBar
+        time={time}
+        onTimeChange={setTime}
+        gameMode={gameMode}
+        onGameModeChange={setGameMode}
+      />
 
-          <ChartWrapper
-            title="K/D & Efficiency"
-            description="Shows the ratios for the selected time window."
-          >
-            <KDPerformance
-              data={data}
-              timeWindow={customTime}
-              syncId="performance"
-              className="lg:max-h-[200px] xl:max-h-[400px]"
-            />
-          </ChartWrapper>
-          <ChartWrapper
-            title={
-              <div className="flex flex-row gap-4">
-                <CardTitle>Win Percentage</CardTitle>
-                <div
-                  className={cn(
-                    'text-md',
-                    calculatePercentage(ratio.wins, ratio.games) >= 50
-                      ? 'text-green-500'
-                      : 'text-red-500',
-                  )}
-                >{`${calculatePercentage(ratio.wins, ratio.games).toFixed(0)}%`}</div>
-              </div>
-            }
-            description="Shows the win percentage for the selected time window."
-          >
-            <WinRatio
-              data={data}
-              timeWindow={customTime}
-              syncId="performance"
-              className="lg:max-h-[200px] xl:max-h-[400px]"
-            />
-          </ChartWrapper>
+      {matchSeries.points.length === 0 ? (
+        <Empty
+          title="No Matches in Selected Filter"
+          description="Try expanding the date range or switching back to All Modes to view telemetry for this loadout."
+        />
+      ) : (
+        <div className="flex flex-col gap-6">
+          <MetricsTrendPanel
+            points={matchSeries.points}
+            summary={matchSeries.summary}
+            syncId="loadout-performance"
+          />
+          <MapTelemetryPanel data={mapData} />
         </div>
-        <div className="flex flex-col gap-4 lg:flex-row">
-          <ChartWrapper
-            title="Map Performance"
-            description="Shows the map performance for the selected time window."
-          >
-            <MapPerformance
-              data={mapData}
-              timeWindow={customTime}
-              syncId="map"
-            />
-          </ChartWrapper>
-          <ChartWrapper
-            title="Map Win Rate"
-            description="Shows the number of wins and loses for each map."
-          >
-            <MapWinRate data={mapData} timeWindow={customTime} syncId="map" />
-          </ChartWrapper>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
+
+export default LoadoutMetrics;

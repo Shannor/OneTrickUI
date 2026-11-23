@@ -8,8 +8,6 @@ import {
   endOfHour,
   endOfToday,
   format,
-  isAfter,
-  isBefore,
   isFirstDayOfMonth,
   isLastDayOfMonth,
   startOfDay,
@@ -21,8 +19,8 @@ import {
   subMonths,
   subWeeks,
 } from 'date-fns';
-import type { Aggregate, GameMode } from '~/api';
-import { calculateRatio } from '~/calculations/precision';
+import type { Aggregate, CharacterSnapshot, GameMode } from '~/api';
+import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 
 interface KDA {
   kills: number;
@@ -57,6 +55,65 @@ export interface MapResult {
   count: number;
 }
 
+export type MapSignal = 'strong' | 'swap' | 'neutral' | 'low-sample';
+
+export interface MapBestLoadout {
+  snapshotId: string;
+  name: string;
+  kd: number;
+  winPct: number;
+  count: number;
+}
+
+export interface MapTelemetryResult extends MapResult {
+  winPct: number;
+  signal: MapSignal;
+  bestLoadout?: MapBestLoadout;
+}
+
+export interface MatchPoint {
+  matchIndex: number;
+  activityId: string;
+  time: string;
+  shortLabel: string;
+  fullLabel: string;
+  location: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  won: boolean;
+  kd: number;
+  kda: number;
+  winPct: number;
+  rollingKd: number;
+  rollingKda: number;
+  rollingWinPct: number;
+  rollingKills: number;
+  rollingDeaths: number;
+  rollingAssists: number;
+  kdBand: [number, number];
+  kdaBand: [number, number];
+  killsBand: [number, number];
+}
+
+export interface TelemetrySummary {
+  games: number;
+  wins: number;
+  losses: number;
+  winPct: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  avgKills: number;
+  avgDeaths: number;
+  avgAssists: number;
+  kd: number;
+  kda: number;
+  kdDelta: number | null;
+  kdaDelta: number | null;
+  winPctDelta: number | null;
+}
+
 export type CustomTimeWindow = {
   start: Date;
   end: Date;
@@ -71,6 +128,9 @@ export type TimeWindow =
   | 'last-hour'
   | 'last-3-hours'
   | 'last-6-hours';
+
+export const DEFAULT_ROLLING_WINDOW = 5;
+export const MIN_MAP_SAMPLE_FOR_SIGNAL = 2;
 
 export function timeWindowToCustom(
   time: TimeWindow | CustomTimeWindow,
@@ -118,50 +178,341 @@ export function timeWindowToCustom(
   }
 }
 
+export function classifyMapSignal(
+  count: number,
+  kd: number,
+  winPct: number,
+): MapSignal {
+  if (count < MIN_MAP_SAMPLE_FOR_SIGNAL) {
+    return 'low-sample';
+  }
+  if ((kd >= 1.25 && winPct >= 50) || kd >= 1.5) {
+    return 'strong';
+  }
+  if (kd < 0.95 || (winPct <= 35 && kd < 1.2)) {
+    return 'swap';
+  }
+  return 'neutral';
+}
+
+interface RawMatchSample {
+  kills: number;
+  deaths: number;
+  assists: number;
+  won: boolean;
+}
+
+export function summarizeMatchSamples(
+  current: RawMatchSample[],
+  prior: RawMatchSample[] = [],
+): TelemetrySummary {
+  const totals = current.reduce(
+    (acc, m) => {
+      acc.kills += m.kills;
+      acc.deaths += m.deaths;
+      acc.assists += m.assists;
+      acc.wins += m.won ? 1 : 0;
+      return acc;
+    },
+    { kills: 0, deaths: 0, assists: 0, wins: 0 },
+  );
+
+  const games = current.length;
+  const losses = games - totals.wins;
+  const winPct =
+    games > 0 ? Math.round(calculatePercentage(totals.wins, games)) : 0;
+  const kd = games > 0 ? calculateRatio(totals.kills, totals.deaths) : 0;
+  const kda =
+    games > 0
+      ? calculateRatio(totals.kills + totals.assists, totals.deaths)
+      : 0;
+
+  let kdDelta: number | null = null;
+  let kdaDelta: number | null = null;
+  let winPctDelta: number | null = null;
+
+  if (games > 0 && prior.length > 0) {
+    const priorSums = prior.reduce(
+      (acc, m) => ({
+        k: acc.k + m.kills,
+        d: acc.d + m.deaths,
+        a: acc.a + m.assists,
+        w: acc.w + (m.won ? 1 : 0),
+      }),
+      { k: 0, d: 0, a: 0, w: 0 },
+    );
+
+    const priorKd = calculateRatio(priorSums.k, priorSums.d);
+    const priorKda = calculateRatio(priorSums.k + priorSums.a, priorSums.d);
+    const priorWin = calculatePercentage(priorSums.w, prior.length);
+
+    kdDelta = Number((kd - priorKd).toFixed(2));
+    kdaDelta = Number((kda - priorKda).toFixed(2));
+    winPctDelta = Math.round(
+      calculatePercentage(totals.wins, games) - priorWin,
+    );
+  }
+
+  return {
+    games,
+    wins: totals.wins,
+    losses,
+    winPct,
+    kills: totals.kills,
+    deaths: totals.deaths,
+    assists: totals.assists,
+    avgKills: games > 0 ? calculateRatio(totals.kills, games) : 0,
+    avgDeaths: games > 0 ? calculateRatio(totals.deaths, games) : 0,
+    avgAssists: games > 0 ? calculateRatio(totals.assists, games) : 0,
+    kd,
+    kda,
+    kdDelta,
+    kdaDelta,
+    winPctDelta,
+  };
+}
+
+export function generateMatchSeries(
+  aggregates: Aggregate[],
+  time: CustomTimeWindow,
+  characterId: string,
+  filterBy?: GameMode,
+  rollingWindow: number = DEFAULT_ROLLING_WINDOW,
+): { points: MatchPoint[]; summary: TelemetrySummary } {
+  const startMs = new Date(time.start).getTime();
+  const endMs = new Date(time.end).getTime();
+  const durationMs = Math.max(0, endMs - startMs);
+
+  const allModeMatched = aggregates
+    .filter((a) => matchesGameMode(a, filterBy))
+    .sort(
+      (a, b) =>
+        new Date(a.activityDetails.period).getTime() -
+        new Date(b.activityDetails.period).getTime(),
+    )
+    .map((agg) => {
+      const perf = agg.performance?.[characterId];
+      if (!perf) {
+        return null;
+      }
+      const kills = perf.playerStats.kills?.value ?? 0;
+      const deaths = perf.playerStats.deaths?.value ?? 0;
+      const assists = perf.playerStats.assists?.value ?? 0;
+      const won = perf.playerStats.standing?.value === 0;
+      const period = new Date(agg.activityDetails.period);
+      return {
+        activityId: agg.activityId || agg.id,
+        period,
+        periodMs: period.getTime(),
+        location: agg.activityDetails.location || 'Unknown Map',
+        kills,
+        deaths,
+        assists,
+        won,
+        kd: calculateRatio(kills, deaths),
+        kda: calculateRatio(kills + assists, deaths),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  const validMatches = allModeMatched.filter(
+    (m) => m.periodMs >= startMs && m.periodMs <= endMs,
+  );
+  const allBeforeStart = allModeMatched.filter((m) => m.periodMs < startMs);
+  const equalDurationPrior =
+    durationMs > 0
+      ? allBeforeStart.filter((m) => m.periodMs >= startMs - durationMs)
+      : [];
+  const priorMatches =
+    equalDurationPrior.length > 0 ? equalDurationPrior : allBeforeStart;
+
+  const windowSize = Math.max(1, rollingWindow);
+  const points: MatchPoint[] = validMatches.map((match, idx, arr) => {
+    const slice = arr.slice(Math.max(0, idx - windowSize + 1), idx + 1);
+    const sumKills = slice.reduce((acc, m) => acc + m.kills, 0);
+    const sumDeaths = slice.reduce((acc, m) => acc + m.deaths, 0);
+    const sumAssists = slice.reduce((acc, m) => acc + m.assists, 0);
+    const sumWins = slice.reduce((acc, m) => acc + (m.won ? 1 : 0), 0);
+
+    // Pooled numerator/denominator prevents zero-death outlier matches from distorting the rolling ratio
+    const rollingKd = calculateRatio(sumKills, sumDeaths);
+    const rollingKda = calculateRatio(sumKills + sumAssists, sumDeaths);
+    const rollingWinPct = Math.round(
+      calculatePercentage(sumWins, slice.length),
+    );
+    const rollingKills = calculateRatio(sumKills, slice.length);
+    const rollingDeaths = calculateRatio(sumDeaths, slice.length);
+    const rollingAssists = calculateRatio(sumAssists, slice.length);
+
+    const kds = slice.map((m) => m.kd);
+    const kdas = slice.map((m) => m.kda);
+    const killCounts = slice.map((m) => m.kills);
+
+    const matchNumber = idx + 1;
+    const dateShort = format(match.period, 'MMM d');
+    const dateFull = format(match.period, 'MMM d, yyyy h:mm a');
+
+    return {
+      matchIndex: matchNumber,
+      activityId: match.activityId,
+      time: match.period.toISOString(),
+      shortLabel: `#${matchNumber} · ${dateShort}`,
+      fullLabel: `Match #${matchNumber} · ${match.location} · ${dateFull}`,
+      location: match.location,
+      kills: match.kills,
+      deaths: match.deaths,
+      assists: match.assists,
+      won: match.won,
+      kd: match.kd,
+      kda: match.kda,
+      winPct: match.won ? 100 : 0,
+      rollingKd,
+      rollingKda,
+      rollingWinPct,
+      rollingKills,
+      rollingDeaths,
+      rollingAssists,
+      kdBand: [Math.min(...kds), Math.max(...kds)],
+      kdaBand: [Math.min(...kdas), Math.max(...kdas)],
+      killsBand: [Math.min(...killCounts), Math.max(...killCounts)],
+    };
+  });
+
+  return {
+    points,
+    summary: summarizeMatchSamples(validMatches, priorMatches),
+  };
+}
+
+export function generateMapTelemetry(
+  aggregates: Aggregate[],
+  time: CustomTimeWindow,
+  characterId: string,
+  filterBy?: GameMode,
+  snapshots?: Record<string, Pick<CharacterSnapshot, 'id' | 'name'>>,
+): MapTelemetryResult[] {
+  const aggs = sortAggregates(time, aggregates, filterBy);
+  const mapTotals: Record<string, KDA> = {};
+  const perMapSnapshotTotals: Record<string, Record<string, KDA>> = {};
+
+  for (const agg of aggs) {
+    const p = agg.performance?.[characterId];
+    const location = agg.activityDetails?.location;
+    if (!p || !location) {
+      continue;
+    }
+    const kills = p.playerStats.kills?.value ?? 0;
+    const deaths = p.playerStats.deaths?.value ?? 0;
+    const assists = p.playerStats.assists?.value ?? 0;
+    const win = p.playerStats.standing?.value === 0 ? 1 : 0;
+
+    if (!mapTotals[location]) {
+      mapTotals[location] = { kills, deaths, assists, wins: win, gameCount: 1 };
+    } else {
+      mapTotals[location].kills += kills;
+      mapTotals[location].deaths += deaths;
+      mapTotals[location].assists += assists;
+      mapTotals[location].wins += win;
+      mapTotals[location].gameCount += 1;
+    }
+
+    if (snapshots) {
+      const link = agg.snapshotLinks?.[characterId];
+      const snapId = link?.snapshotId;
+      const isValidLink =
+        snapId &&
+        snapshots[snapId] &&
+        link.confidenceLevel !== 'noMatch' &&
+        link.confidenceLevel !== 'notFound';
+
+      if (isValidLink && snapId) {
+        if (!perMapSnapshotTotals[location]) {
+          perMapSnapshotTotals[location] = {};
+        }
+        if (!perMapSnapshotTotals[location][snapId]) {
+          perMapSnapshotTotals[location][snapId] = {
+            kills,
+            deaths,
+            assists,
+            wins: win,
+            gameCount: 1,
+          };
+        } else {
+          perMapSnapshotTotals[location][snapId].kills += kills;
+          perMapSnapshotTotals[location][snapId].deaths += deaths;
+          perMapSnapshotTotals[location][snapId].assists += assists;
+          perMapSnapshotTotals[location][snapId].wins += win;
+          perMapSnapshotTotals[location][snapId].gameCount += 1;
+        }
+      }
+    }
+  }
+
+  return Object.entries(mapTotals).map(([location, value]) => {
+    const kd = calculateRatio(value.kills, value.deaths);
+    const kda = calculateRatio(value.kills + value.assists, value.deaths);
+    const winRatio = calculateRatio(value.wins, value.gameCount);
+    const winPct = Math.round(calculatePercentage(value.wins, value.gameCount));
+
+    let bestLoadout: MapBestLoadout | undefined;
+    if (snapshots && perMapSnapshotTotals[location]) {
+      const candidates = Object.entries(perMapSnapshotTotals[location]).map(
+        ([snapshotId, stats]) => {
+          const snapKd = calculateRatio(stats.kills, stats.deaths);
+          const snapWinPct = Math.round(
+            calculatePercentage(stats.wins, stats.gameCount),
+          );
+          return {
+            snapshotId,
+            name: snapshots[snapshotId]?.name || 'Loadout',
+            kd: snapKd,
+            winPct: snapWinPct,
+            count: stats.gameCount,
+          };
+        },
+      );
+
+      // Prefer builds with 2+ matches on the map when available so a 1-game fluke doesn't overshadow a proven build
+      const multiMatchCandidates = candidates.filter((c) => c.count >= 2);
+      const pool =
+        multiMatchCandidates.length > 0 ? multiMatchCandidates : candidates;
+
+      pool.sort((a, b) => {
+        if (b.kd !== a.kd) return b.kd - a.kd;
+        if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+        return b.count - a.count;
+      });
+
+      if (pool[0]) {
+        bestLoadout = pool[0];
+      }
+    }
+
+    return {
+      location,
+      avgKills: calculateRatio(value.kills, value.gameCount),
+      avgDeaths: calculateRatio(value.deaths, value.gameCount),
+      avgAssists: calculateRatio(value.assists, value.gameCount),
+      kd,
+      kda,
+      wins: value.wins,
+      loses: value.gameCount - value.wins,
+      winRatio,
+      winPct,
+      count: value.gameCount,
+      signal: classifyMapSignal(value.gameCount, kd, winPct),
+      bestLoadout,
+    };
+  });
+}
+
 export function generatePerformancePerMap(
   aggregates: Aggregate[],
   time: CustomTimeWindow,
   characterId: string,
   filterBy?: GameMode,
 ): MapResult[] {
-  const aggs = sortAggregates(time, aggregates, filterBy);
-  const values = aggs.reduce<Record<string, KDA>>((acc, agg) => {
-    const p = agg.performance[characterId];
-    const location = agg.activityDetails.location;
-    if (!p) {
-      return acc;
-    }
-    if (!acc[location]) {
-      acc[location] = {
-        kills: p.playerStats.kills?.value ?? 0,
-        deaths: p.playerStats.deaths?.value ?? 0,
-        assists: p.playerStats.assists?.value ?? 0,
-        wins: p.playerStats.standing?.value === 0 ? 1 : 0,
-        gameCount: 1,
-      };
-    } else {
-      acc[location].kills += p.playerStats.kills?.value ?? 0;
-      acc[location].deaths += p.playerStats.deaths?.value ?? 0;
-      acc[location].assists += p.playerStats.assists?.value ?? 0;
-      acc[location].wins += p.playerStats.standing?.value === 0 ? 1 : 0;
-      acc[location].gameCount += 1;
-    }
-    return acc;
-  }, {});
-  return Object.entries(values).map(([location, value]) => {
-    return {
-      location,
-      avgKills: calculateRatio(value.kills, value.gameCount),
-      avgDeaths: calculateRatio(value.deaths, value.gameCount),
-      avgAssists: calculateRatio(value.assists, value.gameCount),
-      kd: calculateRatio(value.kills, value.deaths),
-      kda: calculateRatio(value.kills + value.assists, value.deaths),
-      wins: value.wins,
-      loses: value.gameCount - value.wins,
-      winRatio: calculateRatio(value.wins, value.gameCount),
-      count: value.gameCount,
-    };
-  });
+  return generateMapTelemetry(aggregates, time, characterId, filterBy);
 }
 
 export function generateKDAResultsForTimeWindow(
@@ -170,7 +521,7 @@ export function generateKDAResultsForTimeWindow(
   characterId: string,
   filterBy?: GameMode,
 ): KDAResult[] {
-  const { intervals, intervalRate } = getTimes(time);
+  const { intervalRate } = getTimes(time);
   const aggs = sortAggregates(time, aggregates, filterBy);
   const values = aggs.reduce<Record<string, KDA>>((acc, agg) => {
     const p = agg.performance[characterId];
@@ -199,8 +550,9 @@ export function generateKDAResultsForTimeWindow(
         break;
       }
     }
-    if (!acc[day.toISOString()]) {
-      acc[day.toISOString()] = {
+    const key = day.toISOString();
+    if (!acc[key]) {
+      acc[key] = {
         kills: p.playerStats.kills?.value ?? 0,
         deaths: p.playerStats.deaths?.value ?? 0,
         assists: p.playerStats.assists?.value ?? 0,
@@ -208,47 +560,30 @@ export function generateKDAResultsForTimeWindow(
         gameCount: 1,
       };
     } else {
-      acc[day.toISOString()].kills += p.playerStats.kills?.value ?? 0;
-      acc[day.toISOString()].deaths += p.playerStats.deaths?.value ?? 0;
-      acc[day.toISOString()].assists += p.playerStats.assists?.value ?? 0;
-      acc[day.toISOString()].wins +=
-        p.playerStats.standing?.value === 0 ? 1 : 0;
-      acc[day.toISOString()].gameCount += 1;
+      acc[key].kills += p.playerStats.kills?.value ?? 0;
+      acc[key].deaths += p.playerStats.deaths?.value ?? 0;
+      acc[key].assists += p.playerStats.assists?.value ?? 0;
+      acc[key].wins += p.playerStats.standing?.value === 0 ? 1 : 0;
+      acc[key].gameCount += 1;
     }
     return acc;
   }, {});
 
-  return intervals
-    .map((interval) => {
-      const int = interval.toISOString();
-      const value = values[int];
-      if (!value) {
-        return {
-          time: int,
-          avgKills: 0,
-          avgDeaths: 0,
-          avgAssists: 0,
-          kd: 1.0,
-          kda: 1.0,
-          winRatio: 0.5,
-          wins: 0,
-          gameCount: 0,
-        };
-      }
-      return {
-        time: int,
-        avgKills: calculateRatio(value.kills, value.gameCount),
-        avgDeaths: calculateRatio(value.deaths, value.gameCount),
-        avgAssists: calculateRatio(value.assists, value.gameCount),
-        kd: calculateRatio(value.kills, value.deaths),
-        kda: calculateRatio(value.kills + value.assists, value.deaths),
-        winRatio: calculateRatio(value.wins, value.gameCount),
-        gameCount: value.gameCount,
-        wins: value.wins,
-      };
-    })
-    .filter(Boolean);
+  return Object.entries(values)
+    .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+    .map(([int, value]) => ({
+      time: int,
+      avgKills: calculateRatio(value.kills, value.gameCount),
+      avgDeaths: calculateRatio(value.deaths, value.gameCount),
+      avgAssists: calculateRatio(value.assists, value.gameCount),
+      kd: calculateRatio(value.kills, value.deaths),
+      kda: calculateRatio(value.kills + value.assists, value.deaths),
+      winRatio: calculateRatio(value.wins, value.gameCount),
+      gameCount: value.gameCount,
+      wins: value.wins,
+    }));
 }
+
 function getTimes(time: CustomTimeWindow): {
   intervals: Date[];
   startDay: Date;
@@ -286,26 +621,32 @@ function getTimes(time: CustomTimeWindow): {
   };
 }
 
+function matchesGameMode(agg: Aggregate, filterBy?: GameMode): boolean {
+  if (filterBy === undefined || filterBy === 'allGameModes') {
+    return true;
+  }
+  if (agg.activityDetails.estimatedGameMode) {
+    return agg.activityDetails.estimatedGameMode === filterBy;
+  }
+  const modes = gameModeToActivityModes(filterBy);
+  return !modes || modes.includes(agg.activityDetails.activity);
+}
+
 function sortAggregates(
   time: CustomTimeWindow,
   aggregates: Aggregate[],
   filterBy?: GameMode,
 ) {
-  const { endDay, startDay } = getTimes(time);
+  const startMs = new Date(time.start).getTime();
+  const endMs = new Date(time.end).getTime();
+
   return aggregates
     .filter((a) => {
-      if (filterBy !== undefined && filterBy !== 'allGameModes') {
-        const modes = gameModeToActivityModes(filterBy);
-        if (modes) {
-          if (!modes.includes(a.activityDetails.activity)) {
-            return false;
-          }
-        }
+      if (!matchesGameMode(a, filterBy)) {
+        return false;
       }
-      return (
-        isAfter(new Date(a.activityDetails.period), startDay) &&
-        isBefore(new Date(a.activityDetails.period), endDay)
-      );
+      const periodMs = new Date(a.activityDetails.period).getTime();
+      return periodMs >= startMs && periodMs <= endMs;
     })
     .sort((a, b) => {
       return (
@@ -314,6 +655,7 @@ function sortAggregates(
       );
     });
 }
+
 export function tickFormater(
   value: string,
   timeWindow: CustomTimeWindow,
