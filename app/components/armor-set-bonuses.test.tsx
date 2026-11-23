@@ -126,10 +126,41 @@ describe('ArmorSetBonusesPanel', () => {
     expect(screen.getByText('Per Audacia')).toBeInTheDocument();
     expect(screen.getAllByText('2-Piece Set')).toHaveLength(2);
   });
+  it('uses two columns for 2 active perks and falls back to single column for 3+ perks', () => {
+    const { rerender } = render(
+      <ArmorSetBonusesPanel bonuses={[singleFourPieceBonus]} />,
+    );
+    const twoPerkGrid = screen
+      .getByTestId('armor-set-bonus-742845781')
+      .querySelector('.grid');
+    expect(twoPerkGrid).toHaveClass('md:grid-cols-2');
+
+    const threeTierBonus: ArmorSetBonus = {
+      ...singleFourPieceBonus,
+      activeCount: 5,
+      activePerks: [
+        ...singleFourPieceBonus.activePerks,
+        {
+          requiredSetCount: 5,
+          hash: 2562518504n,
+          name: 'Primary Apex',
+          description: 'Bonus fifth-piece effect.',
+          iconPath: '/common/destiny2_content/icons/primary-apex.png',
+        },
+      ],
+    };
+
+    rerender(<ArmorSetBonusesPanel bonuses={[threeTierBonus]} />);
+    const threePerkGrid = screen
+      .getByTestId('armor-set-bonus-742845781')
+      .querySelector('.grid');
+    expect(threePerkGrid).not.toHaveClass('md:grid-cols-2');
+    expect(screen.getByText('Primary Apex')).toBeInTheDocument();
+  });
 });
 
 describe('ArmorSetBonusPill', () => {
-  it('renders compact pill label and opens tooltip with unlocked perk details on click', () => {
+  it('renders a semantic button pill and toggles tooltip open and closed across pointerDown + click', () => {
     render(
       <TooltipProvider>
         <ArmorSetBonusPill bonus={singleFourPieceBonus} />
@@ -137,13 +168,21 @@ describe('ArmorSetBonusPill', () => {
     );
 
     const pill = screen.getByTestId('armor-set-bonus-pill-742845781');
+    expect(pill.tagName).toBe('BUTTON');
+    expect(pill).toHaveAttribute('type', 'button');
     expect(pill).toHaveTextContent('Cruel Electrum');
     expect(pill).toHaveTextContent('(4pc)');
-    expect(pill).toHaveAttribute('tabIndex', '0');
 
+    fireEvent.pointerDown(pill);
     fireEvent.click(pill);
 
     expect(screen.getAllByText('Primary Survivor').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Primary Phantom').length).toBeGreaterThan(0);
+
+    fireEvent.pointerDown(pill);
+    fireEvent.click(pill);
+
+    expect(screen.queryByText('Primary Survivor')).not.toBeInTheDocument();
+    expect(screen.queryByText('Primary Phantom')).not.toBeInTheDocument();
   });
 });

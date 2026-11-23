@@ -13,7 +13,7 @@ import {
   GearItemDetailsSummary,
   getGearItemName,
 } from '~/components/gear-item-pill';
-import { Badge } from '~/components/ui/badge';
+import { Badge, badgeVariants } from '~/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -24,6 +24,7 @@ import {
   effectiveInstanceId,
   getExotic,
 } from '~/hooks/use-loadout';
+import { useTapTooltip } from '~/hooks/use-tap-tooltip';
 import { cn } from '~/lib/utils';
 
 import { extractClassStatMap } from './similar-loadouts-utils';
@@ -39,6 +40,7 @@ export function ArmorSetBonusDiffBadge({
   candidateBonuses = [],
   targetBonuses = [],
 }: ArmorSetBonusDiffBadgeProps) {
+  const { open, onOpenChange, triggerProps, contentProps } = useTapTooltip();
   const bothLackSetBonuses =
     candidateBonuses.length === 0 && targetBonuses.length === 0;
   const candidateSummary = formatArmorSetBonusSummary(candidateBonuses);
@@ -55,33 +57,40 @@ export function ArmorSetBonusDiffBadge({
           : `Different Armor Set Bonuses than Primary (${targetSummary})`;
 
   return (
-    <Tooltip>
+    <Tooltip open={open} onOpenChange={onOpenChange}>
       <TooltipTrigger asChild>
-        {armorSetBonusMatch ? (
-          <Badge
-            tabIndex={0}
-            data-testid="armor-set-bonus-diff-badge"
-            variant="secondary"
-            className="cursor-help gap-1 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-            <span>
-              {bothLackSetBonuses ? 'No Set Bonuses' : 'Set Bonus Match'}
-            </span>
-          </Badge>
-        ) : (
-          <Badge
-            tabIndex={0}
-            data-testid="armor-set-bonus-diff-badge"
-            variant="outline"
-            className="cursor-help gap-1.5 border-sky-500/50 bg-sky-500/10 text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-sky-400"
-          >
-            <ShieldCheckIcon className="h-3 w-3 shrink-0" />
-            <span>Set: {candidateSummary}</span>
-          </Badge>
-        )}
+        <button
+          type="button"
+          data-testid="armor-set-bonus-diff-badge"
+          {...triggerProps}
+          className={cn(
+            badgeVariants({
+              variant: armorSetBonusMatch ? 'secondary' : 'outline',
+            }),
+            armorSetBonusMatch
+              ? 'cursor-help gap-1 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
+              : 'cursor-help gap-1.5 border-sky-500/50 bg-sky-500/10 text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-sky-400',
+          )}
+        >
+          {armorSetBonusMatch ? (
+            <>
+              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+              <span>
+                {bothLackSetBonuses ? 'No Set Bonuses' : 'Set Bonus Match'}
+              </span>
+            </>
+          ) : (
+            <>
+              <ShieldCheckIcon className="h-3 w-3 shrink-0" />
+              <span>Set: {candidateSummary}</span>
+            </>
+          )}
+        </button>
       </TooltipTrigger>
-      <TooltipContent className="flex max-w-sm flex-col gap-3 p-3">
+      <TooltipContent
+        {...contentProps}
+        className="flex max-w-sm flex-col gap-3 p-3"
+      >
         <div className="border-b border-border/60 pb-1.5 text-xs font-semibold">
           {tooltipHeading}
         </div>

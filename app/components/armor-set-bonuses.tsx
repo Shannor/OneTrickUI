@@ -1,5 +1,4 @@
 import { ShieldCheckIcon, ShieldIcon } from 'lucide-react';
-import { useState } from 'react';
 import type { ArmorSetBonus, ArmorSetBonusPerk } from '~/api';
 import { Badge } from '~/components/ui/badge';
 import {
@@ -7,6 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
+import { useTapTooltip } from '~/hooks/use-tap-tooltip';
 import { cn, setBungieUrl } from '~/lib/utils';
 
 export function getHighestActiveTier(bonus: ArmorSetBonus): number {
@@ -112,7 +112,7 @@ export function ArmorSetBonusGroup({
 }: ArmorSetBonusGroupProps) {
   const activePerks = bonus.activePerks ?? [];
   const highestTier = getHighestActiveTier(bonus);
-  const hasTwoColumns = !isSplitSet && activePerks.length > 1;
+  const hasTwoColumns = !isSplitSet && activePerks.length === 2;
 
   return (
     <div
@@ -307,28 +307,18 @@ export function ArmorSetBonusPill({
   size = 'md',
   className,
 }: ArmorSetBonusPillProps) {
-  const [open, setOpen] = useState(false);
+  const { open, onOpenChange, triggerProps, contentProps } = useTapTooltip();
   const highestTier = getHighestActiveTier(bonus);
   const featuredPerk =
     bonus.activePerks?.[bonus.activePerks.length - 1] ?? bonus.activePerks?.[0];
 
   return (
-    <Tooltip open={open} onOpenChange={setOpen}>
+    <Tooltip open={open} onOpenChange={onOpenChange}>
       <TooltipTrigger asChild>
-        <div
-          tabIndex={0}
+        <button
+          type="button"
           data-testid={`armor-set-bonus-pill-${String(bonus.setHash)}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpen((prev) => !prev);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen((prev) => !prev);
-            }
-          }}
+          {...triggerProps}
           className={cn(
             'inline-flex max-w-full cursor-help select-none items-center gap-1.5 rounded-full border border-primary/35 bg-primary/10 font-semibold text-foreground transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
             size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs',
@@ -348,9 +338,9 @@ export function ArmorSetBonusPill({
           <span className="shrink-0 font-mono text-[10px] font-bold text-primary">
             ({highestTier}pc)
           </span>
-        </div>
+        </button>
       </TooltipTrigger>
-      <TooltipContent className="max-w-sm p-3">
+      <TooltipContent {...contentProps} className="max-w-sm p-3">
         <ArmorSetBonusTooltipDetails bonuses={[bonus]} />
       </TooltipContent>
     </Tooltip>

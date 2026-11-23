@@ -212,9 +212,20 @@ describe('LoadoutCard', () => {
     expect(audaciaPill).toHaveTextContent('Per Audacia');
     expect(audaciaPill).toHaveTextContent('(4pc)');
 
+    fireEvent.pointerDown(audaciaPill);
     fireEvent.click(audaciaPill);
     expect(handleClick).not.toHaveBeenCalled();
-    expect(screen.getAllByText('Primary Chain').length).toBeGreaterThan(0);
+
+    const primaryChainMatches = screen.getAllByText('Primary Chain');
+    expect(primaryChainMatches.length).toBeGreaterThan(0);
     expect(screen.getAllByText('Sublime Transit').length).toBeGreaterThan(0);
+
+    fireEvent.click(primaryChainMatches[0]);
+    expect(handleClick).not.toHaveBeenCalled();
+
+    fireEvent.pointerDown(audaciaPill);
+    fireEvent.click(audaciaPill);
+    expect(handleClick).not.toHaveBeenCalled();
+    expect(screen.queryByText('Primary Chain')).not.toBeInTheDocument();
   });
 });
