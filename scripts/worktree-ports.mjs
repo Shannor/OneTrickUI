@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { realpathSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const DEFAULT_DEV_PORT = 5173;
 const EXTRA_PATHS = ['/opt/homebrew/bin', '/usr/local/bin'];
+const MAX_ANCESTOR_DEPTH = 6;
 const UI_SERVER_COMMAND_PATTERN =
   /(?:^|[\s/\\])(?:react-router(?:-serve)?|@react-router\/dev|vite|server\.js)(?:[\s/\\]|$)/i;
+const PACKAGE_RUNNER_DEV_PATTERN =
+  /(?:^|[\s/\\])(?:(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?(?:dev|start)\b|(?:npx|pnpx|bunx|npm\s+exec)\b.*(?:react-router|vite|server\.js))/i;
+const SHELL_C_WRAPPER_PATTERN =
+  /^(?:[^\s]*\/)?(?:sh|bash|zsh|dash)\s+-c\s+(.+)$/i;
 
 function buildExecEnv(env = process.env) {
   const existingPath = env.PATH ?? '';
@@ -32,8 +37,84 @@ function defaultRealpath(targetPath) {
   try {
     return realpathSync(targetPath);
   } catch {
-    return path.resolve(targetPath);
+    const resolved = path.resolve(targetPath);
+    const trailingSegments = [];
+    let current = resolved;
+
+    while (true) {
+      const parent = path.dirname(current);
+      if (parent === current) {
+        return resolved;
+      }
+      trailingSegments.unshift(path.basename(current));
+      current = parent;
+      try {
+        return path.join(realpathSync(current), ...trailingSegments);
+      } catch {
+        // Continue walking up until an existing ancestor resolves symlinks.
+      }
+    }
   }
+}
+
+function defaultPathExists(targetPath) {
+  try {
+    return existsSync(targetPath);
+  } catch {
+    return false;
+  }
+}
+
+function resolvePathExistsFn(options) {
+  if (typeof options.pathExists === 'function') {
+    return options.pathExists;
+  }
+  if (options.execCommand) {
+    return () => true;
+  }
+  return defaultPathExists;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isPathStartBoundary(char) {
+  return (
+    char === undefined ||
+    /\s/.test(char) ||
+    char === '"' ||
+    char === "'" ||
+    char === '=' ||
+    char === ':'
+  );
+}
+
+function isPathEndBoundary(char) {
+  return (
+    char === undefined ||
+    char === path.sep ||
+    /\s/.test(char) ||
+    char === '"' ||
+    char === "'" ||
+    char === ':'
+  );
+}
+
+function isNestedWorktreeSubpath(normalizedTarget, normalizedParent) {
+  const nestedPrefix = `${normalizedParent}${path.sep}.worktrees`;
+  return (
+    normalizedTarget === nestedPrefix ||
+    normalizedTarget.startsWith(nestedPrefix + path.sep)
+  );
+}
+
+export function cleanDeletedPath(rawPath) {
+  if (!rawPath || typeof rawPath !== 'string') {
+    return null;
+  }
+  const cleaned = rawPath.replace(/\s+\(deleted\)$/, '').trim();
+  return cleaned || null;
 }
 
 export function hashBranchToPort(branch) {
@@ -87,6 +168,7 @@ export function parseWtListOutput(raw) {
     const expectedPort =
       parsePortFromUrl(expectedUrl) ??
       (branch ? hashBranchToPort(branch) : DEFAULT_DEV_PORT);
+    const isPrunable = Boolean(item.worktree?.prunable);
 
     worktrees.push({
       branch,
@@ -96,6 +178,7 @@ export function parseWtListOutput(raw) {
       expectedPort,
       expectedUrl: expectedUrl ?? `http://localhost:${expectedPort}`,
       wtListening: Boolean(item.dev_server?.listening),
+      ...(isPrunable ? { prunable: true } : {}),
     });
   }
 
@@ -114,6 +197,7 @@ export function parseGitWorktreeList(raw, currentCwd = process.cwd()) {
       const lines = block.split(/\r?\n/);
       let worktreePath = null;
       let branch = null;
+      let isPrunable = false;
 
       for (const line of lines) {
         if (line.startsWith('worktree ')) {
@@ -121,6 +205,8 @@ export function parseGitWorktreeList(raw, currentCwd = process.cwd()) {
         } else if (line.startsWith('branch ')) {
           const ref = line.slice('branch '.length).trim();
           branch = ref.replace(/^refs\/heads\//, '') || null;
+        } else if (line === 'prunable' || line.startsWith('prunable ')) {
+          isPrunable = true;
         }
       }
 
@@ -142,6 +228,7 @@ export function parseGitWorktreeList(raw, currentCwd = process.cwd()) {
         expectedPort,
         expectedUrl: `http://localhost:${expectedPort}`,
         wtListening: false,
+        ...(isPrunable ? { prunable: true } : {}),
       };
     })
     .filter(Boolean);
@@ -231,9 +318,147 @@ export function parsePsCommands(raw) {
   return commandByPid;
 }
 
+export function parsePsProcesses(raw) {
+  const processByPid = new Map();
+
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    const withPgid = trimmed.match(/^(\d+)\s+(\d+)\s+(\d+)\s+(.+)$/);
+    if (withPgid) {
+      const pid = Number(withPgid[1]);
+      const ppid = Number(withPgid[2]);
+      const pgid = Number(withPgid[3]);
+      if (Number.isInteger(pid)) {
+        processByPid.set(pid, {
+          pid,
+          ppid: Number.isInteger(ppid) ? ppid : null,
+          pgid: Number.isInteger(pgid) ? pgid : null,
+          command: withPgid[4].trim(),
+        });
+      }
+      continue;
+    }
+
+    const withPpid = trimmed.match(/^(\d+)\s+(\d+)\s+(.+)$/);
+    if (withPpid) {
+      const pid = Number(withPpid[1]);
+      const ppid = Number(withPpid[2]);
+      if (Number.isInteger(pid)) {
+        processByPid.set(pid, {
+          pid,
+          ppid: Number.isInteger(ppid) ? ppid : null,
+          pgid: null,
+          command: withPpid[3].trim(),
+        });
+      }
+      continue;
+    }
+
+    const pidOnly = trimmed.match(/^(\d+)\s+(.+)$/);
+    if (pidOnly) {
+      const pid = Number(pidOnly[1]);
+      if (Number.isInteger(pid)) {
+        processByPid.set(pid, {
+          pid,
+          ppid: null,
+          pgid: null,
+          command: pidOnly[2].trim(),
+        });
+      }
+    }
+  }
+
+  return processByPid;
+}
+
 export function isUiServerCommand(commandLine, commandName = '') {
   const combined = [commandLine, commandName].filter(Boolean).join(' ');
   return UI_SERVER_COMMAND_PATTERN.test(combined);
+}
+
+export function isUiServerWrapperCommand(commandLine) {
+  if (!commandLine || typeof commandLine !== 'string') {
+    return false;
+  }
+  const trimmed = commandLine.trim();
+  if (!trimmed) {
+    return false;
+  }
+  if (isUiServerCommand(trimmed) || PACKAGE_RUNNER_DEV_PATTERN.test(trimmed)) {
+    return true;
+  }
+  const shellMatch = trimmed.match(SHELL_C_WRAPPER_PATTERN);
+  if (shellMatch) {
+    const inner = shellMatch[1].replace(/^['"]|['"]$/g, '');
+    return isUiServerCommand(inner) || PACKAGE_RUNNER_DEV_PATTERN.test(inner);
+  }
+  return false;
+}
+
+function pathMatchesTarget(
+  candidatePath,
+  targetPath,
+  normalizePath = defaultRealpath,
+) {
+  const cleanedCandidate = cleanDeletedPath(candidatePath);
+  if (!cleanedCandidate || !targetPath) {
+    return false;
+  }
+
+  const normalizedCandidate = normalizePath(cleanedCandidate);
+  const normalizedTarget = normalizePath(targetPath);
+
+  if (normalizedCandidate === normalizedTarget) {
+    return true;
+  }
+
+  return (
+    normalizedCandidate.startsWith(normalizedTarget + path.sep) &&
+    !isNestedWorktreeSubpath(normalizedCandidate, normalizedTarget)
+  );
+}
+
+function commandMatchesPath(commandLine, rawTargetPath, normalizedTargetPath) {
+  if (!commandLine) {
+    return false;
+  }
+
+  const candidates = new Set(
+    [rawTargetPath, normalizedTargetPath].filter(Boolean),
+  );
+  for (const candidatePath of candidates) {
+    let searchFrom = 0;
+    while (searchFrom < commandLine.length) {
+      const idx = commandLine.indexOf(candidatePath, searchFrom);
+      if (idx === -1) {
+        break;
+      }
+      searchFrom = idx + candidatePath.length;
+
+      const prevChar = idx > 0 ? commandLine[idx - 1] : undefined;
+      const nextChar = commandLine[idx + candidatePath.length];
+      if (!isPathStartBoundary(prevChar) || !isPathEndBoundary(nextChar)) {
+        continue;
+      }
+
+      const after = commandLine.slice(idx + candidatePath.length);
+      const nestedPrefix = `${path.sep}.worktrees`;
+      if (
+        after.startsWith(nestedPrefix) &&
+        isPathEndBoundary(after[nestedPrefix.length])
+      ) {
+        continue;
+      }
+
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function matchWorktreeForPath(
@@ -241,11 +466,12 @@ export function matchWorktreeForPath(
   worktrees,
   normalizePath = defaultRealpath,
 ) {
-  if (!targetPath) {
+  const cleanedTarget = cleanDeletedPath(targetPath);
+  if (!cleanedTarget) {
     return null;
   }
 
-  const normalizedTarget = normalizePath(targetPath);
+  const normalizedTarget = normalizePath(cleanedTarget);
   const sorted = [...worktrees]
     .map((worktree) => ({
       worktree,
@@ -256,7 +482,8 @@ export function matchWorktreeForPath(
   for (const candidate of sorted) {
     if (
       normalizedTarget === candidate.normalizedPath ||
-      normalizedTarget.startsWith(candidate.normalizedPath + path.sep)
+      (normalizedTarget.startsWith(candidate.normalizedPath + path.sep) &&
+        !isNestedWorktreeSubpath(normalizedTarget, candidate.normalizedPath))
     ) {
       return candidate.worktree;
     }
@@ -283,24 +510,131 @@ function matchWorktreeInCommand(
     .sort((a, b) => b.normalizedPath.length - a.normalizedPath.length);
 
   for (const candidate of sorted) {
-    for (const candidatePath of new Set([
-      candidate.rawPath,
-      candidate.normalizedPath,
-    ])) {
-      const idx = commandLine.indexOf(candidatePath);
-      if (idx === -1) {
-        continue;
+    if (
+      commandMatchesPath(
+        commandLine,
+        candidate.rawPath,
+        candidate.normalizedPath,
+      )
+    ) {
+      return candidate.worktree;
+    }
+  }
+
+  return null;
+}
+
+export function buildRepoContext(
+  worktrees,
+  cwd = process.cwd(),
+  normalizePath = defaultRealpath,
+) {
+  const mainWorktree =
+    worktrees.find((worktree) => worktree.isMain) ?? worktrees[0] ?? null;
+  const rawMainPath = mainWorktree?.path ?? path.resolve(cwd);
+  const normalizedMainPath = normalizePath(rawMainPath);
+
+  const variants = [];
+  const seen = new Set();
+  for (const mainPath of [normalizedMainPath, rawMainPath]) {
+    if (!mainPath || seen.has(mainPath)) {
+      continue;
+    }
+    seen.add(mainPath);
+    variants.push({
+      mainPath,
+      parentDir: path.dirname(mainPath),
+      repoName: path.basename(mainPath),
+    });
+  }
+
+  return {
+    mainPath: normalizedMainPath,
+    parentDir: path.dirname(normalizedMainPath),
+    repoName: path.basename(normalizedMainPath),
+    variants,
+  };
+}
+
+export function extractRepoWorktreePath(
+  targetPath,
+  repoContext,
+  normalizePath = defaultRealpath,
+) {
+  const cleaned = cleanDeletedPath(targetPath);
+  if (!cleaned || !repoContext?.variants?.length) {
+    return null;
+  }
+
+  const normalized = normalizePath(cleaned);
+
+  for (const variant of repoContext.variants) {
+    const nestedBase = `${variant.mainPath}${path.sep}.worktrees${path.sep}`;
+    if (normalized.startsWith(nestedBase)) {
+      const remainder = normalized.slice(nestedBase.length);
+      const [worktreeName] = remainder.split(path.sep);
+      if (worktreeName) {
+        return path.join(repoContext.mainPath, '.worktrees', worktreeName);
       }
-      const nextChar = commandLine[idx + candidatePath.length];
+      return null;
+    }
+
+    const parentPrefix = variant.parentDir.endsWith(path.sep)
+      ? variant.parentDir
+      : `${variant.parentDir}${path.sep}`;
+    if (normalized.startsWith(parentPrefix)) {
+      const remainder = normalized.slice(parentPrefix.length);
+      const [topSegment] = remainder.split(path.sep);
       if (
-        nextChar === undefined ||
-        nextChar === path.sep ||
-        /\s/.test(nextChar) ||
-        nextChar === '"' ||
-        nextChar === "'"
+        topSegment &&
+        (topSegment.startsWith(`${variant.repoName}.`) ||
+          topSegment.startsWith(`${variant.repoName}-`)) &&
+        topSegment.length > variant.repoName.length + 1
       ) {
-        return candidate.worktree;
+        return path.join(repoContext.parentDir, topSegment);
       }
+    }
+  }
+
+  return null;
+}
+
+export function extractRepoWorktreePathFromCommand(
+  commandLine,
+  repoContext,
+  normalizePath = defaultRealpath,
+) {
+  if (!commandLine || !repoContext?.variants?.length) {
+    return null;
+  }
+
+  for (const variant of repoContext.variants) {
+    const nestedPrefix = `${variant.mainPath}${path.sep}.worktrees${path.sep}`;
+    const nestedPattern = new RegExp(
+      `(?:^|[\\s"'=:])(${escapeRegExp(nestedPrefix)}[^\\s"'/:;]+)(?=$|[\\s"'/:;])`,
+    );
+    const nestedMatch = commandLine.match(nestedPattern);
+    if (nestedMatch) {
+      return extractRepoWorktreePath(
+        nestedMatch[1],
+        repoContext,
+        normalizePath,
+      );
+    }
+
+    const parentPrefix = variant.parentDir.endsWith(path.sep)
+      ? variant.parentDir
+      : `${variant.parentDir}${path.sep}`;
+    const siblingPattern = new RegExp(
+      `(?:^|[\\s"'=:])(${escapeRegExp(parentPrefix)}${escapeRegExp(variant.repoName)}[.-][^\\s"'/:;]+)(?=$|[\\s"'/:;])`,
+    );
+    const siblingMatch = commandLine.match(siblingPattern);
+    if (siblingMatch) {
+      return extractRepoWorktreePath(
+        siblingMatch[1],
+        repoContext,
+        normalizePath,
+      );
     }
   }
 
@@ -361,25 +695,166 @@ function loadListeningProcesses(execCommand) {
     cwdByPid = new Map();
   }
 
-  let commandByPid = new Map();
+  let processByPid = new Map();
   try {
     const psRaw = execCommand('ps', [
       '-ww',
       '-o',
-      'pid=,command=',
+      'pid=,ppid=,pgid=,command=',
       '-p',
       pidArg,
     ]);
-    commandByPid = parsePsCommands(psRaw);
+    processByPid = parsePsProcesses(psRaw);
   } catch {
-    commandByPid = new Map();
+    processByPid = new Map();
   }
 
-  return listeners.map((listener) => ({
-    ...listener,
-    cwd: cwdByPid.get(listener.pid) ?? null,
-    command: commandByPid.get(listener.pid) ?? listener.commandName ?? '',
-  }));
+  return listeners.map((listener) => {
+    const proc = processByPid.get(listener.pid);
+    return {
+      ...listener,
+      cwd: cwdByPid.get(listener.pid) ?? null,
+      command: proc?.command ?? listener.commandName ?? '',
+      ppid: proc?.ppid ?? null,
+      pgid: proc?.pgid ?? null,
+    };
+  });
+}
+
+function loadAncestorProcesses(seedProcesses, execCommand) {
+  const processMap = new Map();
+  for (const proc of seedProcesses) {
+    if (proc && Number.isInteger(proc.pid) && !processMap.has(proc.pid)) {
+      processMap.set(proc.pid, {
+        pid: proc.pid,
+        ppid: proc.ppid ?? null,
+        pgid: proc.pgid ?? null,
+        command: proc.command ?? '',
+      });
+    }
+  }
+
+  let frontier = [...processMap.values()]
+    .map((proc) => proc.ppid)
+    .filter(
+      (ppid) => Number.isInteger(ppid) && ppid > 1 && !processMap.has(ppid),
+    );
+
+  for (
+    let depth = 0;
+    depth < MAX_ANCESTOR_DEPTH && frontier.length > 0;
+    depth++
+  ) {
+    const uniquePids = [...new Set(frontier)];
+    let fetched = new Map();
+    try {
+      const psRaw = execCommand('ps', [
+        '-ww',
+        '-o',
+        'pid=,ppid=,pgid=,command=',
+        '-p',
+        uniquePids.join(','),
+      ]);
+      fetched = parsePsProcesses(psRaw);
+    } catch {
+      break;
+    }
+
+    const nextFrontier = [];
+    for (const [pid, proc] of fetched.entries()) {
+      if (!processMap.has(pid)) {
+        processMap.set(pid, proc);
+        if (
+          Number.isInteger(proc.ppid) &&
+          proc.ppid > 1 &&
+          !processMap.has(proc.ppid)
+        ) {
+          nextFrontier.push(proc.ppid);
+        }
+      }
+    }
+    frontier = nextFrontier;
+  }
+
+  return processMap;
+}
+
+export function resolveProcessWrapperChain(
+  listenerProcess,
+  processMap,
+  options = {},
+) {
+  const selfPid = options.selfPid ?? process.pid;
+  const selfPgid = options.selfPgid ?? null;
+
+  const base = processMap.get(listenerProcess.pid) ?? {
+    pid: listenerProcess.pid,
+    ppid: listenerProcess.ppid ?? null,
+    pgid: listenerProcess.pgid ?? null,
+    command: listenerProcess.command ?? '',
+  };
+
+  const chain = [base];
+  const visited = new Set([base.pid]);
+  let current = base;
+
+  for (let depth = 0; depth < MAX_ANCESTOR_DEPTH; depth++) {
+    const parentPid = current.ppid;
+    if (
+      !Number.isInteger(parentPid) ||
+      parentPid <= 1 ||
+      parentPid === selfPid ||
+      visited.has(parentPid)
+    ) {
+      break;
+    }
+
+    const parent = processMap.get(parentPid);
+    if (!parent || !isUiServerWrapperCommand(parent.command)) {
+      break;
+    }
+    if (selfPgid !== null && parent.pid === selfPgid) {
+      break;
+    }
+
+    visited.add(parent.pid);
+    chain.unshift(parent);
+    current = parent;
+  }
+
+  const root = chain[0];
+  const detached = base.ppid === 1 || root.ppid === 1;
+
+  return {
+    chain,
+    root,
+    detached,
+  };
+}
+
+function resolveSelfPgid(options, execCommand, processMap) {
+  if (options.selfPgid !== undefined) {
+    return options.selfPgid;
+  }
+  const selfPid = options.selfPid ?? process.pid;
+  if (processMap?.has(selfPid)) {
+    return processMap.get(selfPid).pgid ?? null;
+  }
+  if (options.execCommand) {
+    return null;
+  }
+  try {
+    const raw = execCommand('ps', [
+      '-o',
+      'pgid=',
+      '-p',
+      String(selfPid),
+    ]).trim();
+    const parsed = Number(raw);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 export function isLoopbackAddress(address) {
@@ -436,13 +911,21 @@ export function selectPrimaryPortForProcess(processListeners, expectedPort) {
   return [...pool].sort((a, b) => a.port - b.port)[0];
 }
 
+function isWorktreeAvailable(worktree, pathExists) {
+  return !worktree.prunable && pathExists(worktree.path);
+}
+
 export function collectWorktreePorts(options = {}) {
   const execCommand = options.execCommand ?? defaultExecCommand;
   const normalizePath = options.normalizePath ?? defaultRealpath;
+  const pathExists = resolvePathExistsFn(options);
   const cwd = options.cwd ?? process.cwd();
   const includeAll = Boolean(options.includeAll);
 
   const worktrees = loadWorktrees(execCommand, cwd);
+  const availableWorktrees = worktrees.filter((worktree) =>
+    isWorktreeAvailable(worktree, pathExists),
+  );
   const listeners = loadListeningProcesses(execCommand);
 
   const activeByWorktreeAndPort = new Map();
@@ -456,13 +939,17 @@ export function collectWorktreePorts(options = {}) {
 
     const matchedByCwd = matchWorktreeForPath(
       listener.cwd,
-      worktrees,
+      availableWorktrees,
       normalizePath,
     );
     const matchedWorktree =
       matchedByCwd ??
       (isUiServerCommand(listener.command, listener.commandName)
-        ? matchWorktreeInCommand(listener.command, worktrees, normalizePath)
+        ? matchWorktreeInCommand(
+            listener.command,
+            availableWorktrees,
+            normalizePath,
+          )
         : null);
 
     if (!matchedWorktree) {
@@ -516,7 +1003,7 @@ export function collectWorktreePorts(options = {}) {
     }
   }
 
-  for (const worktree of worktrees) {
+  for (const worktree of availableWorktrees) {
     if (!worktree.wtListening || !worktree.expectedPort) {
       continue;
     }
@@ -568,6 +1055,336 @@ export function collectWorktreePorts(options = {}) {
   return entries;
 }
 
+export function collectOrphanedWorktreeServers(options = {}) {
+  const execCommand = options.execCommand ?? defaultExecCommand;
+  const normalizePath = options.normalizePath ?? defaultRealpath;
+  const pathExists = resolvePathExistsFn(options);
+  const cwd = options.cwd ?? process.cwd();
+
+  const worktrees = loadWorktrees(execCommand, cwd);
+  const repoContext = buildRepoContext(worktrees, cwd, normalizePath);
+  const listeners = loadListeningProcesses(execCommand);
+
+  const groupedByPid = new Map();
+
+  for (const listener of listeners) {
+    if (!isUiServerCommand(listener.command, listener.commandName)) {
+      continue;
+    }
+
+    const matchedWorktree =
+      matchWorktreeForPath(listener.cwd, worktrees, normalizePath) ??
+      matchWorktreeInCommand(listener.command, worktrees, normalizePath);
+
+    let orphanPath = null;
+    let reason = null;
+    let expectedPort = null;
+
+    if (matchedWorktree) {
+      if (isWorktreeAvailable(matchedWorktree, pathExists)) {
+        continue;
+      }
+      orphanPath = matchedWorktree.path;
+      reason = 'missing-worktree';
+      expectedPort = matchedWorktree.expectedPort ?? null;
+    } else {
+      const inferredPath =
+        extractRepoWorktreePath(listener.cwd, repoContext, normalizePath) ??
+        extractRepoWorktreePathFromCommand(
+          listener.command,
+          repoContext,
+          normalizePath,
+        );
+
+      if (!inferredPath) {
+        continue;
+      }
+      orphanPath = inferredPath;
+      reason = 'removed-worktree';
+    }
+
+    const group = groupedByPid.get(listener.pid) ?? {
+      reason,
+      orphanPath,
+      expectedPort,
+      listeners: [],
+    };
+    group.listeners.push(listener);
+    groupedByPid.set(listener.pid, group);
+  }
+
+  const primaries = [];
+  for (const group of groupedByPid.values()) {
+    const primary = selectPrimaryPortForProcess(
+      group.listeners,
+      group.expectedPort,
+    );
+    if (primary) {
+      primaries.push({ group, primary });
+    }
+  }
+
+  const processMap = loadAncestorProcesses(
+    primaries.map(({ primary }) => primary),
+    execCommand,
+  );
+
+  return primaries
+    .map(({ group, primary }) => {
+      const { detached } = resolveProcessWrapperChain(primary, processMap, {
+        selfPid: options.selfPid,
+        selfPgid: options.selfPgid,
+      });
+
+      return {
+        reason: group.reason,
+        port: primary.port,
+        url: `http://localhost:${primary.port}`,
+        pid: primary.pid,
+        ppid: primary.ppid ?? null,
+        pgid: primary.pgid ?? null,
+        detached,
+        path: group.orphanPath,
+        cwd: primary.cwd ?? null,
+        command: primary.command || null,
+      };
+    })
+    .sort((a, b) => a.port - b.port || a.pid - b.pid);
+}
+
+export function findWorktreeServersForPath(targetPath, options = {}) {
+  const execCommand = options.execCommand ?? defaultExecCommand;
+  const normalizePath = options.normalizePath ?? defaultRealpath;
+  const cwd = options.cwd ?? process.cwd();
+
+  const rawTargetPath = path.resolve(targetPath);
+  const normalizedTargetPath = normalizePath(rawTargetPath);
+
+  let expectedPort = null;
+  try {
+    const worktrees = loadWorktrees(execCommand, cwd);
+    const matched = worktrees.find(
+      (worktree) => normalizePath(worktree.path) === normalizedTargetPath,
+    );
+    expectedPort = matched?.expectedPort ?? null;
+  } catch {
+    expectedPort = null;
+  }
+
+  const listeners = loadListeningProcesses(execCommand);
+  const groupedByPid = new Map();
+
+  for (const listener of listeners) {
+    if (!isUiServerCommand(listener.command, listener.commandName)) {
+      continue;
+    }
+
+    const matchedByCwd = pathMatchesTarget(
+      listener.cwd,
+      rawTargetPath,
+      normalizePath,
+    );
+    const matchedByCommand = commandMatchesPath(
+      listener.command,
+      rawTargetPath,
+      normalizedTargetPath,
+    );
+
+    if (!matchedByCwd && !matchedByCommand) {
+      continue;
+    }
+
+    const existing = groupedByPid.get(listener.pid) ?? [];
+    existing.push(listener);
+    groupedByPid.set(listener.pid, existing);
+  }
+
+  const primaries = [];
+  for (const processListeners of groupedByPid.values()) {
+    const primary = selectPrimaryPortForProcess(processListeners, expectedPort);
+    if (primary) {
+      primaries.push(primary);
+    }
+  }
+
+  const processMap = loadAncestorProcesses(primaries, execCommand);
+
+  return primaries
+    .map((primary) => {
+      const { detached } = resolveProcessWrapperChain(primary, processMap, {
+        selfPid: options.selfPid,
+        selfPgid: options.selfPgid,
+      });
+
+      return {
+        pid: primary.pid,
+        ppid: primary.ppid ?? null,
+        pgid: primary.pgid ?? null,
+        detached,
+        port: primary.port,
+        url: `http://localhost:${primary.port}`,
+        path: normalizedTargetPath,
+        cwd: primary.cwd ?? null,
+        command: primary.command || null,
+      };
+    })
+    .sort((a, b) => a.port - b.port || a.pid - b.pid);
+}
+
+export function stopServerProcesses(targets, options = {}) {
+  const execCommand = options.execCommand ?? defaultExecCommand;
+  const killProcess = options.killProcess ?? process.kill;
+  const signal = options.signal ?? 'SIGTERM';
+  const selfPid = options.selfPid ?? process.pid;
+
+  if (!Array.isArray(targets) || targets.length === 0) {
+    return { stopped: [], failed: [] };
+  }
+
+  const processMap = loadAncestorProcesses(targets, execCommand);
+  const selfPgid = resolveSelfPgid(options, execCommand, processMap);
+  const signaledPgids = new Set();
+  const signaledPids = new Set();
+
+  const stopped = [];
+  const failed = [];
+
+  for (const target of targets) {
+    if (
+      !Number.isInteger(target.pid) ||
+      target.pid <= 1 ||
+      target.pid === selfPid
+    ) {
+      failed.push({
+        ...target,
+        error: `Refusing to signal unsafe PID ${target.pid}`,
+      });
+      continue;
+    }
+
+    const { chain, root } = resolveProcessWrapperChain(target, processMap, {
+      selfPid,
+      selfPgid,
+    });
+
+    const canSignalProcessGroup =
+      Number.isInteger(root.pgid) &&
+      root.pgid > 1 &&
+      root.pgid === root.pid &&
+      root.pgid !== selfPid &&
+      (selfPgid === null || root.pgid !== selfPgid) &&
+      chain.every((proc) => proc.pgid === root.pgid);
+
+    if (canSignalProcessGroup) {
+      const pgid = root.pgid;
+      if (signaledPgids.has(pgid)) {
+        stopped.push({
+          ...target,
+          signal,
+          signaledPgid: pgid,
+          signaledPids: chain.map((proc) => proc.pid),
+          alreadyExited: false,
+        });
+        continue;
+      }
+
+      try {
+        killProcess(-pgid, signal);
+        signaledPgids.add(pgid);
+        for (const proc of chain) {
+          signaledPids.add(proc.pid);
+        }
+        stopped.push({
+          ...target,
+          signal,
+          signaledPgid: pgid,
+          signaledPids: chain.map((proc) => proc.pid),
+          alreadyExited: false,
+        });
+        continue;
+      } catch (error) {
+        if (error?.code === 'ESRCH') {
+          signaledPgids.add(pgid);
+          stopped.push({
+            ...target,
+            signal,
+            signaledPgid: pgid,
+            signaledPids: chain.map((proc) => proc.pid),
+            alreadyExited: true,
+          });
+          continue;
+        }
+      }
+    }
+
+    const safePids = chain
+      .map((proc) => proc.pid)
+      .filter((pid) => Number.isInteger(pid) && pid > 1 && pid !== selfPid);
+
+    const sentPids = [];
+    let allAlreadyExited = true;
+    let lastError = null;
+
+    for (const pid of safePids) {
+      if (signaledPids.has(pid)) {
+        sentPids.push(pid);
+        allAlreadyExited = false;
+        continue;
+      }
+
+      try {
+        killProcess(pid, signal);
+        signaledPids.add(pid);
+        sentPids.push(pid);
+        allAlreadyExited = false;
+      } catch (error) {
+        if (error?.code === 'ESRCH') {
+          signaledPids.add(pid);
+          continue;
+        }
+        lastError = error;
+      }
+    }
+
+    if (lastError && sentPids.length === 0) {
+      failed.push({
+        ...target,
+        signal,
+        error:
+          lastError instanceof Error ? lastError.message : String(lastError),
+      });
+    } else {
+      stopped.push({
+        ...target,
+        signal,
+        signaledPgid: null,
+        signaledPids: sentPids.length > 0 ? sentPids : safePids,
+        alreadyExited: allAlreadyExited,
+      });
+    }
+  }
+
+  return { stopped, failed };
+}
+
+export function killOrphanedWorktreeServers(options = {}) {
+  const orphans = collectOrphanedWorktreeServers(options);
+  return stopServerProcesses(orphans, options);
+}
+
+export function stopWorktreeServersByPath(targetPath, options = {}) {
+  const normalizePath = options.normalizePath ?? defaultRealpath;
+  const resolvedTargetPath = normalizePath(path.resolve(targetPath));
+  const matches = findWorktreeServersForPath(targetPath, options);
+  const { stopped, failed } = stopServerProcesses(matches, options);
+
+  return {
+    targetPath: resolvedTargetPath,
+    stopped,
+    failed,
+  };
+}
+
 export function formatPathForDisplay(targetPath, homeDir = homedir()) {
   if (!homeDir) {
     return targetPath;
@@ -579,6 +1396,21 @@ export function formatPathForDisplay(targetPath, homeDir = homedir()) {
     return `~${targetPath.slice(homeDir.length)}`;
   }
   return targetPath;
+}
+
+function formatTable(headers, rows) {
+  const widths = headers.map((header, columnIndex) =>
+    Math.max(header.length, ...rows.map((row) => row[columnIndex].length)),
+  );
+
+  const formatRow = (cells) =>
+    cells
+      .map((cell, index) =>
+        index === cells.length - 1 ? cell : cell.padEnd(widths[index]),
+      )
+      .join('  ');
+
+  return [formatRow(headers), ...rows.map(formatRow)].join('\n');
 }
 
 export function formatWorktreePortsTable(entries, options = {}) {
@@ -609,32 +1441,120 @@ export function formatWorktreePortsTable(entries, options = {}) {
     return includeAll ? [entry.active ? 'active' : 'inactive', ...base] : base;
   });
 
-  const widths = headers.map((header, columnIndex) =>
-    Math.max(header.length, ...rows.map((row) => row[columnIndex].length)),
-  );
+  return formatTable(headers, rows);
+}
 
-  const formatRow = (cells) =>
-    cells
-      .map((cell, index) =>
-        index === cells.length - 1 ? cell : cell.padEnd(widths[index]),
-      )
-      .join('  ');
+export function formatOrphanedServersTable(orphans, options = {}) {
+  const homeDir = options.homeDir ?? homedir();
 
-  return [formatRow(headers), ...rows.map(formatRow)].join('\n');
+  if (orphans.length === 0) {
+    return 'No orphaned UI servers found for this repository.';
+  }
+
+  const headers = ['REASON', 'PORT', 'URL', 'PID', 'PPID', 'DETACHED', 'PATH'];
+  const rows = orphans.map((entry) => [
+    entry.reason,
+    String(entry.port),
+    entry.url,
+    String(entry.pid),
+    entry.ppid !== null ? String(entry.ppid) : '-',
+    entry.detached ? 'yes' : 'no',
+    formatPathForDisplay(entry.path, homeDir),
+  ]);
+
+  return formatTable(headers, rows);
+}
+
+export function formatStopResult(result, options = {}) {
+  const homeDir = options.homeDir ?? homedir();
+  const mode = options.mode ?? 'orphans';
+  const targetLabel = options.targetPath
+    ? formatPathForDisplay(options.targetPath, homeDir)
+    : null;
+
+  const lines = [];
+
+  if (result.stopped.length === 0 && result.failed.length === 0) {
+    return mode === 'stop-path'
+      ? `No running UI server found for ${targetLabel}.`
+      : 'No orphaned UI servers found to stop.';
+  }
+
+  if (result.stopped.length > 0) {
+    const noun = result.stopped.length === 1 ? 'server' : 'servers';
+    const heading =
+      mode === 'stop-path'
+        ? `Stopped ${result.stopped.length} UI ${noun} for ${targetLabel}:`
+        : `Stopped ${result.stopped.length} orphaned UI ${noun}:`;
+    lines.push(heading);
+
+    for (const item of result.stopped) {
+      const details = [
+        `port ${item.port}`,
+        ...(item.reason ? [item.reason] : []),
+        formatPathForDisplay(item.path, homeDir),
+      ].join(', ');
+      const targetDetail = item.alreadyExited
+        ? 'already exited'
+        : item.signaledPgid !== null
+          ? `${item.signal} -> pgid ${item.signaledPgid}`
+          : `${item.signal} -> pid ${item.signaledPids.join(', ')}`;
+      lines.push(`- PID ${item.pid} (${details}) [${targetDetail}]`);
+    }
+  }
+
+  if (result.failed.length > 0) {
+    const noun = result.failed.length === 1 ? 'server' : 'servers';
+    lines.push(`Failed to stop ${result.failed.length} UI ${noun}:`);
+    for (const item of result.failed) {
+      lines.push(
+        `- PID ${item.pid} (port ${item.port}, ${formatPathForDisplay(item.path, homeDir)}): ${item.error}`,
+      );
+    }
+  }
+
+  return lines.join('\n');
 }
 
 export function parseCliArgs(argv) {
   const flags = {
     all: false,
     json: false,
+    orphans: false,
+    killOrphans: false,
+    stopPath: null,
     help: false,
   };
 
-  for (const arg of argv) {
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
     if (arg === '--all' || arg === '-a') {
       flags.all = true;
     } else if (arg === '--json') {
       flags.json = true;
+    } else if (arg === '--orphans') {
+      flags.orphans = true;
+    } else if (arg === '--kill-orphans') {
+      flags.killOrphans = true;
+    } else if (arg === '--stop-path') {
+      const next = argv[i + 1];
+      if (!next || next.startsWith('-')) {
+        return {
+          ...flags,
+          error: 'Missing value for --stop-path',
+        };
+      }
+      flags.stopPath = next;
+      i++;
+    } else if (arg.startsWith('--stop-path=')) {
+      const value = arg.slice('--stop-path='.length);
+      if (!value) {
+        return {
+          ...flags,
+          error: 'Missing value for --stop-path',
+        };
+      }
+      flags.stopPath = value;
     } else if (arg === '--help' || arg === '-h') {
       flags.help = true;
     } else {
@@ -645,6 +1565,21 @@ export function parseCliArgs(argv) {
     }
   }
 
+  if (flags.stopPath && (flags.orphans || flags.killOrphans)) {
+    return {
+      ...flags,
+      error: 'Cannot combine --stop-path with --orphans or --kill-orphans',
+    };
+  }
+
+  if (flags.all && (flags.orphans || flags.killOrphans || flags.stopPath)) {
+    return {
+      ...flags,
+      error:
+        'Cannot combine --all with --orphans, --kill-orphans, or --stop-path',
+    };
+  }
+
   return flags;
 }
 
@@ -652,12 +1587,16 @@ export function getHelpText() {
   return [
     'Usage: worktree-ports [options]',
     '',
-    'Show active UI dev/server ports across all Git worktrees.',
+    'Show active UI dev/server ports across all Git worktrees,',
+    'or inspect and stop orphaned UI servers for this repository.',
     '',
     'Options:',
-    '  -a, --all   Include inactive worktrees with their configured ports',
-    '      --json  Output results as JSON',
-    '  -h, --help  Show this help message',
+    '  -a, --all                Include inactive worktrees with their configured ports',
+    '      --orphans            Show orphaned UI servers belonging to this repository',
+    '      --kill-orphans       Stop detected orphaned UI servers with SIGTERM',
+    '      --stop-path <path>   Stop any UI server running for a specific worktree path',
+    '      --json               Output results as JSON',
+    '  -h, --help               Show this help message',
   ].join('\n');
 }
 
@@ -678,6 +1617,54 @@ export function runCli(argv = process.argv.slice(2), io = {}) {
   }
 
   try {
+    if (parsed.stopPath) {
+      const result = stopWorktreeServersByPath(
+        parsed.stopPath,
+        io.collectOptions,
+      );
+      if (parsed.json) {
+        stdout(JSON.stringify(result, null, 2));
+      } else {
+        stdout(
+          formatStopResult(result, {
+            mode: 'stop-path',
+            targetPath: result.targetPath,
+            homeDir: io.homeDir,
+          }),
+        );
+      }
+      return result.failed.length > 0 ? 1 : 0;
+    }
+
+    if (parsed.killOrphans) {
+      const result = killOrphanedWorktreeServers(io.collectOptions);
+      if (parsed.json) {
+        stdout(JSON.stringify(result, null, 2));
+      } else {
+        stdout(
+          formatStopResult(result, {
+            mode: 'orphans',
+            homeDir: io.homeDir,
+          }),
+        );
+      }
+      return result.failed.length > 0 ? 1 : 0;
+    }
+
+    if (parsed.orphans) {
+      const orphans = collectOrphanedWorktreeServers(io.collectOptions);
+      if (parsed.json) {
+        stdout(JSON.stringify(orphans, null, 2));
+      } else {
+        stdout(
+          formatOrphanedServersTable(orphans, {
+            homeDir: io.homeDir,
+          }),
+        );
+      }
+      return 0;
+    }
+
     const entries = collectWorktreePorts({
       ...io.collectOptions,
       includeAll: parsed.all,

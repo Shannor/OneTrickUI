@@ -1,5 +1,8 @@
 [pre-start]
 install = "npm ci"
 
+[pre-remove]
+stop-server = "node ./scripts/worktree-ports.mjs --stop-path {{ worktree_path }}"
+
 [list]
 url = "http://localhost:{{ branch | hash_port }}"
