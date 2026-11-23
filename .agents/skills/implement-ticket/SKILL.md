@@ -65,8 +65,26 @@ Follow this workflow whenever implementing a GitHub issue or Jira ticket so that
      /opt/homebrew/bin/wt step eval '{{ branch | hash_port }}'
      ```
      *(Falls back to `5173` if not in a named branch).*
-2. **Start the Dev Server**:
-   - Launch `npm run dev` in the background inside the worktree directory and verify it is listening on `http://localhost:<port>`.
+2. **Start the Dev Server (Always Detached)**:
+   - **Never** leave `npm run dev` attached to an agent shell task (background tasks hit the 600s command timeout, and plain `nohup ... &` is killed on process-group teardown).
+   - Always spawn the dev server in a **new detached session** (`detached: true` + `stdio: ['ignore', out, out]` + `child.unref()`), write logs to `/tmp/<repo>-<port>-dev.log`, and poll `http://localhost:<port>` until it returns HTTP `200`:
+     ```bash
+     node -e '
+     const { spawn } = require("node:child_process");
+     const fs = require("node:fs");
+     const out = fs.openSync("/tmp/dev-server-<port>.log", "w");
+     const child = spawn("npm", ["run", "dev"], {
+       cwd: process.cwd(),
+       detached: true,
+       stdio: ["ignore", out, out],
+       env: { ...process.env },
+     });
+     child.unref();
+     console.log("Spawned detached dev server PID:", child.pid);
+     '
+     ```
+   - Verify in a follow-up check (`lsof -i :<port>` / `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:<port>/`) that the detached server remained alive after the spawn command exited.
+   - *(Tip: Stop a detached server later via `lsof -ti :<port> | xargs kill`).*
 3. **Identify Demo User(s) & Deep Links That Showcase the Change**:
    - Provide the user with:
      - **Base Dev URL & Port**: `http://localhost:<port>`

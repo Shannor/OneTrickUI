@@ -7,6 +7,7 @@ import {
   TrophyIcon,
 } from 'lucide-react';
 import type { CharacterSnapshot } from '~/api';
+import { ArmorSetBonusPill } from '~/components/armor-set-bonuses';
 import { ArmorStats } from '~/components/armor-stats';
 import { FormattedDate } from '~/components/formatted-date';
 import { GearItemPill, hasArmorStats } from '~/components/gear-item-pill';
@@ -85,6 +86,7 @@ export function LoadoutCard({
               compact={compact}
             />
             <LoadoutCardGear snapshot={snapshot} compact={compact} />
+            <LoadoutCardSetBonuses snapshot={snapshot} compact={compact} />
           </div>
           <LoadoutCardFooter />
         </CardContent>
@@ -316,6 +318,37 @@ export function LoadoutCardGear({
             />
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+export function LoadoutCardSetBonuses({
+  snapshot,
+  compact = false,
+}: {
+  snapshot: CharacterSnapshot;
+  compact?: boolean;
+}) {
+  const bonuses = snapshot.armorSetBonuses;
+  if (!bonuses || bonuses.length === 0) return null;
+
+  return (
+    <div
+      data-testid="loadout-card-set-bonuses"
+      className="flex w-full min-w-0 flex-wrap items-center gap-2 border-t border-border/50 pt-3"
+    >
+      <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Set Bonuses
+      </span>
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+        {bonuses.map((bonus) => (
+          <ArmorSetBonusPill
+            key={String(bonus.setHash)}
+            bonus={bonus}
+            size={compact ? 'sm' : 'md'}
+          />
+        ))}
       </div>
     </div>
   );

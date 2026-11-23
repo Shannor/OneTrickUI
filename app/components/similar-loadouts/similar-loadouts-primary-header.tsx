@@ -1,6 +1,7 @@
 import { CrosshairIcon, Gamepad2Icon, TrophyIcon } from 'lucide-react';
 import type { CharacterSnapshot, ItemSnapshot } from '~/api';
 import type { CombinedStatsResult } from '~/calculations/precision';
+import { ArmorSetBonusPill } from '~/components/armor-set-bonuses';
 import { GearItemPill } from '~/components/gear-item-pill';
 import { Badge } from '~/components/ui/badge';
 import {
@@ -25,6 +26,8 @@ export function SimilarLoadoutsPrimaryHeader({
   exoticArmor,
   classStats,
 }: SimilarLoadoutsPrimaryHeaderProps) {
+  const armorSetBonuses = target.armorSetBonuses ?? [];
+
   return (
     <div
       data-testid="primary-loadout-header"
@@ -77,6 +80,24 @@ export function SimilarLoadoutsPrimaryHeader({
           className="cursor-help"
         />
       </div>
+
+      {armorSetBonuses.length > 0 && (
+        <div
+          data-testid="primary-armor-set-bonuses"
+          className="flex flex-wrap items-center gap-2 pt-1"
+        >
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Set Bonuses:
+          </span>
+          {armorSetBonuses.map((bonus) => (
+            <ArmorSetBonusPill
+              key={String(bonus.setHash)}
+              bonus={bonus}
+              size="sm"
+            />
+          ))}
+        </div>
+      )}
 
       {classStats.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 pt-1">

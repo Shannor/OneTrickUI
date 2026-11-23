@@ -1,5 +1,14 @@
-import { CheckCircle2, ShieldIcon, SwordsIcon } from 'lucide-react';
-import type { ItemSnapshot, SimilarSnapshotItem } from '~/api';
+import {
+  CheckCircle2,
+  ShieldCheckIcon,
+  ShieldIcon,
+  SwordsIcon,
+} from 'lucide-react';
+import type { ArmorSetBonus, ItemSnapshot, SimilarSnapshotItem } from '~/api';
+import {
+  ArmorSetBonusTooltipDetails,
+  formatArmorSetBonusSummary,
+} from '~/components/armor-set-bonuses';
 import {
   GearItemDetailsSummary,
   getGearItemName,
@@ -19,11 +28,88 @@ import { cn } from '~/lib/utils';
 
 import { extractClassStatMap } from './similar-loadouts-utils';
 
+export interface ArmorSetBonusDiffBadgeProps {
+  armorSetBonusMatch: boolean;
+  candidateBonuses?: ArmorSetBonus[];
+  targetBonuses?: ArmorSetBonus[];
+}
+
+export function ArmorSetBonusDiffBadge({
+  armorSetBonusMatch,
+  candidateBonuses = [],
+  targetBonuses = [],
+}: ArmorSetBonusDiffBadgeProps) {
+  const bothLackSetBonuses =
+    candidateBonuses.length === 0 && targetBonuses.length === 0;
+  const candidateSummary = formatArmorSetBonusSummary(candidateBonuses);
+  const targetSummary = formatArmorSetBonusSummary(targetBonuses);
+
+  const tooltipHeading = bothLackSetBonuses
+    ? 'Neither loadout has active Armor Set Bonuses'
+    : armorSetBonusMatch
+      ? `Same Armor Set Bonuses as Primary (${candidateSummary})`
+      : candidateBonuses.length === 0
+        ? `No active Armor Set Bonuses (Primary has ${targetSummary})`
+        : targetBonuses.length === 0
+          ? `Active Armor Set Bonuses (Primary has none)`
+          : `Different Armor Set Bonuses than Primary (${targetSummary})`;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {armorSetBonusMatch ? (
+          <Badge
+            tabIndex={0}
+            data-testid="armor-set-bonus-diff-badge"
+            variant="secondary"
+            className="cursor-help gap-1 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+            <span>
+              {bothLackSetBonuses ? 'No Set Bonuses' : 'Set Bonus Match'}
+            </span>
+          </Badge>
+        ) : (
+          <Badge
+            tabIndex={0}
+            data-testid="armor-set-bonus-diff-badge"
+            variant="outline"
+            className="cursor-help gap-1.5 border-sky-500/50 bg-sky-500/10 text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-sky-400"
+          >
+            <ShieldCheckIcon className="h-3 w-3 shrink-0" />
+            <span>Set: {candidateSummary}</span>
+          </Badge>
+        )}
+      </TooltipTrigger>
+      <TooltipContent className="flex max-w-sm flex-col gap-3 p-3">
+        <div className="border-b border-border/60 pb-1.5 text-xs font-semibold">
+          {tooltipHeading}
+        </div>
+        <div className="grid grid-cols-1 gap-3">
+          <ArmorSetBonusTooltipDetails
+            bonuses={candidateBonuses}
+            heading="This Loadout's Set Bonuses"
+          />
+          {!armorSetBonusMatch && (
+            <div className="border-t border-border/50 pt-2">
+              <ArmorSetBonusTooltipDetails
+                bonuses={targetBonuses}
+                heading="Primary Target's Set Bonuses"
+              />
+            </div>
+          )}
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export interface SimilarLoadoutCandidateDiffBadgesProps {
   item: SimilarSnapshotItem;
   targetExoticArmor?: ItemSnapshot;
   targetPowerWeapon?: ItemSnapshot;
   targetClassStatMap: Record<string, number>;
+  targetArmorSetBonuses?: ArmorSetBonus[];
 }
 
 export function SimilarLoadoutCandidateDiffBadges({
@@ -31,6 +117,7 @@ export function SimilarLoadoutCandidateDiffBadges({
   targetExoticArmor,
   targetPowerWeapon,
   targetClassStatMap,
+  targetArmorSetBonuses,
 }: SimilarLoadoutCandidateDiffBadgesProps) {
   const { snapshot } = item;
   const candidateExotic = getExotic(snapshot.loadout).armor;
@@ -130,6 +217,12 @@ export function SimilarLoadoutCandidateDiffBadges({
           </div>
         </TooltipContent>
       </Tooltip>
+
+      <ArmorSetBonusDiffBadge
+        armorSetBonusMatch={item.armorSetBonusMatch}
+        candidateBonuses={snapshot.armorSetBonuses}
+        targetBonuses={targetArmorSetBonuses}
+      />
 
       <Tooltip>
         <TooltipTrigger asChild>

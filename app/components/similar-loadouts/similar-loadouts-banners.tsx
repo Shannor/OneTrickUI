@@ -60,6 +60,10 @@ export function SimilarLoadoutsLegend() {
           Different Exotic / Roll
         </span>
         <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-sky-500" />
+          Different Set Bonus
+        </span>
+        <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-primary" />
           Different Power Weapon
         </span>

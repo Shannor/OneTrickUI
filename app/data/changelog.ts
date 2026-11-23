@@ -17,10 +17,22 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-11-22',
     date: 'November 22, 2026',
-    title: 'Compact Guardian Switcher & Seamless Tab Swapping',
+    title: 'Active Armor Set Bonuses & Compact Guardian Switcher',
     summary:
-      'Keep the spotlight on your active Guardian with a compact emblem header, one-tap crest tabs, and a quick-swap menu that keeps your place across Loadouts, Sessions, and Fireteam.',
+      'See active Armor 3.0 set bonuses across loadout cards, loadout details, and similar loadout comparisons, alongside a streamlined Guardian switcher that keeps your place across tabs.',
     changes: [
+      {
+        type: 'feature',
+        text: 'View active Armor Set Bonuses—including 2-piece, 4-piece, and 2+2 split builds—directly alongside your equipped armor on Loadout Details with set names, tier badges, perk icons, and descriptions.',
+      },
+      {
+        type: 'feature',
+        text: 'Spot active armor set bonuses at a glance on Loadout Cards with compact set bonus badges and hover tooltips detailing every unlocked perk.',
+      },
+      {
+        type: 'feature',
+        text: 'Compare active Armor Set Bonuses when merging Similar Loadouts to immediately see whether candidate loadouts match or differ from your primary build.',
+      },
       {
         type: 'improvement',
         text: 'Focus on your active Guardian emblem while keeping your other characters one tap away via stepped crest tabs or the quick Swap menu on desktop and mobile.',

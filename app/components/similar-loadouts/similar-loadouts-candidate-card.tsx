@@ -2,6 +2,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router';
 import type {
+  ArmorSetBonus,
   ItemSnapshot,
   PlayerStats,
   SimilarSnapshotItem,
@@ -21,6 +22,7 @@ export interface SimilarLoadoutCandidateCardProps {
   targetExoticArmor?: ItemSnapshot;
   targetPowerWeapon?: ItemSnapshot;
   targetClassStatMap: Record<string, number>;
+  targetArmorSetBonuses?: ArmorSetBonus[];
   loadoutHref?: string;
   onToggleSelect: (id: string) => void;
 }
@@ -34,6 +36,7 @@ export function SimilarLoadoutCandidateCard({
   targetExoticArmor,
   targetPowerWeapon,
   targetClassStatMap,
+  targetArmorSetBonuses,
   loadoutHref,
   onToggleSelect,
 }: SimilarLoadoutCandidateCardProps) {
@@ -107,6 +110,7 @@ export function SimilarLoadoutCandidateCard({
         targetExoticArmor={targetExoticArmor}
         targetPowerWeapon={targetPowerWeapon}
         targetClassStatMap={targetClassStatMap}
+        targetArmorSetBonuses={targetArmorSetBonuses}
       />
     </div>
   );

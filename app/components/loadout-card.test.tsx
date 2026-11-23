@@ -142,4 +142,79 @@ describe('LoadoutCard', () => {
     fireEvent.click(cardTitle);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
+
+  it('does not render set bonus pills when armorSetBonuses is empty or undefined', () => {
+    render(
+      <LoadoutCard snapshot={mockSnapshot} stats={mockStats} gamesCount={5} />,
+    );
+    expect(
+      screen.queryByTestId('loadout-card-set-bonuses'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders compact set bonus pills with perk detail tooltips and stops card click propagation', () => {
+    const handleClick = vi.fn();
+    const snapshotWithBonuses = {
+      ...mockSnapshot,
+      armorSetBonuses: [
+        {
+          setHash: 742845781n,
+          setName: 'Cruel Electrum',
+          activeCount: 2,
+          activePerks: [
+            {
+              requiredSetCount: 2,
+              hash: 2562518502n,
+              name: 'Primary Survivor',
+              description: 'Boosts Primary weapons when allies fall.',
+              iconPath: '/icons/survivor.png',
+            },
+          ],
+        },
+        {
+          setHash: 2618364783n,
+          setName: 'Per Audacia',
+          activeCount: 4,
+          activePerks: [
+            {
+              requiredSetCount: 2,
+              hash: 3091068916n,
+              name: 'Primary Chain',
+              description: 'Grants stacking mobility on Primary kills.',
+              iconPath: '/icons/chain.png',
+            },
+            {
+              requiredSetCount: 4,
+              hash: 3091068917n,
+              name: 'Sublime Transit',
+              description: 'Enhances sprint speed and slide distance.',
+              iconPath: '/icons/transit.png',
+            },
+          ],
+        },
+      ],
+    } as unknown as CharacterSnapshot;
+
+    render(
+      <LoadoutCard
+        snapshot={snapshotWithBonuses}
+        stats={mockStats}
+        gamesCount={10}
+        onClick={handleClick}
+      />,
+    );
+
+    expect(screen.getByTestId('loadout-card-set-bonuses')).toBeInTheDocument();
+    const electrumPill = screen.getByTestId('armor-set-bonus-pill-742845781');
+    const audaciaPill = screen.getByTestId('armor-set-bonus-pill-2618364783');
+    expect(electrumPill).toHaveTextContent('Cruel Electrum');
+    expect(electrumPill).toHaveTextContent('(2pc)');
+    expect(audaciaPill).toHaveTextContent('Per Audacia');
+    expect(audaciaPill).toHaveTextContent('(4pc)');
+
+    fireEvent.click(audaciaPill);
+    expect(handleClick).not.toHaveBeenCalled();
+    expect(screen.getAllByText('Primary Chain').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Sublime Transit').length).toBeGreaterThan(0);
+  });
 });
