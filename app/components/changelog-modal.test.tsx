@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHANGELOG } from '~/data/changelog';
 
 import { ChangelogModal } from './changelog-modal';
@@ -37,5 +37,32 @@ describe('ChangelogModal', () => {
       CHANGELOG[0]?.id,
     );
     expect(trigger.querySelector('.animate-ping')).not.toBeInTheDocument();
+  });
+
+  it('clears the unread indicator in-memory when localStorage throws', () => {
+    const getItemSpy = vi
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('SecurityError');
+      });
+    const setItemSpy = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new Error('SecurityError');
+      });
+
+    try {
+      render(<ChangelogModal />);
+
+      const trigger = screen.getByRole('button', { name: /what's new/i });
+      expect(trigger.querySelector('.animate-ping')).toBeInTheDocument();
+
+      fireEvent.click(trigger);
+
+      expect(trigger.querySelector('.animate-ping')).not.toBeInTheDocument();
+    } finally {
+      getItemSpy.mockRestore();
+      setItemSpy.mockRestore();
+    }
   });
 });

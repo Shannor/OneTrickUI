@@ -26,7 +26,7 @@ export default defineConfig([
   reactHooks.configs.flat.recommended,
   reactYouMightNotNeedAnEffect.configs.recommended,
   {
-    files: ['app/.server/**', '**/*.server.ts'],
+    files: ['app/.server/**', 'app/actions/**', '**/*.server.ts'],
     rules: {
       'react-hooks/rules-of-hooks': 'off',
     },

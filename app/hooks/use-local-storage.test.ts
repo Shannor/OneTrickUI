@@ -40,14 +40,17 @@ describe('useLocalStorage', () => {
     expect(result.current[0]).toBe('stored-value');
   });
 
-  it('supports functional updates', () => {
+  it('supports consecutive functional updates in the same tick', () => {
     const { result } = renderHook(() => useLocalStorage('count-key', 1));
+    const initialSetValue = result.current[1];
 
     act(() => {
       result.current[1]((prev) => prev + 1);
+      result.current[1]((prev) => prev + 1);
     });
 
-    expect(result.current[0]).toBe(2);
-    expect(window.localStorage.getItem('count-key')).toBe('2');
+    expect(result.current[0]).toBe(3);
+    expect(window.localStorage.getItem('count-key')).toBe('3');
+    expect(result.current[1]).toBe(initialSetValue);
   });
 });

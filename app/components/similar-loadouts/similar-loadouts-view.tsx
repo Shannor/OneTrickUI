@@ -70,6 +70,9 @@ export function SimilarLoadoutsView({
     acknowledgedMergeData: undefined,
     ids: [],
   });
+  const [submittedTargetId, setSubmittedTargetId] = useState<string | null>(
+    null,
+  );
   const previousState = useRef(fetcher.state);
   const mergeContextRef = useRef<{
     mergedAll: boolean;
@@ -188,6 +191,7 @@ export function SimilarLoadoutsView({
     for (const sourceId of selectedIds) {
       formData.append('sourceSnapshotIds', sourceId);
     }
+    setSubmittedTargetId(target.id);
     mergeContextRef.current = {
       mergedAll: items.length > 0 && selectedIds.length >= items.length,
       redirectPath:
@@ -202,7 +206,9 @@ export function SimilarLoadoutsView({
   };
 
   const actionError =
-    fetcher.state === 'idle' && fetcher.data?.ok === false
+    fetcher.state === 'idle' &&
+    fetcher.data?.ok === false &&
+    submittedTargetId === target?.id
       ? fetcher.data.error
       : undefined;
 

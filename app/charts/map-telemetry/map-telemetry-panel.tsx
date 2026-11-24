@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   MIN_MAP_SAMPLE_FOR_SIGNAL,
   type MapTelemetryResult,
@@ -43,6 +43,21 @@ export function MapTelemetryPanel({
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
 
+  const handleFilterChange = (nextFilter: MapFilterTab) => {
+    setFilter(nextFilter);
+    setPage(1);
+  };
+
+  const handleSortChange = (nextSort: MapSortKey) => {
+    setSortBy(nextSort);
+    setPage(1);
+  };
+
+  const handleSearchChange = (nextQuery: string) => {
+    setSearchQuery(nextQuery);
+    setPage(1);
+  };
+
   const strongMaps = useMemo(
     () =>
       [...data]
@@ -68,10 +83,6 @@ export function MapTelemetryPanel({
     () => filterAndSortMaps(data, filter, searchQuery, sortBy),
     [data, filter, searchQuery, sortBy],
   );
-
-  useEffect(() => {
-    setPage(1);
-  }, [filter, searchQuery, sortBy]);
 
   if (data.length === 0) {
     return null;
@@ -103,11 +114,11 @@ export function MapTelemetryPanel({
         title={title}
         description={description}
         sortBy={sortBy}
-        onSortChange={setSortBy}
+        onSortChange={handleSortChange}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
         filter={filter}
-        onFilterChange={setFilter}
+        onFilterChange={handleFilterChange}
         filterTabs={filterTabs}
       />
 
@@ -119,7 +130,7 @@ export function MapTelemetryPanel({
 
       <MapMobileFilterTabs
         filter={filter}
-        onFilterChange={setFilter}
+        onFilterChange={handleFilterChange}
         filterTabs={filterTabs}
       />
 
@@ -128,7 +139,7 @@ export function MapTelemetryPanel({
           <MapDesktopTable
             rows={pagedRows}
             sortBy={sortBy}
-            onSortChange={setSortBy}
+            onSortChange={handleSortChange}
             showBestLoadout={showBestLoadout}
             loadoutBasePath={loadoutBasePath}
           />

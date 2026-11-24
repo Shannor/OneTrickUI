@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { RouterProvider, createMemoryRouter, redirect } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { toast } from '~/components/ui/sonner';
@@ -121,26 +122,29 @@ describe('StartSessionDialog', () => {
   });
 
   it('closes dialog automatically after successful same-route redirect submission', async () => {
-    const router = createMemoryRouter([
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/fireteam',
+          loader: async () => ({ ok: true }),
+          element: (
+            <StartSessionDialog
+              characterId="char-100"
+              userId="user-1"
+              redirectTo="/fireteam"
+              triggerLabel="Start a Session"
+            />
+          ),
+        },
+        {
+          path: '/action/start-session',
+          action: async () => redirect('/fireteam'),
+        },
+      ],
       {
-        path: '/fireteam',
-        loader: async () => ({ ok: true }),
-        element: (
-          <StartSessionDialog
-            characterId="char-100"
-            userId="user-1"
-            redirectTo="/fireteam"
-            triggerLabel="Start a Session"
-          />
-        ),
+        initialEntries: ['/fireteam'],
       },
-      {
-        path: '/action/start-session',
-        action: async () => redirect('/fireteam'),
-      },
-    ], {
-      initialEntries: ['/fireteam'],
-    });
+    );
 
     render(<RouterProvider router={router} />);
 
@@ -152,6 +156,73 @@ describe('StartSessionDialog', () => {
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /^start session$/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/configure tracking options before queueing/i),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('resets submitting lock if closed externally while a request is in flight', async () => {
+    let resolveAction!: (val: { error?: string }) => void;
+
+    function ControlledHarness() {
+      const [isOpen, setIsOpen] = useState(true);
+      return (
+        <>
+          <button type="button" onClick={() => setIsOpen(false)}>
+            Force Close
+          </button>
+          <button type="button" onClick={() => setIsOpen(true)}>
+            Force Open
+          </button>
+          <StartSessionDialog
+            characterId="char-100"
+            userId="user-1"
+            isOpen={isOpen}
+            onOpenChange={setIsOpen}
+            triggerLabel="Open Dialog"
+          />
+        </>
+      );
+    }
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <ControlledHarness />,
+      },
+      {
+        path: '/action/start-session',
+        action: () =>
+          new Promise<{ error?: string }>((resolve) => {
+            resolveAction = resolve;
+          }),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^start session$/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /force close/i, hidden: true }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/configure tracking options before queueing/i),
+      ).not.toBeInTheDocument();
+    });
+
+    resolveAction({});
+
+    fireEvent.click(screen.getByRole('button', { name: /force open/i }));
+    expect(
+      screen.getByText(/configure tracking options before queueing/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
 
     await waitFor(() => {
       expect(

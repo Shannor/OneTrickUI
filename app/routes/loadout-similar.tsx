@@ -139,6 +139,7 @@ export function LoadoutSimilar({ loaderData, params }: Route.ComponentProps) {
       {metaTags}
 
       <SimilarLoadoutsView
+        key={similarData?.target?.id ?? 'empty'}
         initialData={similarData}
         initialError={error}
         showPageHeader={true}

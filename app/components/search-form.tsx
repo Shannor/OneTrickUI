@@ -11,15 +11,17 @@ export interface SearchFormProps {
 }
 
 export function SearchForm({ query, isLoading = false }: SearchFormProps) {
-  const [draft, setDraft] = useState<{ query: string; value: string } | null>(
-    null,
-  );
+  const [prevQuery, setPrevQuery] = useState(query);
+  const [value, setValue] = useState(query);
   const navigate = useNavigate();
 
-  const value = draft?.query === query ? draft.value : query;
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    setValue(query);
+  }
 
   const handleClear = () => {
-    setDraft({ query, value: '' });
+    setValue('');
     if (query) {
       navigate('/search');
     }
@@ -42,7 +44,7 @@ export function SearchForm({ query, isLoading = false }: SearchFormProps) {
             name="q"
             type="search"
             value={value}
-            onChange={(event) => setDraft({ query, value: event.target.value })}
+            onChange={(event) => setValue(event.target.value)}
             placeholder="Search Bungie Name (e.g. Guardian#1234)..."
             aria-label="Search Guardians by Bungie Name"
             autoComplete="off"

@@ -81,6 +81,12 @@ function StartSessionDialogForm({
   const isSubmitDisabled = disabled || !characterId || !userId || isSubmitting;
 
   useEffect(() => {
+    return () => {
+      onSubmittingChange(false);
+    };
+  }, [onSubmittingChange]);
+
+  useEffect(() => {
     if (previousState.current !== 'idle' && state === 'idle') {
       onSubmittingChange(false);
       if (data?.error) {
@@ -98,14 +104,7 @@ function StartSessionDialogForm({
       : undefined;
 
   return (
-    <DialogContent
-      onEscapeKeyDown={(e) => {
-        if (isSubmitting) e.preventDefault();
-      }}
-      onInteractOutside={(e) => {
-        if (isSubmitting) e.preventDefault();
-      }}
-    >
+    <>
       <DialogHeader>
         <DialogTitle>Start Session</DialogTitle>
         <DialogDescription>
@@ -182,7 +181,7 @@ function StartSessionDialogForm({
           </LoadingButton>
         </DialogFooter>
       </Form>
-    </DialogContent>
+    </>
   );
 }
 
@@ -250,7 +249,14 @@ export function StartSessionDialog({
           </LoadingButton>
         </DialogTrigger>
       )}
-      {open && (
+      <DialogContent
+        onEscapeKeyDown={(e) => {
+          if (isSubmittingRef.current || isLoading) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if (isSubmittingRef.current || isLoading) e.preventDefault();
+        }}
+      >
         <StartSessionDialogForm
           characterId={characterId}
           userId={userId}
@@ -260,7 +266,7 @@ export function StartSessionDialog({
           onSubmittingChange={handleSubmittingChange}
           onSuccess={handleSuccess}
         />
-      )}
+      </DialogContent>
     </Dialog>
   );
 }

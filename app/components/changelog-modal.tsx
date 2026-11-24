@@ -14,6 +14,7 @@ import { CHANGELOG } from '~/data/changelog';
 
 const LAST_SEEN_KEY = 'onetrick_last_seen_changelog';
 const changelogListeners = new Set<() => void>();
+let memoryLastSeen: string | null = null;
 
 function subscribeChangelogSeen(callback: () => void) {
   changelogListeners.add(callback);
@@ -28,15 +29,16 @@ function getLastSeenChangelog(): string | null {
   try {
     return window.localStorage.getItem(LAST_SEEN_KEY);
   } catch {
-    return null;
+    return memoryLastSeen;
   }
 }
 
 function markChangelogSeen(releaseId: string) {
   try {
     window.localStorage.setItem(LAST_SEEN_KEY, releaseId);
+    memoryLastSeen = null;
   } catch {
-    // Ignore storage errors
+    memoryLastSeen = releaseId;
   }
   changelogListeners.forEach((listener) => listener());
 }
@@ -53,6 +55,7 @@ export function ChangelogModal({
   trigger,
 }: ChangelogModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [seenInSession, setSeenInSession] = useState<string | null>(null);
 
   const isControlled = openProp !== undefined;
   const isOpen = isControlled ? openProp : internalOpen;
@@ -63,12 +66,15 @@ export function ChangelogModal({
     getLastSeenChangelog,
     () => latestReleaseId ?? null,
   );
+  const effectiveLastSeen = lastSeen ?? seenInSession;
   const hasUnread = Boolean(
-    latestReleaseId && (!lastSeen || lastSeen < latestReleaseId),
+    latestReleaseId &&
+      (!effectiveLastSeen || effectiveLastSeen < latestReleaseId),
   );
 
   const handleOpenChange = (openState: boolean) => {
     if (openState && latestReleaseId) {
+      setSeenInSession(latestReleaseId);
       markChangelogSeen(latestReleaseId);
     }
 

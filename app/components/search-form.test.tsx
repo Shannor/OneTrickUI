@@ -59,7 +59,7 @@ describe('SearchForm', () => {
     expect(submitButton).toBeDisabled();
   });
 
-  it('updates input value when the query prop changes', () => {
+  it('updates input value when the query prop changes and does not resurrect stale drafts on back navigation', () => {
     function Harness() {
       const [query, setQuery] = useState('Initial');
       return (
@@ -67,6 +67,9 @@ describe('SearchForm', () => {
           <SearchForm query={query} />
           <button type="button" onClick={() => setQuery('Updated')}>
             Change Query
+          </button>
+          <button type="button" onClick={() => setQuery('Initial')}>
+            Back To Initial
           </button>
         </>
       );
@@ -91,7 +94,9 @@ describe('SearchForm', () => {
     expect(input).toHaveValue('Unsaved Draft');
 
     fireEvent.click(screen.getByRole('button', { name: /change query/i }));
-
     expect(input).toHaveValue('Updated');
+
+    fireEvent.click(screen.getByRole('button', { name: /back to initial/i }));
+    expect(input).toHaveValue('Initial');
   });
 });
