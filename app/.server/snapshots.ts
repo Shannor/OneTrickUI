@@ -5,7 +5,7 @@ const similarFetchCache = new WeakMap<
   Map<string, ReturnType<typeof getSimilarSnapshots<false>>>
 >();
 
-function requestTargetsSimilarRoute(request: Request): boolean {
+export function requestTargetsSimilarRoute(request: Request): boolean {
   try {
     const { pathname } = new URL(request.url);
     return /\/similar(?:\.data)?\/?$/.test(pathname);
@@ -32,7 +32,7 @@ export function getCachedSimilarSnapshots(
   const callApi = () =>
     getSimilarSnapshots({
       path: { snapshotId },
-      ...(includeStats ? { query: { includeStats: true } } : {}),
+      query: { includeStats },
     });
 
   if (!request) {
