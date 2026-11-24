@@ -18,9 +18,9 @@ export const CHANGELOG: ReleaseNote[] = [
     id: '2026-11-23',
     date: 'November 23, 2026',
     title:
-      'Guardian-Wide Metrics, Rolling Match Consistency & Map Swap Insights',
+      'Guardian-Wide Metrics, Map Swap Insights & Active Armor Set Bonuses',
     summary:
-      'Explore a dedicated Metrics view for every Guardian across all recorded loadouts, follow rolling 5-match trends without empty-month dips, and spot your strongest vs. swap-candidate Crucible maps at a glance.',
+      'Explore a dedicated Metrics view across all recorded loadouts with rolling 5-match trends and strong vs. swap-candidate maps, plus inspect active Armor 3.0 set bonuses across loadouts and comparisons.',
     changes: [
       {
         type: 'feature',
@@ -29,6 +29,18 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'feature',
         text: 'Spot Strong maps to keep equipped and Swap Candidate maps where a build struggles, complete with one-tap links to your top-performing loadout on each map.',
+      },
+      {
+        type: 'feature',
+        text: 'View active Armor Set Bonuses—including 2-piece, 4-piece, and 2+2 split builds—directly alongside your equipped armor on Loadout Details with set names, tier badges, perk icons, and descriptions.',
+      },
+      {
+        type: 'feature',
+        text: 'Spot active armor set bonuses at a glance on Loadout Cards with compact set bonus badges and hover or tap tooltips detailing every unlocked perk.',
+      },
+      {
+        type: 'feature',
+        text: 'Compare active Armor Set Bonuses when merging Similar Loadouts to immediately see whether candidate loadouts match or differ from your primary build.',
       },
       {
         type: 'improvement',

@@ -210,6 +210,7 @@ export type BaseItemInfo = {
   tierType: number;
   styleBasicInfo?: BaseItemInfo;
   damage?: DamageInfo;
+  equipableItemSetHash?: bigint;
 };
 
 export type DamageInfo = {
@@ -319,6 +320,21 @@ export type Loadout = {
   [key: string]: ItemSnapshot;
 };
 
+export type ArmorSetBonusPerk = {
+  requiredSetCount: number;
+  hash: bigint;
+  name: string;
+  description?: string;
+  iconPath?: string;
+};
+
+export type ArmorSetBonus = {
+  setHash: bigint;
+  setName: string;
+  activeCount: number;
+  activePerks: Array<ArmorSetBonusPerk>;
+};
+
 export type CharacterSnapshot = {
   /**
    * Id of the snapshot
@@ -368,6 +384,10 @@ export type CharacterSnapshot = {
    * List of source snapshot IDs that have been merged into this snapshot
    */
   mergedFromIds?: Array<string>;
+  /**
+   * Active Destiny 2 Armor 3.0 set bonuses unlocked by equipped armor pieces
+   */
+  armorSetBonuses?: Array<ArmorSetBonus>;
 };
 
 export type StatsValuePair = {
@@ -442,6 +462,10 @@ export type SimilarSnapshotItem = {
    * True when both snapshots have the same Power weapon equipped
    */
   powerWeaponMatch: boolean;
+  /**
+   * True when both snapshots have the same unlocked armor set bonuses (or neither has active set bonuses)
+   */
+  armorSetBonusMatch: boolean;
   /**
    * Non-zero class stat differences (candidate value minus target value) keyed by stat name or hash
    */
@@ -599,6 +623,28 @@ export type User = {
   memberships: Array<Membership>;
   createdAt: Date;
   characterIds: Array<string>;
+};
+
+/**
+ * Summary counters and runtime metrics from a session tick execution
+ */
+export type SessionTickResponse = {
+  dryRun: boolean;
+  totalSessions: number;
+  sessionsProcessed: number;
+  sessionsSkipped: number;
+  sessionsStaleEnded: number;
+  sessionsStaleDeleted: number;
+  sessionsInactiveDeleted: number;
+  sessionsErrored: number;
+  loadoutsSaved: number;
+  loadoutsFailed: number;
+  activitiesFoundTotal: number;
+  aggregatesAddedTotal: number;
+  compFinalizedCount: number;
+  emptySessionsCleaned: number;
+  errorsTotal: number;
+  durationMs: bigint;
 };
 
 /**
@@ -1602,6 +1648,60 @@ export type FinalizeSessionsCompResponses = {
 
 export type FinalizeSessionsCompResponse =
   FinalizeSessionsCompResponses[keyof FinalizeSessionsCompResponses];
+
+export type RunSessionTickData = {
+  /**
+   * JSON options object (pass `{}` to run with default options)
+   */
+  body: {
+    /**
+     * Executes read/discovery logic without persisting Firestore mutations
+     */
+    dryRun?: boolean;
+    /**
+     * Skips live Bungie profile loadout snapshot capture while still processing activity history
+     */
+    skipSave?: boolean;
+  };
+  headers?: {
+    'X-Internal-API-Key'?: string;
+  };
+  path?: never;
+  query?: never;
+  url: '/internal/sessions/tick';
+};
+
+export type RunSessionTickErrors = {
+  /**
+   * Invalid request body
+   */
+  400: OneTrickError;
+  /**
+   * Missing or invalid internal API key
+   */
+  401: OneTrickError;
+  /**
+   * Resource not found
+   */
+  404: OneTrickError;
+  /**
+   * Error running session tick
+   */
+  500: OneTrickError;
+};
+
+export type RunSessionTickError =
+  RunSessionTickErrors[keyof RunSessionTickErrors];
+
+export type RunSessionTickResponses = {
+  /**
+   * Session tick completed successfully
+   */
+  200: SessionTickResponse;
+};
+
+export type RunSessionTickResponse =
+  RunSessionTickResponses[keyof RunSessionTickResponses];
 
 export type GetBestPerformingLoadoutsData = {
   body?: never;

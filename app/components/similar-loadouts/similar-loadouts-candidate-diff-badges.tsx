@@ -1,5 +1,5 @@
 import { CheckCircle2, ShieldIcon, SwordsIcon } from 'lucide-react';
-import type { ItemSnapshot, SimilarSnapshotItem } from '~/api';
+import type { ArmorSetBonus, ItemSnapshot, SimilarSnapshotItem } from '~/api';
 import {
   GearItemDetailsSummary,
   getGearItemName,
@@ -17,6 +17,7 @@ import {
 } from '~/hooks/use-loadout';
 import { cn } from '~/lib/utils';
 
+import { ArmorSetBonusDiffBadge } from './armor-set-bonus-diff-badge';
 import { extractClassStatMap } from './similar-loadouts-utils';
 
 export interface SimilarLoadoutCandidateDiffBadgesProps {
@@ -24,6 +25,7 @@ export interface SimilarLoadoutCandidateDiffBadgesProps {
   targetExoticArmor?: ItemSnapshot;
   targetPowerWeapon?: ItemSnapshot;
   targetClassStatMap: Record<string, number>;
+  targetArmorSetBonuses?: ArmorSetBonus[];
 }
 
 export function SimilarLoadoutCandidateDiffBadges({
@@ -31,6 +33,7 @@ export function SimilarLoadoutCandidateDiffBadges({
   targetExoticArmor,
   targetPowerWeapon,
   targetClassStatMap,
+  targetArmorSetBonuses,
 }: SimilarLoadoutCandidateDiffBadgesProps) {
   const { snapshot } = item;
   const candidateExotic = getExotic(snapshot.loadout).armor;
@@ -130,6 +133,12 @@ export function SimilarLoadoutCandidateDiffBadges({
           </div>
         </TooltipContent>
       </Tooltip>
+
+      <ArmorSetBonusDiffBadge
+        armorSetBonusMatch={item.armorSetBonusMatch}
+        candidateBonuses={snapshot.armorSetBonuses}
+        targetBonuses={targetArmorSetBonuses}
+      />
 
       <Tooltip>
         <TooltipTrigger asChild>
