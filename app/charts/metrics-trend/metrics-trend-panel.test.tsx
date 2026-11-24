@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { MatchPoint, TelemetrySummary } from '~/lib/metrics';
 
-import { MetricsTrendPanel } from './MetricsTrendPanel';
+import { MetricsTrendPanel } from './metrics-trend-panel';
 
 if (typeof window !== 'undefined' && !window.ResizeObserver) {
   class ResizeObserver {
@@ -225,12 +225,11 @@ describe('MetricsTrendPanel', () => {
       activityId: `trials-${idx + 1}`,
     }));
 
-    rerender(
-      <MetricsTrendPanel points={trialsPoints} summary={mockSummary} />,
-    );
+    rerender(<MetricsTrendPanel points={trialsPoints} summary={mockSummary} />);
 
-    expect(
-      screen.getByRole('button', { name: 'All Matches' }),
-    ).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'All Matches' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 });

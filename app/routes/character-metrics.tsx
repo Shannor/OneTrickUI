@@ -9,8 +9,8 @@ import {
   getSnapshots,
   getUserSessions,
 } from '~/api';
-import { MapTelemetryPanel } from '~/charts/MapTelemetryPanel';
-import { MetricsTrendPanel } from '~/charts/MetricsTrendPanel';
+import { MapTelemetryPanel } from '~/charts/map-telemetry';
+import { MetricsTrendPanel } from '~/charts/metrics-trend';
 import { Empty } from '~/components/empty';
 import { MetricsFilterBar } from '~/components/metrics-filter-bar';
 import { useOptionalProfileData } from '~/hooks/use-route-loaders';
@@ -204,7 +204,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     if (!item.res.data) {
       continue;
     }
-    for (const [snapId, snap] of Object.entries(item.res.data.snapshots ?? {})) {
+    for (const [snapId, snap] of Object.entries(
+      item.res.data.snapshots ?? {},
+    )) {
       snapshotMap[snapId] = { id: snap.id, name: snap.name };
     }
     for (const agg of item.res.data.aggregates ?? []) {
@@ -321,14 +323,15 @@ export function CharacterMetrics({ loaderData, params }: Route.ComponentProps) {
   const activeCharacter = profile?.characters?.find(
     (char) => char.id === characterId,
   );
-  const classLabel = activeCharacter?.class
-    ? `${activeCharacter.class} `
-    : '';
+  const classLabel = activeCharacter?.class ? `${activeCharacter.class} ` : '';
   const displayName = profile?.displayName;
 
   const headingTitle = isOwner
     ? `${classLabel}Metrics`.trim()
-    : `${displayName ?? 'Guardian'}'s ${classLabel}Metrics`.replace(/\s+/g, ' ');
+    : `${displayName ?? 'Guardian'}'s ${classLabel}Metrics`.replace(
+        /\s+/g,
+        ' ',
+      );
   const pageTitle = displayName
     ? `${classLabel}Metrics - ${displayName} | 1 Trick`
     : `${headingTitle} | 1 Trick`;

@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { MapTelemetryResult } from '~/lib/metrics';
 
-import { MapTelemetryPanel } from './MapTelemetryPanel';
+import { MapTelemetryPanel } from './map-telemetry-panel';
 
 const sampleMaps: MapTelemetryResult[] = [
   {
@@ -77,16 +77,12 @@ describe('MapTelemetryPanel', () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/Strong Maps \(2\+ Matches/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Strong Maps \(2\+ Matches/i)).toBeInTheDocument();
     expect(screen.getAllByText('Strong')[0]).toHaveClass(
       'text-emerald-600',
       'dark:text-emerald-400',
     );
-    expect(
-      screen.getByText(/Problem \/ Swap Candidates/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Problem \/ Swap Candidates/i)).toBeInTheDocument();
     expect(screen.getByText('Try SMG Swap Build')).toBeInTheDocument();
 
     expect(screen.getByText('1 / 2')).toBeInTheDocument();

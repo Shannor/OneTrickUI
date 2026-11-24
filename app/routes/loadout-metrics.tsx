@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshotAggregates } from '~/api';
-import { MapTelemetryPanel } from '~/charts/MapTelemetryPanel';
-import { MetricsTrendPanel } from '~/charts/MetricsTrendPanel';
+import { MapTelemetryPanel } from '~/charts/map-telemetry';
+import { MetricsTrendPanel } from '~/charts/metrics-trend';
 import { Empty } from '~/components/empty';
 import { MetricsFilterBar } from '~/components/metrics-filter-bar';
 import {

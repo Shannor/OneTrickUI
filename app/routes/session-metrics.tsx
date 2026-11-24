@@ -3,7 +3,7 @@ import { ExternalLink } from 'lucide-react';
 import { Link } from 'react-router';
 import type { Aggregate, CharacterSnapshot } from '~/api';
 import { calculatePercentage, calculateRatio } from '~/calculations/precision';
-import { MapTelemetryPanel } from '~/charts/MapTelemetryPanel';
+import { MapTelemetryPanel } from '~/charts/map-telemetry';
 import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';

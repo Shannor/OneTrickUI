@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import type { Aggregate, Session } from '~/api';
-import { MetricsTrendPanel } from '~/charts/MetricsTrendPanel';
+import { MetricsTrendPanel } from '~/charts/metrics-trend';
 import { SessionCompTrackingBanner } from '~/components/comp-tracking';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import { generateMatchSeries, timeWindowToCustom } from '~/lib/metrics';
