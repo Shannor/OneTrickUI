@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Area,
   Brush,
@@ -61,30 +61,40 @@ export function MetricsTrendPanel({
     () => points.map((p) => `${p.activityId}:${p.time}`).join('|'),
     [points],
   );
+  const seriesKey = `${seriesSignature}|${hideKpiTabs}`;
+  const [prevSeriesKey, setPrevSeriesKey] = useState(seriesKey);
   const [activeMetric, setActiveMetric] = useState<TrendMetricKey>('kd');
   const [windowPreset, setWindowPreset] = useState<MatchWindowPreset>(() =>
     getDefaultWindowPreset(points.length, hideKpiTabs),
   );
-  const [brushRange, setBrushRange] = useState<{
-    startIndex: number;
-    endIndex: number;
-  }>(() => ({
-    startIndex: 0,
-    endIndex: Math.max(0, points.length - 1),
-  }));
 
-  useEffect(() => {
+  if (seriesKey !== prevSeriesKey) {
+    setPrevSeriesKey(seriesKey);
     setWindowPreset(getDefaultWindowPreset(points.length, hideKpiTabs));
-    setBrushRange({
-      startIndex: 0,
-      endIndex: Math.max(0, points.length - 1),
-    });
-  }, [seriesSignature, points.length, hideKpiTabs]);
+  }
 
   const visibleData = useMemo(
     () => slicePointsForWindow(points, windowPreset),
     [points, windowPreset],
   );
+
+  const brushResetKey = `${seriesKey}|${visibleData.length}`;
+  const [prevBrushResetKey, setPrevBrushResetKey] = useState(brushResetKey);
+  const [brushRange, setBrushRange] = useState<{
+    startIndex: number;
+    endIndex: number;
+  }>(() => ({
+    startIndex: 0,
+    endIndex: Math.max(0, visibleData.length - 1),
+  }));
+
+  if (brushResetKey !== prevBrushResetKey) {
+    setPrevBrushResetKey(brushResetKey);
+    setBrushRange({
+      startIndex: 0,
+      endIndex: Math.max(0, visibleData.length - 1),
+    });
+  }
 
   const displayedSummary = useMemo(() => {
     if (
@@ -101,13 +111,6 @@ export function MetricsTrendPanel({
     }
     return summary;
   }, [points, summary, visibleData, windowPreset]);
-
-  useEffect(() => {
-    setBrushRange({
-      startIndex: 0,
-      endIndex: Math.max(0, visibleData.length - 1),
-    });
-  }, [visibleData.length]);
 
   if (points.length === 0) {
     return null;

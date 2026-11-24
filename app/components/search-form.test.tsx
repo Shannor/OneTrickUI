@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
@@ -56,5 +57,46 @@ describe('SearchForm', () => {
 
     const submitButton = screen.getByRole('button', { name: /searching/i });
     expect(submitButton).toBeDisabled();
+  });
+
+  it('updates input value when the query prop changes and does not resurrect stale drafts on back navigation', () => {
+    function Harness() {
+      const [query, setQuery] = useState('Initial');
+      return (
+        <>
+          <SearchForm query={query} />
+          <button type="button" onClick={() => setQuery('Updated')}>
+            Change Query
+          </button>
+          <button type="button" onClick={() => setQuery('Initial')}>
+            Back To Initial
+          </button>
+        </>
+      );
+    }
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/search',
+          element: <Harness />,
+        },
+      ],
+      { initialEntries: ['/search?q=Initial'] },
+    );
+
+    render(<RouterProvider router={router} />);
+    const input = screen.getByRole('searchbox', {
+      name: /search guardians by bungie name/i,
+    });
+
+    fireEvent.change(input, { target: { value: 'Unsaved Draft' } });
+    expect(input).toHaveValue('Unsaved Draft');
+
+    fireEvent.click(screen.getByRole('button', { name: /change query/i }));
+    expect(input).toHaveValue('Updated');
+
+    fireEvent.click(screen.getByRole('button', { name: /back to initial/i }));
+    expect(input).toHaveValue('Initial');
   });
 });

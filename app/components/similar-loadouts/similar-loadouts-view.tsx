@@ -12,11 +12,7 @@ import { LoadingButton } from '~/components/loading-button';
 import { Button } from '~/components/ui/button';
 import { toast } from '~/components/ui/sonner';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import {
-  POWER_BUCKET,
-  getExotic,
-  useClassStats,
-} from '~/hooks/use-loadout';
+import { POWER_BUCKET, getExotic, useClassStats } from '~/hooks/use-loadout';
 import { cn } from '~/lib/utils';
 
 import {
@@ -48,6 +44,7 @@ export interface SimilarLoadoutsViewProps {
 const EMPTY_ITEMS: SimilarSnapshotItem[] = [];
 const EMPTY_STATS: Record<string, PlayerStats> = {};
 const EMPTY_COUNTS: Record<string, number> = {};
+const EMPTY_SELECTED_IDS: string[] = [];
 
 export function SimilarLoadoutsView({
   initialData,
@@ -64,40 +61,48 @@ export function SimilarLoadoutsView({
   const statsMap = initialData?.stats ?? EMPTY_STATS;
   const countMap = initialData?.count ?? EMPTY_COUNTS;
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const submittedAllCandidatesRef = useRef(false);
+  const [selection, setSelection] = useState<{
+    source: GetSimilarSnapshotsResponse | null | undefined;
+    acknowledgedMergeData: { ok: boolean; error?: string } | undefined;
+    ids: string[];
+  }>({
+    source: initialData,
+    acknowledgedMergeData: undefined,
+    ids: [],
+  });
+  const [submittedTargetId, setSubmittedTargetId] = useState<string | null>(
+    null,
+  );
+  const previousState = useRef(fetcher.state);
+  const mergeContextRef = useRef<{
+    mergedAll: boolean;
+    redirectPath: string | null;
+  }>({ mergedAll: false, redirectPath: null });
 
   const isMerging = fetcher.state !== 'idle';
 
-  useEffect(() => {
-    setSelectedIds([]);
-  }, [initialData]);
+  const isStaleSelection =
+    selection.source !== initialData ||
+    (fetcher.state === 'idle' &&
+      fetcher.data?.ok === true &&
+      selection.acknowledgedMergeData !== fetcher.data);
+
+  const selectedIds = isStaleSelection ? EMPTY_SELECTED_IDS : selection.ids;
 
   useEffect(() => {
-    if (!hasSubmitted || fetcher.state !== 'idle' || !fetcher.data) {
-      return;
-    }
-
-    if (fetcher.data.ok && target) {
-      const mergedAll = submittedAllCandidatesRef.current;
-      setHasSubmitted(false);
-      setSelectedIds([]);
+    if (
+      previousState.current !== 'idle' &&
+      fetcher.state === 'idle' &&
+      fetcher.data?.ok
+    ) {
       toast.success('Loadouts merged successfully');
-
-      if (mergedAll && userId && characterId) {
-        navigate(`/profile/${userId}/c/${characterId}/loadouts/${target.id}`);
+      const { mergedAll, redirectPath } = mergeContextRef.current;
+      if (mergedAll && redirectPath) {
+        navigate(redirectPath);
       }
     }
-  }, [
-    hasSubmitted,
-    fetcher.state,
-    fetcher.data,
-    target,
-    userId,
-    characterId,
-    navigate,
-  ]);
+    previousState.current = fetcher.state;
+  }, [fetcher.state, fetcher.data, navigate]);
 
   const getLoadoutHref = useCallback(
     (candidateSnapshotId: string) => {
@@ -151,9 +156,17 @@ export function SimilarLoadoutsView({
     return calculateCombinedStats(target.id, selectedIds, statsMap, countMap);
   }, [target, selectedIds, statsMap, countMap]);
 
+  const updateSelectedIds = (updater: (prev: string[]) => string[]) => {
+    setSelection({
+      source: initialData,
+      acknowledgedMergeData: fetcher.data,
+      ids: updater(selectedIds),
+    });
+  };
+
   const handleToggleCandidate = (id: string) => {
     if (isMerging) return;
-    setSelectedIds((prev) =>
+    updateSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
@@ -163,9 +176,9 @@ export function SimilarLoadoutsView({
     const highIds = highSimilarityItems.map((i) => i.snapshot.id);
 
     if (allHighSelected) {
-      setSelectedIds((prev) => prev.filter((id) => !highIds.includes(id)));
+      updateSelectedIds((prev) => prev.filter((id) => !highIds.includes(id)));
     } else {
-      setSelectedIds((prev) => Array.from(new Set([...prev, ...highIds])));
+      updateSelectedIds((prev) => Array.from(new Set([...prev, ...highIds])));
     }
   };
 
@@ -178,9 +191,14 @@ export function SimilarLoadoutsView({
     for (const sourceId of selectedIds) {
       formData.append('sourceSnapshotIds', sourceId);
     }
-    submittedAllCandidatesRef.current =
-      items.length > 0 && selectedIds.length >= items.length;
-    setHasSubmitted(true);
+    setSubmittedTargetId(target.id);
+    mergeContextRef.current = {
+      mergedAll: items.length > 0 && selectedIds.length >= items.length,
+      redirectPath:
+        userId && characterId
+          ? `/profile/${userId}/c/${characterId}/loadouts/${target.id}`
+          : null,
+    };
     fetcher.submit(formData, {
       method: 'post',
       action: '/action/merge-loadout',
@@ -188,7 +206,9 @@ export function SimilarLoadoutsView({
   };
 
   const actionError =
-    hasSubmitted && fetcher.state === 'idle' && fetcher.data?.ok === false
+    fetcher.state === 'idle' &&
+    fetcher.data?.ok === false &&
+    submittedTargetId === target?.id
       ? fetcher.data.error
       : undefined;
 

@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -909,5 +910,65 @@ describe('SimilarLoadoutsView', () => {
     expect(
       screen.getAllByText("Primary Target's Set Bonuses").length,
     ).toBeGreaterThan(0);
+  });
+
+  it('does not leak a failed merge error alert when switching to another target loadout', async () => {
+    const otherTarget = buildTestSnapshot({
+      id: 'target-2',
+      name: 'Second Target Loadout',
+    });
+    const otherData: GetSimilarSnapshotsResponse = {
+      target: otherTarget,
+      items: mockItems,
+      stats: { ...mockStats, 'target-2': mockStats['target-1'] },
+      count: { ...mockCounts, 'target-2': 12 },
+    };
+
+    function SwitchTargetHarness() {
+      const [currentData, setCurrentData] = useState(mockInitialData);
+      return (
+        <>
+          <button type="button" onClick={() => setCurrentData(otherData)}>
+            Switch Target
+          </button>
+          <SimilarLoadoutsView initialData={currentData} />
+        </>
+      );
+    }
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <SwitchTargetHarness />,
+      },
+      {
+        path: '/action/merge-loadout',
+        action: async () => ({
+          ok: false,
+          error: 'Merge failed for target 1',
+        }),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: /select primed' roaming gamer mode/i,
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: /merge selected \(1\)/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Merge failed for target 1',
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /switch target/i }));
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

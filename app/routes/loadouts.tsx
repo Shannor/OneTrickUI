@@ -3,10 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshots } from '~/api';
 import { Empty } from '~/components/empty';
+import { GameModeSelector } from '~/components/game-mode-selector';
 import { LoadoutCard } from '~/components/loadout-card';
 import { Button } from '~/components/ui/button';
 import { FormLabel } from '~/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -206,33 +206,11 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
       <div className="flex flex-col gap-4">
-        <RadioGroup
+        <GameModeSelector
           value={gameMode}
           onValueChange={(val) => handleFilterChange('mode', val)}
-          className="flex flex-col gap-4 md:flex-row md:items-center"
-          name="mode"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="allGameModes" id="all-modes" />
-            <FormLabel htmlFor="all-modes">All Modes</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="quickplay" id="quickplay" />
-            <FormLabel htmlFor="quickplay">Quickplay</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="competitive" id="comp" />
-            <FormLabel htmlFor="comp">Competitive </FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="trials" id="trials" />
-            <FormLabel htmlFor="trials">Trials</FormLabel>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="ironBanner" id="iron-banner" />
-            <FormLabel htmlFor="iron-banner">Iron Banner</FormLabel>
-          </div>
-        </RadioGroup>
+          mobileSelectClassName="w-full"
+        />
 
         <div className="flex flex-col gap-4 md:flex-row md:items-start">
           <div>

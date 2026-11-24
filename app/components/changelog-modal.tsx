@@ -1,6 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { Button } from '~/components/ui/button';
 import {
   Dialog,
@@ -13,6 +13,35 @@ import {
 import { CHANGELOG } from '~/data/changelog';
 
 const LAST_SEEN_KEY = 'onetrick_last_seen_changelog';
+const changelogListeners = new Set<() => void>();
+let memoryLastSeen: string | null = null;
+
+function subscribeChangelogSeen(callback: () => void) {
+  changelogListeners.add(callback);
+  window.addEventListener('storage', callback);
+  return () => {
+    changelogListeners.delete(callback);
+    window.removeEventListener('storage', callback);
+  };
+}
+
+function getLastSeenChangelog(): string | null {
+  try {
+    return window.localStorage.getItem(LAST_SEEN_KEY);
+  } catch {
+    return memoryLastSeen;
+  }
+}
+
+function markChangelogSeen(releaseId: string) {
+  try {
+    window.localStorage.setItem(LAST_SEEN_KEY, releaseId);
+    memoryLastSeen = null;
+  } catch {
+    memoryLastSeen = releaseId;
+  }
+  changelogListeners.forEach((listener) => listener());
+}
 
 export interface ChangelogModalProps {
   open?: boolean;
@@ -26,36 +55,27 @@ export function ChangelogModal({
   trigger,
 }: ChangelogModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(false);
+  const [seenInSession, setSeenInSession] = useState<string | null>(null);
 
   const isControlled = openProp !== undefined;
   const isOpen = isControlled ? openProp : internalOpen;
 
   const latestReleaseId = CHANGELOG[0]?.id;
-
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && latestReleaseId) {
-        const lastSeen = window.localStorage.getItem(LAST_SEEN_KEY);
-        if (!lastSeen || lastSeen < latestReleaseId) {
-          setHasUnread(true);
-        }
-      }
-    } catch {
-      // Ignore storage errors
-    }
-  }, [latestReleaseId]);
+  const lastSeen = useSyncExternalStore(
+    subscribeChangelogSeen,
+    getLastSeenChangelog,
+    () => latestReleaseId ?? null,
+  );
+  const effectiveLastSeen = lastSeen ?? seenInSession;
+  const hasUnread = Boolean(
+    latestReleaseId &&
+      (!effectiveLastSeen || effectiveLastSeen < latestReleaseId),
+  );
 
   const handleOpenChange = (openState: boolean) => {
     if (openState && latestReleaseId) {
-      try {
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(LAST_SEEN_KEY, latestReleaseId);
-        }
-      } catch {
-        // Ignore storage errors
-      }
-      setHasUnread(false);
+      setSeenInSession(latestReleaseId);
+      markChangelogSeen(latestReleaseId);
     }
 
     if (onOpenChange) {

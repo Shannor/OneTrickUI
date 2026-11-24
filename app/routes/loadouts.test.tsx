@@ -346,5 +346,42 @@ describe('Loadouts Route Component', () => {
     );
     expect(result.hasSimilar).toBe(true);
   });
+
+  it('updates URL mode query param and resets page when selecting a game mode pill', () => {
+    const props = {
+      loaderData: {
+        loadouts: {
+          items: [olderSnapshot],
+          count: { 'snap-1': 5 },
+          stats: {},
+          similarCounts: {},
+        },
+        gameMode: 'allGameModes' as const,
+        minimumGames: 5,
+        hasSimilar: false,
+        page: 2,
+      },
+    } as unknown as ComponentProps<typeof Loadouts>;
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/loadouts',
+          element: <Loadouts {...props} />,
+        },
+      ],
+      {
+        initialEntries: ['/loadouts?page=2&minimum=0'],
+      },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Trials' }));
+    expect(router.state.location.search).toBe('?minimum=0&mode=trials');
+
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expect(router.state.location.search).toBe('?minimum=0');
+  });
 });
 

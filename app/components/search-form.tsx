@@ -1,5 +1,5 @@
 import { Search, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Form, useNavigate } from 'react-router';
 import { LoadingButton } from '~/components/loading-button';
 import { Button } from '~/components/ui/button';
@@ -11,12 +11,14 @@ export interface SearchFormProps {
 }
 
 export function SearchForm({ query, isLoading = false }: SearchFormProps) {
+  const [prevQuery, setPrevQuery] = useState(query);
   const [value, setValue] = useState(query);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  if (query !== prevQuery) {
+    setPrevQuery(query);
     setValue(query);
-  }, [query]);
+  }
 
   const handleClear = () => {
     setValue('');

@@ -13,7 +13,7 @@ import {
   SquareLibrary,
   UsersRound,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   Link,
   Outlet,
@@ -34,6 +34,10 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '~/components/ui/sidebar';
+import {
+  saveActiveCharacterCache,
+  useActiveCharacterCache,
+} from '~/hooks/use-active-character-cache';
 import {
   useIsNavigating,
   useOptionalProfileData,
@@ -90,41 +94,11 @@ export function Sidebar() {
     signedInUser?.id ||
     (profileResponse?.auth ? profileResponse.auth.id : undefined);
 
-  // Active character state cached in localStorage for returning from home/public views
-  const [cachedCharId, setCachedCharId] = useState<string | null>(null);
+  const cachedCharId = useActiveCharacterCache(signedInUserId);
 
   useEffect(() => {
-    if (signedInUserId) {
-      if (characterId && profileResponse?.type === 'owner') {
-        try {
-          localStorage.setItem(
-            `onetrick_active_char_${signedInUserId}`,
-            characterId,
-          );
-          setCachedCharId(characterId);
-        } catch (err) {
-          log.error({
-            action: 'sidebar.save_active_character',
-            message: 'Failed to save active character in localStorage',
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-      } else {
-        try {
-          const stored = localStorage.getItem(
-            `onetrick_active_char_${signedInUserId}`,
-          );
-          if (stored) {
-            setCachedCharId(stored);
-          }
-        } catch (err) {
-          log.error({
-            action: 'sidebar.get_active_character',
-            message: 'Failed to get active character from localStorage',
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-      }
+    if (signedInUserId && characterId && profileResponse?.type === 'owner') {
+      saveActiveCharacterCache(signedInUserId, characterId);
     }
   }, [characterId, signedInUserId, profileResponse?.type]);
 
