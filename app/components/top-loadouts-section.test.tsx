@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { startTransition, useState } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import type { CharacterSnapshot } from '~/api';
@@ -28,6 +29,17 @@ const mockSnapshot: CharacterSnapshot = {
   hash: 'hash-top-1',
   createdAt: new Date('2025-02-01T00:00:00Z'),
   updatedAt: new Date('2025-02-01T00:00:00Z'),
+  loadout: {},
+};
+
+const mockChar2Snapshot: CharacterSnapshot = {
+  id: 'snap-top-2',
+  name: 'Arc Titan Rush Build',
+  userId: 'user-1',
+  characterId: 'char-2',
+  hash: 'hash-top-2',
+  createdAt: new Date('2025-02-02T00:00:00Z'),
+  updatedAt: new Date('2025-02-02T00:00:00Z'),
   loadout: {},
 };
 
@@ -88,6 +100,76 @@ describe('TopLoadoutsSection', () => {
     expect(
       screen.getByRole('link', { name: /view all loadouts/i }),
     ).toHaveAttribute('href', '/profile/user-1/c/char-1/loadouts');
+  });
+
+  it('resets Suspense boundary on character switch inside startTransition so skeleton shows immediately instead of freezing on previous character', async () => {
+    const char2Deferred = createDeferred<TopLoadoutsResult>();
+    let switchToChar2!: () => void;
+
+    function CharacterSwitchHarness() {
+      const [state, setState] = useState<{
+        characterId: string;
+        loadouts: TopLoadoutsResult | Promise<TopLoadoutsResult>;
+      }>({
+        characterId: 'char-1',
+        loadouts: {
+          data: {
+            items: [mockSnapshot],
+            count: { 'snap-top-1': 14 },
+            stats: {},
+          },
+          error: undefined,
+        },
+      });
+
+      switchToChar2 = () => {
+        startTransition(() => {
+          setState({
+            characterId: 'char-2',
+            loadouts: char2Deferred.promise,
+          });
+        });
+      };
+
+      return (
+        <TopLoadoutsSection
+          loadouts={state.loadouts}
+          isOwner={true}
+          hasSessions={true}
+          userId="user-1"
+          characterId={state.characterId}
+          onSelectLoadout={vi.fn()}
+        />
+      );
+    }
+
+    renderWithRouter(<CharacterSwitchHarness />);
+
+    expect(screen.getByText('Solar Hand Cannon Build')).toBeInTheDocument();
+
+    await act(async () => {
+      switchToChar2();
+    });
+
+    expect(screen.getByTestId('top-loadouts-skeleton')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Solar Hand Cannon Build'),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      char2Deferred.resolve({
+        data: {
+          items: [mockChar2Snapshot],
+          count: { 'snap-top-2': 18 },
+          stats: {},
+        },
+        error: undefined,
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Arc Titan Rush Build')).toBeInTheDocument();
+    });
   });
 
   it('renders empty state without View all loadouts link when resolved with zero loadouts', async () => {

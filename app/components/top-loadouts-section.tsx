@@ -241,6 +241,7 @@ export function TopLoadoutsSection({
   return (
     <section className="flex flex-col gap-4">
       <Suspense
+        key={`${userId ?? ''}:${characterId ?? ''}`}
         fallback={
           <>
             <TopLoadoutsHeader viewAllTo={viewAllTo} />

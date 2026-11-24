@@ -1,9 +1,10 @@
 import '@testing-library/jest-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import { type ComponentProps, startTransition, useState } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAuth } from '~/.server/auth';
+import { loggerContext } from '~/.server/logger';
 import {
   type CharacterSnapshot,
   getSimilarSnapshots,
@@ -395,5 +396,151 @@ describe('loadout route loader and component', () => {
     expect(
       screen.queryByRole('tab', { name: /similar/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('forks evlog logger when streaming similarCount on non-/similar routes and uses direct logger on /similar', async () => {
+    const forkSpy = vi.fn(
+      async (_label: string, fn: () => void | Promise<void>) => {
+        await fn();
+      },
+    );
+    const mockLog = {
+      set: vi.fn(),
+      error: vi.fn(),
+      fork: forkSpy,
+    };
+    const context = {
+      get: vi.fn((key) => (key === loggerContext ? mockLog : undefined)),
+    };
+
+    vi.mocked(getAuth).mockResolvedValue({ id: 'user-1' } as any);
+    vi.mocked(getSnapshot).mockResolvedValue({
+      data: mockSnapshot,
+      error: undefined,
+    } as any);
+    vi.mocked(getSimilarSnapshots).mockResolvedValue({
+      data: {
+        target: mockSnapshot,
+        items: [{ snapshot: { ...mockSnapshot, id: 'sim-1' }, tier: 'high' }],
+      },
+      error: undefined,
+    } as any);
+
+    const detailsRes = (await loader({
+      request: new Request(
+        'http://localhost/profile/user-1/c/char-1/loadouts/snap-archived',
+      ),
+      params: {
+        id: 'user-1',
+        characterId: 'char-1',
+        snapshotId: 'snap-archived',
+      },
+      context,
+    } as any)) as any;
+
+    expect(forkSpy).toHaveBeenCalledTimes(1);
+    expect(forkSpy).toHaveBeenCalledWith(
+      'loadout.similar_count',
+      expect.any(Function),
+    );
+    expect(await detailsRes.similarCount).toBe(1);
+
+    forkSpy.mockClear();
+
+    const similarRes = (await loader({
+      request: new Request(
+        'http://localhost/profile/user-1/c/char-1/loadouts/snap-archived/similar',
+      ),
+      params: {
+        id: 'user-1',
+        characterId: 'char-1',
+        snapshotId: 'snap-archived',
+      },
+      context,
+    } as any)) as any;
+
+    expect(forkSpy).not.toHaveBeenCalled();
+    expect(similarRes.similarCount).toBe(1);
+  });
+
+  it('resets SimilarCountBadge Suspense boundary when navigating between loadouts inside startTransition', async () => {
+    const snap2: CharacterSnapshot = {
+      ...mockSnapshot,
+      id: 'snap-second',
+      name: 'Second Loadout',
+    };
+    const snap2CountDeferred = createDeferred<number>();
+    let switchToSnap2!: () => void;
+
+    function LoadoutSwitchHarness() {
+      const [state, setState] = useState<{
+        snapshot: CharacterSnapshot;
+        similarCount: number | Promise<number>;
+      }>({
+        snapshot: mockSnapshot,
+        similarCount: 4,
+      });
+
+      switchToSnap2 = () => {
+        startTransition(() => {
+          setState({
+            snapshot: snap2,
+            similarCount: snap2CountDeferred.promise,
+          });
+        });
+      };
+
+      const props = {
+        loaderData: {
+          snapshot: state.snapshot,
+          error: undefined,
+          path: `https://d2onetrick.com/profile/user-1/c/char-1/loadouts/${state.snapshot.id}`,
+          similarCount: state.similarCount,
+        },
+      } as unknown as ComponentProps<typeof Loadout>;
+
+      return (
+        <TooltipProvider>
+          <Loadout {...props} />
+        </TooltipProvider>
+      );
+    }
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/profile/:id/c/:characterId/loadouts/:snapshotId',
+          element: <LoadoutSwitchHarness />,
+        },
+      ],
+      {
+        initialEntries: ['/profile/user-1/c/char-1/loadouts/snap-archived'],
+      },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByRole('tab', { name: /similar/i })).toHaveTextContent(
+      'Similar4',
+    );
+
+    await act(async () => {
+      switchToSnap2();
+    });
+
+    expect(screen.getByDisplayValue('Second Loadout')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /similar/i })).toHaveTextContent(
+      /^Similar$/,
+    );
+
+    await act(async () => {
+      snap2CountDeferred.resolve(2);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /similar/i })).toHaveTextContent(
+        'Similar2',
+      );
+    });
   });
 });

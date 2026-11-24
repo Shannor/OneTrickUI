@@ -1,6 +1,6 @@
 import { RadioIcon } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { getRequestLogger } from '~/.server/logger';
+import { getRequestLogger, runWithForkedLogger } from '~/.server/logger';
 import { getBestPerformingLoadouts, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
 import {
@@ -15,6 +15,7 @@ import {
   TopLoadoutsSection,
 } from '~/components/top-loadouts-section';
 import { Button } from '~/components/ui/button';
+import { slimSnapshotForCard } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { getSiteOrigin } from '~/lib/utils';
 
@@ -25,41 +26,58 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const { characterId, id } = params;
   log.set({ route: 'routes/home', home: { userId: id, characterId } });
 
-  const loadoutsPromise: Promise<TopLoadoutsResult> = getBestPerformingLoadouts(
-    {
-      query: {
-        characterId,
-        userId: id,
-        gameMode: 'allGameModes',
-        count: 3,
-        minimumGames: 10,
-      },
-    },
-  )
-    .then((res) => {
-      if (res.error) {
-        log.error('Failed to fetch top loadouts in home loader', {
-          home: { userId: id, characterId, error: res.error },
+  const loadoutsPromise: Promise<TopLoadoutsResult> = runWithForkedLogger(
+    log,
+    'home.top_loadouts',
+    async (streamLog) => {
+      streamLog.set({ home: { userId: id, characterId } });
+      try {
+        const res = await getBestPerformingLoadouts({
+          query: {
+            characterId,
+            userId: id,
+            gameMode: 'allGameModes',
+            count: 3,
+            minimumGames: 10,
+          },
+        });
+        if (res.error) {
+          streamLog.error('Failed to fetch top loadouts in home loader', {
+            home: { userId: id, characterId, error: res.error },
+          });
+          return {
+            data: EMPTY_TOP_LOADOUTS,
+            error: 'Failed to load top loadouts',
+          };
+        }
+
+        const rawData = res.data ?? EMPTY_TOP_LOADOUTS;
+        const slimmedItems = (rawData.items ?? []).map(slimSnapshotForCard);
+        streamLog.set({
+          home: {
+            userId: id,
+            characterId,
+            topLoadoutCount: slimmedItems.length,
+          },
+        });
+        return {
+          data: {
+            ...rawData,
+            items: slimmedItems,
+          },
+          error: undefined,
+        };
+      } catch (e) {
+        streamLog.error(e instanceof Error ? e : String(e), {
+          home: { userId: id, characterId },
         });
         return {
           data: EMPTY_TOP_LOADOUTS,
           error: 'Failed to load top loadouts',
         };
       }
-      return {
-        data: res.data ?? EMPTY_TOP_LOADOUTS,
-        error: undefined,
-      };
-    })
-    .catch((e) => {
-      log.error(e instanceof Error ? e : String(e), {
-        home: { userId: id, characterId },
-      });
-      return {
-        data: EMPTY_TOP_LOADOUTS,
-        error: 'Failed to load top loadouts',
-      };
-    });
+    },
+  );
 
   try {
     const sessionsRes = await getUserSessions({

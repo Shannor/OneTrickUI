@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import type { AuditableLogger } from 'evlog';
 import React, { Suspense } from 'react';
 import {
   Await,
@@ -11,7 +12,7 @@ import {
   useParams,
 } from 'react-router';
 import { getAuth } from '~/.server/auth';
-import { getRequestLogger } from '~/.server/logger';
+import { getRequestLogger, runWithForkedLogger } from '~/.server/logger';
 import {
   getCachedSimilarSnapshots,
   requestTargetsSimilarRoute,
@@ -78,35 +79,49 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     );
   }
 
-  const similarCountPromise: Promise<number> | null = isOwner
-    ? getCachedSimilarSnapshots(request, snapshotId)
-        .then((res) => {
-          if (res.error) {
-            log.error(
-              'Failed to fetch similar snapshots count in loadout loader',
-              {
-                snapshot: { id: snapshotId, error: res.error },
-              },
-            );
-            return 0;
-          }
-          return res.data?.items?.length ?? 0;
-        })
-        .catch((err) => {
-          log.error(
-            err instanceof Error
-              ? err
-              : 'Failed to fetch similar snapshots count in loadout loader',
-            { snapshot: { id: snapshotId } },
-          );
-          return 0;
-        })
-    : null;
+  const targetsSimilarRoute = Boolean(
+    request && requestTargetsSimilarRoute(request),
+  );
 
-  const similarCount: number | Promise<number> = similarCountPromise
-    ? request && requestTargetsSimilarRoute(request)
-      ? await similarCountPromise
-      : similarCountPromise
+  const fetchSimilarCount = async (
+    targetLog: AuditableLogger,
+  ): Promise<number> => {
+    try {
+      const res = await getCachedSimilarSnapshots(request, snapshotId);
+      if (res.error) {
+        targetLog.error(
+          'Failed to fetch similar snapshots count in loadout loader',
+          {
+            snapshot: { id: snapshotId, error: res.error },
+          },
+        );
+        return 0;
+      }
+      const count = res.data?.items?.length ?? 0;
+      targetLog.set({
+        snapshot: {
+          id: snapshotId,
+          userId: id,
+          characterId,
+          similarCount: count,
+        },
+      });
+      return count;
+    } catch (err) {
+      targetLog.error(
+        err instanceof Error
+          ? err
+          : 'Failed to fetch similar snapshots count in loadout loader',
+        { snapshot: { id: snapshotId, userId: id, characterId } },
+      );
+      return 0;
+    }
+  };
+
+  const similarCount: number | Promise<number> = isOwner
+    ? targetsSimilarRoute
+      ? await fetchSimilarCount(log)
+      : runWithForkedLogger(log, 'loadout.similar_count', fetchSimilarCount)
     : 0;
 
   return {
@@ -140,12 +155,14 @@ export function shouldRevalidate({
 }
 
 export function SimilarCountBadge({
+  snapshotId,
   similarCount,
 }: {
+  snapshotId?: string;
   similarCount: number | Promise<number>;
 }) {
   return (
-    <Suspense fallback={null}>
+    <Suspense key={snapshotId} fallback={null}>
       <Await resolve={similarCount} errorElement={<></>}>
         {(count) =>
           count > 0 ? (
@@ -222,6 +239,7 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
 
         {isOwner ? (
           <LoadoutUpdateForm
+            key={snapshot.id}
             snapshotId={snapshot.id}
             defaultName={snapshot.name}
             defaultDescription={snapshot.description}
@@ -253,7 +271,11 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
             <TabsTrigger value="similar" asChild>
               <NavLink to="similar" className="flex items-center gap-1.5">
                 <span>Similar</span>
-                <SimilarCountBadge similarCount={similarCount} />
+                <SimilarCountBadge
+                  key={snapshot.id}
+                  snapshotId={snapshot.id}
+                  similarCount={similarCount}
+                />
               </NavLink>
             </TabsTrigger>
           )}
