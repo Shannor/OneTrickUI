@@ -12,6 +12,9 @@
     "test": "vitest run",
     "worktree-ports": "node ./scripts/worktree-ports.mjs"
   },
+  "engines": {
+    "node": ">=26.13.1"
+  },
   "dependencies": {
     "@fontsource/iceland": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
