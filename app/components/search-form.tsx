@@ -1,5 +1,5 @@
 import { Search, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Form, useNavigate } from 'react-router';
 import { LoadingButton } from '~/components/loading-button';
 import { Button } from '~/components/ui/button';
@@ -11,15 +11,15 @@ export interface SearchFormProps {
 }
 
 export function SearchForm({ query, isLoading = false }: SearchFormProps) {
-  const [value, setValue] = useState(query);
+  const [draft, setDraft] = useState<{ query: string; value: string } | null>(
+    null,
+  );
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setValue(query);
-  }, [query]);
+  const value = draft?.query === query ? draft.value : query;
 
   const handleClear = () => {
-    setValue('');
+    setDraft({ query, value: '' });
     if (query) {
       navigate('/search');
     }
@@ -42,7 +42,7 @@ export function SearchForm({ query, isLoading = false }: SearchFormProps) {
             name="q"
             type="search"
             value={value}
-            onChange={(event) => setValue(event.target.value)}
+            onChange={(event) => setDraft({ query, value: event.target.value })}
             placeholder="Search Bungie Name (e.g. Guardian#1234)..."
             aria-label="Search Guardians by Bungie Name"
             autoComplete="off"

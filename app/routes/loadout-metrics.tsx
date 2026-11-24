@@ -107,9 +107,31 @@ export default function LoadoutMetrics({
 
   const customTime = useMemo(() => {
     return timeWindowToCustom(time, aggregates);
-  }, [time, snapshot, aggregates]);
+  }, [time, aggregates]);
 
-  if (error || aggregates.length === 0) {
+  const hasMetrics = !error && aggregates.length > 0;
+
+  const data = useMemo(() => {
+    if (!hasMetrics) return [];
+    return generateKDAResultsForTimeWindow(
+      aggregates,
+      customTime,
+      characterId,
+      gameMode,
+    );
+  }, [hasMetrics, aggregates, customTime, gameMode, characterId]);
+
+  const mapData = useMemo(() => {
+    if (!hasMetrics) return [];
+    return generatePerformancePerMap(
+      aggregates,
+      customTime,
+      characterId,
+      gameMode,
+    );
+  }, [hasMetrics, aggregates, customTime, gameMode, characterId]);
+
+  if (!hasMetrics) {
     return (
       <>
         {metaTags}
@@ -124,24 +146,6 @@ export default function LoadoutMetrics({
       </>
     );
   }
-
-  const data = useMemo(() => {
-    return generateKDAResultsForTimeWindow(
-      aggregates,
-      customTime,
-      characterId,
-      gameMode,
-    );
-  }, [aggregates, customTime, gameMode, characterId]);
-
-  const mapData = useMemo(() => {
-    return generatePerformancePerMap(
-      aggregates,
-      customTime,
-      characterId,
-      gameMode,
-    );
-  }, [aggregates, customTime, gameMode, characterId]);
 
   const ratio = data.reduce(
     (state, current) => {

@@ -29,4 +29,25 @@ describe('useLocalStorage', () => {
       JSON.stringify('new-value'),
     );
   });
+
+  it('reads existing values from localStorage', () => {
+    window.localStorage.setItem('test-key', JSON.stringify('stored-value'));
+
+    const { result } = renderHook(() =>
+      useLocalStorage('test-key', 'default-value'),
+    );
+
+    expect(result.current[0]).toBe('stored-value');
+  });
+
+  it('supports functional updates', () => {
+    const { result } = renderHook(() => useLocalStorage('count-key', 1));
+
+    act(() => {
+      result.current[1]((prev) => prev + 1);
+    });
+
+    expect(result.current[0]).toBe(2);
+    expect(window.localStorage.getItem('count-key')).toBe('2');
+  });
 });

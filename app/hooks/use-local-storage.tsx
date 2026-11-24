@@ -1,19 +1,46 @@
 import { log } from 'evlog';
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
+
+const storageListeners = new Set<() => void>();
+
+function subscribe(callback: () => void) {
+  storageListeners.add(callback);
+  window.addEventListener('storage', callback);
+  return () => {
+    storageListeners.delete(callback);
+    window.removeEventListener('storage', callback);
+  };
+}
+
+function emitStorageChange() {
+  storageListeners.forEach((listener) => listener());
+}
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
-  // State to store the value, safe for initial SSR & hydration render
-  const [storedValue, setStoredValue] = useState<T>(initialValue);
-
-  // Sync from localStorage after hydration mount
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const item = window.localStorage.getItem(key);
-        if (item !== null) {
-          setStoredValue(JSON.parse(item));
-        }
+  const rawValue = useSyncExternalStore(
+    subscribe,
+    () => {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (error) {
+        log.error({
+          action: 'localStorage.read',
+          message: 'Error reading from localStorage',
+          key,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
       }
+    },
+    () => null,
+  );
+
+  const storedValue = useMemo<T>(() => {
+    if (rawValue === null) {
+      return initialValue;
+    }
+    try {
+      return JSON.parse(rawValue) as T;
     } catch (error) {
       log.error({
         action: 'localStorage.read',
@@ -21,27 +48,30 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         key,
         error: error instanceof Error ? error.message : String(error),
       });
+      return initialValue;
     }
-  }, [key]);
+  }, [rawValue, initialValue, key]);
 
-  // Function to set value in state and localStorage
-  const setValue = (value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore =
-        value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+  const setValue = useCallback(
+    (value: T | ((val: T) => T)) => {
+      try {
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+          emitStorageChange();
+        }
+      } catch (error) {
+        log.error({
+          action: 'localStorage.write',
+          message: 'Error setting localStorage value',
+          key,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
-    } catch (error) {
-      log.error({
-        action: 'localStorage.write',
-        message: 'Error setting localStorage value',
-        key,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  };
+    },
+    [key, storedValue],
+  );
 
   return [storedValue, setValue] as const;
 }
