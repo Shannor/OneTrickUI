@@ -36,6 +36,9 @@ export default [
             id: 'loadout-similar',
           }),
         ]),
+        route('metrics', 'routes/character-metrics.tsx', {
+          id: 'character-metrics',
+        }),
         route('fireteam', 'routes/fireteam.tsx'),
       ]),
     ]),

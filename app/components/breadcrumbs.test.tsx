@@ -89,6 +89,20 @@ describe('generateBreadcrumbs', () => {
       { label: 'PvP Main Setup' },
     ]);
   });
+
+  it('generates breadcrumbs for character-wide metrics path', () => {
+    const crumbs = generateBreadcrumbs(
+      '/profile/user-1/c/char-1/metrics',
+      { id: 'user-1', characterId: 'char-1' },
+      { profileDisplayName: 'GuardianOne' },
+    );
+    expect(crumbs).toEqual([
+      { label: 'Home', url: '/' },
+      { label: 'GuardianOne', url: '/profile/user-1/c/char-1' },
+      { label: 'Overview', url: '/profile/user-1/c/char-1' },
+      { label: 'Metrics' },
+    ]);
+  });
 });
 
 describe('AppBreadcrumbs Component', () => {

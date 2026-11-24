@@ -2,7 +2,12 @@ import { Outlet, useLocation, useParams } from 'react-router';
 import { CharacterSwitcher } from '~/components/character-switcher';
 import { useProfileData } from '~/hooks/use-route-loaders';
 
-const PRESERVED_SUB_ROUTES = new Set(['loadouts', 'sessions', 'fireteam']);
+const PRESERVED_SUB_ROUTES = new Set([
+  'loadouts',
+  'sessions',
+  'metrics',
+  'fireteam',
+]);
 
 export function buildCharacterSwitchHref(
   profileId: string,

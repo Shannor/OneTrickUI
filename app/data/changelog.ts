@@ -17,10 +17,19 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-11-23',
     date: 'November 23, 2026',
-    title: 'Active Armor Set Bonuses',
+    title:
+      'Guardian-Wide Metrics, Map Swap Insights & Active Armor Set Bonuses',
     summary:
-      'Inspect active Armor 3.0 set bonuses across loadout cards, loadout details, and similar loadout comparisons at a glance.',
+      'Explore a dedicated Metrics view across all recorded loadouts with rolling 5-match trends and strong vs. swap-candidate maps, plus inspect active Armor 3.0 set bonuses across loadouts and comparisons.',
     changes: [
+      {
+        type: 'feature',
+        text: 'Open the new Metrics page from your Guardian sidebar to analyze K/D, Efficiency, Win %, and per-map performance across all of your recorded sessions and loadouts in one place.',
+      },
+      {
+        type: 'feature',
+        text: 'Spot Strong maps to keep equipped and Swap Candidate maps where a build struggles, complete with one-tap links to your top-performing loadout on each map.',
+      },
       {
         type: 'feature',
         text: 'View active Armor Set Bonuses—including 2-piece, 4-piece, and 2+2 split builds—directly alongside your equipped armor on Loadout Details with set names, tier badges, perk icons, and descriptions.',
@@ -32,6 +41,18 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'feature',
         text: 'Compare active Armor Set Bonuses when merging Similar Loadouts to immediately see whether candidate loadouts match or differ from your primary build.',
+      },
+      {
+        type: 'improvement',
+        text: 'Read performance clearly with Win/Loss match dots and a 5-game rolling average on focused windows, while large All Time histories stay clean with headline summary numbers.',
+      },
+      {
+        type: 'improvement',
+        text: 'Browse large Crucible map pools effortlessly on both desktop and mobile with search, Strong/Swap filters, sortable stats, and a clean open mobile layout.',
+      },
+      {
+        type: 'fix',
+        text: 'Eliminated misleading drops in long-term performance charts caused by inactive weeks or months between Crucible sessions.',
       },
     ],
   },

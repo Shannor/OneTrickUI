@@ -6,14 +6,10 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import type { Aggregate, Session } from '~/api';
-import { ChartWrapper } from '~/charts/ChartWrapper';
-import { KDPerformance } from '~/charts/KDPerformance';
+import { MetricsTrendPanel } from '~/charts/metrics-trend';
 import { SessionCompTrackingBanner } from '~/components/comp-tracking';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import {
-  generateKDAResultsForTimeWindow,
-  timeWindowToCustom,
-} from '~/lib/metrics';
+import { generateMatchSeries, timeWindowToCustom } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 export interface SessionOverviewProps {
@@ -33,43 +29,24 @@ export function SessionOverview({
     return timeWindowToCustom('all-time', aggregates);
   }, [aggregates]);
 
-  const kdaData = useMemo(() => {
-    if (!aggregates || aggregates.length === 0) return [];
-    return generateKDAResultsForTimeWindow(aggregates, customTime, characterId);
+  const matchSeries = useMemo(() => {
+    if (!aggregates || aggregates.length === 0) {
+      return null;
+    }
+    return generateMatchSeries(aggregates, customTime, characterId);
   }, [aggregates, customTime, characterId]);
 
-  const summary = useMemo(() => {
-    if (!aggregates || aggregates.length === 0) return null;
-    return aggregates.reduce(
-      (acc, agg) => {
-        const p = agg.performance[characterId];
-        if (!p) return acc;
-        acc.kills += p.playerStats.kills?.value ?? 0;
-        acc.deaths += p.playerStats.deaths?.value ?? 0;
-        acc.assists += p.playerStats.assists?.value ?? 0;
-        acc.wins += p.playerStats.standing?.value === 0 ? 1 : 0;
-        acc.games += 1;
-        return acc;
-      },
-      { kills: 0, deaths: 0, assists: 0, wins: 0, games: 0 },
-    );
-  }, [aggregates, characterId]);
-
-  const gamesCount = summary?.games ?? session.aggregateIds?.length ?? 0;
-  const wins = summary?.wins ?? 0;
+  const hasMatches = Boolean(matchSeries && matchSeries.points.length > 0);
+  const gamesCount =
+    matchSeries && matchSeries.summary.games > 0
+      ? matchSeries.summary.games
+      : (session.aggregateIds?.length ?? 0);
+  const wins = matchSeries?.summary.wins ?? 0;
   const losses = gamesCount - wins;
-  const winRate = gamesCount > 0 ? Math.round((wins / gamesCount) * 100) : 0;
+  const winRate = matchSeries?.summary.winPct ?? 0;
   const isPositiveWinRate = winRate >= 50;
-  const kd = summary
-    ? summary.deaths > 0
-      ? summary.kills / summary.deaths
-      : summary.kills
-    : 0;
-  const kda = summary
-    ? summary.deaths > 0
-      ? (summary.kills + summary.assists) / summary.deaths
-      : summary.kills + summary.assists
-    : 0;
+  const kd = matchSeries?.summary.kd ?? 0;
+  const kda = matchSeries?.summary.kda ?? 0;
   const isPending = session.status === 'pending';
 
   return (
@@ -80,7 +57,7 @@ export function SessionOverview({
           isPending={isPending}
         />
 
-        {summary && (
+        {hasMatches && (
           <SessionOverviewStats
             gamesCount={gamesCount}
             wins={wins}
@@ -92,18 +69,14 @@ export function SessionOverview({
           />
         )}
 
-        {kdaData.length > 0 && (
-          <ChartWrapper
-            title="Session Performance Graph"
-            description="K/D ratio and Efficiency trend over the course of this session."
-          >
-            <KDPerformance
-              data={kdaData}
-              timeWindow={customTime}
-              syncId="session-performance"
-              className="max-h-[300px]"
-            />
-          </ChartWrapper>
+        {matchSeries && matchSeries.points.length > 0 && (
+          <MetricsTrendPanel
+            points={matchSeries.points}
+            summary={matchSeries.summary}
+            hideKpiTabs
+            titleOverride="Session Performance Graph"
+            syncId="session-performance"
+          />
         )}
       </div>
     </TooltipProvider>
