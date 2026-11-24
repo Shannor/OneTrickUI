@@ -1,4 +1,9 @@
-import type { MatchPoint, TelemetrySummary } from '~/lib/metrics';
+import {
+  EVEN_KD_TARGET,
+  EVEN_WIN_RATE_PCT,
+  type MatchPoint,
+  type TelemetrySummary,
+} from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 import { type TrendMetricKey, formatSignedDelta } from './metrics-trend-config';
@@ -24,7 +29,7 @@ export function buildKpiItems(
   const kdDeltaText = formatSignedDelta(summary.kdDelta);
   const kdaDeltaText = formatSignedDelta(summary.kdaDelta);
   const winDeltaText = formatSignedDelta(summary.winPctDelta, '%');
-  const isPositiveWin = summary.winPct >= 50;
+  const isPositiveWin = summary.winPct >= EVEN_WIN_RATE_PCT;
 
   return [
     {
@@ -35,7 +40,7 @@ export function buildKpiItems(
       subText: kdDeltaText,
       subPositive: (summary.kdDelta ?? 0) >= 0,
       valueClassName:
-        summary.kd >= 1
+        summary.kd >= EVEN_KD_TARGET
           ? 'text-emerald-600 dark:text-emerald-400'
           : 'text-red-600 dark:text-red-400',
       activeBorderClassName: 'border-b-emerald-500 md:bg-emerald-500/[0.04]',
@@ -97,10 +102,10 @@ export function KpiStatCellContent({
   return (
     <>
       <div className="min-w-0">
-        <div className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:hidden">
+        <div className="truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:hidden">
           {item.mobileLabel}
         </div>
-        <div className="hidden truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:block">
+        <div className="hidden truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:block">
           {item.label}
         </div>
         <div className="mt-0.5 flex flex-wrap items-baseline gap-1.5">

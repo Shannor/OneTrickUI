@@ -1,8 +1,11 @@
 import React from 'react';
-import type { MatchPoint } from '~/lib/metrics';
+import { EVEN_WIN_RATE_PCT, type MatchPoint } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
-import type { TrendMetricKey } from './metrics-trend-config';
+import {
+  DEFAULT_OUTCOME_DOT_RADIUS,
+  type TrendMetricKey,
+} from './metrics-trend-config';
 
 export interface MatchOutcomeDotProps {
   cx?: number;
@@ -15,7 +18,7 @@ export function MatchOutcomeDot({
   cx,
   cy,
   payload,
-  radius = 3.5,
+  radius = DEFAULT_OUTCOME_DOT_RADIUS,
 }: MatchOutcomeDotProps) {
   if (typeof cx !== 'number' || typeof cy !== 'number' || !payload) {
     return null;
@@ -107,7 +110,7 @@ export function buildTooltipRows(
           value: `${point.rollingWinPct}%`,
           valueClassName: cn(
             'font-bold',
-            point.rollingWinPct >= 50
+            point.rollingWinPct >= EVEN_WIN_RATE_PCT
               ? 'text-emerald-600 dark:text-emerald-400'
               : 'text-red-600 dark:text-red-400',
           ),
@@ -147,19 +150,19 @@ export function TrendTooltipContent({
   const rows = buildTooltipRows(point, activeMetric);
 
   return (
-    <div className="min-w-[215px] rounded-lg border border-border/70 bg-background/95 p-3 text-xs shadow-xl backdrop-blur-sm">
+    <div className="min-w-52 rounded-lg border border-border/70 bg-background/95 p-3 text-xs shadow-xl backdrop-blur-sm">
       <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
         <div className="min-w-0">
           <div className="truncate font-semibold text-foreground">
             Match #{point.matchIndex} · {point.location}
           </div>
-          <div className="text-[11px] text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             {point.shortLabel.split('·')[1]?.trim() ?? point.shortLabel}
           </div>
         </div>
         <span
           className={cn(
-            'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+            'shrink-0 rounded px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider',
             point.won
               ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
               : 'bg-red-500/15 text-red-600 dark:text-red-400',

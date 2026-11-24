@@ -46,7 +46,7 @@ export function MetricsFilterBar({
     >
       <DateRangePicker value={time} onValueChange={onTimeChange} />
 
-      <div className="w-[150px] md:hidden">
+      <div className="w-40 md:hidden">
         <Select
           value={gameMode}
           onValueChange={(val) => onGameModeChange(val as GameMode)}
@@ -80,7 +80,7 @@ export function MetricsFilterBar({
               className={cn(
                 'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                 isActive
-                  ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                  ? 'bg-primary font-semibold text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >

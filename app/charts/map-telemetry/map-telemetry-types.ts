@@ -1,4 +1,7 @@
-import type { MapTelemetryResult } from '~/lib/metrics';
+import {
+  MIN_MAP_SAMPLE_FOR_SIGNAL,
+  type MapTelemetryResult,
+} from '~/lib/metrics';
 
 export type MapFilterTab = 'all' | 'strong' | 'swap' | 'multi';
 export type MapSortKey = 'count' | 'winPct' | 'kd' | 'kda';
@@ -10,6 +13,10 @@ export interface MapFilterTabOption {
 }
 
 export const MAP_PAGE_SIZE = 7;
+export const MAX_STRONG_INSIGHT_MAPS = 4;
+export const MAX_SWAP_INSIGHT_MAPS = 3;
+export const RECOMMENDED_SWAP_LOADOUT_MIN_KD = 1.1;
+export const KD_BULLET_MAX_SCALE = 3;
 
 export function filterAndSortMaps(
   data: readonly MapTelemetryResult[],
@@ -26,7 +33,7 @@ export function filterAndSortMaps(
       }
       if (filter === 'strong') return map.signal === 'strong';
       if (filter === 'swap') return map.signal === 'swap';
-      if (filter === 'multi') return map.count >= 2;
+      if (filter === 'multi') return map.count >= MIN_MAP_SAMPLE_FOR_SIGNAL;
       return true;
     })
     .sort((a, b) => {
@@ -61,8 +68,8 @@ export function buildMapFilterTabs(counts: {
     },
     {
       key: 'multi',
-      label: `2+ Games (${counts.multi})`,
-      mobileLabel: `2+g (${counts.multi})`,
+      label: `${MIN_MAP_SAMPLE_FOR_SIGNAL}+ Games (${counts.multi})`,
+      mobileLabel: `${MIN_MAP_SAMPLE_FOR_SIGNAL}+g (${counts.multi})`,
     },
   ];
 }

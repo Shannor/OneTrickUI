@@ -50,7 +50,7 @@ export function MapFilterToolbar({
           </p>
         </div>
 
-        <div className="w-[132px] md:hidden">
+        <div className="w-36 md:hidden">
           <Select
             value={sortBy}
             onValueChange={(val) => onSortChange(val as MapSortKey)}

@@ -11,17 +11,25 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip } from '~/components/ui/chart';
 import {
+  EVEN_KD_TARGET,
+  EVEN_WIN_RATE_PCT,
+  MAX_WIN_RATE_PCT,
   type MatchPoint,
+  TARGET_EFFICIENCY_KDA,
   type TelemetrySummary,
   summarizeMatchSamples,
 } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 import {
+  ACTIVE_OUTCOME_DOT_RADIUS,
   HIGH_VOLUME_MATCH_THRESHOLD,
+  MAX_COMBAT_DOT_POINTS,
+  MEDIUM_MATCH_WINDOW,
   METRIC_METADATA,
   type MatchWindowPreset,
   type TrendMetricKey,
+  WIN_PCT_DOT_RADIUS,
   getDefaultWindowPreset,
   metricsTrendChartConfig,
   slicePointsForWindow,
@@ -108,7 +116,9 @@ export function MetricsTrendPanel({
   const isSummaryOnly =
     !hideKpiTabs && isHighVolume && windowPreset === 'summary';
   const showBrush =
-    !isHighVolume && windowPreset === 'all' && visibleData.length > 25;
+    !isHighVolume &&
+    windowPreset === 'all' &&
+    visibleData.length > MEDIUM_MATCH_WINDOW;
   const meta = METRIC_METADATA[activeMetric];
 
   return (
@@ -154,7 +164,7 @@ export function MetricsTrendPanel({
 
           <ChartContainer
             config={metricsTrendChartConfig}
-            className="aspect-auto h-[230px] w-full sm:h-[260px] lg:h-[290px]"
+            className="aspect-auto h-56 w-full sm:h-64 lg:h-72"
           >
             <ComposedChart
               accessibilityLayer
@@ -175,7 +185,11 @@ export function MetricsTrendPanel({
                 axisLine={false}
                 tickMargin={8}
                 width={36}
-                domain={activeMetric === 'winPct' ? [0, 100] : [0, 'auto']}
+                domain={
+                  activeMetric === 'winPct'
+                    ? [0, MAX_WIN_RATE_PCT]
+                    : [0, 'auto']
+                }
                 tickFormatter={(val) =>
                   activeMetric === 'winPct' ? `${val}%` : `${val}`
                 }
@@ -190,7 +204,7 @@ export function MetricsTrendPanel({
 
               {activeMetric === 'kd' && (
                 <ReferenceLine
-                  y={1}
+                  y={EVEN_KD_TARGET}
                   stroke="#78716c"
                   strokeDasharray="4 4"
                   ifOverflow="extendDomain"
@@ -213,14 +227,16 @@ export function MetricsTrendPanel({
                   dataKey="kd"
                   stroke="transparent"
                   dot={<MatchOutcomeDot />}
-                  activeDot={<MatchOutcomeDot radius={5} />}
+                  activeDot={
+                    <MatchOutcomeDot radius={ACTIVE_OUTCOME_DOT_RADIUS} />
+                  }
                   isAnimationActive={false}
                 />
               )}
 
               {activeMetric === 'kda' && (
                 <ReferenceLine
-                  y={1.5}
+                  y={TARGET_EFFICIENCY_KDA}
                   stroke="#78716c"
                   strokeDasharray="4 4"
                   ifOverflow="extendDomain"
@@ -243,13 +259,19 @@ export function MetricsTrendPanel({
                   dataKey="kda"
                   stroke="transparent"
                   dot={<MatchOutcomeDot />}
-                  activeDot={<MatchOutcomeDot radius={5} />}
+                  activeDot={
+                    <MatchOutcomeDot radius={ACTIVE_OUTCOME_DOT_RADIUS} />
+                  }
                   isAnimationActive={false}
                 />
               )}
 
               {activeMetric === 'winPct' && (
-                <ReferenceLine y={50} stroke="#78716c" strokeDasharray="4 4" />
+                <ReferenceLine
+                  y={EVEN_WIN_RATE_PCT}
+                  stroke="#78716c"
+                  strokeDasharray="4 4"
+                />
               )}
               {activeMetric === 'winPct' && (
                 <Area
@@ -259,8 +281,10 @@ export function MetricsTrendPanel({
                   strokeWidth={2.5}
                   fill="var(--color-rollingWinPct)"
                   fillOpacity={0.1}
-                  dot={<MatchOutcomeDot radius={3} />}
-                  activeDot={<MatchOutcomeDot radius={5} />}
+                  dot={<MatchOutcomeDot radius={WIN_PCT_DOT_RADIUS} />}
+                  activeDot={
+                    <MatchOutcomeDot radius={ACTIVE_OUTCOME_DOT_RADIUS} />
+                  }
                   isAnimationActive={false}
                 />
               )}
@@ -271,7 +295,7 @@ export function MetricsTrendPanel({
                   dataKey="rollingKills"
                   stroke="var(--color-rollingKills)"
                   strokeWidth={2.2}
-                  dot={visibleData.length <= 4}
+                  dot={visibleData.length <= MAX_COMBAT_DOT_POINTS}
                   isAnimationActive={false}
                 />
               )}
@@ -281,7 +305,7 @@ export function MetricsTrendPanel({
                   dataKey="rollingAssists"
                   stroke="var(--color-rollingAssists)"
                   strokeWidth={2}
-                  dot={visibleData.length <= 4}
+                  dot={visibleData.length <= MAX_COMBAT_DOT_POINTS}
                   isAnimationActive={false}
                 />
               )}
@@ -292,7 +316,7 @@ export function MetricsTrendPanel({
                   stroke="var(--color-rollingDeaths)"
                   strokeWidth={2}
                   strokeDasharray="4 3"
-                  dot={visibleData.length <= 4}
+                  dot={visibleData.length <= MAX_COMBAT_DOT_POINTS}
                   isAnimationActive={false}
                 />
               )}

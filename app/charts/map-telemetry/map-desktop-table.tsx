@@ -1,6 +1,10 @@
 import { ChevronDown } from 'lucide-react';
 import { Link } from 'react-router';
-import type { MapTelemetryResult } from '~/lib/metrics';
+import {
+  EVEN_KD_TARGET,
+  EVEN_WIN_RATE_PCT,
+  type MapTelemetryResult,
+} from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 import { KdBulletBar, MapSignalPill, WinRateBar } from './map-signal-pill';
@@ -75,11 +79,11 @@ export function MapTrailingCell({
       to={`${loadoutBasePath}/${map.bestLoadout.snapshotId}`}
       className="inline-flex items-center gap-1.5 font-medium text-foreground hover:text-primary hover:underline"
     >
-      <span className="max-w-[180px] truncate">{map.bestLoadout.name}</span>
+      <span className="max-w-44 truncate">{map.bestLoadout.name}</span>
       <span
         className={cn(
           'font-semibold',
-          map.bestLoadout.kd >= 1
+          map.bestLoadout.kd >= EVEN_KD_TARGET
             ? 'text-emerald-600 dark:text-emerald-400'
             : 'text-red-600 dark:text-red-400',
         )}
@@ -109,7 +113,7 @@ export function MapDesktopTable({
     <div className="hidden overflow-x-auto md:block">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-[10px]">
+          <tr className="border-b border-border text-left text-xs">
             <th className="px-5 py-2.5 font-semibold uppercase tracking-wider text-muted-foreground">
               Map
             </th>
@@ -174,7 +178,7 @@ export function MapDesktopTable({
                   <span
                     className={cn(
                       'w-10 font-semibold',
-                      map.winPct >= 50
+                      map.winPct >= EVEN_WIN_RATE_PCT
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : 'text-red-600 dark:text-red-400',
                     )}
@@ -192,7 +196,7 @@ export function MapDesktopTable({
                   <span
                     className={cn(
                       'font-bold',
-                      map.kd >= 1
+                      map.kd >= EVEN_KD_TARGET
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : 'text-red-600 dark:text-red-400',
                     )}

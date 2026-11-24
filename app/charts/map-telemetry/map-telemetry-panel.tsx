@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { MapTelemetryResult } from '~/lib/metrics';
+import {
+  MIN_MAP_SAMPLE_FOR_SIGNAL,
+  type MapTelemetryResult,
+} from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 import { MapDesktopTable } from './map-desktop-table';
@@ -57,7 +60,7 @@ export function MapTelemetryPanel({
   );
 
   const multiCount = useMemo(
-    () => data.filter((map) => map.count >= 2).length,
+    () => data.filter((map) => map.count >= MIN_MAP_SAMPLE_FOR_SIGNAL).length,
     [data],
   );
 

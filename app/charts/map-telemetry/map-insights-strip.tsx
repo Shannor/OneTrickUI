@@ -1,8 +1,14 @@
 import { ArrowRight } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router';
-import type { MapTelemetryResult } from '~/lib/metrics';
+import { EVEN_KD_TARGET, type MapTelemetryResult } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
+
+import {
+  MAX_STRONG_INSIGHT_MAPS,
+  MAX_SWAP_INSIGHT_MAPS,
+  RECOMMENDED_SWAP_LOADOUT_MIN_KD,
+} from './map-telemetry-types';
 
 export type MapCalloutTone = 'strong' | 'swap';
 
@@ -35,7 +41,7 @@ export function MapInsightsCallout({
     >
       <div
         className={cn(
-          'text-[10px] font-bold uppercase tracking-wider',
+          'text-xs font-bold uppercase tracking-wider',
           isStrong
             ? 'text-emerald-600 dark:text-emerald-400'
             : 'text-red-600 dark:text-red-400',
@@ -68,13 +74,17 @@ export function MapInsightItem({
   const kdClassName =
     tone === 'strong'
       ? 'text-emerald-600 dark:text-emerald-400'
-      : map.kd < 1
+      : map.kd < EVEN_KD_TARGET
         ? 'text-red-600 dark:text-red-400'
         : 'text-amber-600 dark:text-amber-400';
 
   const showSwapLink =
     tone === 'swap' &&
-    Boolean(loadoutBasePath && map.bestLoadout && map.bestLoadout.kd >= 1.1);
+    Boolean(
+      loadoutBasePath &&
+      map.bestLoadout &&
+      map.bestLoadout.kd >= RECOMMENDED_SWAP_LOADOUT_MIN_KD,
+    );
 
   return (
     <span className="inline-flex items-center gap-1">
@@ -122,7 +132,7 @@ export function MapInsightsStrip({
         emptyMessage="Play 2+ matches on a map with strong ratios to unlock keep-equipped signals."
         className="md:border-r md:border-r-border/70"
       >
-        {strongMaps.slice(0, 4).map((map) => (
+        {strongMaps.slice(0, MAX_STRONG_INSIGHT_MAPS).map((map) => (
           <MapInsightItem key={map.location} map={map} tone="strong" />
         ))}
       </MapInsightsCallout>
@@ -133,7 +143,7 @@ export function MapInsightsStrip({
         hasItems={swapMaps.length > 0}
         emptyMessage="No multi-match problem maps flagged in this window."
       >
-        {swapMaps.slice(0, 3).map((map) => (
+        {swapMaps.slice(0, MAX_SWAP_INSIGHT_MAPS).map((map) => (
           <MapInsightItem
             key={map.location}
             map={map}

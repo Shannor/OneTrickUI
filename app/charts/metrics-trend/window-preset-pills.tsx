@@ -1,6 +1,10 @@
 import { cn } from '~/lib/utils';
 
-import type { MatchWindowPreset } from './metrics-trend-config';
+import {
+  MEDIUM_MATCH_WINDOW,
+  type MatchWindowPreset,
+  SHORT_MATCH_WINDOW,
+} from './metrics-trend-config';
 
 export interface WindowPresetPillsProps {
   totalMatches: number;
@@ -26,12 +30,28 @@ export function WindowPresetPills({
         ...(allowSummaryPreset
           ? [{ value: 'summary' as const, label: 'Summary Only', min: 0 }]
           : []),
-        { value: '10', label: 'Last 10g', min: 11 },
-        { value: '25', label: 'Last 25g', min: 26 },
+        {
+          value: '10',
+          label: `Last ${SHORT_MATCH_WINDOW}g`,
+          min: SHORT_MATCH_WINDOW + 1,
+        },
+        {
+          value: '25',
+          label: `Last ${MEDIUM_MATCH_WINDOW}g`,
+          min: MEDIUM_MATCH_WINDOW + 1,
+        },
       ]
     : [
-        { value: '10', label: 'Last 10g', min: 11 },
-        { value: '25', label: 'Last 25g', min: 26 },
+        {
+          value: '10',
+          label: `Last ${SHORT_MATCH_WINDOW}g`,
+          min: SHORT_MATCH_WINDOW + 1,
+        },
+        {
+          value: '25',
+          label: `Last ${MEDIUM_MATCH_WINDOW}g`,
+          min: MEDIUM_MATCH_WINDOW + 1,
+        },
         { value: 'all', label: 'All Matches', min: 0 },
       ];
 

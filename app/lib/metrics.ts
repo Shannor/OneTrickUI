@@ -108,6 +108,17 @@ export type TimeWindow =
 
 export const DEFAULT_ROLLING_WINDOW = 5;
 export const MIN_MAP_SAMPLE_FOR_SIGNAL = 2;
+export const EVEN_KD_TARGET = 1;
+export const TARGET_EFFICIENCY_KDA = 1.5;
+export const EVEN_WIN_RATE_PCT = 50;
+export const MAX_WIN_RATE_PCT = 100;
+
+const ALL_TIME_BUFFER_MINUTES = 30;
+const STRONG_SIGNAL_KD = 1.25;
+const DOMINANT_SIGNAL_KD = 1.5;
+const SWAP_SIGNAL_MAX_KD = 0.95;
+const SWAP_SIGNAL_LOW_WIN_PCT = 35;
+const SWAP_SIGNAL_LOW_WIN_MAX_KD = 1.2;
 
 export function timeWindowToCustom(
   time: TimeWindow | CustomTimeWindow,
@@ -150,7 +161,10 @@ export function timeWindowToCustom(
       const start = first?.activityDetails?.period
         ? new Date(first.activityDetails.period)
         : end;
-      return { start: subMinutes(start, 30), end: addMinutes(endDate, 30) };
+      return {
+        start: subMinutes(start, ALL_TIME_BUFFER_MINUTES),
+        end: addMinutes(endDate, ALL_TIME_BUFFER_MINUTES),
+      };
     }
   }
 }
@@ -163,10 +177,16 @@ export function classifyMapSignal(
   if (count < MIN_MAP_SAMPLE_FOR_SIGNAL) {
     return 'low-sample';
   }
-  if ((kd >= 1.25 && winPct >= 50) || kd >= 1.5) {
+  if (
+    (kd >= STRONG_SIGNAL_KD && winPct >= EVEN_WIN_RATE_PCT) ||
+    kd >= DOMINANT_SIGNAL_KD
+  ) {
     return 'strong';
   }
-  if (kd < 0.95 || (winPct <= 35 && kd < 1.2)) {
+  if (
+    kd < SWAP_SIGNAL_MAX_KD ||
+    (winPct <= SWAP_SIGNAL_LOW_WIN_PCT && kd < SWAP_SIGNAL_LOW_WIN_MAX_KD)
+  ) {
     return 'swap';
   }
   return 'neutral';

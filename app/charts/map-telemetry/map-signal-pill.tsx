@@ -1,5 +1,11 @@
-import type { MapSignal } from '~/lib/metrics';
+import {
+  EVEN_KD_TARGET,
+  MAX_WIN_RATE_PCT,
+  type MapSignal,
+} from '~/lib/metrics';
 import { cn } from '~/lib/utils';
+
+import { KD_BULLET_MAX_SCALE } from './map-telemetry-types';
 
 const SIGNAL_STYLES: Record<MapSignal, { label: string; className: string }> = {
   strong: {
@@ -31,7 +37,7 @@ export function MapSignalPill({ signal }: MapSignalPillProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-[10px]',
+        'inline-flex items-center rounded-full px-2 py-0.5 text-xs',
         className,
       )}
     >
@@ -46,8 +52,11 @@ export interface KdBulletBarProps {
 }
 
 export function KdBulletBar({ kd, compact = false }: KdBulletBarProps) {
-  const fillPct = Math.min(100, (kd / 3.0) * 100);
-  const isPositive = kd >= 1.0;
+  const fillPct = Math.min(
+    MAX_WIN_RATE_PCT,
+    (kd / KD_BULLET_MAX_SCALE) * MAX_WIN_RATE_PCT,
+  );
+  const isPositive = kd >= EVEN_KD_TARGET;
 
   return (
     <div
@@ -58,7 +67,7 @@ export function KdBulletBar({ kd, compact = false }: KdBulletBarProps) {
     >
       <div
         aria-hidden="true"
-        className="absolute -bottom-0.5 -top-0.5 left-1/3 w-[1.5px] bg-muted-foreground/70"
+        className="absolute -bottom-0.5 -top-0.5 left-1/3 w-0.5 bg-muted-foreground/70"
       />
       <div
         className={cn(
@@ -76,7 +85,7 @@ export interface WinRateBarProps {
 }
 
 export function WinRateBar({ winPct }: WinRateBarProps) {
-  const clampedPct = Math.max(0, Math.min(100, winPct));
+  const clampedPct = Math.max(0, Math.min(MAX_WIN_RATE_PCT, winPct));
 
   return (
     <div className="h-1.5 w-20 overflow-hidden rounded-full bg-red-600/85">

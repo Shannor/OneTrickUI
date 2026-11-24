@@ -1,5 +1,9 @@
 import { Link } from 'react-router';
-import type { MapTelemetryResult } from '~/lib/metrics';
+import {
+  EVEN_KD_TARGET,
+  EVEN_WIN_RATE_PCT,
+  type MapTelemetryResult,
+} from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 import { KdBulletBar, MapSignalPill } from './map-signal-pill';
@@ -30,7 +34,7 @@ export function MapMobileRow({
           <span
             className={cn(
               'font-bold',
-              map.kd >= 1
+              map.kd >= EVEN_KD_TARGET
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : 'text-red-600 dark:text-red-400',
             )}
@@ -49,7 +53,7 @@ export function MapMobileRow({
           {map.wins}W–{map.loses}L (
           <span
             className={
-              map.winPct >= 50
+              map.winPct >= EVEN_WIN_RATE_PCT
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : 'text-red-600 dark:text-red-400'
             }

@@ -2,6 +2,16 @@ import type { ChartConfig } from '~/components/ui/chart';
 import type { MatchPoint } from '~/lib/metrics';
 
 export const HIGH_VOLUME_MATCH_THRESHOLD = 50;
+export const SHORT_MATCH_WINDOW = 10;
+export const MEDIUM_MATCH_WINDOW = 25;
+export const MAX_COMBAT_DOT_POINTS = 4;
+export const MIN_SPARKLINE_POINTS = 2;
+export const SPARKLINE_WIDTH = 88;
+export const SPARKLINE_HEIGHT = 26;
+export const SPARKLINE_VERTICAL_PADDING = 2;
+export const DEFAULT_OUTCOME_DOT_RADIUS = 3.5;
+export const WIN_PCT_DOT_RADIUS = 3;
+export const ACTIVE_OUTCOME_DOT_RADIUS = 5;
 
 export type TrendMetricKey = 'kd' | 'kda' | 'winPct' | 'combat';
 export type MatchWindowPreset = 'summary' | '10' | '25' | 'all';
@@ -95,11 +105,11 @@ export function slicePointsForWindow(
   if (windowPreset === 'summary') {
     return [];
   }
-  if (windowPreset === '10' && points.length > 10) {
-    return points.slice(-10);
+  if (windowPreset === '10' && points.length > SHORT_MATCH_WINDOW) {
+    return points.slice(-SHORT_MATCH_WINDOW);
   }
-  if (windowPreset === '25' && points.length > 25) {
-    return points.slice(-25);
+  if (windowPreset === '25' && points.length > MEDIUM_MATCH_WINDOW) {
+    return points.slice(-MEDIUM_MATCH_WINDOW);
   }
   return points;
 }
