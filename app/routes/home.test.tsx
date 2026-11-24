@@ -1,10 +1,30 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { type ComponentProps, startTransition, useState } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { loggerContext } from '~/.server/logger';
+import {
+  type CharacterSnapshot,
+  getBestPerformingLoadouts,
+  getUserSessions,
+} from '~/api';
+import {
+  EMPTY_TOP_LOADOUTS,
+  type TopLoadoutsResult,
+} from '~/components/top-loadouts-section';
 
-import Home from './home';
+import Home, { loader } from './home';
+
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 const mockUseProfileData = vi.fn();
 
@@ -12,8 +32,240 @@ vi.mock('~/hooks/use-route-loaders', () => ({
   useProfileData: () => mockUseProfileData(),
 }));
 
+vi.mock('~/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/api')>();
+  return {
+    ...actual,
+    getUserSessions: vi.fn(),
+    getBestPerformingLoadouts: vi.fn(),
+  };
+});
+
+const emptyLoadoutsResult: TopLoadoutsResult = {
+  data: EMPTY_TOP_LOADOUTS,
+  error: undefined,
+};
+
+const mockTopSnapshot: CharacterSnapshot = {
+  id: 'snap-top-1',
+  name: 'Void Rose Hunter',
+  userId: 'user-1',
+  characterId: 'char-1',
+  hash: 'hash-top-1',
+  createdAt: new Date('2025-02-01T00:00:00Z'),
+  updatedAt: new Date('2025-02-01T00:00:00Z'),
+  loadout: {},
+};
+
+describe('Home Page Route Loader', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('starts getBestPerformingLoadouts in parallel and returns immediately once getUserSessions resolves', async () => {
+    const loadoutsDeferred = createDeferred<any>();
+    const sessions = [{ id: 'session-1', name: 'Trials Run 1' }];
+
+    vi.mocked(getBestPerformingLoadouts).mockReturnValueOnce(
+      loadoutsDeferred.promise,
+    );
+    vi.mocked(getUserSessions).mockResolvedValueOnce({
+      data: sessions,
+      error: undefined,
+    } as any);
+
+    const result = await loader({
+      params: { id: 'user-1', characterId: 'char-1' },
+      context: new Map(),
+    } as any);
+
+    expect(getBestPerformingLoadouts).toHaveBeenCalledTimes(1);
+    expect(getUserSessions).toHaveBeenCalledTimes(1);
+    expect(result.error).toBeUndefined();
+    expect(result.sessions).toEqual(sessions);
+    expect(result.loadouts).toBeInstanceOf(Promise);
+
+    loadoutsDeferred.resolve({
+      data: {
+        items: [mockTopSnapshot],
+        count: { 'snap-top-1': 12 },
+        stats: {},
+      },
+      error: undefined,
+    });
+
+    const resolvedLoadouts = await result.loadouts;
+    expect(resolvedLoadouts.error).toBeUndefined();
+    expect(resolvedLoadouts.data.items).toEqual([mockTopSnapshot]);
+  });
+
+  it('degrades only loadouts when getBestPerformingLoadouts returns an error or rejects', async () => {
+    const sessions = [{ id: 'session-1', name: 'Trials Run 1' }];
+
+    vi.mocked(getBestPerformingLoadouts).mockResolvedValueOnce({
+      data: undefined,
+      error: { message: 'firestore timeout' },
+    } as any);
+    vi.mocked(getUserSessions).mockResolvedValueOnce({
+      data: sessions,
+      error: undefined,
+    } as any);
+
+    const apiErrorRes = await loader({
+      params: { id: 'user-1', characterId: 'char-1' },
+      context: new Map(),
+    } as any);
+
+    expect(apiErrorRes.error).toBeUndefined();
+    expect(apiErrorRes.sessions).toEqual(sessions);
+    expect(await apiErrorRes.loadouts).toEqual({
+      data: EMPTY_TOP_LOADOUTS,
+      error: 'Failed to load top loadouts',
+    });
+
+    vi.mocked(getBestPerformingLoadouts).mockRejectedValueOnce(
+      new Error('network error'),
+    );
+    vi.mocked(getUserSessions).mockResolvedValueOnce({
+      data: sessions,
+      error: undefined,
+    } as any);
+
+    const rejectRes = await loader({
+      params: { id: 'user-1', characterId: 'char-1' },
+      context: new Map(),
+    } as any);
+
+    expect(rejectRes.error).toBeUndefined();
+    expect(rejectRes.sessions).toEqual(sessions);
+    expect(await rejectRes.loadouts).toEqual({
+      data: EMPTY_TOP_LOADOUTS,
+      error: 'Failed to load top loadouts',
+    });
+  });
+
+  it('returns page-level error when getUserSessions fails', async () => {
+    vi.mocked(getBestPerformingLoadouts).mockRejectedValueOnce(
+      new Error('ignored secondary error'),
+    );
+    vi.mocked(getUserSessions).mockRejectedValueOnce(
+      new Error('sessions failure'),
+    );
+
+    const result = await loader({
+      params: { id: 'user-1', characterId: 'char-1' },
+      context: new Map(),
+    } as any);
+
+    expect(result.error).toBe('Failed to load home page data');
+    expect(result.sessions).toEqual([]);
+  });
+
+  it('runs streamed top loadouts inside log.fork and slims snapshots via slimSnapshotForCard', async () => {
+    const forkSpy = vi.fn(
+      async (_label: string, fn: () => void | Promise<void>) => {
+        await fn();
+      },
+    );
+    const mockLog = {
+      set: vi.fn(),
+      error: vi.fn(),
+      fork: forkSpy,
+    };
+    const context = {
+      get: vi.fn((key) => (key === loggerContext ? mockLog : undefined)),
+    };
+
+    const verboseSnapshot = {
+      ...mockTopSnapshot,
+      stats: {
+        mobility: {
+          name: 'Mobility',
+          value: 100,
+          description: 'Verbose mobility description',
+        },
+        power: {
+          name: 'Power',
+          value: 2010,
+          description: 'Power level',
+        },
+      },
+      loadout: {
+        // Kinetic weapon (kept, sockets stripped)
+        '1498876634': {
+          itemHash: 1001,
+          details: {
+            baseInfo: {
+              name: 'Rose',
+              tierType: 5,
+            },
+            sockets: [{ plugHash: 999 }],
+          },
+        },
+        // Legendary helmet (stripped by slimSnapshotForCard)
+        '3448274439': {
+          itemHash: 2002,
+          details: {
+            baseInfo: {
+              name: 'Legendary Helmet',
+              tierType: 5,
+            },
+          },
+        },
+        // Exotic legs (kept)
+        '20886954': {
+          itemHash: 3003,
+          details: {
+            baseInfo: {
+              name: 'St0mp-EE5',
+              tierType: 6,
+            },
+          },
+        },
+      },
+    } as unknown as CharacterSnapshot;
+
+    vi.mocked(getBestPerformingLoadouts).mockResolvedValueOnce({
+      data: {
+        items: [verboseSnapshot],
+        count: { 'snap-top-1': 12 },
+        stats: {},
+      },
+      error: undefined,
+    } as any);
+    vi.mocked(getUserSessions).mockResolvedValueOnce({
+      data: [{ id: 'session-1', name: 'Trials Run 1' }],
+      error: undefined,
+    } as any);
+
+    const result = await loader({
+      params: { id: 'user-1', characterId: 'char-1' },
+      context,
+    } as any);
+
+    expect(forkSpy).toHaveBeenCalledWith(
+      'home.top_loadouts',
+      expect.any(Function),
+    );
+
+    const resolved = await result.loadouts;
+    const slimmed = resolved.data.items[0];
+    expect(slimmed.loadout?.['1498876634']?.details?.baseInfo?.name).toBe(
+      'Rose',
+    );
+    expect(slimmed.loadout?.['1498876634']?.details?.sockets).toEqual([]);
+    expect(slimmed.loadout?.['3448274439']).toBeUndefined();
+    expect(slimmed.loadout?.['20886954']?.details?.baseInfo?.name).toBe(
+      'St0mp-EE5',
+    );
+    expect(slimmed.stats?.mobility?.description).toBe('');
+    expect(slimmed.stats?.power).toBeUndefined();
+  });
+});
+
 describe('Home Page Route Component', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     mockUseProfileData.mockReturnValue({
       type: 'owner',
       profile: {
@@ -23,6 +275,140 @@ describe('Home Page Route Component', () => {
       },
       character: { id: 'char-1', class: 'Hunter' },
     });
+  });
+
+  it('renders RecentFormPulse immediately with Top Loadouts skeleton while loadouts promise is pending, then streams cards on resolve', async () => {
+    const loadoutsDeferred = createDeferred<TopLoadoutsResult>();
+    const mockSession = {
+      id: 'session-1',
+      name: 'Trials Run 1',
+      userId: 'user-1',
+      characterId: 'char-1',
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      aggregateIds: ['agg-1', 'agg-2'],
+      status: 'complete' as const,
+      summary: {
+        totalMatches: 2,
+        wins: 2,
+        losses: 0,
+        kdRatio: 1.75,
+      },
+    };
+
+    const props = {
+      loaderData: {
+        sessions: [mockSession],
+        loadouts: loadoutsDeferred.promise,
+        error: undefined,
+      },
+      params: { id: 'user-1', characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Home>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Home {...props} />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByText(/welcome testguardian/i)).toBeInTheDocument();
+    expect(screen.getByText(/recent form \(1 session\)/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /trials run 1/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Top Loadouts' }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('top-loadouts-skeleton')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /view all loadouts/i }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      loadoutsDeferred.resolve({
+        data: {
+          items: [mockTopSnapshot],
+          count: { 'snap-top-1': 15 },
+          stats: {
+            'snap-top-1': {
+              kd: { value: 1.9 },
+              kda: { value: 2.4 },
+              standing: { value: 0.73 },
+            },
+          },
+        },
+        error: undefined,
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('top-loadouts-skeleton'),
+      ).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Void Rose Hunter')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /view all loadouts/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('degrades only Top Loadouts section when loadouts stream fails while keeping OverviewHeader and RecentFormPulse rendered', async () => {
+    const loadoutsDeferred = createDeferred<TopLoadoutsResult>();
+    const mockSession = {
+      id: 'session-1',
+      name: 'Trials Run 1',
+      userId: 'user-1',
+      characterId: 'char-1',
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      aggregateIds: ['agg-1', 'agg-2'],
+      status: 'complete' as const,
+      summary: {
+        totalMatches: 2,
+        wins: 2,
+        losses: 0,
+        kdRatio: 1.75,
+      },
+    };
+
+    const props = {
+      loaderData: {
+        sessions: [mockSession],
+        loadouts: loadoutsDeferred.promise,
+        error: undefined,
+      },
+      params: { id: 'user-1', characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Home>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Home {...props} />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    await act(async () => {
+      loadoutsDeferred.resolve({
+        data: EMPTY_TOP_LOADOUTS,
+        error: 'Failed to load top loadouts',
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Unable to Load Top Loadouts'),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/welcome testguardian/i)).toBeInTheDocument();
+    expect(screen.getByText(/recent form \(1 session\)/i)).toBeInTheDocument();
+    expect(screen.queryByText('Unexpected Error')).not.toBeInTheDocument();
   });
 
   it('renders RecentFormPulse with session pill, direct Start Session CTA, and hides completed SessionCard when only completed sessions exist', () => {
@@ -46,7 +432,7 @@ describe('Home Page Route Component', () => {
     const props = {
       loaderData: {
         sessions: [mockSession],
-        loadouts: { items: [], count: {}, stats: {} },
+        loadouts: emptyLoadoutsResult,
         error: undefined,
       },
       params: { id: 'user-1', characterId: 'char-1' },
@@ -114,7 +500,7 @@ describe('Home Page Route Component', () => {
     const props = {
       loaderData: {
         sessions: mockSessions,
-        loadouts: { items: [], count: {}, stats: {} },
+        loadouts: emptyLoadoutsResult,
         error: undefined,
       },
       params: { id: 'user-1', characterId: 'char-1' },
@@ -142,7 +528,7 @@ describe('Home Page Route Component', () => {
     const props = {
       loaderData: {
         sessions: [],
-        loadouts: { items: [], count: {}, stats: {} },
+        loadouts: emptyLoadoutsResult,
         error: undefined,
       },
       params: { id: 'user-1', characterId: 'char-1' },
@@ -187,7 +573,7 @@ describe('Home Page Route Component', () => {
     const props = {
       loaderData: {
         sessions: [activeSession],
-        loadouts: { items: [], count: {}, stats: {} },
+        loadouts: emptyLoadoutsResult,
         error: undefined,
       },
       params: { id: 'user-1', characterId: 'char-1' },
@@ -224,7 +610,7 @@ describe('Home Page Route Component', () => {
     const props = {
       loaderData: {
         sessions: [],
-        loadouts: { items: [], count: {}, stats: {} },
+        loadouts: emptyLoadoutsResult,
         error: undefined,
       },
       params: { id: 'user-1', characterId: 'char-1' },
@@ -247,5 +633,128 @@ describe('Home Page Route Component', () => {
       container.querySelector('form[action="/action/end-session"]'),
     ).not.toBeInTheDocument();
   });
-});
 
+  it('updates RecentFormPulse and resets Top Loadouts to skeleton immediately when switching characters inside startTransition', async () => {
+    const char1Session = {
+      id: 'session-char-1',
+      name: 'Hunter Trials',
+      userId: 'user-1',
+      characterId: 'char-1',
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      aggregateIds: ['agg-1'],
+      status: 'complete' as const,
+      summary: { totalMatches: 2, wins: 2, losses: 0, kdRatio: 1.8 },
+    };
+    const char2Session = {
+      id: 'session-char-2',
+      name: 'Titan Control',
+      userId: 'user-1',
+      characterId: 'char-2',
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      aggregateIds: ['agg-2'],
+      status: 'complete' as const,
+      summary: { totalMatches: 3, wins: 2, losses: 1, kdRatio: 1.4 },
+    };
+    const char2Snapshot: CharacterSnapshot = {
+      ...mockTopSnapshot,
+      id: 'snap-top-2',
+      name: 'Arc Titan Build',
+      characterId: 'char-2',
+    };
+    const char2LoadoutsDeferred = createDeferred<TopLoadoutsResult>();
+    let switchToChar2!: () => void;
+
+    function OverviewCharacterSwitchHarness() {
+      const [state, setState] = useState<{
+        characterId: string;
+        sessions: (typeof char1Session)[];
+        loadouts: TopLoadoutsResult | Promise<TopLoadoutsResult>;
+      }>({
+        characterId: 'char-1',
+        sessions: [char1Session],
+        loadouts: {
+          data: {
+            items: [mockTopSnapshot],
+            count: { 'snap-top-1': 15 },
+            stats: {},
+          },
+          error: undefined,
+        },
+      });
+
+      switchToChar2 = () => {
+        mockUseProfileData.mockReturnValue({
+          type: 'owner',
+          profile: {
+            id: 'user-1',
+            displayName: 'TestGuardian',
+            characters: [
+              { id: 'char-1', class: 'Hunter' },
+              { id: 'char-2', class: 'Titan' },
+            ],
+          },
+          character: { id: 'char-2', class: 'Titan' },
+        });
+        startTransition(() => {
+          setState({
+            characterId: 'char-2',
+            sessions: [char2Session],
+            loadouts: char2LoadoutsDeferred.promise,
+          });
+        });
+      };
+
+      const props = {
+        loaderData: {
+          sessions: state.sessions,
+          loadouts: state.loadouts,
+          error: undefined,
+        },
+        params: { id: 'user-1', characterId: state.characterId },
+      } as unknown as ComponentProps<typeof Home>;
+
+      return <Home {...props} />;
+    }
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <OverviewCharacterSwitchHarness />,
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(
+      screen.getByRole('button', { name: /hunter trials/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Void Rose Hunter')).toBeInTheDocument();
+
+    await act(async () => {
+      switchToChar2();
+    });
+
+    expect(
+      screen.getByRole('button', { name: /titan control/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('top-loadouts-skeleton')).toBeInTheDocument();
+    expect(screen.queryByText('Void Rose Hunter')).not.toBeInTheDocument();
+
+    await act(async () => {
+      char2LoadoutsDeferred.resolve({
+        data: {
+          items: [char2Snapshot],
+          count: { 'snap-top-2': 11 },
+          stats: {},
+        },
+        error: undefined,
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Arc Titan Build')).toBeInTheDocument();
+    });
+  });
+});

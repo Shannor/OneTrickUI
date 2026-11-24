@@ -51,6 +51,10 @@ export const CHANGELOG: ReleaseNote[] = [
         text: 'Browse large Crucible map pools effortlessly on both desktop and mobile with search, Strong/Swap filters, sortable stats, and a clean open mobile layout.',
       },
       {
+        type: 'improvement',
+        text: 'Jump into Guardian Overview and individual Loadout pages right away—recent sessions and loadout details now appear immediately while top loadouts and similar-build counts load seamlessly in place.',
+      },
+      {
         type: 'fix',
         text: 'Eliminated misleading drops in long-term performance charts caused by inactive weeks or months between Crucible sessions.',
       },

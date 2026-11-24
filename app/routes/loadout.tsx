@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
-import React from 'react';
+import type { AuditableLogger } from 'evlog';
+import React, { Suspense } from 'react';
 import {
+  Await,
   Link,
   NavLink,
   Outlet,
@@ -10,8 +12,11 @@ import {
   useParams,
 } from 'react-router';
 import { getAuth } from '~/.server/auth';
-import { getRequestLogger } from '~/.server/logger';
-import { getCachedSimilarSnapshots } from '~/.server/snapshots';
+import { getRequestLogger, runWithForkedLogger } from '~/.server/logger';
+import {
+  getCachedSimilarSnapshots,
+  requestTargetsSimilarRoute,
+} from '~/.server/snapshots';
 import { getSnapshot } from '~/api';
 import { Empty } from '~/components/empty';
 import { LoadoutHeaderActions } from '~/components/loadout-header-actions';
@@ -39,17 +44,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       ? `${devOrigin}/${sharablePath}`
       : `https://d2onetrick.com/${sharablePath}`;
 
-  const auth = request ? await getAuth(request) : undefined;
-  const isOwner = Boolean(auth?.id && auth.id === id);
-
-  const [{ data: snapshot, error }, similarRes] = await Promise.all([
+  const [auth, { data: snapshot, error }] = await Promise.all([
+    request ? getAuth(request) : Promise.resolve(undefined),
     getSnapshot({
       path: { snapshotId },
     }),
-    isOwner
-      ? getCachedSimilarSnapshots(request, snapshotId).catch(() => null)
-      : Promise.resolve(null),
   ]);
+  const isOwner = Boolean(auth?.id && auth.id === id);
 
   if (error) {
     log.error('Failed to fetch snapshot in loadout loader', {
@@ -59,7 +60,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       snapshot: undefined,
       error: 'Failed to load loadout',
       path,
-      similarCount: 0,
+      similarCount: 0 as number | Promise<number>,
     };
   }
   if (!snapshot) {
@@ -68,7 +69,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       snapshot: undefined,
       error: 'Loadout Not Found',
       path,
-      similarCount: 0,
+      similarCount: 0 as number | Promise<number>,
     };
   }
 
@@ -78,7 +79,50 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     );
   }
 
-  const similarCount = similarRes?.data?.items?.length ?? 0;
+  const targetsSimilarRoute = Boolean(
+    request && requestTargetsSimilarRoute(request),
+  );
+
+  const fetchSimilarCount = async (
+    targetLog: AuditableLogger,
+  ): Promise<number> => {
+    try {
+      const res = await getCachedSimilarSnapshots(request, snapshotId);
+      if (res.error) {
+        targetLog.error(
+          'Failed to fetch similar snapshots count in loadout loader',
+          {
+            snapshot: { id: snapshotId, error: res.error },
+          },
+        );
+        return 0;
+      }
+      const count = res.data?.items?.length ?? 0;
+      targetLog.set({
+        snapshot: {
+          id: snapshotId,
+          userId: id,
+          characterId,
+          similarCount: count,
+        },
+      });
+      return count;
+    } catch (err) {
+      targetLog.error(
+        err instanceof Error
+          ? err
+          : 'Failed to fetch similar snapshots count in loadout loader',
+        { snapshot: { id: snapshotId, userId: id, characterId } },
+      );
+      return 0;
+    }
+  };
+
+  const similarCount: number | Promise<number> = isOwner
+    ? targetsSimilarRoute
+      ? await fetchSimilarCount(log)
+      : runWithForkedLogger(log, 'loadout.similar_count', fetchSimilarCount)
+    : 0;
 
   return {
     snapshot,
@@ -108,6 +152,28 @@ export function shouldRevalidate({
     return defaultShouldRevalidate;
   }
   return currentParams.snapshotId !== nextParams.snapshotId;
+}
+
+export function SimilarCountBadge({
+  snapshotId,
+  similarCount,
+}: {
+  snapshotId?: string;
+  similarCount: number | Promise<number>;
+}) {
+  return (
+    <Suspense key={snapshotId} fallback={null}>
+      <Await resolve={similarCount} errorElement={<></>}>
+        {(count) =>
+          count > 0 ? (
+            <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary">
+              {count}
+            </span>
+          ) : null
+        }
+      </Await>
+    </Suspense>
+  );
 }
 
 export function Loadout({ loaderData }: Route.ComponentProps) {
@@ -173,6 +239,7 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
 
         {isOwner ? (
           <LoadoutUpdateForm
+            key={snapshot.id}
             snapshotId={snapshot.id}
             defaultName={snapshot.name}
             defaultDescription={snapshot.description}
@@ -204,11 +271,11 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
             <TabsTrigger value="similar" asChild>
               <NavLink to="similar" className="flex items-center gap-1.5">
                 <span>Similar</span>
-                {similarCount > 0 && (
-                  <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary">
-                    {similarCount}
-                  </span>
-                )}
+                <SimilarCountBadge
+                  key={snapshot.id}
+                  snapshotId={snapshot.id}
+                  similarCount={similarCount}
+                />
               </NavLink>
             </TabsTrigger>
           )}

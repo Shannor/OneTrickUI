@@ -1,17 +1,21 @@
-import { RadioIcon, SwordsIcon } from 'lucide-react';
+import { RadioIcon } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { getRequestLogger } from '~/.server/logger';
+import { getRequestLogger, runWithForkedLogger } from '~/.server/logger';
 import { getBestPerformingLoadouts, getUserSessions } from '~/api';
 import { Empty } from '~/components/empty';
-import { LoadoutCard } from '~/components/loadout-card';
 import {
   DirectSessionStartForm,
   OverviewHeader,
   RecentFormPulse,
 } from '~/components/overview-pulse';
 import { SessionCard } from '~/components/session-card';
-import { Badge } from '~/components/ui/badge';
+import {
+  EMPTY_TOP_LOADOUTS,
+  type TopLoadoutsResult,
+  TopLoadoutsSection,
+} from '~/components/top-loadouts-section';
 import { Button } from '~/components/ui/button';
+import { slimSnapshotForCard } from '~/hooks/use-loadout';
 import { useProfileData } from '~/hooks/use-route-loaders';
 import { getSiteOrigin } from '~/lib/utils';
 
@@ -22,32 +26,89 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const { characterId, id } = params;
   log.set({ route: 'routes/home', home: { userId: id, characterId } });
 
+  const loadoutsPromise: Promise<TopLoadoutsResult> = runWithForkedLogger(
+    log,
+    'home.top_loadouts',
+    async (streamLog) => {
+      streamLog.set({ home: { userId: id, characterId } });
+      try {
+        const res = await getBestPerformingLoadouts({
+          query: {
+            characterId,
+            userId: id,
+            gameMode: 'allGameModes',
+            count: 3,
+            minimumGames: 10,
+          },
+        });
+        if (res.error) {
+          streamLog.error('Failed to fetch top loadouts in home loader', {
+            home: { userId: id, characterId, error: res.error },
+          });
+          return {
+            data: EMPTY_TOP_LOADOUTS,
+            error: 'Failed to load top loadouts',
+          };
+        }
+
+        const rawData = res.data ?? EMPTY_TOP_LOADOUTS;
+        const slimmedItems = (rawData.items ?? []).map(slimSnapshotForCard);
+        streamLog.set({
+          home: {
+            userId: id,
+            characterId,
+            topLoadoutCount: slimmedItems.length,
+          },
+        });
+        return {
+          data: {
+            ...rawData,
+            items: slimmedItems,
+          },
+          error: undefined,
+        };
+      } catch (e) {
+        streamLog.error(e instanceof Error ? e : String(e), {
+          home: { userId: id, characterId },
+        });
+        return {
+          data: EMPTY_TOP_LOADOUTS,
+          error: 'Failed to load top loadouts',
+        };
+      }
+    },
+  );
+
   try {
-    const [sessionsRes, loadoutsRes] = await Promise.all([
-      getUserSessions({
-        path: {
-          userId: id,
-        },
-        query: {
-          count: BigInt(5),
-          page: BigInt(0),
-          characterId,
-        },
-      }),
-      getBestPerformingLoadouts({
-        query: {
-          characterId,
-          userId: id,
-          gameMode: 'allGameModes',
-          count: 3,
-          minimumGames: 10,
-        },
-      }),
-    ]);
+    const sessionsRes = await getUserSessions({
+      path: {
+        userId: id,
+      },
+      query: {
+        count: BigInt(5),
+        page: BigInt(0),
+        characterId,
+      },
+    });
+
+    if (sessionsRes.error) {
+      log.error('Failed to fetch user sessions in home loader', {
+        home: { userId: id, characterId, error: sessionsRes.error },
+      });
+      return {
+        sessions: [],
+        loadouts: {
+          data: EMPTY_TOP_LOADOUTS,
+          error: undefined,
+        } as TopLoadoutsResult | Promise<TopLoadoutsResult>,
+        error: 'Failed to load home page data',
+      };
+    }
 
     return {
       sessions: sessionsRes.data ?? [],
-      loadouts: loadoutsRes.data ?? { items: [], count: {}, stats: {} },
+      loadouts: loadoutsPromise as
+        TopLoadoutsResult | Promise<TopLoadoutsResult>,
       error: undefined,
     };
   } catch (e) {
@@ -56,7 +117,10 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     });
     return {
       sessions: [],
-      loadouts: { items: [], count: {}, stats: {} },
+      loadouts: {
+        data: EMPTY_TOP_LOADOUTS,
+        error: undefined,
+      } as TopLoadoutsResult | Promise<TopLoadoutsResult>,
       error: 'Failed to load home page data',
     };
   }
@@ -66,7 +130,11 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
   const navigate = useNavigate();
   const routeParams = useParams();
   const data = useProfileData();
-  const { sessions = [], loadouts, error } = loaderData ?? {};
+  const {
+    sessions = [],
+    loadouts = { data: EMPTY_TOP_LOADOUTS, error: undefined },
+    error,
+  } = loaderData ?? {};
   const resolvedUserId = params?.id ?? routeParams.id;
   const resolvedCharacterId = params?.characterId ?? routeParams.characterId;
 
@@ -91,7 +159,10 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
           name="description"
           content="View Destiny 2 PvP sessions and top loadouts on 1 Trick."
         />
-        <Empty title="Unexpected Error" description="Failed to load home page" />
+        <Empty
+          title="Unexpected Error"
+          description="Failed to load home page"
+        />
       </>
     );
   }
@@ -113,12 +184,6 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
     const isOwner = type === 'owner';
     const characterId = resolvedCharacterId ?? character?.id;
     const userId = resolvedUserId ?? profile.id;
-    const topLoadouts = loadouts?.items ?? [];
-    const statsRecord = (loadouts?.stats ?? {}) as Record<
-      string,
-      Record<string, { value?: number }>
-    >;
-    const countRecord = (loadouts?.count ?? {}) as Record<string, number>;
 
     const activeSession = sessions.find((s) => s.status === 'pending');
 
@@ -225,10 +290,7 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
                         label="Start First Session"
                       />
                     )}
-                    <Button
-                      asChild
-                      variant={isOwner ? 'outline' : 'default'}
-                    >
+                    <Button asChild variant={isOwner ? 'outline' : 'default'}>
                       <Link to="/sessions">Browse Community Sessions</Link>
                     </Button>
                   </div>
@@ -237,79 +299,20 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
             </section>
           )}
 
-          <section className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-                  Top Loadouts
-                </h3>
-                <Badge
-                  variant="secondary"
-                  className="text-xs font-medium uppercase tracking-wider"
-                >
-                  All Modes · Min. 10 Games
-                </Badge>
-              </div>
-              {topLoadouts.length > 0 && (
-                <Link
-                  to={
-                    userId && characterId
-                      ? `/profile/${userId}/c/${characterId}/loadouts`
-                      : 'loadouts'
-                  }
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  View all loadouts
-                </Link>
-              )}
-            </div>
-
-            {topLoadouts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-                {topLoadouts.map((snapshot) => (
-                  <LoadoutCard
-                    key={snapshot.id}
-                    snapshot={snapshot}
-                    stats={statsRecord[snapshot.id]}
-                    gamesCount={countRecord[snapshot.id] ?? 0}
-                    compact
-                    onClick={() =>
-                      navigate(
-                        userId && characterId
-                          ? `/profile/${userId}/c/${characterId}/loadouts/${snapshot.id}`
-                          : `loadouts/${snapshot.id}`,
-                      )
-                    }
-                  />
-                ))}
-              </div>
-            ) : (
-              <Empty
-                icon={
-                  <SwordsIcon className="h-12 w-12 self-center text-muted-foreground/60" />
-                }
-                title={
-                  isOwner ? 'Get in the Crucible!' : 'No Top Loadouts Yet'
-                }
-                description={
-                  isOwner
-                    ? 'Play at least 10 games with a loadout so your top builds will start showing up!'
-                    : 'This Guardian has not recorded 10 or more games with a single loadout on this character yet.'
-                }
-              >
-                {sessions.length > 0 && (
-                  <div className="flex flex-wrap items-center justify-center gap-3">
-                    <Button
-                      asChild
-                      variant={isOwner ? 'outline' : 'default'}
-                    >
-                      <Link to="loadouts?minimum=1">Browse All Loadouts</Link>
-                    </Button>
-                  </div>
-                )}
-              </Empty>
-            )}
-          </section>
+          <TopLoadoutsSection
+            loadouts={loadouts}
+            isOwner={isOwner}
+            hasSessions={sessions.length > 0}
+            userId={userId}
+            characterId={characterId}
+            onSelectLoadout={(snapshotId) =>
+              navigate(
+                userId && characterId
+                  ? `/profile/${userId}/c/${characterId}/loadouts/${snapshotId}`
+                  : `loadouts/${snapshotId}`,
+              )
+            }
+          />
         </div>
       </div>
     );
@@ -319,5 +322,3 @@ export function Home({ loaderData, params }: Route.ComponentProps) {
 }
 
 export default Home;
-
-

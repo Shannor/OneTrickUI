@@ -53,6 +53,46 @@ export function getRequestLogger(context?: unknown): AuditableLogger {
   }
 }
 
+export function runWithForkedLogger<T>(
+  parentLog: AuditableLogger,
+  label: string,
+  fn: (log: AuditableLogger) => Promise<T>,
+): Promise<T> {
+  if (typeof parentLog.fork !== 'function') {
+    return fn(parentLog);
+  }
+
+  let resolveResult!: (value: T) => void;
+  let rejectResult!: (reason?: unknown) => void;
+  const resultPromise = new Promise<T>((resolve, reject) => {
+    resolveResult = resolve;
+    rejectResult = reject;
+  });
+
+  try {
+    void parentLog.fork(label, async () => {
+      let childLog: AuditableLogger;
+      try {
+        childLog = useLogger();
+      } catch {
+        childLog = parentLog;
+      }
+
+      try {
+        const value = await fn(childLog);
+        resolveResult(value);
+      } catch (err) {
+        rejectResult(err);
+        throw err;
+      }
+    });
+  } catch {
+    return fn(parentLog);
+  }
+
+  return resultPromise;
+}
+
 function resolvePathname(urlStr: string): string {
   try {
     return new URL(urlStr).pathname;
