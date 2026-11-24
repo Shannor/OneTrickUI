@@ -1,5 +1,5 @@
 import { RefreshCw, X } from 'lucide-react';
-import { Fragment, type ReactNode, useEffect, useState } from 'react';
+import { Fragment, type ReactNode, useState } from 'react';
 import type { Character } from '~/api';
 import { CharacterItem } from '~/components/character-item';
 import { Button } from '~/components/ui/button';
@@ -15,17 +15,19 @@ export function CharacterPicker({
   currentCharacterId,
   children,
 }: Props) {
+  const [prevCharacterId, setPrevCharacterId] = useState(currentCharacterId);
   const [checked, setChecked] = useState<string | null | undefined>(
     currentCharacterId,
   );
   const [isExpanded, setIsExpanded] = useState(!currentCharacterId);
 
-  useEffect(() => {
+  if (currentCharacterId !== prevCharacterId) {
+    setPrevCharacterId(currentCharacterId);
     setChecked(currentCharacterId);
     if (currentCharacterId) {
       setIsExpanded(false);
     }
-  }, [currentCharacterId]);
+  }
 
   const selectedCharacter = characters.find((c) => c.id === checked);
   const visibleCharacters =

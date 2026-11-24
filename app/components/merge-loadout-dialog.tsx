@@ -1,5 +1,5 @@
 import { AlertCircle, Loader2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFetcher } from 'react-router';
 import type { CharacterSnapshot } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
@@ -29,54 +29,47 @@ interface MergeLoadoutDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function MergeLoadoutDialog({
+interface MergeLoadoutDialogContentProps {
+  baseSnapshot: CharacterSnapshot;
+  availableSnapshots: CharacterSnapshot[];
+  onOpenChange: (open: boolean) => void;
+}
+
+function MergeLoadoutDialogContent({
   baseSnapshot,
   availableSnapshots,
-  isOpen,
   onOpenChange,
-}: MergeLoadoutDialogProps) {
+}: MergeLoadoutDialogContentProps) {
   const fetcher = useFetcher<{ ok: boolean; error?: string }>();
   const [selectedSourceId, setSelectedSourceId] = useState('');
-  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const previousState = useRef(fetcher.state);
 
   const isMerging = fetcher.state !== 'idle';
 
   useEffect(() => {
-    setSelectedSourceId('');
-    setHasSubmitted(false);
-  }, [isOpen, baseSnapshot?.id]);
-
-  // Close the modal only when the current dialog session's submission succeeds
-  useEffect(() => {
-    if (!hasSubmitted || fetcher.state !== 'idle' || !fetcher.data) {
-      return;
-    }
-
-    if (fetcher.data.ok) {
-      setHasSubmitted(false);
-      setSelectedSourceId('');
+    if (
+      previousState.current !== 'idle' &&
+      fetcher.state === 'idle' &&
+      fetcher.data?.ok
+    ) {
       toast.success('Loadouts merged successfully');
       onOpenChange(false);
     }
-  }, [hasSubmitted, fetcher.state, fetcher.data, onOpenChange]);
+    previousState.current = fetcher.state;
+  }, [fetcher.state, fetcher.data, onOpenChange]);
 
-  if (!baseSnapshot) {
-    return null;
-  }
-
-  // Filter to compatible snapshots (matching Kinetic instanceId + Energy instanceId + Subclass itemHash)
   const compatibleSnapshots = availableSnapshots.filter((s) =>
     areSnapshotsCompatible(baseSnapshot, s),
   );
 
   const errorMessage =
-    hasSubmitted && fetcher.state === 'idle' && fetcher.data?.ok === false
+    fetcher.state === 'idle' && fetcher.data?.ok === false
       ? fetcher.data.error
       : undefined;
 
   return (
     <Dialog
-      open={isOpen}
+      open={true}
       onOpenChange={(open) => {
         if (isMerging) return;
         onOpenChange(open);
@@ -97,12 +90,7 @@ export function MergeLoadoutDialog({
             action cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        <fetcher.Form
-          method="post"
-          action="/action/merge-loadout"
-          onSubmit={() => setHasSubmitted(true)}
-        >
-          {/* Hidden input to pass the base loadout ID */}
+        <fetcher.Form method="post" action="/action/merge-loadout">
           <input type="hidden" name="baseLoadoutId" value={baseSnapshot.id} />
 
           <Select
@@ -182,5 +170,25 @@ export function MergeLoadoutDialog({
         </fetcher.Form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function MergeLoadoutDialog({
+  baseSnapshot,
+  availableSnapshots,
+  isOpen,
+  onOpenChange,
+}: MergeLoadoutDialogProps) {
+  if (!isOpen || !baseSnapshot) {
+    return null;
+  }
+
+  return (
+    <MergeLoadoutDialogContent
+      key={baseSnapshot.id}
+      baseSnapshot={baseSnapshot}
+      availableSnapshots={availableSnapshots}
+      onOpenChange={onOpenChange}
+    />
   );
 }

@@ -1,5 +1,5 @@
 import { GitBranch, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { cn } from '~/lib/utils';
 
 const ACCENT_DOT_CLASSES = [
@@ -10,6 +10,15 @@ const ACCENT_DOT_CLASSES = [
   'bg-rose-500',
   'bg-cyan-500',
 ] as const;
+
+const badgeListeners = new Set<() => void>();
+
+function subscribeBadge(callback: () => void) {
+  badgeListeners.add(callback);
+  return () => {
+    badgeListeners.delete(callback);
+  };
+}
 
 export function getBranchAccentClass(branch: string): string {
   let hash = 0;
@@ -40,39 +49,47 @@ export function DevWorktreeBadge({
       : (import.meta.env.VITE_DEV_GIT_BRANCH as string | undefined)?.trim() ||
         '';
 
-  const [visible, setVisible] = useState(false);
-  const [resolvedPort, setResolvedPort] = useState<string>(port ?? '');
+  const [dismissedKeys, setDismissedKeys] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (!resolvedBranch) {
-      setVisible(false);
-      return;
-    }
+  const clientPort = useSyncExternalStore(
+    subscribeBadge,
+    () => window.location.port || '',
+    () => '',
+  );
+  const resolvedPort = port !== undefined ? (port ?? '') : clientPort;
+  const storageKey = resolvedBranch
+    ? getDismissStorageKey(resolvedBranch, resolvedPort)
+    : null;
 
-    const activePort =
-      port !== undefined ? (port ?? '') : window.location.port || '';
-    setResolvedPort(activePort);
+  const isVisibleInStorage = useSyncExternalStore(
+    subscribeBadge,
+    () => {
+      if (!storageKey) return false;
+      try {
+        return sessionStorage.getItem(storageKey) !== '1';
+      } catch {
+        return true;
+      }
+    },
+    () => false,
+  );
 
-    try {
-      const storageKey = getDismissStorageKey(resolvedBranch, activePort);
-      const isDismissed = sessionStorage.getItem(storageKey) === '1';
-      setVisible(!isDismissed);
-    } catch {
-      setVisible(true);
-    }
-  }, [resolvedBranch, port]);
-
-  if (!visible || !resolvedBranch) {
+  if (
+    !resolvedBranch ||
+    !storageKey ||
+    !isVisibleInStorage ||
+    dismissedKeys.includes(storageKey)
+  ) {
     return null;
   }
 
   const handleDismiss = () => {
-    setVisible(false);
+    setDismissedKeys((prev) =>
+      prev.includes(storageKey) ? prev : [...prev, storageKey],
+    );
     try {
-      sessionStorage.setItem(
-        getDismissStorageKey(resolvedBranch, resolvedPort),
-        '1',
-      );
+      sessionStorage.setItem(storageKey, '1');
+      badgeListeners.forEach((listener) => listener());
     } catch {
       // Ignore storage access errors in restricted browsing modes
     }

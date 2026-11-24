@@ -6,7 +6,6 @@ import {
   Swords,
   Users,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { getAuth, getCachedUser } from '~/.server/auth';
 import { getRequestLogger } from '~/.server/logger';
@@ -23,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
+import { useActiveCharacterCache } from '~/hooks/use-active-character-cache';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
 import { cn, getSiteOrigin } from '~/lib/utils';
 
@@ -185,27 +185,16 @@ export function Landing({ loaderData }: Route.ComponentProps) {
     selectedCharacterId: null,
   };
 
-  const [activeCharId, setActiveCharId] = useState<string | null>(
-    selectedCharacterId ?? null,
-  );
-
-  useEffect(() => {
-    if (profile?.id) {
-      try {
-        const stored = localStorage.getItem(
-          `onetrick_active_char_${profile.id}`,
-        );
-        if (stored && profile.characters?.some((c) => c.id === stored)) {
-          setActiveCharId(stored);
-        }
-      } catch {
-        // Ignore storage errors
-      }
-    }
-  }, [profile]);
+  const cachedCharId = useActiveCharacterCache(profile?.id);
+  const validCachedCharId =
+    cachedCharId && profile?.characters?.some((c) => c.id === cachedCharId)
+      ? cachedCharId
+      : null;
 
   const targetCharacterId =
-    activeCharId || (profile?.characters?.[0]?.id ?? null);
+    validCachedCharId ||
+    selectedCharacterId ||
+    (profile?.characters?.[0]?.id ?? null);
   const continueUrl = profile
     ? targetCharacterId
       ? `/profile/${profile.id}/c/${targetCharacterId}`
