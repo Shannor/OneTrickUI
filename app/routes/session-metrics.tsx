@@ -1,11 +1,9 @@
 import { log } from 'evlog';
 import { ExternalLink } from 'lucide-react';
 import { Link } from 'react-router';
-import type { Aggregate } from '~/api';
+import type { Aggregate, CharacterSnapshot } from '~/api';
 import { calculatePercentage, calculateRatio } from '~/calculations/precision';
-import { ChartWrapper } from '~/charts/ChartWrapper';
-import { MapPerformance } from '~/charts/MapPerformance';
-import { MapWinRate } from '~/charts/MapWinRate';
+import { MapTelemetryPanel } from '~/charts/map-telemetry';
 import { Empty } from '~/components/empty';
 import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
@@ -14,12 +12,12 @@ import {
   useOptionalProfileData,
   useSessionData,
 } from '~/hooks/use-route-loaders';
-import { generatePerformancePerMap, timeWindowToCustom } from '~/lib/metrics';
+import { generateMapTelemetry, timeWindowToCustom } from '~/lib/metrics';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
 
-export default function SessionMetrics({ params }: Route.ComponentProps) {
+export function SessionMetrics({ params }: Route.ComponentProps) {
   const { aggregates, snapshots, session, path } = useSessionData();
   const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id } = params;
@@ -88,12 +86,18 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
 
   const groupedBySnapshot = groupAggregates(aggregates, characterId);
   const data = getLoadoutData(groupedBySnapshot, characterId);
-  const fake = [['test', aggregates]] as GroupTuple[];
-  const [item] = getLoadoutData(fake, characterId, true);
-  const { stats, matchStats, rawStats } = item;
+  const overallTuple = [['overall', aggregates]] as GroupTuple[];
+  const [overallItem] = getLoadoutData(
+    overallTuple,
+    characterId,
+    true,
+    snapshots,
+  );
+  const { stats, matchStats, rawStats, mapData: overallMapData } = overallItem;
+  const loadoutBasePath = `/profile/${id}/c/${characterId}/loadouts`;
 
   return (
-    <div className="mt-8 flex flex-col gap-16">
+    <div className="mt-8 flex flex-col gap-14">
       {metaTags}
       <div className="flex flex-col gap-6">
         <h4 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight">
@@ -102,82 +106,74 @@ export default function SessionMetrics({ params }: Route.ComponentProps) {
         <h5 className="text-xl font-semibold tracking-tight">Overall</h5>
         <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
           <Performance stats={stats} className="md:pr-2" />
-          <Performance stats={matchStats} className={'md:px-2'} />
-          <Performance stats={rawStats} className={'md:px-2'} />
+          <Performance stats={matchStats} className="md:px-2" />
+          <Performance stats={rawStats} className="md:px-2" />
         </div>
         <div className="text-sm text-muted-foreground">
           Stats for all games including ones where no snapshot was found.
         </div>
+        <MapTelemetryPanel
+          data={overallMapData}
+          title="Session Map Telemetry"
+          description="Overall map performance across this session, including your top build per map."
+          showBestLoadout
+          loadoutBasePath={loadoutBasePath}
+        />
       </div>
-      <div className="flex flex-col gap-20">
-        {data?.map(
-          ({ snapshotId, stats, mapData, time, matchStats, rawStats }) => {
-            const snapshot = snapshots[snapshotId];
-            const weapons = getWeapons(snapshot.loadout);
 
-            return (
-              <div className="flex flex-col gap-4" key={snapshotId}>
-                <div className="group flex flex-row gap-2">
-                  <Link
-                    to={`/profile/${id}/c/${characterId}/loadouts/${snapshotId}`}
-                  >
-                    <Label className="group-hover:text-blue-400 group-hover:underline">
-                      {snapshot?.name ?? 'Snapshot'}
-                    </Label>
-                  </Link>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
-                </div>
-                <div className="flex flex-row gap-4">
-                  {weapons.map((weapon) => (
-                    <WeaponHeader
-                      key={weapon.itemHash}
-                      properties={weapon.details}
-                      onlyIcon
-                    />
-                  ))}
-                </div>
-                <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-                  <Performance stats={stats} className="md:pr-2" />
-                  <Performance stats={matchStats} className={'md:px-2'} />
-                  <Performance stats={rawStats} className={'md:px-2'} />
-                </div>
-                <div className="flex flex-col gap-4 md:flex-row">
-                  <ChartWrapper
-                    title="Map Performance"
-                    description="Shows the map performance for the session with the loadout"
-                  >
-                    <MapPerformance
-                      data={mapData}
-                      timeWindow={time}
-                      syncId={`map-${snapshotId}`}
-                    />
-                  </ChartWrapper>
-                  <ChartWrapper
-                    title="Map Win Rate"
-                    description="Shows the number wins and losses for each map with a given loadout."
-                  >
-                    <MapWinRate
-                      data={mapData}
-                      timeWindow={time}
-                      syncId={`map-${snapshotId}`}
-                    />
-                  </ChartWrapper>
-                </div>
+      <div className="flex flex-col gap-16">
+        {data?.map(({ snapshotId, stats, mapData, matchStats, rawStats }) => {
+          const snapshot = snapshots[snapshotId];
+          if (!snapshot) {
+            return null;
+          }
+          const weapons = getWeapons(snapshot.loadout);
+
+          return (
+            <div className="flex flex-col gap-5" key={snapshotId}>
+              <div className="group flex flex-row items-center gap-2">
+                <Link to={`${loadoutBasePath}/${snapshotId}`}>
+                  <Label className="group-hover:text-blue-400 group-hover:underline">
+                    {snapshot?.name ?? 'Snapshot'}
+                  </Label>
+                </Link>
+                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
               </div>
-            );
-          },
-        )}
+              <div className="flex flex-row gap-4">
+                {weapons.map((weapon) => (
+                  <WeaponHeader
+                    key={weapon.itemHash}
+                    properties={weapon.details}
+                    onlyIcon
+                  />
+                ))}
+              </div>
+              <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
+                <Performance stats={stats} className="md:pr-2" />
+                <Performance stats={matchStats} className="md:px-2" />
+                <Performance stats={rawStats} className="md:px-2" />
+              </div>
+              <MapTelemetryPanel
+                data={mapData}
+                title="Loadout Map Telemetry"
+                description="Strong vs. swap-candidate maps for this loadout during the session."
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
+export default SessionMetrics;
+
 type GroupTuple = [string, Aggregate[]];
+
 function groupAggregates(
   aggregates: Aggregate[],
   characterId: string,
 ): GroupTuple[] {
-  // Group by Snapshot Id
   const grouped = aggregates.reduce(
     (state, current) => {
       const link = current.snapshotLinks[characterId];
@@ -207,18 +203,14 @@ function groupAggregates(
     {} as Record<string, Aggregate[]>,
   );
 
-  // Convert to an array of tuples and sort
-  return Object.entries(grouped).sort((a, b) => {
-    const aAggsLength = a[1].length;
-    const bAggsLength = b[1].length;
-    return bAggsLength - aAggsLength;
-  });
+  return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
 }
 
 function getLoadoutData(
   groupedBySnapshot: GroupTuple[],
   characterId: string,
   allowAll: boolean = false,
+  snapshots?: Record<string, CharacterSnapshot>,
 ) {
   return groupedBySnapshot.map(([snapshotId, aggs]) => {
     const performances = getPerformances(aggs, characterId, allowAll);
@@ -247,15 +239,10 @@ function getLoadoutData(
       { label: 'Deaths', value: deaths.toString() },
       { label: 'Assists', value: assists.toString() },
     ];
-    const stats = [];
-    stats.push({
-      label: 'K/D',
-      value: kd.toFixed(2),
-    });
-    stats.push({
-      label: 'Efficiency',
-      value: kda.toFixed(2),
-    });
+    const stats = [
+      { label: 'K/D', value: kd.toFixed(2) },
+      { label: 'Efficiency', value: kda.toFixed(2) },
+    ];
     const matchStats = [];
     if (performances.length >= 1) {
       matchStats.push({
@@ -270,7 +257,13 @@ function getLoadoutData(
       });
     }
 
-    const mapData = generatePerformancePerMap(aggs, customTime, characterId);
+    const mapData = generateMapTelemetry(
+      aggs,
+      customTime,
+      characterId,
+      'allGameModes',
+      snapshots,
+    );
     return {
       snapshotId,
       stats,
@@ -281,6 +274,7 @@ function getLoadoutData(
     };
   });
 }
+
 function getPerformances(
   aggregates: Aggregate[],
   characterId: string,
@@ -293,6 +287,7 @@ function getPerformances(
         return agg.performance[characterId];
       }
       if (
+        snapshot &&
         snapshot.confidenceLevel !== 'noMatch' &&
         snapshot.confidenceLevel !== 'notFound'
       ) {

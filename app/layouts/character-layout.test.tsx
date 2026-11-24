@@ -36,7 +36,7 @@ vi.mock('~/hooks/use-route-loaders', () => ({
 }));
 
 describe('buildCharacterSwitchHref', () => {
-  it('preserves top-level loadouts, sessions, and fireteam sub-routes with search params', () => {
+  it('preserves top-level loadouts, sessions, metrics, and fireteam sub-routes with search params', () => {
     expect(
       buildCharacterSwitchHref(
         'user-123',
@@ -56,6 +56,16 @@ describe('buildCharacterSwitchHref', () => {
         '',
       ),
     ).toBe('/profile/user-123/c/char-2/sessions');
+
+    expect(
+      buildCharacterSwitchHref(
+        'user-123',
+        'char-1',
+        'char-2',
+        '/profile/user-123/c/char-1/metrics',
+        '',
+      ),
+    ).toBe('/profile/user-123/c/char-2/metrics');
   });
 
   it('falls back to the character overview when switching from a nested detail page', () => {

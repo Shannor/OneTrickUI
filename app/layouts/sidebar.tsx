@@ -3,6 +3,7 @@ import {
   Activity,
   ArrowLeft,
   ArrowLeftFromLine,
+  BarChart3,
   Gamepad2,
   Home,
   Hourglass,
@@ -177,6 +178,12 @@ export function Sidebar() {
         url: `/profile/${profile.id}/c/${characterId}/loadouts`,
         icon: SquareLibrary,
       },
+      {
+        name: 'Metrics',
+        title: 'Metrics',
+        url: `/profile/${profile.id}/c/${characterId}/metrics`,
+        icon: BarChart3,
+      },
     ];
 
     if (signedInUserId) {
@@ -220,6 +227,14 @@ export function Sidebar() {
           ? `${baseUrl}/loadouts`
           : `/profile/${signedInUserId}`,
         icon: SquareLibrary,
+      },
+      {
+        name: 'Metrics',
+        title: 'Metrics',
+        url: activeUserCharacterId
+          ? `${baseUrl}/metrics`
+          : `/profile/${signedInUserId}`,
+        icon: BarChart3,
       },
     ];
 
