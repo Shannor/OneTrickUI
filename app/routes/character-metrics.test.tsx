@@ -1,13 +1,11 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  type Aggregate,
-  getSessionAggregates,
-  getSnapshotAggregates,
-  getSnapshots,
-  getUserSessions,
+  type GameMode,
+  type TelemetryMatch,
+  getCharacterTelemetry,
 } from '~/api';
 
 import { CharacterMetrics, loader } from './character-metrics';
@@ -32,59 +30,33 @@ vi.mock('~/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/api')>();
   return {
     ...actual,
-    getUserSessions: vi.fn(),
-    getSnapshots: vi.fn(),
-    getSessionAggregates: vi.fn(),
-    getSnapshotAggregates: vi.fn(),
+    getCharacterTelemetry: vi.fn(),
   };
 });
 
-function makeAggregate(
+function makeTelemetryMatch(
   id: string,
   location: string,
   kills: number,
   deaths: number,
-  standing: number,
-  snapshotId?: string,
-): Aggregate {
+  won: boolean,
+  options?: {
+    snapshotId?: string;
+    estimatedGameMode?: GameMode;
+  },
+): TelemetryMatch {
   return {
-    id,
     activityId: `act-${id}`,
-    sessionIds: ['sess-1'],
-    characterIds: ['char-1'],
-    snapshotIds: snapshotId ? [snapshotId] : [],
-    createdAt: new Date('2026-10-01T12:00:00Z'),
-    activityDetails: {
-      instanceId: `inst-${id}`,
-      activity: 'Trials of Osiris',
-      location,
-      period: new Date(`2026-10-0${id.slice(-1)}T12:00:00Z`),
-      imageUrl: '/map.png',
-      activityIcon: '/mode.png',
-      estimatedGameMode: 'trials',
-    } as any,
-    snapshotLinks: snapshotId
-      ? {
-          'char-1': {
-            characterId: 'char-1',
-            snapshotId,
-            confidenceLevel: 'high',
-            confidenceSource: 'system',
-            createdAt: new Date('2026-10-01T12:00:00Z'),
-          },
-        }
-      : {},
-    performance: {
-      'char-1': {
-        playerStats: {
-          kills: { value: kills },
-          deaths: { value: deaths },
-          assists: { value: 4 },
-          standing: { value: standing },
-        },
-        weapons: {},
-      } as any,
-    },
+    period: new Date(`2026-10-0${id.slice(-1)}T12:00:00Z`),
+    location,
+    activity: 'Trials of Osiris',
+    estimatedGameMode: options?.estimatedGameMode ?? 'trials',
+    kills,
+    deaths,
+    assists: 4,
+    won,
+    snapshotId: options?.snapshotId,
+    snapshotConfidence: options?.snapshotId ? 'high' : undefined,
   };
 }
 
@@ -101,39 +73,23 @@ describe('character-metrics route loader and component', () => {
     });
   });
 
-  it('deduplicates aggregates across sessions and loadouts and merges snapshot names in loader', async () => {
-    const sharedAgg = makeAggregate('agg-1', 'Javelin-4', 18, 9, 0, 'snap-a');
-    const snapOnlyAgg = makeAggregate('agg-2', 'Burnout', 16, 10, 0);
+  it('fetches character telemetry in a single request and returns matches, snapshots, totalCount, and truncated', async () => {
+    const matches = [
+      makeTelemetryMatch('1', 'Javelin-4', 18, 9, true, {
+        snapshotId: 'snap-a',
+      }),
+      makeTelemetryMatch('2', 'Burnout', 16, 10, true),
+    ];
 
-    vi.mocked(getUserSessions)
-      .mockResolvedValueOnce({
-        data: [{ id: 'sess-1' }],
-        error: undefined,
-      } as any)
-      .mockResolvedValueOnce({
-        data: [],
-        error: undefined,
-      } as any);
-
-    vi.mocked(getSnapshots).mockResolvedValueOnce({
+    vi.mocked(getCharacterTelemetry).mockResolvedValueOnce({
       data: {
-        items: [{ id: 'snap-b', name: 'Solar Pulse Build' }],
-      },
-      error: undefined,
-    } as any);
-
-    vi.mocked(getSessionAggregates).mockResolvedValueOnce({
-      data: {
-        aggregates: [sharedAgg],
+        matches,
         snapshots: {
           'snap-a': { id: 'snap-a', name: 'Prismatic Hand Cannon' },
         },
+        totalCount: 614,
+        truncated: true,
       },
-      error: undefined,
-    } as any);
-
-    vi.mocked(getSnapshotAggregates).mockResolvedValueOnce({
-      data: [sharedAgg, snapOnlyAgg],
       error: undefined,
     } as any);
 
@@ -143,115 +99,21 @@ describe('character-metrics route loader and component', () => {
       request: new Request('http://localhost/profile/user-1/c/char-1/metrics'),
     } as any);
 
-    expect(res.error).toBeUndefined();
-    expect(res.aggregates).toHaveLength(2);
-    expect(res.snapshots['snap-a']?.name).toBe('Prismatic Hand Cannon');
-    expect(res.snapshots['snap-b']?.name).toBe('Solar Pulse Build');
-    const normalizedSecond = res.aggregates.find((a) => a.id === 'agg-2');
-    expect(normalizedSecond?.snapshotLinks['char-1']?.snapshotId).toBe(
-      'snap-b',
-    );
-  });
-
-  it('backfills snapshotLinks on an unlinked session aggregate when confirmed by getSnapshotAggregates', async () => {
-    const unlinkedSessionAgg = makeAggregate('agg-3', 'Endless Vale', 20, 8, 0);
-    const snapshotConfirmedAgg = makeAggregate(
-      'agg-3',
-      'Endless Vale',
-      20,
-      8,
-      0,
-    );
-
-    vi.mocked(getUserSessions)
-      .mockResolvedValueOnce({
-        data: [{ id: 'sess-1' }],
-        error: undefined,
-      } as any)
-      .mockResolvedValueOnce({
-        data: [],
-        error: undefined,
-      } as any);
-
-    vi.mocked(getSnapshots).mockResolvedValueOnce({
-      data: {
-        items: [{ id: 'snap-b', name: 'Solar Pulse Build' }],
-      },
-      error: undefined,
-    } as any);
-
-    vi.mocked(getSessionAggregates).mockResolvedValueOnce({
-      data: {
-        aggregates: [unlinkedSessionAgg],
-        snapshots: {},
-      },
-      error: undefined,
-    } as any);
-
-    vi.mocked(getSnapshotAggregates).mockResolvedValueOnce({
-      data: [snapshotConfirmedAgg],
-      error: undefined,
-    } as any);
-
-    const res = await loader({
-      params: { id: 'user-1', characterId: 'char-1' },
-      context: new Map(),
-      request: new Request('http://localhost/profile/user-1/c/char-1/metrics'),
-    } as any);
-
-    expect(res.aggregates).toHaveLength(1);
-    expect(res.aggregates[0].snapshotLinks['char-1']?.snapshotId).toBe(
-      'snap-b',
-    );
-    expect(res.partialFailure).toBe(false);
-  });
-
-  it('flags partialFailure and bounds fan-out concurrency when upstream aggregate calls fail', async () => {
-    const validAgg = makeAggregate('agg-1', 'Javelin-4', 18, 9, 0, 'snap-a');
-
-    vi.mocked(getUserSessions)
-      .mockResolvedValueOnce({
-        data: Array.from({ length: 12 }, (_, idx) => ({ id: `sess-${idx}` })),
-        error: undefined,
-      } as any)
-      .mockResolvedValueOnce({
-        data: undefined,
-        error: { message: 'timeout' },
-      } as any);
-
-    vi.mocked(getSnapshots).mockResolvedValueOnce({
-      data: {
-        items: [{ id: 'snap-a', name: 'Prismatic HC' }],
-      },
-      error: undefined,
-    } as any);
-
-    let activeInFlight = 0;
-    let peakInFlight = 0;
-
-    vi.mocked(getSessionAggregates).mockImplementation(async ({ path }) => {
-      activeInFlight += 1;
-      peakInFlight = Math.max(peakInFlight, activeInFlight);
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      activeInFlight -= 1;
-      if (path.sessionId === 'sess-0') {
-        return {
-          data: { aggregates: [validAgg], snapshots: {} },
-          error: undefined,
-        } as any;
-      }
-      if (path.sessionId === 'sess-1') {
-        return { data: undefined, error: { message: '502' } } as any;
-      }
-      return {
-        data: { aggregates: [], snapshots: {} },
-        error: undefined,
-      } as any;
+    expect(getCharacterTelemetry).toHaveBeenCalledTimes(1);
+    expect(getCharacterTelemetry).toHaveBeenCalledWith({
+      path: { userId: 'user-1', characterId: 'char-1' },
     });
+    expect(res.error).toBeUndefined();
+    expect(res.matches).toHaveLength(2);
+    expect(res.snapshots['snap-a']?.name).toBe('Prismatic Hand Cannon');
+    expect(res.totalCount).toBe(614);
+    expect(res.truncated).toBe(true);
+  });
 
-    vi.mocked(getSnapshotAggregates).mockResolvedValueOnce({
+  it('returns error state when getCharacterTelemetry fails', async () => {
+    vi.mocked(getCharacterTelemetry).mockResolvedValueOnce({
       data: undefined,
-      error: { message: 'timeout' },
+      error: { message: 'Internal Server Error' },
     } as any);
 
     const res = await loader({
@@ -260,30 +122,37 @@ describe('character-metrics route loader and component', () => {
       request: new Request('http://localhost/profile/user-1/c/char-1/metrics'),
     } as any);
 
-    expect(peakInFlight).toBeLessThanOrEqual(8);
-    expect(res.partialFailure).toBe(true);
-    expect(res.error).toBeUndefined();
-    expect(res.aggregates).toHaveLength(1);
+    expect(res.error).toBe('Failed to load character metrics');
+    expect(res.matches).toEqual([]);
+    expect(res.totalCount).toBe(0);
+    expect(res.truncated).toBe(false);
   });
 
-  it('renders CharacterMetrics trend panel, all-loadout map telemetry, and best loadout links', () => {
-    const aggregates = [
-      makeAggregate('agg-1', 'Javelin-4', 18, 9, 0, 'snap-a'),
-      makeAggregate('agg-2', 'Javelin-4', 16, 8, 0, 'snap-a'),
-      makeAggregate('agg-3', 'Cirrus Plaza', 6, 14, 1, 'snap-b'),
-      makeAggregate('agg-4', 'Cirrus Plaza', 7, 13, 1, 'snap-b'),
+  it('renders CharacterMetrics trend panel, all-loadout map telemetry, unmatched matches, and truncation notice', () => {
+    const matches = [
+      makeTelemetryMatch('1', 'Javelin-4', 18, 9, true, {
+        snapshotId: 'snap-a',
+      }),
+      makeTelemetryMatch('2', 'Javelin-4', 16, 8, true, {
+        snapshotId: 'snap-a',
+      }),
+      makeTelemetryMatch('3', 'Cirrus Plaza', 6, 14, false, {
+        snapshotId: 'snap-b',
+      }),
+      makeTelemetryMatch('4', 'Cirrus Plaza', 7, 13, false),
     ];
 
     render(
       <MemoryRouter>
         <CharacterMetrics
           loaderData={{
-            aggregates,
+            matches,
             snapshots: {
               'snap-a': { id: 'snap-a', name: 'Prismatic HC' },
               'snap-b': { id: 'snap-b', name: 'Void SMG' },
             },
-            partialFailure: true,
+            totalCount: 614,
+            truncated: true,
             error: undefined,
           }}
           params={{ id: 'user-1', characterId: 'char-1' }}
@@ -295,23 +164,65 @@ describe('character-metrics route loader and component', () => {
     expect(
       screen.getByRole('heading', { name: 'Hunter Metrics' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Some recent sessions or loadouts timed out/i),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Showing most recent 4 of 614 tracked matches.',
+    );
     expect(screen.getByText('All-Loadout Map Telemetry')).toBeInTheDocument();
     expect(
       screen.getAllByRole('link', { name: /Prismatic HC/i }).length,
     ).toBeGreaterThan(0);
+    expect(screen.getAllByText('Cirrus Plaza').length).toBeGreaterThan(0);
   });
 
-  it('renders empty state when no aggregates are recorded yet', () => {
+  it('omits truncation notice when history is not truncated and filters client-side by estimatedGameMode', () => {
+    const matches = [
+      makeTelemetryMatch('1', 'Javelin-4', 18, 9, true, {
+        snapshotId: 'snap-a',
+        estimatedGameMode: 'trials',
+      }),
+      makeTelemetryMatch('2', 'Midtown', 20, 10, true, {
+        snapshotId: 'snap-a',
+        estimatedGameMode: 'quickplay',
+      }),
+    ];
+
     render(
       <MemoryRouter>
         <CharacterMetrics
           loaderData={{
-            aggregates: [],
+            matches,
+            snapshots: {
+              'snap-a': { id: 'snap-a', name: 'Prismatic HC' },
+            },
+            totalCount: 2,
+            truncated: false,
+            error: undefined,
+          }}
+          params={{ id: 'user-1', characterId: 'char-1' }}
+          matches={[] as any}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Javelin-4').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Midtown').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Trials$/i }));
+
+    expect(screen.getAllByText('Javelin-4').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Midtown')).not.toBeInTheDocument();
+  });
+
+  it('renders empty state when no matches are recorded yet', () => {
+    render(
+      <MemoryRouter>
+        <CharacterMetrics
+          loaderData={{
+            matches: [],
             snapshots: {},
-            partialFailure: false,
+            totalCount: 0,
+            truncated: false,
             error: undefined,
           }}
           params={{ id: 'user-1', characterId: 'char-1' }}

@@ -7,6 +7,7 @@ import {
   getActivitiesResponseTransformer,
   getActivityResponseTransformer,
   getBestPerformingLoadoutsResponseTransformer,
+  getCharacterTelemetryResponseTransformer,
   getFeaturedLoadoutsResponseTransformer,
   getFireteamResponseTransformer,
   getSessionAggregatesResponseTransformer,
@@ -22,6 +23,7 @@ import {
   refreshTokenResponseTransformer,
   runSessionTickResponseTransformer,
   searchResponseTransformer,
+  startFireteamSessionsResponseTransformer,
   startSessionResponseTransformer,
   startUserSessionResponseTransformer,
   updateSessionResponseTransformer,
@@ -54,6 +56,9 @@ import type {
   GetActivityResponses,
   GetBestPerformingLoadoutsData,
   GetBestPerformingLoadoutsResponses,
+  GetCharacterTelemetryData,
+  GetCharacterTelemetryErrors,
+  GetCharacterTelemetryResponses,
   GetFeaturedLoadoutsData,
   GetFeaturedLoadoutsErrors,
   GetFeaturedLoadoutsResponses,
@@ -95,6 +100,9 @@ import type {
   SearchData,
   SearchErrors,
   SearchResponses,
+  StartFireteamSessionsData,
+  StartFireteamSessionsErrors,
+  StartFireteamSessionsResponses,
   StartSessionData,
   StartSessionErrors,
   StartSessionResponses,
@@ -192,6 +200,27 @@ export const getFireteam = <ThrowOnError extends boolean = false>(
     ...options,
   });
 
+/**
+ * Idempotently start individual sessions for multiple fireteam members. Skips any requested (userId, characterId) pair that already has a pending session.
+ */
+export const startFireteamSessions = <ThrowOnError extends boolean = false>(
+  options: Options<StartFireteamSessionsData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    StartFireteamSessionsResponses,
+    StartFireteamSessionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: startFireteamSessionsResponseTransformer,
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/fireteam/sessions',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
 export const getUser = <ThrowOnError extends boolean = false>(
   options: Options<GetUserData, ThrowOnError>,
 ) =>
@@ -264,6 +293,22 @@ export const startUserSession = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Returns slim chronological match telemetry for a character alongside referenced snapshot summaries
+ */
+export const getCharacterTelemetry = <ThrowOnError extends boolean = false>(
+  options: Options<GetCharacterTelemetryData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetCharacterTelemetryResponses,
+    GetCharacterTelemetryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCharacterTelemetryResponseTransformer,
+    url: '/users/{userId}/characters/{characterId}/telemetry',
+    ...options,
   });
 
 /**

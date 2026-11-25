@@ -88,53 +88,32 @@ export type OneTrickError = {
   status: InternalError;
 };
 
+export type FireteamActiveSession = {
+  sessionId: string;
+  characterId: string;
+  startedAt: Date;
+  trackComp?: boolean;
+};
+
 export type FireteamMember = {
   id: string;
   membershipId: string;
   displayName: string;
   characters: Array<Character>;
+  activeSessions?: Array<FireteamActiveSession>;
 };
 
-export type Profile = {
-  id: string;
-  membershipId: string;
-  displayName: string;
-  uniqueName: string;
-  characters: Array<Character>;
+export type FireteamSessionMemberTarget = {
+  userId: string;
+  characterId: string;
 };
 
-export type AuthResponse = {
-  id: string;
-  /**
-   * Access token value.
-   */
-  accessToken: string;
-  /**
-   * Type of the access token.
-   */
-  tokenType: string;
-  /**
-   * The time duration in which the access token will be expired.
-   */
-  expiresIn: number;
-  /**
-   * Refresh token for acquiring new access token after it is expired.
-   */
-  refreshToken: string;
-  /**
-   * The time duration in which the refresh token will be expired.
-   */
-  refreshExpiresIn: number;
-  /**
-   * Membership identification value.
-   */
-  membershipId: string;
-  /**
-   * Membership that is mainly used
-   */
-  primaryMembershipId: string;
-  timestamp: Date;
+export type StartFireteamSessionsRequest = {
+  members: Array<FireteamSessionMemberTarget>;
+  trackComp?: boolean;
 };
+
+export type FireteamSessionOutcome = 'started' | 'skipped_active';
 
 export type AuditField = {
   id: string;
@@ -195,8 +174,102 @@ export type Session = {
   compTracking?: CompTracking;
 };
 
+export type FireteamSessionResult = {
+  userId: string;
+  characterId: string;
+  outcome: FireteamSessionOutcome;
+  session: Session;
+};
+
+export type StartFireteamSessionsResponse = {
+  results: Array<FireteamSessionResult>;
+};
+
+export type Profile = {
+  id: string;
+  membershipId: string;
+  displayName: string;
+  uniqueName: string;
+  characters: Array<Character>;
+};
+
+export type AuthResponse = {
+  id: string;
+  /**
+   * Access token value.
+   */
+  accessToken: string;
+  /**
+   * Type of the access token.
+   */
+  tokenType: string;
+  /**
+   * The time duration in which the access token will be expired.
+   */
+  expiresIn: number;
+  /**
+   * Refresh token for acquiring new access token after it is expired.
+   */
+  refreshToken: string;
+  /**
+   * The time duration in which the refresh token will be expired.
+   */
+  refreshExpiresIn: number;
+  /**
+   * Membership identification value.
+   */
+  membershipId: string;
+  /**
+   * Membership that is mainly used
+   */
+  primaryMembershipId: string;
+  timestamp: Date;
+};
+
 export type GameMode =
   'allGameModes' | 'quickplay' | 'competitive' | 'trials' | 'ironBanner';
+
+export type ConfidenceLevel =
+  'notFound' | 'noMatch' | 'low' | 'medium' | 'high';
+
+/**
+ * Slim per-match telemetry record for a single character
+ */
+export type TelemetryMatch = {
+  activityId: string;
+  period: Date;
+  location: string;
+  activity: string;
+  estimatedGameMode?: GameMode;
+  kills: number;
+  deaths: number;
+  assists: number;
+  won: boolean;
+  timePlayedSeconds?: number;
+  sessionId?: string;
+  snapshotId?: string;
+  snapshotConfidence?: ConfidenceLevel;
+};
+
+/**
+ * Lightweight snapshot metadata referenced by telemetry matches
+ */
+export type TelemetrySnapshotSummary = {
+  id: string;
+  name: string;
+};
+
+/**
+ * Character-scoped chronological match telemetry and referenced snapshot summaries
+ */
+export type CharacterTelemetryResponse = {
+  matches: Array<TelemetryMatch>;
+  snapshots: {
+    [key: string]: TelemetrySnapshotSummary;
+  };
+  totalCount: number;
+  truncated: boolean;
+};
 
 export type BaseItemInfo = {
   name: string;
@@ -504,9 +577,6 @@ export type ActivityHistory = {
   estimatedGameMode?: GameMode;
 };
 
-export type ConfidenceLevel =
-  'notFound' | 'noMatch' | 'low' | 'medium' | 'high';
-
 export type ConfidenceSource = 'system' | 'user';
 
 export type SnapshotLink = {
@@ -679,6 +749,17 @@ export type SessionWritable = {
   compTracking?: CompTracking;
 };
 
+export type FireteamSessionResultWritable = {
+  userId: string;
+  characterId: string;
+  outcome: FireteamSessionOutcome;
+  session: SessionWritable;
+};
+
+export type StartFireteamSessionsResponseWritable = {
+  results: Array<FireteamSessionResultWritable>;
+};
+
 export type XUserId = string;
 
 export type XMembershipId = string;
@@ -809,6 +890,10 @@ export type GetFireteamData = {
 
 export type GetFireteamErrors = {
   /**
+   * User not found
+   */
+  404: OneTrickError;
+  /**
    * Server is down
    */
   503: {
@@ -831,6 +916,60 @@ export type GetFireteamResponses = {
 
 export type GetFireteamResponse =
   GetFireteamResponses[keyof GetFireteamResponses];
+
+export type StartFireteamSessionsData = {
+  /**
+   * Fireteam members and characters to start sessions for
+   */
+  body: StartFireteamSessionsRequest;
+  headers: {
+    'X-User-ID': string;
+    'X-Membership-ID': string;
+  };
+  path?: never;
+  query?: never;
+  url: '/fireteam/sessions';
+};
+
+export type StartFireteamSessionsErrors = {
+  /**
+   * Request is invalid
+   */
+  400: OneTrickError;
+  /**
+   * Unauthorized
+   */
+  401: OneTrickError;
+  /**
+   * Target user is not in caller's current Bungie fireteam
+   */
+  403: OneTrickError;
+  /**
+   * Caller user not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal Server Error
+   */
+  500: OneTrickError;
+  /**
+   * Destiny 2 servers are currently unavailable
+   */
+  503: OneTrickError;
+};
+
+export type StartFireteamSessionsError =
+  StartFireteamSessionsErrors[keyof StartFireteamSessionsErrors];
+
+export type StartFireteamSessionsResponses = {
+  /**
+   * Bulk start results for each requested member
+   */
+  200: StartFireteamSessionsResponse;
+};
+
+export type StartFireteamSessionsResponse2 =
+  StartFireteamSessionsResponses[keyof StartFireteamSessionsResponses];
 
 export type GetUserData = {
   body?: never;
@@ -953,6 +1092,26 @@ export type StartUserSessionErrors = {
   400: {
     message: string;
   };
+  /**
+   * Unauthorized
+   */
+  401: OneTrickError;
+  /**
+   * Target user is not in caller's current Bungie fireteam
+   */
+  403: OneTrickError;
+  /**
+   * Caller user not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal Server Error
+   */
+  500: OneTrickError;
+  /**
+   * Destiny 2 servers are currently unavailable
+   */
+  503: OneTrickError;
 };
 
 export type StartUserSessionError =
@@ -967,6 +1126,71 @@ export type StartUserSessionResponses = {
 
 export type StartUserSessionResponse =
   StartUserSessionResponses[keyof StartUserSessionResponses];
+
+export type GetCharacterTelemetryData = {
+  body?: never;
+  path: {
+    /**
+     * Internal user ID, Bungie member ID, or primary membership ID
+     */
+    userId: string;
+    /**
+     * Target Destiny 2 character ID
+     */
+    characterId: string;
+  };
+  query?: {
+    /**
+     * Inclusive RFC3339 start timestamp filter on activity period
+     */
+    from?: Date;
+    /**
+     * Inclusive RFC3339 end timestamp filter on activity period
+     */
+    to?: Date;
+    /**
+     * Optional PvP game mode filter (defaults to allGameModes)
+     */
+    gameMode?: GameMode;
+    /**
+     * Optional loadout snapshot ID to scope telemetry to a single loadout
+     */
+    snapshotId?: string;
+    /**
+     * Maximum number of most recent matching games to return (returned chronologically ascending)
+     */
+    limit?: number;
+  };
+  url: '/users/{userId}/characters/{characterId}/telemetry';
+};
+
+export type GetCharacterTelemetryErrors = {
+  /**
+   * Invalid query parameters
+   */
+  400: OneTrickError;
+  /**
+   * User, character, or snapshot not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal server error
+   */
+  500: OneTrickError;
+};
+
+export type GetCharacterTelemetryError =
+  GetCharacterTelemetryErrors[keyof GetCharacterTelemetryErrors];
+
+export type GetCharacterTelemetryResponses = {
+  /**
+   * Chronological character telemetry and snapshot summaries
+   */
+  200: CharacterTelemetryResponse;
+};
+
+export type GetCharacterTelemetryResponse =
+  GetCharacterTelemetryResponses[keyof GetCharacterTelemetryResponses];
 
 export type GetSnapshotsData = {
   body?: never;
@@ -1447,6 +1671,26 @@ export type StartSessionErrors = {
   400: {
     message: string;
   };
+  /**
+   * Unauthorized
+   */
+  401: OneTrickError;
+  /**
+   * Target user is not in caller's current Bungie fireteam
+   */
+  403: OneTrickError;
+  /**
+   * Caller user not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal Server Error
+   */
+  500: OneTrickError;
+  /**
+   * Destiny 2 servers are currently unavailable
+   */
+  503: OneTrickError;
 };
 
 export type StartSessionError = StartSessionErrors[keyof StartSessionErrors];

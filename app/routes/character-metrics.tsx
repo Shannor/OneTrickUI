@@ -1,18 +1,16 @@
 import { useMemo, useState } from 'react';
 import { getRequestLogger } from '~/.server/logger';
 import {
-  type Aggregate,
-  type CharacterSnapshot,
   type GameMode,
-  getSessionAggregates,
-  getSnapshotAggregates,
-  getSnapshots,
-  getUserSessions,
+  type TelemetryMatch,
+  type TelemetrySnapshotSummary,
+  getCharacterTelemetry,
 } from '~/api';
 import { MapTelemetryPanel } from '~/charts/map-telemetry';
 import { MetricsTrendPanel } from '~/charts/metrics-trend';
 import { Empty } from '~/components/empty';
 import { MetricsFilterBar } from '~/components/metrics-filter-bar';
+import { TelemetryTruncationNotice } from '~/components/telemetry-truncation-notice';
 import { useOptionalProfileData } from '~/hooks/use-route-loaders';
 import {
   type CustomTimeWindow,
@@ -25,296 +23,56 @@ import { getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/character-metrics';
 
-const MAX_SESSIONS_TO_AGGREGATE = 20;
-const MAX_SNAPSHOTS_TO_AGGREGATE = 15;
-const MAX_AGGREGATE_FETCH_CONCURRENCY = 8;
-
-export type SnapshotNameMap = Record<
-  string,
-  Pick<CharacterSnapshot, 'id' | 'name'>
->;
-
-export async function mapWithConcurrency<T, R>(
-  items: readonly T[],
-  concurrency: number,
-  worker: (item: T) => Promise<R>,
-): Promise<R[]> {
-  if (items.length === 0) {
-    return [];
-  }
-  const results = new Array<R>(items.length);
-  let nextIndex = 0;
-  const workerCount = Math.min(Math.max(1, concurrency), items.length);
-  await Promise.all(
-    Array.from({ length: workerCount }, async () => {
-      while (nextIndex < items.length) {
-        const current = nextIndex++;
-        results[current] = await worker(items[current]);
-      }
-    }),
-  );
-  return results;
-}
-
-function ensureCharacterSnapshotLink(
-  agg: Aggregate,
-  characterId: string,
-  snapshotId: string,
-): Aggregate {
-  if (agg.snapshotLinks?.[characterId]?.snapshotId) {
-    return agg;
-  }
-  return {
-    ...agg,
-    snapshotLinks: {
-      ...agg.snapshotLinks,
-      [characterId]: {
-        characterId,
-        snapshotId,
-        confidenceLevel: 'high',
-        confidenceSource: 'system',
-        createdAt: agg.createdAt,
-      },
-    },
-  };
-}
-
 export async function loader({ params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
   const { id: userId, characterId } = params;
 
-  const [completeSessionsRes, pendingSessionsRes, snapshotsRes] =
-    await Promise.all([
-      getUserSessions({
-        path: { userId },
-        query: {
-          count: BigInt(MAX_SESSIONS_TO_AGGREGATE),
-          page: BigInt(0),
-          characterId,
-          status: 'complete',
-        },
-      }),
-      getUserSessions({
-        path: { userId },
-        query: {
-          count: BigInt(1),
-          page: BigInt(0),
-          characterId,
-          status: 'pending',
-        },
-      }),
-      getSnapshots({
-        query: {
-          userId,
-          characterId,
-          count: MAX_SNAPSHOTS_TO_AGGREGATE,
-          page: 0,
-          sortBy: 'matches_played',
-        },
-      }),
-    ]);
+  const { data, error } = await getCharacterTelemetry({
+    path: { userId, characterId },
+  });
 
-  if (
-    completeSessionsRes.error &&
-    pendingSessionsRes.error &&
-    snapshotsRes.error
-  ) {
-    log.error('Failed to fetch character metrics sources', {
-      metrics: {
-        userId,
-        characterId,
-        upstreamErrors: {
-          completeSessions: Boolean(completeSessionsRes.error),
-          pendingSessions: Boolean(pendingSessionsRes.error),
-          snapshots: Boolean(snapshotsRes.error),
-        },
-      },
+  if (error) {
+    log.error('Failed to fetch character telemetry', {
+      route: 'routes/character-metrics',
+      metrics: { userId, characterId, error },
     });
     return {
-      aggregates: [] as Aggregate[],
-      snapshots: {} as SnapshotNameMap,
-      partialFailure: false,
+      matches: [] as TelemetryMatch[],
+      snapshots: {} as Record<string, TelemetrySnapshotSummary>,
+      totalCount: 0,
+      truncated: false,
       error: 'Failed to load character metrics',
     };
   }
 
-  const sessions = [
-    ...(pendingSessionsRes.data ?? []),
-    ...(completeSessionsRes.data ?? []),
-  ].slice(0, MAX_SESSIONS_TO_AGGREGATE);
-
-  const snapshotItems = (snapshotsRes.data?.items ?? []).slice(
-    0,
-    MAX_SNAPSHOTS_TO_AGGREGATE,
-  );
-
-  const snapshotMap: SnapshotNameMap = {};
-  for (const snap of snapshotItems) {
-    snapshotMap[snap.id] = { id: snap.id, name: snap.name };
-  }
-
-  type AggregateFetchTask =
-    | { kind: 'session'; sessionId: string }
-    | { kind: 'snapshot'; snapshotId: string };
-
-  const tasks: AggregateFetchTask[] = [
-    ...sessions.map((session) => ({
-      kind: 'session' as const,
-      sessionId: session.id,
-    })),
-    ...snapshotItems.map((snap) => ({
-      kind: 'snapshot' as const,
-      snapshotId: snap.id,
-    })),
-  ];
-
-  const taskResults = await mapWithConcurrency(
-    tasks,
-    MAX_AGGREGATE_FETCH_CONCURRENCY,
-    async (task) => {
-      if (task.kind === 'session') {
-        return {
-          kind: 'session' as const,
-          res: await getSessionAggregates({
-            path: { sessionId: task.sessionId },
-          }),
-        };
-      }
-      return {
-        kind: 'snapshot' as const,
-        snapshotId: task.snapshotId,
-        res: await getSnapshotAggregates({
-          path: { snapshotId: task.snapshotId },
-        }),
-      };
-    },
-  );
-
-  const aggregateByKey = new Map<string, Aggregate>();
-  let failedSessionAggregates = 0;
-  let failedSnapshotAggregates = 0;
-
-  for (const item of taskResults) {
-    if (item.kind !== 'session') {
-      continue;
-    }
-    if (item.res.error) {
-      failedSessionAggregates += 1;
-    }
-    if (!item.res.data) {
-      continue;
-    }
-    for (const [snapId, snap] of Object.entries(
-      item.res.data.snapshots ?? {},
-    )) {
-      snapshotMap[snapId] = { id: snap.id, name: snap.name };
-    }
-    for (const agg of item.res.data.aggregates ?? []) {
-      if (!agg.performance?.[characterId]) {
-        continue;
-      }
-      const key = agg.id || agg.activityId;
-      if (key && !aggregateByKey.has(key)) {
-        aggregateByKey.set(key, agg);
-      }
-    }
-  }
-
-  for (const item of taskResults) {
-    if (item.kind !== 'snapshot') {
-      continue;
-    }
-    if (item.res.error) {
-      failedSnapshotAggregates += 1;
-    }
-    for (const agg of item.res.data ?? []) {
-      if (!agg.performance?.[characterId]) {
-        continue;
-      }
-      const key = agg.id || agg.activityId;
-      if (!key) {
-        continue;
-      }
-      const existingAgg = aggregateByKey.get(key);
-      if (existingAgg) {
-        if (!existingAgg.snapshotLinks?.[characterId]?.snapshotId) {
-          aggregateByKey.set(
-            key,
-            ensureCharacterSnapshotLink(
-              existingAgg,
-              characterId,
-              item.snapshotId,
-            ),
-          );
-        }
-        continue;
-      }
-      aggregateByKey.set(
-        key,
-        ensureCharacterSnapshotLink(agg, characterId, item.snapshotId),
-      );
-    }
-  }
-
-  const aggregates = Array.from(aggregateByKey.values());
-  const upstreamErrors = {
-    completeSessions: Boolean(completeSessionsRes.error),
-    pendingSessions: Boolean(pendingSessionsRes.error),
-    snapshots: Boolean(snapshotsRes.error),
-    failedSessionAggregates,
-    failedSnapshotAggregates,
-  };
-  const degraded =
-    upstreamErrors.completeSessions ||
-    upstreamErrors.pendingSessions ||
-    upstreamErrors.snapshots ||
-    failedSessionAggregates > 0 ||
-    failedSnapshotAggregates > 0;
+  const matches = data?.matches ?? [];
+  const snapshots = data?.snapshots ?? {};
+  const totalCount = data?.totalCount ?? matches.length;
+  const truncated = Boolean(data?.truncated);
 
   log.set({
     route: 'routes/character-metrics',
     metrics: {
       userId,
       characterId,
-      sessionCount: sessions.length,
-      snapshotCount: Object.keys(snapshotMap).length,
-      aggregateCount: aggregates.length,
-      degraded,
-      upstreamErrors,
+      matchCount: matches.length,
+      snapshotCount: Object.keys(snapshots).length,
+      totalCount,
+      truncated,
     },
   });
 
-  if (aggregates.length === 0 && degraded) {
-    return {
-      aggregates,
-      snapshots: snapshotMap,
-      partialFailure: false,
-      error: 'Failed to load character metrics',
-    };
-  }
-
   return {
-    aggregates,
-    snapshots: snapshotMap,
-    partialFailure: degraded,
+    matches,
+    snapshots,
+    totalCount,
+    truncated,
     error: undefined,
   };
 }
 
-export function PartialTelemetryNotice() {
-  return (
-    <div
-      role="status"
-      className="border-l-2 border-amber-500 pl-3 text-xs text-amber-700 dark:text-amber-400 md:rounded-lg md:border md:border-amber-500/30 md:bg-amber-500/10 md:px-3.5 md:py-2"
-    >
-      Some recent sessions or loadouts timed out while loading. Telemetry shown
-      below reflects available match history.
-    </div>
-  );
-}
-
 export function CharacterMetrics({ loaderData, params }: Route.ComponentProps) {
-  const { aggregates, snapshots, partialFailure, error } = loaderData;
+  const { matches, snapshots, totalCount, truncated, error } = loaderData;
   const { id: userId, characterId } = params;
   const profileData = useOptionalProfileData();
   const profile = profileData?.profile;
@@ -366,22 +124,16 @@ export function CharacterMetrics({ loaderData, params }: Route.ComponentProps) {
   const [gameMode, setGameMode] = useState<GameMode>('allGameModes');
 
   const customTime = useMemo(() => {
-    return timeWindowToCustom(time, aggregates);
-  }, [time, aggregates]);
+    return timeWindowToCustom(time, matches);
+  }, [time, matches]);
 
   const matchSeries = useMemo(() => {
-    return generateMatchSeries(aggregates, customTime, characterId, gameMode);
-  }, [aggregates, customTime, characterId, gameMode]);
+    return generateMatchSeries(matches, customTime, gameMode);
+  }, [matches, customTime, gameMode]);
 
   const mapData = useMemo(() => {
-    return generateMapTelemetry(
-      aggregates,
-      customTime,
-      characterId,
-      gameMode,
-      snapshots,
-    );
-  }, [aggregates, customTime, characterId, gameMode, snapshots]);
+    return generateMapTelemetry(matches, customTime, gameMode, snapshots);
+  }, [matches, customTime, gameMode, snapshots]);
 
   const loadoutBasePath = `/profile/${userId}/c/${characterId}/loadouts`;
 
@@ -399,7 +151,7 @@ export function CharacterMetrics({ loaderData, params }: Route.ComponentProps) {
         </p>
       </div>
 
-      {error || aggregates.length === 0 ? (
+      {error || matches.length === 0 ? (
         <Empty
           title={error ? 'Unable to Load Metrics' : 'No Metrics Recorded Yet'}
           description={
@@ -410,7 +162,12 @@ export function CharacterMetrics({ loaderData, params }: Route.ComponentProps) {
         />
       ) : (
         <div className="flex flex-col gap-6">
-          {partialFailure && <PartialTelemetryNotice />}
+          {truncated && (
+            <TelemetryTruncationNotice
+              shownCount={matches.length}
+              totalCount={totalCount}
+            />
+          )}
 
           <MetricsFilterBar
             time={time}

@@ -24,6 +24,10 @@ export const CHANGELOG: ReleaseNote[] = [
     changes: [
       {
         type: 'improvement',
+        text: 'Load Guardian and Loadout Metrics significantly faster with broader match history, more accurate game mode filtering, and a clear indicator when viewing the most recent subset of your tracked matches.',
+      },
+      {
+        type: 'improvement',
         text: 'Get into your Guardian profile, sessions, and loadouts much faster—even when visiting 1 Trick after quiet periods.',
       },
       {

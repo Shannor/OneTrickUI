@@ -5,6 +5,7 @@ import type {
   GetActivitiesResponse,
   GetActivityResponse,
   GetBestPerformingLoadoutsResponse,
+  GetCharacterTelemetryResponse,
   GetFeaturedLoadoutsResponse,
   GetFireteamResponse,
   GetSessionAggregatesResponse,
@@ -20,6 +21,7 @@ import type {
   RefreshTokenResponse,
   RunSessionTickResponse,
   SearchResponse,
+  StartFireteamSessionsResponse2,
   StartSessionResponse,
   StartUserSessionResponse,
   UpdateSessionResponse,
@@ -52,10 +54,20 @@ export const searchResponseTransformer = async (
   return data;
 };
 
+const fireteamActiveSessionSchemaResponseTransformer = (data: any) => {
+  data.startedAt = new Date(data.startedAt);
+  return data;
+};
+
 const fireteamMemberSchemaResponseTransformer = (data: any) => {
   data.characters = data.characters.map((item: any) =>
     characterSchemaResponseTransformer(item),
   );
+  if (data.activeSessions) {
+    data.activeSessions = data.activeSessions.map((item: any) =>
+      fireteamActiveSessionSchemaResponseTransformer(item),
+    );
+  }
   return data;
 };
 
@@ -63,6 +75,55 @@ export const getFireteamResponseTransformer = async (
   data: any,
 ): Promise<GetFireteamResponse> => {
   data = data.map((item: any) => fireteamMemberSchemaResponseTransformer(item));
+  return data;
+};
+
+const compRankSnapshotSchemaResponseTransformer = (data: any) => {
+  if (data.recordedAt) {
+    data.recordedAt = new Date(data.recordedAt);
+  }
+  return data;
+};
+
+const compTrackingSchemaResponseTransformer = (data: any) => {
+  if (data.start) {
+    data.start = compRankSnapshotSchemaResponseTransformer(data.start);
+  }
+  if (data.end) {
+    data.end = compRankSnapshotSchemaResponseTransformer(data.end);
+  }
+  return data;
+};
+
+const sessionSchemaResponseTransformer = (data: any) => {
+  data.startedAt = new Date(data.startedAt);
+  if (data.completedAt) {
+    data.completedAt = new Date(data.completedAt);
+  }
+  if (data.compTracking) {
+    data.compTracking = compTrackingSchemaResponseTransformer(
+      data.compTracking,
+    );
+  }
+  return data;
+};
+
+const fireteamSessionResultSchemaResponseTransformer = (data: any) => {
+  data.session = sessionSchemaResponseTransformer(data.session);
+  return data;
+};
+
+const startFireteamSessionsResponseSchemaResponseTransformer = (data: any) => {
+  data.results = data.results.map((item: any) =>
+    fireteamSessionResultSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const startFireteamSessionsResponseTransformer = async (
+  data: any,
+): Promise<StartFireteamSessionsResponse2> => {
+  data = startFireteamSessionsResponseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -99,36 +160,6 @@ export const refreshTokenResponseTransformer = async (
   return data;
 };
 
-const compRankSnapshotSchemaResponseTransformer = (data: any) => {
-  if (data.recordedAt) {
-    data.recordedAt = new Date(data.recordedAt);
-  }
-  return data;
-};
-
-const compTrackingSchemaResponseTransformer = (data: any) => {
-  if (data.start) {
-    data.start = compRankSnapshotSchemaResponseTransformer(data.start);
-  }
-  if (data.end) {
-    data.end = compRankSnapshotSchemaResponseTransformer(data.end);
-  }
-  return data;
-};
-
-const sessionSchemaResponseTransformer = (data: any) => {
-  data.startedAt = new Date(data.startedAt);
-  if (data.completedAt) {
-    data.completedAt = new Date(data.completedAt);
-  }
-  if (data.compTracking) {
-    data.compTracking = compTrackingSchemaResponseTransformer(
-      data.compTracking,
-    );
-  }
-  return data;
-};
-
 export const getUserSessionsResponseTransformer = async (
   data: any,
 ): Promise<GetUserSessionsResponse> => {
@@ -140,6 +171,25 @@ export const startUserSessionResponseTransformer = async (
   data: any,
 ): Promise<StartUserSessionResponse> => {
   data = sessionSchemaResponseTransformer(data);
+  return data;
+};
+
+const telemetryMatchSchemaResponseTransformer = (data: any) => {
+  data.period = new Date(data.period);
+  return data;
+};
+
+const characterTelemetryResponseSchemaResponseTransformer = (data: any) => {
+  data.matches = data.matches.map((item: any) =>
+    telemetryMatchSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getCharacterTelemetryResponseTransformer = async (
+  data: any,
+): Promise<GetCharacterTelemetryResponse> => {
+  data = characterTelemetryResponseSchemaResponseTransformer(data);
   return data;
 };
 
