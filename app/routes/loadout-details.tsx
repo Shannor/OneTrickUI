@@ -65,16 +65,16 @@ export function LoadoutDetails() {
   return (
     <div className="flex flex-col gap-20">
       {metaTags}
-      <div className="flex flex-col gap-10 lg:flex-row">
+      <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
         <SubClassProvider snapshot={snapshot}>
-          <div className="flex flex-col gap-4">
+          <div className="flex shrink-0 flex-col gap-4">
             <Super />
             <Abilities />
             <Aspects />
             <Fragments />
           </div>
         </SubClassProvider>
-        <ClassStatsRadar data={values} />
+        <ClassStatsRadar data={values} className="lg:flex-1" />
       </div>
       <div className="col-span-12 flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">

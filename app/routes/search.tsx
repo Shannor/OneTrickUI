@@ -347,7 +347,10 @@ export function Search({ loaderData }: Route.ComponentProps) {
       ) : results.length === 0 ? (
         <SearchNoResults query={query} isSignedIn={isSignedIn} />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div
+          aria-busy={isSearching}
+          className={`flex flex-col gap-4 transition-opacity duration-150 ${isSearching ? 'opacity-60' : ''}`}
+        >
           <SearchResultsSummary query={query} results={results} page={page} />
           <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
             {results.map((result, idx) => (

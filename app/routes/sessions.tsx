@@ -12,7 +12,7 @@ import { LoadingButton } from '~/components/loading-button';
 import { SessionCard } from '~/components/session-card';
 import { StartSessionDialog } from '~/components/start-session-dialog';
 import { Button } from '~/components/ui/button';
-import { useProfileData } from '~/hooks/use-route-loaders';
+import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
 import { cn, getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/sessions';
@@ -81,6 +81,7 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
   const { data, current, page } = loaderData;
   const isOwner = type === 'owner';
   const navigate = useNavigate();
+  const { isSameRoute: isUpdating } = useNavigationState();
   const { state, Form } = useFetcher();
   const isSubmitting = state === 'submitting';
   const hasCurrentSession = Boolean(current?.id);
@@ -183,7 +184,13 @@ export function Sessions({ params, loaderData }: Route.ComponentProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-1">
+      <div
+        aria-busy={isUpdating}
+        className={cn(
+          'grid grid-cols-1 gap-4 transition-opacity duration-150 md:grid-cols-1',
+          isUpdating && 'opacity-60',
+        )}
+      >
         {data
           .sort(
             (a, b) =>

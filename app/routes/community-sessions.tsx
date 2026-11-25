@@ -5,6 +5,7 @@ import { getRequestLogger } from '~/.server/logger';
 import { type Profile, type Session, getSessions } from '~/api';
 import { ActiveSessionCard } from '~/components/active-session-card';
 import { Button, buttonVariants } from '~/components/ui/button';
+import { useNavigationState } from '~/hooks/use-route-loaders';
 import { cn, getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/community-sessions';
@@ -148,6 +149,7 @@ export function CommunitySessionsPage() {
     userActiveSession,
     userCharacterId,
   } = useLoaderData<typeof loader>();
+  const { isSameRoute: isUpdating } = useNavigationState();
 
   const actionUrl = getActionTarget({
     auth,
@@ -222,15 +224,23 @@ export function CommunitySessionsPage() {
         buildFilterUrl={buildFilterUrl}
       />
 
-      <CommunitySessionsGrid
-        sessions={sessions}
-        profiles={profiles}
-        page={page}
-        auth={auth}
-        actionUrl={actionUrl}
-        actionLabel={actionLabel}
-        buildPageUrl={buildPageUrl}
-      />
+      <div
+        aria-busy={isUpdating}
+        className={cn(
+          'transition-opacity duration-150',
+          isUpdating && 'opacity-60',
+        )}
+      >
+        <CommunitySessionsGrid
+          sessions={sessions}
+          profiles={profiles}
+          page={page}
+          auth={auth}
+          actionUrl={actionUrl}
+          actionLabel={actionLabel}
+          buildPageUrl={buildPageUrl}
+        />
+      </div>
 
       {(page > 1 || hasNextPage) && (
         <CommunitySessionsPagination
@@ -264,6 +274,7 @@ export function CommunitySessionsHeader({
 
       <Link
         to={actionUrl}
+        prefetch="intent"
         className={cn(
           buttonVariants({ variant: 'default' }),
           'shrink-0 text-sm font-semibold',

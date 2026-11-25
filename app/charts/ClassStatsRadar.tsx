@@ -40,7 +40,7 @@ export function ClassStatsRadar({ className, data }: ClassStatsRadarProps) {
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn('max-h-[500px] min-h-[50px]', className)}
+      className={cn('max-h-[500px] min-h-[260px] w-full min-w-0', className)}
     >
       <RadarChart data={data}>
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />

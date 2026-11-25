@@ -1,7 +1,7 @@
 import { log } from 'evlog';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Info } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { getSession, getSessionAggregates } from '~/api';
@@ -13,10 +13,13 @@ import { SessionUpdateForm } from '~/components/session-update-form';
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
-import { useProfileData } from '~/hooks/use-route-loaders';
+import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
 import { db } from '~/lib/firebaseConfig';
+import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/session';
+
+export const SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS = 300;
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
@@ -76,6 +79,7 @@ type FirestoreSessionData = NonNullable<ISession['data']> & {
 
 export function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
+  const { isSubTab: isSwitchingTab } = useNavigationState();
   const { session, aggregates, error, path } = loaderData;
   const { characterId } = params;
   const isOwner = type === 'owner';
@@ -102,6 +106,15 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
     sessionRef.current = session;
   }, [session]);
 
+  const revalidatorRef = useRef(revalidator);
+  useEffect(() => {
+    revalidatorRef.current = revalidator;
+  }, [revalidator]);
+
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingWhileBusyRef = useRef(false);
+  const pendingInitialRef = useRef(false);
+
   const sessionId = session?.id;
   const sessionStatus = session?.status;
   const isCompFinalizing =
@@ -109,9 +122,49 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
     Boolean(session?.compTracking?.enabled) &&
     Boolean(session?.compTracking?.start) &&
     !session?.compTracking?.end;
+  const shouldSubscribe =
+    Boolean(sessionId) && (sessionStatus === 'pending' || isCompFinalizing);
+
+  const scheduleRevalidate = useCallback((initial: boolean) => {
+    if (debounceTimerRef.current !== null) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    pendingInitialRef.current = initial;
+    debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = null;
+      const currentRevalidator = revalidatorRef.current;
+      if (currentRevalidator.state !== 'idle') {
+        pendingWhileBusyRef.current = true;
+        return;
+      }
+      pendingWhileBusyRef.current = false;
+      const isInitialTrigger = pendingInitialRef.current;
+      currentRevalidator
+        .revalidate()
+        .then(() =>
+          log.debug({
+            action: 'firestore.revalidated',
+            message: isInitialTrigger
+              ? 'Firestore session snapshot revalidated (initial)'
+              : 'Firestore session snapshot revalidated',
+            initial: isInitialTrigger,
+          }),
+        )
+        .catch((err) => {
+          log.error({
+            action: 'firestore.revalidate',
+            message: isInitialTrigger
+              ? 'Failed to revalidate on initial firestore snapshot'
+              : 'Failed to revalidate on firestore update',
+            initial: isInitialTrigger,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+    }, SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
+  }, []);
 
   useEffect(() => {
-    if (!sessionId || (sessionStatus !== 'pending' && !isCompFinalizing)) {
+    if (!sessionId || !shouldSubscribe) {
       return;
     }
 
@@ -125,7 +178,8 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
         if (isInitial) {
           isInitial = false;
           const current = sessionRef.current as
-            FirestoreSessionData | undefined;
+            | FirestoreSessionData
+            | undefined;
           const currentCount = current?.aggregateIds?.length ?? 0;
           const newCount = newData.aggregateIds?.length ?? 0;
           const statusChanged = newData.status !== current?.status;
@@ -141,44 +195,12 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
             activityChanged ||
             compFinalized
           ) {
-            revalidator
-              .revalidate()
-              .then(() =>
-                log.debug({
-                  action: 'firestore.revalidated',
-                  message: 'Firestore session snapshot revalidated (initial)',
-                  initial: true,
-                }),
-              )
-              .catch((err) => {
-                log.error({
-                  action: 'firestore.revalidate',
-                  message: 'Failed to revalidate on initial firestore snapshot',
-                  initial: true,
-                  error: err instanceof Error ? err.message : String(err),
-                });
-              });
+            scheduleRevalidate(true);
           }
           return;
         }
 
-        revalidator
-          .revalidate()
-          .then(() =>
-            log.debug({
-              action: 'firestore.revalidated',
-              message: 'Firestore session snapshot revalidated',
-              initial: false,
-            }),
-          )
-          .catch((err) => {
-            log.error({
-              action: 'firestore.revalidate',
-              message: 'Failed to revalidate on firestore update',
-              initial: false,
-              error: err instanceof Error ? err.message : String(err),
-            });
-          });
+        scheduleRevalidate(false);
       },
       (error) => {
         log.error({
@@ -191,8 +213,20 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
 
     return () => {
       unsubscribe();
+      if (debounceTimerRef.current !== null) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+      pendingWhileBusyRef.current = false;
     };
-  }, [sessionId, sessionStatus, isCompFinalizing, revalidator]);
+  }, [sessionId, shouldSubscribe, scheduleRevalidate]);
+
+  useEffect(() => {
+    if (revalidator.state === 'idle' && pendingWhileBusyRef.current) {
+      pendingWhileBusyRef.current = false;
+      scheduleRevalidate(false);
+    }
+  }, [revalidator.state, scheduleRevalidate]);
 
   if (!session) {
     return (
@@ -301,20 +335,30 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
         <Tabs value={currentTab} className="mt-6 sm:mt-8">
           <TabsList>
             <TabsTrigger value="games" asChild>
-              <NavLink to="." end>
+              <NavLink to="." end prefetch="intent">
                 Games
               </NavLink>
             </TabsTrigger>
             <TabsTrigger value="metrics" asChild>
-              <NavLink to="metrics">Metrics</NavLink>
+              <NavLink to="metrics" prefetch="intent">
+                Metrics
+              </NavLink>
             </TabsTrigger>
             <TabsTrigger value="loadouts" asChild>
-              <NavLink to="loadouts">Loadouts</NavLink>
+              <NavLink to="loadouts" prefetch="intent">
+                Loadouts
+              </NavLink>
             </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
-      <div className="w-full overflow-x-hidden">
+      <div
+        aria-busy={isSwitchingTab}
+        className={cn(
+          'w-full overflow-x-hidden transition-opacity duration-150',
+          isSwitchingTab && 'opacity-60',
+        )}
+      >
         <Outlet />
       </div>
     </div>

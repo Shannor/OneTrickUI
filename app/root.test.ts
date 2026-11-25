@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { getAuth } from '~/.server/auth';
+import { evlogMiddleware } from '~/.server/logger';
+import { prefetchGuardMiddleware } from '~/.server/prefetch-guard';
 import { getUser } from '~/api';
 
 import type { Route } from './+types/root';
-import { loader } from './root';
+import { loader, middleware } from './root';
 
 vi.hoisted(() => {
   if (typeof window !== 'undefined') {
@@ -151,5 +153,11 @@ describe('root loader', () => {
       theme: 'dark',
       user: null,
     });
+  });
+});
+
+describe('root middleware', () => {
+  it('runs prefetchGuardMiddleware ahead of evlogMiddleware', () => {
+    expect(middleware).toEqual([prefetchGuardMiddleware, evlogMiddleware]);
   });
 });
