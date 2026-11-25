@@ -1,5 +1,4 @@
 import { clsx } from 'clsx';
-import LogRocket from 'logrocket';
 import { useEffect } from 'react';
 import {
   Links,
@@ -27,7 +26,7 @@ import { ModeToggle } from '~/components/mode-toggle';
 import { Toaster } from '~/components/ui/sonner';
 import { useToastNotification } from '~/hooks/use-toast-notification';
 import { getDefaultBaseUrl } from '~/lib/api-config';
-import { trackUserSession } from '~/lib/tracking';
+import { initTracking, trackUserSession } from '~/lib/tracking';
 
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
@@ -38,7 +37,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 ];
 
 if (typeof window !== 'undefined') {
-  LogRocket.init('gruntt/d2-one-trick');
+  initTracking();
 }
 
 client.setConfig({

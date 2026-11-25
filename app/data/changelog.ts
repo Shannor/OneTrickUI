@@ -18,13 +18,21 @@ export const CHANGELOG: ReleaseNote[] = [
     id: '2026-11-24',
     date: 'November 24, 2026',
     title:
-      'Snappier Navigation, Smoother Live Sessions & Reliable Loadout Merging',
+      'Faster Page Loads, Snappier Navigation & Reliable Loadout Merging',
     summary:
-      'Move across Guardian views faster without full-screen loading overlays, enjoy steadier real-time session tracking, and merge multiple similar loadouts at once reliably.',
+      'Open 1 Trick faster even after quiet periods, move across Guardian views smoothly without full-screen loading overlays, enjoy steadier real-time session tracking, and merge multiple similar loadouts at once reliably.',
     changes: [
       {
         type: 'improvement',
         text: 'Load Guardian and Loadout Metrics significantly faster with broader match history, more accurate game mode filtering, and a clear indicator when viewing the most recent subset of your tracked matches.',
+      },
+      {
+        type: 'improvement',
+        text: 'Get into your Guardian profile, sessions, and loadouts much faster—even when visiting 1 Trick after quiet periods.',
+      },
+      {
+        type: 'improvement',
+        text: 'Browse completed Crucible sessions more smoothly with lighter page downloads, loading live match updates only when a session is actively recording.',
       },
       {
         type: 'improvement',
