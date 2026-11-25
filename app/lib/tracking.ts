@@ -1,5 +1,4 @@
 import { createError } from 'evlog';
-import LogRocket from 'logrocket';
 import { isRouteErrorResponse } from 'react-router';
 
 export interface UserTrackData {
@@ -11,7 +10,36 @@ export interface UserTrackData {
   primaryMembershipId?: string;
 }
 
-export function trackUserSession(user: UserTrackData | null | undefined): void {
+type LogRocketClient = typeof import('logrocket');
+
+let cachedLogRocketPromise: Promise<LogRocketClient> | null = null;
+
+function loadLogRocket(): Promise<LogRocketClient> {
+  if (!cachedLogRocketPromise) {
+    cachedLogRocketPromise = import('logrocket')
+      .then((mod) => {
+        const interop = mod as unknown as { default?: LogRocketClient };
+        return interop.default ?? mod;
+      })
+      .catch((error) => {
+        cachedLogRocketPromise = null;
+        throw error;
+      });
+  }
+  return cachedLogRocketPromise;
+}
+
+export async function initTracking(): Promise<void> {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const LogRocket = await loadLogRocket();
+  LogRocket.init('gruntt/d2-one-trick');
+}
+
+export async function trackUserSession(
+  user: UserTrackData | null | undefined,
+): Promise<void> {
   if (typeof window === 'undefined' || !user?.id) {
     return;
   }
@@ -31,10 +59,11 @@ export function trackUserSession(user: UserTrackData | null | undefined): void {
   if (user.primaryMembershipId) {
     traits.primaryMembershipId = user.primaryMembershipId;
   }
+  const LogRocket = await loadLogRocket();
   LogRocket.identify(user.id, traits);
 }
 
-export function trackError(error: unknown): void {
+export async function trackError(error: unknown): Promise<void> {
   if (typeof window === 'undefined') {
     return;
   }
@@ -48,6 +77,7 @@ export function trackError(error: unknown): void {
 
   const pathname = window.location.pathname;
   const href = window.location.href;
+  const LogRocket = await loadLogRocket();
 
   if (is404) {
     LogRocket.track('404_page_not_found', {

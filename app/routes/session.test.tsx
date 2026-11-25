@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import type { ComponentProps } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
@@ -26,6 +26,10 @@ vi.mock('~/hooks/use-route-loaders', () => ({
     type: 'owner',
     profile: { id: 'user-1', displayName: 'Guardian' },
   }),
+}));
+
+vi.mock('~/lib/firebaseConfig', () => ({
+  getFirestoreDb: vi.fn().mockResolvedValue({ __mockDb: true }),
 }));
 
 vi.mock('firebase/firestore', async (importOriginal) => {
@@ -117,7 +121,7 @@ describe('Session Page Route Component', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('subscribes to Firestore onSnapshot when session status is pending', () => {
+  it('subscribes to Firestore onSnapshot when session status is pending', async () => {
     const props = {
       loaderData: {
         session: {
@@ -148,19 +152,21 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(doc).toHaveBeenCalledWith(
-      expect.anything(),
-      'sessions',
-      'session-live',
-    );
-    expect(onSnapshot).toHaveBeenCalledWith(
-      expect.objectContaining({ collection: 'sessions', id: 'session-live' }),
-      expect.any(Function),
-      expect.any(Function),
-    );
+    await waitFor(() => {
+      expect(doc).toHaveBeenCalledWith(
+        expect.anything(),
+        'sessions',
+        'session-live',
+      );
+      expect(onSnapshot).toHaveBeenCalledWith(
+        expect.objectContaining({ collection: 'sessions', id: 'session-live' }),
+        expect.any(Function),
+        expect.any(Function),
+      );
+    });
   });
 
-  it('does not subscribe to Firestore onSnapshot when session status is complete', () => {
+  it('does not subscribe to Firestore onSnapshot when session status is complete', async () => {
     const props = {
       loaderData: {
         session: {
@@ -191,10 +197,11 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
+    await Promise.resolve();
     expect(onSnapshot).not.toHaveBeenCalled();
   });
 
-  it('keeps Firestore onSnapshot active for a completed session while compTracking.end is finalizing', () => {
+  it('keeps Firestore onSnapshot active for a completed session while compTracking.end is finalizing', async () => {
     let snapshotCallback:
       | ((snapshot: { data: () => unknown }) => void)
       | undefined;
@@ -241,8 +248,10 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(onSnapshot).toHaveBeenCalledTimes(1);
-    expect(snapshotCallback).toBeDefined();
+    await waitFor(() => {
+      expect(onSnapshot).toHaveBeenCalledTimes(1);
+      expect(snapshotCallback).toBeDefined();
+    });
 
     snapshotCallback!({
       data: () => ({
@@ -261,7 +270,7 @@ describe('Session Page Route Component', () => {
     expect(mockRevalidate).toHaveBeenCalledTimes(1);
   });
 
-  it('revalidates when Firestore sends a subsequent real-time update', () => {
+  it('revalidates when Firestore sends a subsequent real-time update', async () => {
     let snapshotCallback:
       | ((snapshot: { data: () => unknown }) => void)
       | undefined;
@@ -300,7 +309,9 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(snapshotCallback).toBeDefined();
+    await waitFor(() => {
+      expect(snapshotCallback).toBeDefined();
+    });
 
     // First snapshot represents initial sync with identical state
     snapshotCallback!({
@@ -323,7 +334,7 @@ describe('Session Page Route Component', () => {
     expect(mockRevalidate).toHaveBeenCalledTimes(1);
   });
 
-  it('revalidates on initial snapshot if Firestore data is already ahead of loaderData', () => {
+  it('revalidates on initial snapshot if Firestore data is already ahead of loaderData', async () => {
     let snapshotCallback:
       | ((snapshot: { data: () => unknown }) => void)
       | undefined;
@@ -362,6 +373,10 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
+    await waitFor(() => {
+      expect(snapshotCallback).toBeDefined();
+    });
+
     // Initial snapshot arrives with already processed game
     snapshotCallback!({
       data: () => ({
@@ -374,7 +389,7 @@ describe('Session Page Route Component', () => {
     expect(mockRevalidate).toHaveBeenCalledTimes(1);
   });
 
-  it('handles Firestore onSnapshot error gracefully without throwing', () => {
+  it('handles Firestore onSnapshot error gracefully without throwing', async () => {
     let errorCallback: ((err: unknown) => void) | undefined;
     vi.mocked(onSnapshot).mockImplementationOnce((_docRef, _next, error) => {
       errorCallback = error as never;
@@ -411,7 +426,9 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(errorCallback).toBeDefined();
+    await waitFor(() => {
+      expect(errorCallback).toBeDefined();
+    });
     expect(() => {
       errorCallback!(new Error('Connection lost'));
     }).not.toThrow();

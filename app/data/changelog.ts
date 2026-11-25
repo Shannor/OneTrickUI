@@ -15,6 +15,23 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-24',
+    date: 'November 24, 2026',
+    title: 'Faster Page Loads & Snappier Session Viewing',
+    summary:
+      'Open 1 Trick and jump straight into your Guardian stats, loadouts, and past Crucible sessions with significantly faster initial load times.',
+    changes: [
+      {
+        type: 'improvement',
+        text: 'Get into your Guardian profile, sessions, and loadouts much faster—even when visiting 1 Trick after quiet periods.',
+      },
+      {
+        type: 'improvement',
+        text: 'Browse completed Crucible sessions more smoothly with lighter page downloads, loading live match updates only when a session is actively recording.',
+      },
+    ],
+  },
+  {
     id: '2026-11-23',
     date: 'November 23, 2026',
     title:

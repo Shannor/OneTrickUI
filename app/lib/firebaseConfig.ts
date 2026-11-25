@@ -1,5 +1,4 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyA6SF9UbC3df_PWgERiwrfzOF2h3tJDXe8',
@@ -11,5 +10,22 @@ const firebaseConfig = {
   measurementId: 'G-EQN0Y59J6B',
 };
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+let cachedDbPromise: Promise<Firestore> | null = null;
+
+export function getFirestoreDb(): Promise<Firestore> {
+  if (!cachedDbPromise) {
+    cachedDbPromise = Promise.all([
+      import('firebase/app'),
+      import('firebase/firestore'),
+    ])
+      .then(([{ initializeApp }, { getFirestore }]) => {
+        const app = initializeApp(firebaseConfig);
+        return getFirestore(app);
+      })
+      .catch((error) => {
+        cachedDbPromise = null;
+        throw error;
+      });
+  }
+  return cachedDbPromise;
+}

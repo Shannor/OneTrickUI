@@ -1,5 +1,4 @@
 import { log } from 'evlog';
-import { doc, onSnapshot } from 'firebase/firestore';
 import { Info } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
@@ -14,7 +13,6 @@ import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { useProfileData } from '~/hooks/use-route-loaders';
-import { db } from '~/lib/firebaseConfig';
 
 import type { Route } from './+types/session';
 
@@ -115,82 +113,109 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
       return;
     }
 
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
     let isInitial = true;
-    const unsubscribe = onSnapshot(
-      doc(db, 'sessions', sessionId),
-      (snapshot) => {
-        const newData = snapshot.data() as FirestoreSessionData | undefined;
-        if (!newData) return;
 
-        if (isInitial) {
-          isInitial = false;
-          const current = sessionRef.current as
-            FirestoreSessionData | undefined;
-          const currentCount = current?.aggregateIds?.length ?? 0;
-          const newCount = newData.aggregateIds?.length ?? 0;
-          const statusChanged = newData.status !== current?.status;
-          const activityChanged =
-            Boolean(newData.lastSeenActivityId) &&
-            newData.lastSeenActivityId !== current?.lastSeenActivityId;
-          const compFinalized =
-            Boolean(newData.compTracking?.end) && !current?.compTracking?.end;
+    void Promise.all([
+      import('firebase/firestore'),
+      import('~/lib/firebaseConfig').then((mod) => mod.getFirestoreDb()),
+    ])
+      .then(([{ doc, onSnapshot }, db]) => {
+        if (cancelled) {
+          return;
+        }
+        unsubscribe = onSnapshot(
+          doc(db, 'sessions', sessionId),
+          (snapshot) => {
+            const newData = snapshot.data() as FirestoreSessionData | undefined;
+            if (!newData) return;
 
-          if (
-            statusChanged ||
-            newCount !== currentCount ||
-            activityChanged ||
-            compFinalized
-          ) {
+            if (isInitial) {
+              isInitial = false;
+              const current = sessionRef.current as
+                | FirestoreSessionData
+                | undefined;
+              const currentCount = current?.aggregateIds?.length ?? 0;
+              const newCount = newData.aggregateIds?.length ?? 0;
+              const statusChanged = newData.status !== current?.status;
+              const activityChanged =
+                Boolean(newData.lastSeenActivityId) &&
+                newData.lastSeenActivityId !== current?.lastSeenActivityId;
+              const compFinalized =
+                Boolean(newData.compTracking?.end) &&
+                !current?.compTracking?.end;
+
+              if (
+                statusChanged ||
+                newCount !== currentCount ||
+                activityChanged ||
+                compFinalized
+              ) {
+                revalidator
+                  .revalidate()
+                  .then(() =>
+                    log.debug({
+                      action: 'firestore.revalidated',
+                      message:
+                        'Firestore session snapshot revalidated (initial)',
+                      initial: true,
+                    }),
+                  )
+                  .catch((err) => {
+                    log.error({
+                      action: 'firestore.revalidate',
+                      message:
+                        'Failed to revalidate on initial firestore snapshot',
+                      initial: true,
+                      error: err instanceof Error ? err.message : String(err),
+                    });
+                  });
+              }
+              return;
+            }
+
             revalidator
               .revalidate()
               .then(() =>
                 log.debug({
                   action: 'firestore.revalidated',
-                  message: 'Firestore session snapshot revalidated (initial)',
-                  initial: true,
+                  message: 'Firestore session snapshot revalidated',
+                  initial: false,
                 }),
               )
               .catch((err) => {
                 log.error({
                   action: 'firestore.revalidate',
-                  message: 'Failed to revalidate on initial firestore snapshot',
-                  initial: true,
+                  message: 'Failed to revalidate on firestore update',
+                  initial: false,
                   error: err instanceof Error ? err.message : String(err),
                 });
               });
-          }
+          },
+          (error) => {
+            log.error({
+              action: 'firestore.snapshot_error',
+              message: 'Firestore session onSnapshot error',
+              error: error instanceof Error ? error.message : String(error),
+            });
+          },
+        );
+      })
+      .catch((error) => {
+        if (cancelled) {
           return;
         }
-
-        revalidator
-          .revalidate()
-          .then(() =>
-            log.debug({
-              action: 'firestore.revalidated',
-              message: 'Firestore session snapshot revalidated',
-              initial: false,
-            }),
-          )
-          .catch((err) => {
-            log.error({
-              action: 'firestore.revalidate',
-              message: 'Failed to revalidate on firestore update',
-              initial: false,
-              error: err instanceof Error ? err.message : String(err),
-            });
-          });
-      },
-      (error) => {
         log.error({
-          action: 'firestore.snapshot_error',
-          message: 'Firestore session onSnapshot error',
+          action: 'firestore.init_error',
+          message: 'Failed to initialize Firestore session listener',
           error: error instanceof Error ? error.message : String(error),
         });
-      },
-    );
+      });
 
     return () => {
-      unsubscribe();
+      cancelled = true;
+      unsubscribe?.();
     };
   }, [sessionId, sessionStatus, isCompFinalizing, revalidator]);
 

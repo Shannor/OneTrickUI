@@ -1,5 +1,5 @@
 FROM node:22-alpine AS development-dependencies-env
-COPY . /app
+COPY ./package.json package-lock.json /app/
 WORKDIR /app
 RUN npm ci
 
@@ -18,9 +18,9 @@ FROM node:22-alpine
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
-COPY ./package.json package-lock.json server.js /app/
+COPY ./package.json server.js /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/build /app/build
 COPY --from=build-env /app/public /app/public
 WORKDIR /app
-CMD ["npm", "run", "start"]
+CMD ["node", "./server.js"]

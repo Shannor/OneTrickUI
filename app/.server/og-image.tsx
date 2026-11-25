@@ -1,8 +1,7 @@
-import { Resvg } from '@resvg/resvg-js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { ReactElement } from 'react';
-import satori, { type Font } from 'satori';
+import type { Font } from 'satori';
 import type { Aggregate, CharacterSnapshot, Profile, Session } from '~/api';
 import {
   ENERGY_BUCKET,
@@ -20,6 +19,28 @@ const BUNGIE_ORIGIN = 'https://www.bungie.net';
 let cachedFontsPromise: Promise<Font[]> | null = null;
 let cachedDefaultBgPromise: Promise<string | null> | null = null;
 let cachedFallbackPngPromise: Promise<Buffer> | null = null;
+let cachedRenderersPromise: Promise<{
+  satori: typeof import('satori').default;
+  Resvg: typeof import('@resvg/resvg-js').Resvg;
+}> | null = null;
+
+function loadOgRenderers() {
+  if (!cachedRenderersPromise) {
+    cachedRenderersPromise = Promise.all([
+      import('satori'),
+      import('@resvg/resvg-js'),
+    ])
+      .then(([satoriModule, resvgModule]) => ({
+        satori: satoriModule.default,
+        Resvg: resvgModule.Resvg,
+      }))
+      .catch((error) => {
+        cachedRenderersPromise = null;
+        throw error;
+      });
+  }
+  return cachedRenderersPromise;
+}
 
 function toBungieUrl(rawUrl?: string | null): string | null {
   if (!rawUrl) return null;
@@ -117,7 +138,10 @@ export async function getFallbackOgPng(): Promise<Buffer> {
 export async function renderOgElementToPng(
   element: ReactElement,
 ): Promise<Buffer> {
-  const fonts = await loadFonts();
+  const [fonts, { satori, Resvg }] = await Promise.all([
+    loadFonts(),
+    loadOgRenderers(),
+  ]);
   const svg = await satori(element, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
