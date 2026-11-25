@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LayersIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayersIcon, Loader2 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshots } from '~/api';
@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { slimSnapshotForCard } from '~/hooks/use-loadout';
-import { useProfileData } from '~/hooks/use-route-loaders';
-import { getSiteOrigin } from '~/lib/utils';
+import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
+import { cn, getSiteOrigin } from '~/lib/utils';
 
 import type { Route } from './+types/loadouts';
 
@@ -126,6 +126,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, type } = useProfileData();
+  const { isSameRoute: isUpdating } = useNavigationState();
   const isOwner = type === 'owner';
 
   const isHasSimilarActive =
@@ -198,12 +199,21 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
       <meta name="twitter:description" content={pageDescription} />
       <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
       <link rel="canonical" href={canonicalUrl} />
-      <div className="flex flex-row justify-between gap-4">
+      <div className="flex flex-row items-center justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             {headingTitle}
           </h2>
         </div>
+        {isUpdating && (
+          <span
+            role="status"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground"
+          >
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <span>Updating…</span>
+          </span>
+        )}
       </div>
       <div className="flex flex-col gap-4">
         <GameModeSelector
@@ -286,7 +296,13 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
         />
       )}
 
-      <div className="grid grid-cols-1 gap-4">
+      <div
+        aria-busy={isUpdating}
+        className={cn(
+          'grid grid-cols-1 gap-4 transition-opacity duration-150',
+          isUpdating && 'opacity-60',
+        )}
+      >
         {displayLoadouts.map((snapshot) => (
           <LoadoutCard
             key={snapshot.id}

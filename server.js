@@ -5,6 +5,8 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { createPrefetchGuardMiddleware } from './server/prefetch-guard.mjs';
+
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'production';
 
 export function createServerApp(build, mode = process.env.NODE_ENV) {
@@ -28,6 +30,8 @@ export function createServerApp(build, mode = process.env.NODE_ENV) {
   );
   app.use(express.static('build/client', { maxAge: '1h' }));
   app.use(express.static('public', { maxAge: '1h' }));
+
+  app.use(createPrefetchGuardMiddleware());
 
   app.all(
     '/{*splat}',

@@ -7,7 +7,6 @@ import {
   Gamepad2,
   Home,
   Hourglass,
-  Loader2,
   LogIn,
   Search,
   SquareLibrary,
@@ -28,6 +27,7 @@ import { ChangelogModal } from '~/components/changelog-modal';
 import { Logo } from '~/components/logo';
 import { ModeToggle } from '~/components/mode-toggle';
 import { NavUser } from '~/components/nav-user';
+import { NavigationPendingIndicator } from '~/components/navigation-pending-indicator';
 import { Button, buttonVariants } from '~/components/ui/button';
 import {
   SidebarInset,
@@ -39,7 +39,7 @@ import {
   useActiveCharacterCache,
 } from '~/hooks/use-active-character-cache';
 import {
-  useIsNavigating,
+  useNavigationState,
   useOptionalProfileData,
   useRootData,
 } from '~/hooks/use-route-loaders';
@@ -81,7 +81,7 @@ export function Sidebar() {
   const rootData = useRootData();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isNavigating] = useIsNavigating();
+  const navigationState = useNavigationState();
 
   const canGoBack = location.pathname !== '/';
 
@@ -335,14 +335,7 @@ export function Sidebar() {
           </div>
         </header>
         <div className="relative flex w-full min-w-0 max-w-full flex-1 flex-col overflow-y-auto overflow-x-hidden px-2.5 pb-4 sm:px-6 xl:mx-auto 2xl:max-w-[1440px] 2xl:p-6">
-          {isNavigating ? (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-              <div className="flex items-center gap-3 rounded-md border bg-background/80 px-4 py-3 shadow-sm">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span className="text-sm">Loading…</span>
-              </div>
-            </div>
-          ) : null}
+          <NavigationPendingIndicator scope={navigationState.scope} />
           <Outlet />
         </div>
       </SidebarInset>

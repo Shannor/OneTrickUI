@@ -1,15 +1,16 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { doc, onSnapshot } from 'firebase/firestore';
-import type { ComponentProps } from 'react';
+import { type ComponentProps, useState } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import { getFirestoreDb } from '~/lib/firebaseConfig';
 
-import Session from './session';
+import Session, { SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS } from './session';
 
 const mockRevalidate = vi.fn().mockResolvedValue(undefined);
+let mockRevalidatorState: 'idle' | 'loading' = 'idle';
 
 vi.mock('react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router')>();
@@ -17,7 +18,7 @@ vi.mock('react-router', async (importOriginal) => {
     ...actual,
     useRevalidator: () => ({
       revalidate: mockRevalidate,
-      state: 'idle',
+      state: mockRevalidatorState,
     }),
   };
 });
@@ -26,6 +27,15 @@ vi.mock('~/hooks/use-route-loaders', () => ({
   useProfileData: () => ({
     type: 'owner',
     profile: { id: 'user-1', displayName: 'Guardian' },
+  }),
+  useNavigationState: () => ({
+    scope: 'idle',
+    isNavigating: false,
+    isCrossRoute: false,
+    isSameRoute: false,
+    isSubTab: false,
+    isScopedPending: false,
+    nextLocation: undefined,
   }),
 }));
 
@@ -45,6 +55,11 @@ vi.mock('firebase/firestore', async (importOriginal) => {
 describe('Session Page Route Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRevalidatorState = 'idle';
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
   it('renders active recording banner with 2 hour auto-end notice when session status is pending', () => {
     const props = {
@@ -254,6 +269,7 @@ describe('Session Page Route Component', () => {
       expect(snapshotCallback).toBeDefined();
     });
 
+    vi.useFakeTimers();
     snapshotCallback!({
       data: () => ({
         id: 'session-comp-finalizing',
@@ -268,6 +284,10 @@ describe('Session Page Route Component', () => {
       }),
     });
 
+    expect(mockRevalidate).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
+    });
     expect(mockRevalidate).toHaveBeenCalledTimes(1);
   });
 
@@ -314,6 +334,7 @@ describe('Session Page Route Component', () => {
       expect(snapshotCallback).toBeDefined();
     });
 
+    vi.useFakeTimers();
     // First snapshot represents initial sync with identical state
     snapshotCallback!({
       data: () => ({
@@ -321,6 +342,9 @@ describe('Session Page Route Component', () => {
         status: 'pending',
         aggregateIds: [],
       }),
+    });
+    act(() => {
+      vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
     });
     expect(mockRevalidate).not.toHaveBeenCalled();
 
@@ -331,6 +355,10 @@ describe('Session Page Route Component', () => {
         status: 'pending',
         aggregateIds: ['new-aggregate-1'],
       }),
+    });
+    expect(mockRevalidate).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
     });
     expect(mockRevalidate).toHaveBeenCalledTimes(1);
   });
@@ -378,6 +406,7 @@ describe('Session Page Route Component', () => {
       expect(snapshotCallback).toBeDefined();
     });
 
+    vi.useFakeTimers();
     // Initial snapshot arrives with already processed game
     snapshotCallback!({
       data: () => ({
@@ -387,6 +416,245 @@ describe('Session Page Route Component', () => {
       }),
     });
 
+    act(() => {
+      vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
+    });
+    expect(mockRevalidate).toHaveBeenCalledTimes(1);
+  });
+
+  it('coalesces rapid multi-field Firestore writes into a single debounced revalidation', async () => {
+    let snapshotCallback:
+      | ((snapshot: { data: () => unknown }) => void)
+      | undefined;
+    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
+      snapshotCallback = next as never;
+      return vi.fn();
+    });
+
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-burst',
+          name: 'Burst Session',
+          status: 'pending' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: [],
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Session {...props} />,
+      },
+    ]);
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => {
+      expect(snapshotCallback).toBeDefined();
+    });
+
+    vi.useFakeTimers();
+    // Initial sync matches loaderData
+    snapshotCallback!({
+      data: () => ({
+        id: 'session-burst',
+        status: 'pending',
+        aggregateIds: [],
+      }),
+    });
+
+    // Simulate 3 rapid writes within 135ms (e.g. setLastSnapshot + persistSessionProgress)
+    snapshotCallback!({
+      data: () => ({
+        id: 'session-burst',
+        status: 'pending',
+        aggregateIds: ['game-1'],
+      }),
+    });
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    snapshotCallback!({
+      data: () => ({
+        id: 'session-burst',
+        status: 'pending',
+        aggregateIds: ['game-1'],
+        lastSeenActivityId: 'act-1',
+      }),
+    });
+    act(() => {
+      vi.advanceTimersByTime(85);
+    });
+    snapshotCallback!({
+      data: () => ({
+        id: 'session-burst',
+        status: 'pending',
+        aggregateIds: ['game-1'],
+        lastSeenActivityId: 'act-1',
+        summary: { totalMatches: 1 },
+      }),
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS - 1);
+    });
+    expect(mockRevalidate).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(mockRevalidate).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels pending debounced revalidation timer on unmount', async () => {
+    const mockUnsubscribe = vi.fn();
+    let snapshotCallback:
+      | ((snapshot: { data: () => unknown }) => void)
+      | undefined;
+    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
+      snapshotCallback = next as never;
+      return mockUnsubscribe;
+    });
+
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-unmount',
+          name: 'Unmount Session',
+          status: 'pending' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: [],
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Session {...props} />,
+      },
+    ]);
+
+    const { unmount } = render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => {
+      expect(snapshotCallback).toBeDefined();
+    });
+
+    vi.useFakeTimers();
+    snapshotCallback!({
+      data: () => ({
+        id: 'session-unmount',
+        status: 'pending',
+        aggregateIds: ['game-1'],
+      }),
+    });
+
+    unmount();
+    expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS * 2);
+    });
+    expect(mockRevalidate).not.toHaveBeenCalled();
+  });
+
+  it('guards against overlapping revalidations while revalidator.state is loading and flushes once idle', async () => {
+    mockRevalidatorState = 'loading';
+    let snapshotCallback:
+      | ((snapshot: { data: () => unknown }) => void)
+      | undefined;
+    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
+      snapshotCallback = next as never;
+      return vi.fn();
+    });
+
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-busy',
+          name: 'Busy Session',
+          status: 'pending' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: [],
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    let triggerRerender!: () => void;
+    function SessionRevalidatorHarness() {
+      const [, setTick] = useState(0);
+      triggerRerender = () => setTick((t) => t + 1);
+      return <Session {...props} />;
+    }
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <SessionRevalidatorHarness />,
+      },
+    ]);
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => {
+      expect(snapshotCallback).toBeDefined();
+    });
+
+    vi.useFakeTimers();
+    snapshotCallback!({
+      data: () => ({
+        id: 'session-busy',
+        status: 'pending',
+        aggregateIds: ['game-1'],
+      }),
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
+    });
+    expect(mockRevalidate).not.toHaveBeenCalled();
+
+    // Once revalidator becomes idle, the deferred update flushes cleanly without re-subscribing onSnapshot
+    mockRevalidatorState = 'idle';
+    act(() => {
+      triggerRerender();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
+    });
+    expect(onSnapshot).toHaveBeenCalledTimes(1);
     expect(mockRevalidate).toHaveBeenCalledTimes(1);
   });
 

@@ -16,6 +16,7 @@ import {
 } from 'remix-themes';
 import { getAuth, getCachedUser } from '~/.server/auth';
 import { evlogMiddleware, getRequestLogger } from '~/.server/logger';
+import { prefetchGuardMiddleware } from '~/.server/prefetch-guard';
 import { themeSessionResolver } from '~/.server/sessions';
 import type { Character } from '~/api';
 import { client } from '~/api/client.gen';
@@ -30,7 +31,10 @@ import { initTracking, trackUserSession } from '~/lib/tracking';
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
 
-export const middleware: Route.MiddlewareFunction[] = [evlogMiddleware];
+export const middleware: Route.MiddlewareFunction[] = [
+  prefetchGuardMiddleware,
+  evlogMiddleware,
+];
 
 if (typeof window !== 'undefined') {
   void initTracking();

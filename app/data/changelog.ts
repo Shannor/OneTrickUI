@@ -17,9 +17,10 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-11-24',
     date: 'November 24, 2026',
-    title: 'Faster Page Loads & Reliable Multi-Loadout Merging',
+    title:
+      'Faster Page Loads, Snappier Navigation & Reliable Loadout Merging',
     summary:
-      'Open 1 Trick with significantly faster initial load times and lighter session browsing, plus reliably merge multiple similar loadouts at once with clearer error feedback.',
+      'Open 1 Trick faster even after quiet periods, move across Guardian views smoothly without full-screen loading overlays, enjoy steadier real-time session tracking, and merge multiple similar loadouts at once reliably.',
     changes: [
       {
         type: 'improvement',
@@ -28,6 +29,22 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'improvement',
         text: 'Browse completed Crucible sessions more smoothly with lighter page downloads, loading live match updates only when a session is actively recording.',
+      },
+      {
+        type: 'improvement',
+        text: 'Jump between sidebar views, Guardian characters, and Session or Loadout tabs noticeably faster with hover-warmed transitions.',
+      },
+      {
+        type: 'improvement',
+        text: 'Filter, sort, and paginate loadouts or switch between Session and Loadout sub-tabs seamlessly—subtle progress indicators replace the full-screen blurred loading overlay so your controls stay accessible.',
+      },
+      {
+        type: 'fix',
+        text: 'Eliminated duplicate background page loads and rapid back-to-back refreshes during active sessions for faster, steadier live stat tracking.',
+      },
+      {
+        type: 'fix',
+        text: 'Fixed the loadout stats radar chart collapsing on desktop screens so all six stat labels display cleanly without clipping.',
       },
       {
         type: 'fix',

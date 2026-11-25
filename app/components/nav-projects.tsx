@@ -66,6 +66,7 @@ export function NavProjects({
               >
                 <NavLink
                   to={item.url}
+                  prefetch="intent"
                   className={({ isActive: isNavActive }) =>
                     active || isNavActive
                       ? 'font-semibold text-primary'

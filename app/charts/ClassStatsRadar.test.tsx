@@ -22,7 +22,17 @@ describe('ClassStatsRadar', () => {
 
   it('renders radar chart container when data is provided', () => {
     const { container } = render(<ClassStatsRadar data={mockData} />);
-    expect(container.firstChild).not.toBeNull();
+    const chartEl = container.querySelector('[data-chart]');
+    expect(chartEl).not.toBeNull();
+    expect(chartEl).toHaveClass('w-full', 'min-w-0', 'min-h-[260px]');
+  });
+
+  it('merges custom className onto the chart container', () => {
+    const { container } = render(
+      <ClassStatsRadar data={mockData} className="lg:flex-1" />,
+    );
+    const chartEl = container.querySelector('[data-chart]');
+    expect(chartEl).toHaveClass('w-full', 'lg:flex-1');
   });
 
   it('returns null when data is empty or undefined', () => {
