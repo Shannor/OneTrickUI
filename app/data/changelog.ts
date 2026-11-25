@@ -17,9 +17,9 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-11-24',
     date: 'November 24, 2026',
-    title: 'Snappier Navigation, Seamless Filtering & Smoother Live Sessions',
+    title: 'Snappier Navigation, Smoother Live Sessions & Reliable Loadout Merging',
     summary:
-      'Move across Guardian views faster, filter loadouts and switch sub-tabs without full-screen loading overlays, and enjoy steadier real-time updates during active sessions.',
+      'Move across Guardian views faster without full-screen loading overlays, enjoy steadier real-time session tracking, and merge multiple similar loadouts at once reliably.',
     changes: [
       {
         type: 'improvement',
@@ -36,6 +36,14 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'fix',
         text: 'Fixed the loadout stats radar chart collapsing on desktop screens so all six stat labels display cleanly without clipping.',
+      },
+      {
+        type: 'fix',
+        text: 'Merge multiple similar loadouts at once reliably without hitting unexpected errors.',
+      },
+      {
+        type: 'improvement',
+        text: 'Show clearer error details if a loadout merge request fails instead of reporting a generic network error.',
       },
     ],
   },

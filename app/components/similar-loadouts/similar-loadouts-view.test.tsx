@@ -273,11 +273,7 @@ describe('SimilarLoadoutsView', () => {
     const router = createMemoryRouter([
       {
         path: '/',
-        element: (
-          <SimilarLoadoutsView
-            initialData={mockInitialData}
-          />
-        ),
+        element: <SimilarLoadoutsView initialData={mockInitialData} />,
       },
     ]);
 
@@ -321,11 +317,7 @@ describe('SimilarLoadoutsView', () => {
     const router = createMemoryRouter([
       {
         path: '/',
-        element: (
-          <SimilarLoadoutsView
-            initialData={mockInitialData}
-          />
-        ),
+        element: <SimilarLoadoutsView initialData={mockInitialData} />,
       },
     ]);
 
@@ -451,8 +443,7 @@ describe('SimilarLoadoutsView', () => {
 
     expect(submittedFormData!.get('baseLoadoutId')).toBe('target-1');
     expect(submittedFormData!.getAll('sourceSnapshotIds')).toEqual([
-      'cand-high',
-      'cand-base',
+      'cand-high,cand-base',
     ]);
 
     await waitFor(() => {
@@ -468,11 +459,7 @@ describe('SimilarLoadoutsView', () => {
     const router = createMemoryRouter([
       {
         path: '/',
-        element: (
-          <SimilarLoadoutsView
-            initialData={mockInitialData}
-          />
-        ),
+        element: <SimilarLoadoutsView initialData={mockInitialData} />,
       },
       {
         path: '/action/merge-loadout',
