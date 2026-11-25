@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react';
 import { getRequestLogger } from '~/.server/logger';
-import { type GameMode, getSnapshotAggregates } from '~/api';
+import {
+  type GameMode,
+  type TelemetryMatch,
+  getCharacterTelemetry,
+} from '~/api';
 import { MapTelemetryPanel } from '~/charts/map-telemetry';
 import { MetricsTrendPanel } from '~/charts/metrics-trend';
 import { Empty } from '~/components/empty';
 import { MetricsFilterBar } from '~/components/metrics-filter-bar';
+import { TelemetryTruncationNotice } from '~/components/telemetry-truncation-notice';
 import {
   useLoadoutData,
   useOptionalProfileData,
@@ -21,38 +26,54 @@ import type { Route } from './+types/loadout-metrics';
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
-  const { snapshotId } = params;
-  log.set({ route: 'routes/loadout-metrics', snapshot: { id: snapshotId } });
-  const { data: aggregates, error } = await getSnapshotAggregates({
-    path: { snapshotId },
+  const { id: userId, characterId, snapshotId } = params;
+  log.set({
+    route: 'routes/loadout-metrics',
+    snapshot: { id: snapshotId, userId, characterId },
   });
+
+  const { data, error } = await getCharacterTelemetry({
+    path: { userId, characterId },
+    query: { snapshotId },
+  });
+
   if (error) {
-    log.error('Failed to fetch snapshot aggregates', {
-      snapshot: { id: snapshotId, error },
+    log.error('Failed to fetch loadout telemetry', {
+      snapshot: { id: snapshotId, userId, characterId, error },
     });
     return {
-      aggregates: [],
-      error: 'Failed to load snapshot aggregates',
-    };
-  }
-  if (!aggregates) {
-    log.set({ snapshot: { id: snapshotId, aggregateCount: 0 } });
-    return {
-      aggregates: [],
-      error: undefined,
+      matches: [] as TelemetryMatch[],
+      totalCount: 0,
+      truncated: false,
+      error: 'Failed to load loadout metrics',
     };
   }
 
-  log.set({ snapshot: { id: snapshotId, aggregateCount: aggregates.length } });
+  const matches = data?.matches ?? [];
+  const totalCount = data?.totalCount ?? matches.length;
+  const truncated = Boolean(data?.truncated);
+
+  log.set({
+    snapshot: {
+      id: snapshotId,
+      userId,
+      characterId,
+      matchCount: matches.length,
+      totalCount,
+      truncated,
+    },
+  });
+
   return {
-    aggregates,
+    matches,
+    totalCount,
+    truncated,
     error: undefined,
   };
 }
 
-export function LoadoutMetrics({ loaderData, params }: Route.ComponentProps) {
-  const { aggregates, error } = loaderData;
-  const { characterId } = params;
+export function LoadoutMetrics({ loaderData }: Route.ComponentProps) {
+  const { matches, totalCount, truncated, error } = loaderData;
   const { snapshot, path } = useLoadoutData();
   const { profile } = useOptionalProfileData() ?? {};
 
@@ -94,18 +115,18 @@ export function LoadoutMetrics({ loaderData, params }: Route.ComponentProps) {
   const [gameMode, setGameMode] = useState<GameMode>('allGameModes');
 
   const customTime = useMemo(() => {
-    return timeWindowToCustom(time, aggregates);
-  }, [time, aggregates]);
+    return timeWindowToCustom(time, matches);
+  }, [time, matches]);
 
   const matchSeries = useMemo(() => {
-    return generateMatchSeries(aggregates, customTime, characterId, gameMode);
-  }, [aggregates, customTime, characterId, gameMode]);
+    return generateMatchSeries(matches, customTime, gameMode);
+  }, [matches, customTime, gameMode]);
 
   const mapData = useMemo(() => {
-    return generateMapTelemetry(aggregates, customTime, characterId, gameMode);
-  }, [aggregates, customTime, characterId, gameMode]);
+    return generateMapTelemetry(matches, customTime, gameMode);
+  }, [matches, customTime, gameMode]);
 
-  if (error || aggregates.length === 0) {
+  if (error || matches.length === 0) {
     return (
       <>
         {metaTags}
@@ -124,6 +145,12 @@ export function LoadoutMetrics({ loaderData, params }: Route.ComponentProps) {
   return (
     <div className="flex flex-col gap-6">
       {metaTags}
+      {truncated && (
+        <TelemetryTruncationNotice
+          shownCount={matches.length}
+          totalCount={totalCount}
+        />
+      )}
       <MetricsFilterBar
         time={time}
         onTimeChange={setTime}

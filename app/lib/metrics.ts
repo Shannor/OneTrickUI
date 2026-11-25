@@ -8,7 +8,12 @@ import {
   subMonths,
   subWeeks,
 } from 'date-fns';
-import type { Aggregate, CharacterSnapshot, GameMode } from '~/api';
+import type {
+  Aggregate,
+  GameMode,
+  TelemetryMatch,
+  TelemetrySnapshotSummary,
+} from '~/api';
 import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 
 interface KDA {
@@ -120,9 +125,37 @@ const SWAP_SIGNAL_MAX_KD = 0.95;
 const SWAP_SIGNAL_LOW_WIN_PCT = 35;
 const SWAP_SIGNAL_LOW_WIN_MAX_KD = 1.2;
 
+export function aggregatesToTelemetryMatches(
+  aggregates: readonly Aggregate[],
+  characterId: string,
+): TelemetryMatch[] {
+  const matches: TelemetryMatch[] = [];
+  for (const agg of aggregates) {
+    const perf = agg.performance?.[characterId];
+    if (!perf) {
+      continue;
+    }
+    const link = agg.snapshotLinks?.[characterId];
+    matches.push({
+      activityId: agg.activityId || agg.id,
+      period: agg.activityDetails.period,
+      location: agg.activityDetails.location || '',
+      activity: agg.activityDetails.activity || '',
+      estimatedGameMode: agg.activityDetails.estimatedGameMode,
+      kills: perf.playerStats.kills?.value ?? 0,
+      deaths: perf.playerStats.deaths?.value ?? 0,
+      assists: perf.playerStats.assists?.value ?? 0,
+      won: perf.playerStats.standing?.value === 0,
+      snapshotId: link?.snapshotId,
+      snapshotConfidence: link?.confidenceLevel,
+    });
+  }
+  return matches;
+}
+
 export function timeWindowToCustom(
   time: TimeWindow | CustomTimeWindow,
-  aggregates: Aggregate[],
+  matches: readonly TelemetryMatch[],
 ): CustomTimeWindow {
   if (typeof time !== 'string') {
     return time;
@@ -145,25 +178,29 @@ export function timeWindowToCustom(
     case 'six-months':
       return { start: subMonths(startOfToday(), 6), end };
     case 'all-time': {
-      if (!aggregates || aggregates.length === 0) {
+      if (!matches || matches.length === 0) {
         return { start: subHours(end, 1), end };
       }
-      const items = [...aggregates].sort(
-        (a, b) =>
-          new Date(b?.activityDetails?.period ?? 0).getTime() -
-          new Date(a?.activityDetails?.period ?? 0).getTime(),
-      );
-      const last = items[0];
-      const first = items[items.length - 1];
-      const endDate = last?.activityDetails?.period
-        ? new Date(last.activityDetails.period)
-        : end;
-      const start = first?.activityDetails?.period
-        ? new Date(first.activityDetails.period)
-        : end;
+      let minMs = Infinity;
+      let maxMs = -Infinity;
+      for (const match of matches) {
+        const periodMs = new Date(match.period).getTime();
+        if (Number.isNaN(periodMs)) {
+          continue;
+        }
+        if (periodMs < minMs) {
+          minMs = periodMs;
+        }
+        if (periodMs > maxMs) {
+          maxMs = periodMs;
+        }
+      }
+      if (!Number.isFinite(minMs) || !Number.isFinite(maxMs)) {
+        return { start: subHours(end, 1), end };
+      }
       return {
-        start: subMinutes(start, ALL_TIME_BUFFER_MINUTES),
-        end: addMinutes(endDate, ALL_TIME_BUFFER_MINUTES),
+        start: subMinutes(new Date(minMs), ALL_TIME_BUFFER_MINUTES),
+        end: addMinutes(new Date(maxMs), ALL_TIME_BUFFER_MINUTES),
       };
     }
   }
@@ -270,9 +307,8 @@ export function summarizeMatchSamples(
 }
 
 export function generateMatchSeries(
-  aggregates: Aggregate[],
+  matches: readonly TelemetryMatch[],
   time: CustomTimeWindow,
-  characterId: string,
   filterBy?: GameMode,
   rollingWindow: number = DEFAULT_ROLLING_WINDOW,
 ): { points: MatchPoint[]; summary: TelemetrySummary } {
@@ -280,37 +316,24 @@ export function generateMatchSeries(
   const endMs = new Date(time.end).getTime();
   const durationMs = Math.max(0, endMs - startMs);
 
-  const allModeMatched = aggregates
-    .filter((a) => matchesGameMode(a, filterBy))
-    .sort(
-      (a, b) =>
-        new Date(a.activityDetails.period).getTime() -
-        new Date(b.activityDetails.period).getTime(),
-    )
-    .map((agg) => {
-      const perf = agg.performance?.[characterId];
-      if (!perf) {
-        return null;
-      }
-      const kills = perf.playerStats.kills?.value ?? 0;
-      const deaths = perf.playerStats.deaths?.value ?? 0;
-      const assists = perf.playerStats.assists?.value ?? 0;
-      const won = perf.playerStats.standing?.value === 0;
-      const period = new Date(agg.activityDetails.period);
+  const allModeMatched = matches
+    .filter((m) => matchesGameMode(m, filterBy))
+    .map((match) => {
+      const period = new Date(match.period);
       return {
-        activityId: agg.activityId || agg.id,
+        activityId: match.activityId,
         period,
         periodMs: period.getTime(),
-        location: agg.activityDetails.location || 'Unknown Map',
-        kills,
-        deaths,
-        assists,
-        won,
-        kd: calculateRatio(kills, deaths),
-        kda: calculateRatio(kills + assists, deaths),
+        location: match.location || 'Unknown Map',
+        kills: match.kills,
+        deaths: match.deaths,
+        assists: match.assists,
+        won: match.won,
+        kd: calculateRatio(match.kills, match.deaths),
+        kda: calculateRatio(match.kills + match.assists, match.deaths),
       };
     })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+    .sort((a, b) => a.periodMs - b.periodMs);
 
   const validMatches = allModeMatched.filter(
     (m) => m.periodMs >= startMs && m.periodMs <= endMs,
@@ -382,26 +405,22 @@ export function generateMatchSeries(
 }
 
 export function generateMapTelemetry(
-  aggregates: Aggregate[],
+  matches: readonly TelemetryMatch[],
   time: CustomTimeWindow,
-  characterId: string,
   filterBy?: GameMode,
-  snapshots?: Record<string, Pick<CharacterSnapshot, 'id' | 'name'>>,
+  snapshots?: Record<string, TelemetrySnapshotSummary>,
 ): MapTelemetryResult[] {
-  const aggs = sortAggregates(time, aggregates, filterBy);
+  const filteredMatches = sortMatches(time, matches, filterBy);
   const mapTotals: Record<string, KDA> = {};
   const perMapSnapshotTotals: Record<string, Record<string, KDA>> = {};
 
-  for (const agg of aggs) {
-    const p = agg.performance?.[characterId];
-    const location = agg.activityDetails?.location;
-    if (!p || !location) {
+  for (const match of filteredMatches) {
+    const location = match.location;
+    if (!location) {
       continue;
     }
-    const kills = p.playerStats.kills?.value ?? 0;
-    const deaths = p.playerStats.deaths?.value ?? 0;
-    const assists = p.playerStats.assists?.value ?? 0;
-    const win = p.playerStats.standing?.value === 0 ? 1 : 0;
+    const { kills, deaths, assists } = match;
+    const win = match.won ? 1 : 0;
 
     if (!mapTotals[location]) {
       mapTotals[location] = { kills, deaths, assists, wins: win, gameCount: 1 };
@@ -414,13 +433,12 @@ export function generateMapTelemetry(
     }
 
     if (snapshots) {
-      const link = agg.snapshotLinks?.[characterId];
-      const snapId = link?.snapshotId;
+      const snapId = match.snapshotId;
       const isValidLink =
-        snapId &&
-        snapshots[snapId] &&
-        link.confidenceLevel !== 'noMatch' &&
-        link.confidenceLevel !== 'notFound';
+        Boolean(snapId) &&
+        Boolean(snapId && snapshots[snapId]) &&
+        match.snapshotConfidence !== 'noMatch' &&
+        match.snapshotConfidence !== 'notFound';
 
       if (isValidLink && snapId) {
         if (!perMapSnapshotTotals[location]) {
@@ -503,67 +521,30 @@ export function generateMapTelemetry(
   });
 }
 
-function matchesGameMode(agg: Aggregate, filterBy?: GameMode): boolean {
+function matchesGameMode(match: TelemetryMatch, filterBy?: GameMode): boolean {
   if (filterBy === undefined || filterBy === 'allGameModes') {
     return true;
   }
-  if (agg.activityDetails.estimatedGameMode) {
-    return agg.activityDetails.estimatedGameMode === filterBy;
-  }
-  const modes = gameModeToActivityModes(filterBy);
-  return !modes || modes.includes(agg.activityDetails.activity);
+  return match.estimatedGameMode === filterBy;
 }
 
-function sortAggregates(
+function sortMatches(
   time: CustomTimeWindow,
-  aggregates: Aggregate[],
+  matches: readonly TelemetryMatch[],
   filterBy?: GameMode,
-) {
+): TelemetryMatch[] {
   const startMs = new Date(time.start).getTime();
   const endMs = new Date(time.end).getTime();
 
-  return aggregates
-    .filter((a) => {
-      if (!matchesGameMode(a, filterBy)) {
+  return matches
+    .filter((m) => {
+      if (!matchesGameMode(m, filterBy)) {
         return false;
       }
-      const periodMs = new Date(a.activityDetails.period).getTime();
+      const periodMs = new Date(m.period).getTime();
       return periodMs >= startMs && periodMs <= endMs;
     })
     .sort((a, b) => {
-      return (
-        new Date(a.activityDetails.period).getTime() -
-        new Date(b.activityDetails.period).getTime()
-      );
+      return new Date(a.period).getTime() - new Date(b.period).getTime();
     });
-}
-
-function gameModeToActivityModes(gameMode: GameMode): string[] | null {
-  switch (gameMode) {
-    case 'allGameModes':
-      return null;
-    case 'competitive':
-      return ['Competitive: Matchmade', 'Competitive'];
-    case 'quickplay':
-      return [
-        'Control Quickplay',
-        'Control',
-        'Control: Matchmade',
-        'Clash',
-        'Clash Quickplay',
-      ];
-    case 'ironBanner':
-      return [
-        'Iron Banner Zone:Control',
-        'Iron Banner:Control',
-        'Iron Banner',
-        'Iron Banner:Supremacy',
-        'Iron Banner:Rift',
-        'Iron Banner:Clash',
-      ];
-    case 'trials':
-      return ['Trials of Osiris', 'Trials of Osiris: Matchmade'];
-    default:
-      return null;
-  }
 }

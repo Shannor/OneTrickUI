@@ -9,7 +9,11 @@ import type { Aggregate, Session } from '~/api';
 import { MetricsTrendPanel } from '~/charts/metrics-trend';
 import { SessionCompTrackingBanner } from '~/components/comp-tracking';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import { generateMatchSeries, timeWindowToCustom } from '~/lib/metrics';
+import {
+  aggregatesToTelemetryMatches,
+  generateMatchSeries,
+  timeWindowToCustom,
+} from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
 export interface SessionOverviewProps {
@@ -25,16 +29,20 @@ export function SessionOverview({
   characterId,
   className,
 }: SessionOverviewProps) {
+  const telemetryMatches = useMemo(() => {
+    return aggregatesToTelemetryMatches(aggregates, characterId);
+  }, [aggregates, characterId]);
+
   const customTime = useMemo(() => {
-    return timeWindowToCustom('all-time', aggregates);
-  }, [aggregates]);
+    return timeWindowToCustom('all-time', telemetryMatches);
+  }, [telemetryMatches]);
 
   const matchSeries = useMemo(() => {
-    if (!aggregates || aggregates.length === 0) {
+    if (telemetryMatches.length === 0) {
       return null;
     }
-    return generateMatchSeries(aggregates, customTime, characterId);
-  }, [aggregates, customTime, characterId]);
+    return generateMatchSeries(telemetryMatches, customTime);
+  }, [telemetryMatches, customTime]);
 
   const hasMatches = Boolean(matchSeries && matchSeries.points.length > 0);
   const gamesCount =

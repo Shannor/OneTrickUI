@@ -12,7 +12,11 @@ import {
   useOptionalProfileData,
   useSessionData,
 } from '~/hooks/use-route-loaders';
-import { generateMapTelemetry, timeWindowToCustom } from '~/lib/metrics';
+import {
+  aggregatesToTelemetryMatches,
+  generateMapTelemetry,
+  timeWindowToCustom,
+} from '~/lib/metrics';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
@@ -214,7 +218,8 @@ function getLoadoutData(
 ) {
   return groupedBySnapshot.map(([snapshotId, aggs]) => {
     const performances = getPerformances(aggs, characterId, allowAll);
-    const customTime = timeWindowToCustom('all-time', aggs);
+    const matches = aggregatesToTelemetryMatches(aggs, characterId);
+    const customTime = timeWindowToCustom('all-time', matches);
     const { wins, kills, deaths, assists } = performances.reduce(
       (state, p) => {
         state.kills += p.playerStats.kills?.value ?? 0;
@@ -258,9 +263,8 @@ function getLoadoutData(
     }
 
     const mapData = generateMapTelemetry(
-      aggs,
+      matches,
       customTime,
-      characterId,
       'allGameModes',
       snapshots,
     );

@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { type Aggregate, getSnapshotAggregates } from '~/api';
+import { type TelemetryMatch, getCharacterTelemetry } from '~/api';
 
 import { LoadoutMetrics, loader } from './loadout-metrics';
 
@@ -28,53 +28,29 @@ vi.mock('~/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/api')>();
   return {
     ...actual,
-    getSnapshotAggregates: vi.fn(),
+    getCharacterTelemetry: vi.fn(),
   };
 });
 
-function makeAggregate(
+function makeTelemetryMatch(
   id: string,
   location: string,
   kills: number,
   deaths: number,
-  standing: number,
-): Aggregate {
+  won: boolean,
+): TelemetryMatch {
   return {
-    id,
     activityId: `act-${id}`,
-    sessionIds: ['sess-1'],
-    characterIds: ['char-1'],
-    snapshotIds: ['snap-1'],
-    createdAt: new Date('2026-10-01T12:00:00Z'),
-    activityDetails: {
-      instanceId: `inst-${id}`,
-      activity: 'Quickplay',
-      location,
-      period: new Date(`2026-10-0${id.slice(-1)}T12:00:00Z`),
-      imageUrl: '/map.png',
-      activityIcon: '/mode.png',
-      estimatedGameMode: 'quickplay',
-    } as any,
-    snapshotLinks: {
-      'char-1': {
-        characterId: 'char-1',
-        snapshotId: 'snap-1',
-        confidenceLevel: 'high',
-        confidenceSource: 'system',
-        createdAt: new Date('2026-10-01T12:00:00Z'),
-      },
-    },
-    performance: {
-      'char-1': {
-        playerStats: {
-          kills: { value: kills },
-          deaths: { value: deaths },
-          assists: { value: 5 },
-          standing: { value: standing },
-        },
-        weapons: {},
-      } as any,
-    },
+    period: new Date(`2026-10-0${id.slice(-1)}T12:00:00Z`),
+    location,
+    activity: 'Control',
+    estimatedGameMode: 'quickplay',
+    kills,
+    deaths,
+    assists: 5,
+    won,
+    snapshotId: 'snap-1',
+    snapshotConfidence: 'high',
   };
 }
 
@@ -90,10 +66,15 @@ describe('loadout-metrics route loader and component', () => {
     });
   });
 
-  it('loads snapshot aggregates cleanly', async () => {
-    const aggs = [makeAggregate('agg-1', 'Javelin-4', 20, 10, 0)];
-    vi.mocked(getSnapshotAggregates).mockResolvedValueOnce({
-      data: aggs,
+  it('loads loadout telemetry via getCharacterTelemetry scoped by snapshotId', async () => {
+    const matches = [makeTelemetryMatch('1', 'Javelin-4', 20, 10, true)];
+    vi.mocked(getCharacterTelemetry).mockResolvedValueOnce({
+      data: {
+        matches,
+        snapshots: { 'snap-1': { id: 'snap-1', name: 'Ace + Matador' } },
+        totalCount: 1,
+        truncated: false,
+      },
       error: undefined,
     } as any);
 
@@ -105,28 +86,61 @@ describe('loadout-metrics route loader and component', () => {
       ),
     } as any);
 
+    expect(getCharacterTelemetry).toHaveBeenCalledTimes(1);
+    expect(getCharacterTelemetry).toHaveBeenCalledWith({
+      path: { userId: 'user-1', characterId: 'char-1' },
+      query: { snapshotId: 'snap-1' },
+    });
     expect(res.error).toBeUndefined();
-    expect(res.aggregates).toHaveLength(1);
+    expect(res.matches).toHaveLength(1);
+    expect(res.totalCount).toBe(1);
+    expect(res.truncated).toBe(false);
   });
 
-  it('renders MetricsTrendPanel and MapTelemetryPanel when aggregates exist', () => {
-    const aggs = [
-      makeAggregate('agg-1', 'Javelin-4', 22, 10, 0),
-      makeAggregate('agg-2', 'Javelin-4', 18, 9, 0),
-      makeAggregate('agg-3', 'Meltdown', 8, 15, 1),
-      makeAggregate('agg-4', 'Meltdown', 7, 14, 1),
+  it('returns error state when getCharacterTelemetry fails', async () => {
+    vi.mocked(getCharacterTelemetry).mockResolvedValueOnce({
+      data: undefined,
+      error: { message: 'Not Found' },
+    } as any);
+
+    const res = await loader({
+      params: { id: 'user-1', characterId: 'char-1', snapshotId: 'snap-1' },
+      context: new Map(),
+      request: new Request(
+        'http://localhost/profile/user-1/c/char-1/loadouts/snap-1/metrics',
+      ),
+    } as any);
+
+    expect(res.error).toBe('Failed to load loadout metrics');
+    expect(res.matches).toEqual([]);
+  });
+
+  it('renders MetricsTrendPanel, MapTelemetryPanel, and optional truncation notice when matches exist', () => {
+    const matches = [
+      makeTelemetryMatch('1', 'Javelin-4', 22, 10, true),
+      makeTelemetryMatch('2', 'Javelin-4', 18, 9, true),
+      makeTelemetryMatch('3', 'Meltdown', 8, 15, false),
+      makeTelemetryMatch('4', 'Meltdown', 7, 14, false),
     ];
 
     render(
       <MemoryRouter>
         <LoadoutMetrics
-          loaderData={{ aggregates: aggs, error: undefined }}
+          loaderData={{
+            matches,
+            totalCount: 520,
+            truncated: true,
+            error: undefined,
+          }}
           params={{ id: 'user-1', characterId: 'char-1', snapshotId: 'snap-1' }}
           matches={[] as any}
         />
       </MemoryRouter>,
     );
 
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Showing most recent 4 of 520 tracked matches.',
+    );
     expect(
       screen.getByRole('tablist', { name: 'Performance metric selector' }),
     ).toBeInTheDocument();
@@ -137,11 +151,16 @@ describe('loadout-metrics route loader and component', () => {
     expect(screen.getAllByText('Meltdown').length).toBeGreaterThan(0);
   });
 
-  it('renders Empty state when aggregates are empty', () => {
+  it('renders Empty state when matches are empty', () => {
     render(
       <MemoryRouter>
         <LoadoutMetrics
-          loaderData={{ aggregates: [], error: undefined }}
+          loaderData={{
+            matches: [],
+            totalCount: 0,
+            truncated: false,
+            error: undefined,
+          }}
           params={{ id: 'user-1', characterId: 'char-1', snapshotId: 'snap-1' }}
           matches={[] as any}
         />
