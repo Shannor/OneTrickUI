@@ -1,8 +1,8 @@
-import { TooltipArrow } from '@radix-ui/react-tooltip';
 import React from 'react';
 import type { WeaponInstanceMetrics } from '~/api';
 import {
   Tooltip,
+  TooltipArrow,
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
@@ -22,14 +22,14 @@ export const WeaponHeader: React.FC<Props> = ({
   const name = properties?.baseInfo?.name ?? display?.name;
 
   return (
-    <div className={cn('flex flex-col gap-4', className)}>
+    <div className={cn('flex flex-col gap-3', className)}>
       {icon && name && (
         <Tooltip>
           <TooltipContent>
             <TooltipArrow />
             {name}
           </TooltipContent>
-          <TooltipTrigger className="cursor-default">
+          <TooltipTrigger className="inline-flex min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <img
               alt={`${name} image`}
               src={icon}
@@ -39,7 +39,7 @@ export const WeaponHeader: React.FC<Props> = ({
         </Tooltip>
       )}
       {onlyIcon && icon ? null : (
-        <h3 className="font-semibold tracking-tight">
+        <h3 className="text-lg font-semibold tracking-tight sm:text-xl">
           {properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun'}
         </h3>
       )}

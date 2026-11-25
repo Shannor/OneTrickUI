@@ -31,53 +31,48 @@ export function SimilarLoadoutsPrimaryHeader({
   return (
     <div
       data-testid="primary-loadout-header"
-      className="flex flex-col gap-3 rounded-lg border border-primary/40 bg-primary/5 p-4"
+      className="flex flex-col gap-3.5 rounded-lg border border-primary/40 bg-primary/5 p-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Badge variant="default">Primary Target</Badge>
-          <h3 className="text-base font-bold text-foreground sm:text-lg">
+          <h3 className="text-xl font-bold text-foreground sm:text-2xl">
             {target.name || 'Loadout'}
           </h3>
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:text-sm">
           <span>{individualStats.matches} Matches</span>
           <span>{individualStats.winPercentage}% Win Rate</span>
           <span>{individualStats.kd.toFixed(2)} K/D</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3">
         <GearItemPill
           label="Subclass"
           item={target.loadout?.[SUBCLASS_BUCKET]}
           tooltipHeading="Primary Subclass"
-          className="cursor-help"
         />
         <GearItemPill
           label="Kinetic"
           item={target.loadout?.[KINETIC_BUCKET]}
           tooltipHeading="Primary Kinetic"
-          className="cursor-help"
         />
         <GearItemPill
           label="Energy"
           item={target.loadout?.[ENERGY_BUCKET]}
           tooltipHeading="Primary Energy"
-          className="cursor-help"
         />
         <GearItemPill
           label="Exotic Armor"
           item={exoticArmor}
           highlight={!!exoticArmor}
           tooltipHeading="Primary Exotic Armor"
-          className="cursor-help"
         />
         <GearItemPill
           label="Power Weapon"
           item={target.loadout?.[POWER_BUCKET]}
           tooltipHeading="Primary Power Weapon"
-          className="cursor-help"
         />
       </div>
 
@@ -86,7 +81,7 @@ export function SimilarLoadoutsPrimaryHeader({
           data-testid="primary-armor-set-bonuses"
           className="flex flex-wrap items-center gap-2 pt-1"
         >
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
             Set Bonuses:
           </span>
           {armorSetBonuses.map((bonus) => (
@@ -101,14 +96,14 @@ export function SimilarLoadoutsPrimaryHeader({
 
       {classStats.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
             Class Stats:
           </span>
           {classStats.map((st) => (
             <Badge
               key={st.stat}
               variant="secondary"
-              className="font-mono text-xs"
+              className="px-2.5 py-0.5 font-mono text-xs sm:text-sm"
             >
               {st.stat}: {st.value}
             </Badge>
@@ -118,40 +113,40 @@ export function SimilarLoadoutsPrimaryHeader({
 
       <div
         data-testid="combined-stats-preview"
-        className="mt-1 grid grid-cols-3 gap-3 rounded-md border border-border/60 bg-background/80 p-3"
+        className="mt-1 grid grid-cols-1 gap-3 rounded-md border border-border/60 bg-background/80 p-3 sm:grid-cols-3"
       >
-        <div className="flex flex-col">
-          <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <Gamepad2Icon className="h-3.5 w-3.5 text-primary" />
+        <div className="flex flex-col gap-0.5">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Gamepad2Icon className="h-4 w-4 text-primary" />
             Combined Matches
           </span>
           <span
             data-testid="combined-matches-value"
-            className="text-lg font-extrabold text-foreground"
+            className="text-xl font-extrabold text-foreground sm:text-2xl"
           >
             {combinedStats.matches}
           </span>
         </div>
-        <div className="flex flex-col">
-          <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <TrophyIcon className="h-3.5 w-3.5 text-primary" />
+        <div className="flex flex-col gap-0.5">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <TrophyIcon className="h-4 w-4 text-primary" />
             Combined Win Rate
           </span>
           <span
             data-testid="combined-winrate-value"
-            className="text-lg font-extrabold text-foreground"
+            className="text-xl font-extrabold text-foreground sm:text-2xl"
           >
             {combinedStats.winPercentage}%
           </span>
         </div>
-        <div className="flex flex-col">
-          <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <CrosshairIcon className="h-3.5 w-3.5 text-primary" />
+        <div className="flex flex-col gap-0.5">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <CrosshairIcon className="h-4 w-4 text-primary" />
             Combined K/D
           </span>
           <span
             data-testid="combined-kd-value"
-            className="text-lg font-extrabold text-foreground"
+            className="text-xl font-extrabold text-foreground sm:text-2xl"
           >
             {combinedStats.kd.toFixed(2)}
           </span>

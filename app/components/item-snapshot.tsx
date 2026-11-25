@@ -21,7 +21,7 @@ export const ItemSnapshot: React.FC<Props> = ({ item, children }) => {
   return (
     <div className="flex flex-row items-center gap-2">
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger className="inline-flex min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <Avatar className="h-10 w-10 rounded-sm">
             <AvatarFallback className="rounded-sm">
               {baseInfo.name.charAt(0).toUpperCase()}

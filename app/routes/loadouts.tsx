@@ -24,10 +24,7 @@ const PAGE_SIZE = 10;
 const DEFAULT_MINIMUM_GAMES = 5;
 
 export type SortByOption =
-  | 'created_at'
-  | 'win_rate'
-  | 'kd_ratio'
-  | 'matches_played';
+  'created_at' | 'win_rate' | 'kd_ratio' | 'matches_played';
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
@@ -112,7 +109,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     page,
   };
 }
-
 
 export function Loadouts({ loaderData }: Route.ComponentProps) {
   const {
@@ -230,7 +226,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               name="minimum"
               onValueChange={(val) => handleFilterChange('minimum', val)}
             >
-              <SelectTrigger className="w-full md:max-w-[200px]">
+              <SelectTrigger className="h-11 w-full touch-manipulation text-sm md:h-10 md:max-w-[200px]">
                 <SelectValue placeholder="Minimum Games" />
               </SelectTrigger>
               <SelectContent>
@@ -252,7 +248,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               name="sortBy"
               onValueChange={(val) => handleFilterChange('sortBy', val)}
             >
-              <SelectTrigger className="w-full md:max-w-[200px]">
+              <SelectTrigger className="h-11 w-full touch-manipulation text-sm md:h-10 md:max-w-[200px]">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
@@ -279,7 +275,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
                     isHasSimilarActive ? '' : 'true',
                   )
                 }
-                className="flex items-center gap-2"
+                className="flex min-h-11 w-full touch-manipulation items-center justify-center gap-2 sm:w-auto md:min-h-10"
               >
                 <LayersIcon className="h-4 w-4" />
                 <span>Has Similar Loadouts</span>
@@ -325,7 +321,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               disabled
               variant="outline"
               size="sm"
-              className="sm:size-default"
+              className="min-h-11 px-4 text-sm sm:min-h-10"
             >
               <ChevronLeft className="mr-1 h-4 w-4" />
               <span>Previous</span>
@@ -335,7 +331,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               asChild
               variant="outline"
               size="sm"
-              className="sm:size-default"
+              className="min-h-11 touch-manipulation px-4 text-sm sm:min-h-10"
             >
               <Link to={buildPageUrl(page - 1)}>
                 <ChevronLeft className="mr-1 h-4 w-4" />
@@ -344,7 +340,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
             </Button>
           )}
 
-          <span className="text-xs font-semibold text-muted-foreground">
+          <span className="text-sm font-semibold text-muted-foreground">
             Page {page}
           </span>
 
@@ -353,7 +349,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               asChild
               variant="outline"
               size="sm"
-              className="sm:size-default"
+              className="min-h-11 touch-manipulation px-4 text-sm sm:min-h-10"
             >
               <Link to={buildPageUrl(page + 1)}>
                 <span>Next</span>
@@ -365,7 +361,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               disabled
               variant="outline"
               size="sm"
-              className="sm:size-default"
+              className="min-h-11 px-4 text-sm sm:min-h-10"
             >
               <span>Next</span>
               <ChevronRight className="ml-1 h-4 w-4" />

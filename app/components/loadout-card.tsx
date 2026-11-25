@@ -68,9 +68,7 @@ export function LoadoutCard({
         <CardContent
           className={cn(
             'flex h-full w-full min-w-0 flex-1 flex-col justify-between',
-            compact
-              ? 'gap-3.5 p-4 sm:p-5'
-              : 'gap-4 p-4 sm:p-5 md:p-6 lg:p-7',
+            compact ? 'gap-3.5 p-4 sm:p-5' : 'gap-4 p-4 sm:p-5 md:p-6 lg:p-7',
           )}
         >
           <div className="flex w-full min-w-0 flex-col gap-3.5">
@@ -108,12 +106,14 @@ export function LoadoutCardHeader({
 }) {
   return (
     <div className="flex w-full min-w-0 flex-col gap-2.5 border-b border-border/50 pb-3">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="flex w-full items-center justify-between gap-2">
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex w-full flex-wrap items-center justify-between gap-2">
           <h3
             className={cn(
-              'truncate font-bold tracking-tight text-foreground transition-colors group-hover:text-primary',
-              compact ? 'text-base sm:text-lg' : 'text-lg sm:text-xl lg:text-2xl',
+              'min-w-0 flex-1 truncate font-bold tracking-tight text-foreground transition-colors group-hover:text-primary',
+              compact
+                ? 'text-xl sm:text-2xl'
+                : 'text-xl sm:text-2xl lg:text-3xl',
             )}
           >
             {snapshot.name || 'Loadout'}
@@ -129,14 +129,14 @@ export function LoadoutCardHeader({
                   e.stopPropagation();
                   onSimilarClick?.(snapshot);
                 }}
-                className="h-7 gap-1.5 rounded-full px-2.5 text-xs font-semibold"
+                className="min-h-10 touch-manipulation gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold sm:min-h-9 sm:text-sm"
               >
-                <LayersIcon className="h-3.5 w-3.5 text-primary" />
+                <LayersIcon className="h-4 w-4 text-primary" />
                 <span>{similarCount} Similar</span>
               </Button>
             )}
             {snapshot.createdAt && (
-              <span className="shrink-0 text-xs text-muted-foreground">
+              <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
                 <FormattedDate
                   date={snapshot.createdAt}
                   formatStr="MMM d, yyyy"
@@ -146,7 +146,7 @@ export function LoadoutCardHeader({
           </div>
         </div>
         {snapshot.description && (
-          <p className="line-clamp-2 text-xs text-muted-foreground sm:text-sm">
+          <p className="line-clamp-2 text-sm text-muted-foreground sm:text-base">
             {snapshot.description}
           </p>
         )}
@@ -180,20 +180,27 @@ export function LoadoutCardSummary({
   return (
     <div
       className={cn(
-        'grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-2.5',
+        'grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3',
         !compact && 'sm:grid-cols-4 md:divide-x md:divide-border/60',
       )}
     >
-      <div className={cn('flex min-w-0 flex-col gap-0.5', !compact && 'md:pr-4 lg:pr-6')}>
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <Gamepad2Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <div
+        className={cn(
+          'flex min-w-0 flex-col gap-0.5',
+          !compact && 'md:pr-4 lg:pr-6',
+        )}
+      >
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
+          <Gamepad2Icon className="h-4 w-4 shrink-0 text-primary" />
           Games
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
           <span
             className={cn(
               'font-heading font-extrabold tracking-wide text-foreground',
-              compact ? 'text-xl sm:text-2xl' : 'text-xl sm:text-2xl lg:text-3xl',
+              compact
+                ? 'text-2xl sm:text-2xl'
+                : 'text-2xl sm:text-2xl lg:text-3xl',
             )}
           >
             {gamesCount}
@@ -201,23 +208,30 @@ export function LoadoutCardSummary({
         </div>
       </div>
 
-      <div className={cn('flex min-w-0 flex-col gap-0.5', !compact && 'md:px-4 lg:px-6')}>
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <TrophyIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <div
+        className={cn(
+          'flex min-w-0 flex-col gap-0.5',
+          !compact && 'md:px-4 lg:px-6',
+        )}
+      >
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
+          <TrophyIcon className="h-4 w-4 shrink-0 text-primary" />
           Win Rate
         </span>
         <div className="flex flex-wrap items-baseline gap-1.5">
           <span
             className={cn(
               'font-heading font-extrabold tracking-wide text-foreground',
-              compact ? 'text-xl sm:text-2xl' : 'text-xl sm:text-2xl lg:text-3xl',
+              compact
+                ? 'text-2xl sm:text-2xl'
+                : 'text-2xl sm:text-2xl lg:text-3xl',
             )}
           >
             {winPercentage}%
           </span>
           <span
             className={cn(
-              'text-xs font-semibold',
+              'text-xs font-semibold sm:text-sm',
               isPositiveWinRate
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : 'text-amber-600 dark:text-amber-400',
@@ -228,16 +242,22 @@ export function LoadoutCardSummary({
         </div>
       </div>
 
-      <div className={cn('flex min-w-0 flex-col gap-0.5', !compact && 'md:px-4 lg:px-6')}>
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <CrosshairIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
-          K / D
+      <div
+        className={cn(
+          'flex min-w-0 flex-col gap-0.5',
+          !compact && 'md:px-4 lg:px-6',
+        )}
+      >
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
+          <CrosshairIcon className="h-4 w-4 shrink-0 text-primary" />K / D
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
           <span
             className={cn(
               'font-heading font-extrabold tracking-wide text-foreground',
-              compact ? 'text-xl sm:text-2xl' : 'text-xl sm:text-2xl lg:text-3xl',
+              compact
+                ? 'text-2xl sm:text-2xl'
+                : 'text-2xl sm:text-2xl lg:text-3xl',
             )}
           >
             {kd.toFixed(2)}
@@ -245,16 +265,23 @@ export function LoadoutCardSummary({
         </div>
       </div>
 
-      <div className={cn('flex min-w-0 flex-col gap-0.5', !compact && 'md:px-4 lg:px-6')}>
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <SwordsIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <div
+        className={cn(
+          'flex min-w-0 flex-col gap-0.5',
+          !compact && 'md:px-4 lg:px-6',
+        )}
+      >
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
+          <SwordsIcon className="h-4 w-4 shrink-0 text-primary" />
           Efficiency
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
           <span
             className={cn(
               'font-heading font-extrabold tracking-wide text-foreground',
-              compact ? 'text-xl sm:text-2xl' : 'text-xl sm:text-2xl lg:text-3xl',
+              compact
+                ? 'text-2xl sm:text-2xl'
+                : 'text-2xl sm:text-2xl lg:text-3xl',
             )}
           >
             {kda.toFixed(2)}
@@ -280,13 +307,13 @@ export function LoadoutCardGear({
   if (gearItems.length === 0) return null;
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2 border-t border-border/50 pt-3">
-      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="flex w-full min-w-0 flex-col gap-2.5 border-t border-border/50 pt-3">
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
         Gear & Weapons
       </span>
       <div
         className={cn(
-          'grid grid-cols-1 gap-2 sm:grid-cols-2',
+          'grid grid-cols-1 gap-2.5 sm:grid-cols-2',
           !compact && 'lg:grid-cols-4',
         )}
       >
@@ -303,7 +330,10 @@ export function LoadoutCardGear({
               tooltipContent={
                 <div className="flex flex-col gap-2">
                   <span
-                    className={cn('font-bold', isExotic && 'text-amber-400')}
+                    className={cn(
+                      'text-sm font-bold',
+                      isExotic && 'text-amber-400',
+                    )}
                   >
                     {name}
                   </span>
@@ -338,10 +368,10 @@ export function LoadoutCardSetBonuses({
       data-testid="loadout-card-set-bonuses"
       className="flex w-full min-w-0 flex-wrap items-center gap-2 border-t border-border/50 pt-3"
     >
-      <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
         Set Bonuses
       </span>
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         {bonuses.map((bonus) => (
           <ArmorSetBonusPill
             key={String(bonus.setHash)}
@@ -356,10 +386,9 @@ export function LoadoutCardSetBonuses({
 
 export function LoadoutCardFooter() {
   return (
-    <div className="flex min-w-0 items-center justify-end gap-1.5 border-t border-border/40 pt-3 text-xs font-semibold text-primary transition-all group-hover:translate-x-0.5 lg:text-sm">
+    <div className="flex min-h-9 min-w-0 items-center justify-end gap-1.5 border-t border-border/40 pt-3 text-sm font-semibold text-primary transition-all group-hover:translate-x-0.5">
       <span className="truncate">View Loadout Details</span>
-      <ArrowRightIcon className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-1 lg:h-4 lg:w-4" />
+      <ArrowRightIcon className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
     </div>
   );
 }
-

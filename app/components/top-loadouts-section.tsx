@@ -101,7 +101,11 @@ export function TopLoadoutsErrorState({
     >
       {hasSessions && browseAllTo && (
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button asChild variant={isOwner ? 'outline' : 'default'}>
+          <Button
+            asChild
+            variant={isOwner ? 'outline' : 'default'}
+            className="min-h-11 touch-manipulation sm:min-h-10"
+          >
             <Link to={browseAllTo}>Browse All Loadouts</Link>
           </Button>
         </div>
@@ -133,7 +137,7 @@ function TopLoadoutsHeader({
       {showViewAll && (
         <Link
           to={viewAllTo}
-          className="text-sm font-medium text-primary hover:underline"
+          className="inline-flex min-h-10 touch-manipulation items-center rounded-md px-2.5 py-1.5 text-sm font-semibold text-primary hover:underline"
         >
           View all loadouts
         </Link>
@@ -203,7 +207,11 @@ function TopLoadoutsContent({
     >
       {hasSessions && (
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button asChild variant={isOwner ? 'outline' : 'default'}>
+          <Button
+            asChild
+            variant={isOwner ? 'outline' : 'default'}
+            className="min-h-11 touch-manipulation sm:min-h-10"
+          >
             <Link to={browseAllTo}>Browse All Loadouts</Link>
           </Button>
         </div>

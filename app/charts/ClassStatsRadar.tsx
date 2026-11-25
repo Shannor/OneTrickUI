@@ -40,7 +40,10 @@ export function ClassStatsRadar({ className, data }: ClassStatsRadarProps) {
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn('max-h-[500px] min-h-[260px] w-full min-w-0', className)}
+      className={cn(
+        'max-h-[500px] min-h-[280px] w-full min-w-0 sm:min-h-[320px]',
+        className,
+      )}
     >
       <RadarChart data={data}>
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
@@ -60,8 +63,8 @@ export function ClassStatsRadar({ className, data }: ClassStatsRadarProps) {
                 x={x}
                 y={index === 0 ? y - 10 : y}
                 textAnchor={textAnchor}
-                fontSize={13}
-                fontWeight={500}
+                fontSize={14}
+                fontWeight={600}
                 {...props}
               >
                 <tspan className="fill-black dark:fill-white">{d.value}</tspan>
@@ -73,8 +76,8 @@ export function ClassStatsRadar({ className, data }: ClassStatsRadarProps) {
                 </tspan>
                 <tspan
                   x={x}
-                  dy={'1rem'}
-                  fontSize={12}
+                  dy={'1.1rem'}
+                  fontSize={13}
                   className="fill-muted-foreground"
                 >
                   {d.stat}

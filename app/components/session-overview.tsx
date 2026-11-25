@@ -58,7 +58,7 @@ export function SessionOverview({
   const isPending = session.status === 'pending';
 
   return (
-    <TooltipProvider font-sans>
+    <TooltipProvider>
       <div className={cn('flex w-full flex-col gap-6', className)}>
         <SessionCompTrackingBanner
           compTracking={session.compTracking}

@@ -273,7 +273,7 @@ export function SimilarLoadoutsView({
                     size="sm"
                     disabled={isMerging}
                     onClick={handleSelectAllHigh}
-                    className="h-7 text-xs"
+                    className="min-h-10 touch-manipulation px-3.5 text-xs sm:min-h-9 sm:text-sm"
                   >
                     {allHighSelected
                       ? 'Deselect All High Similarity'
@@ -321,6 +321,7 @@ export function SimilarLoadoutsView({
             <div className="flex flex-row items-center justify-end gap-3 border-t pt-4">
               <LoadingButton
                 type="submit"
+                className="min-h-11 w-full touch-manipulation sm:min-h-10 sm:w-auto"
                 disabled={selectedIds.length === 0 || isMerging}
                 isLoading={isMerging}
                 loadingText={

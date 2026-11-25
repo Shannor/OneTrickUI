@@ -258,11 +258,11 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
           />
         ) : (
           <div className="flex w-full flex-col gap-2">
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               {snapshot.name ?? ''}
             </h2>
             {snapshot.description && (
-              <p className="whitespace-pre-line text-sm text-muted-foreground">
+              <p className="whitespace-pre-line text-sm text-muted-foreground sm:text-base">
                 {snapshot.description}
               </p>
             )}

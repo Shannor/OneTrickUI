@@ -87,7 +87,7 @@ export function ShareSiteButton({
 
   return (
     <TooltipProvider>
-      <Tooltip open={copyStatus ? true : undefined}>
+      <Tooltip disableTapTrigger open={copyStatus ? true : undefined}>
         <TooltipTrigger asChild>
           <Button
             type="button"

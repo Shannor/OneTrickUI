@@ -23,6 +23,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '~/components/ui/collapsible';
+import { TooltipProvider } from '~/components/ui/tooltip';
 import { Weapon } from '~/components/weapon';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
@@ -112,11 +113,11 @@ export function PlayerCard({
         <Label className="text-xs uppercase tracking-wider text-muted-foreground">
           Player
         </Label>
-        <h4 className="text-xl font-bold tracking-tight">
+        <h4 className="text-2xl font-bold tracking-tight">
           {targetUserId ? (
             <Link
               to={`/profile/${targetUserId}`}
-              className="transition-colors hover:text-primary"
+              className="inline-flex min-h-9 items-center transition-colors hover:text-primary"
               viewTransition
             >
               {user?.displayName ?? 'Unknown Player'}
@@ -127,18 +128,18 @@ export function PlayerCard({
         </h4>
       </div>
 
-      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+      <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center">
         {targetUserId && charId && sessionId && (
           <Button
             asChild
             variant="outline"
             size="sm"
-            className="w-full justify-center sm:w-auto"
+            className="min-h-11 w-full touch-manipulation justify-center text-sm sm:min-h-9 sm:w-auto"
           >
             <Link
               to={`/profile/${targetUserId}/c/${charId}/sessions/${sessionId}`}
             >
-              <Hourglass className="mr-1.5 h-3.5 w-3.5 text-primary" />
+              <Hourglass className="mr-1.5 h-4 w-4 text-primary" />
               View Session
             </Link>
           </Button>
@@ -148,12 +149,12 @@ export function PlayerCard({
             asChild
             variant="outline"
             size="sm"
-            className="w-full justify-center sm:w-auto"
+            className="min-h-11 w-full touch-manipulation justify-center text-sm sm:min-h-9 sm:w-auto"
           >
             <Link
               to={`/profile/${targetUserId}/c/${charId}/loadouts/${snapshotId}`}
             >
-              <SquareLibrary className="mr-1.5 h-3.5 w-3.5 text-primary" />
+              <SquareLibrary className="mr-1.5 h-4 w-4 text-primary" />
               View Detailed Loadout
             </Link>
           </Button>
@@ -191,7 +192,7 @@ export function PlayerCard({
 
       {weapons.length > 0 && (
         <div className="col-span-12 flex flex-col gap-4 pt-4">
-          <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
+          <div className="grid grid-cols-1 gap-8 sm:gap-10 xl:grid-cols-3 xl:gap-12">
             {weapons.map((w) => (
               <Weapon
                 key={String(w.referenceId)}
@@ -206,45 +207,49 @@ export function PlayerCard({
   );
 
   const mainCard = (
-    <Card>
-      <CardContent className="grid grid-cols-12 gap-6 p-4 md:p-6">
-        {cardHeaderContent}
+    <TooltipProvider>
+      <Card>
+        <CardContent className="grid grid-cols-12 gap-6 p-4 md:p-6">
+          {cardHeaderContent}
 
-        <div className="col-span-12 flex flex-row items-start justify-between gap-4">
-          <Performance stats={stats} />
-        </div>
+          <div className="col-span-12 flex flex-row items-start justify-between gap-4">
+            <Performance stats={stats} />
+          </div>
 
-        {collapsible ? (
-          <>
-            <CollapsibleContent className="col-span-12 grid grid-cols-12 gap-6 pt-2 transition-all">
-              {detailedContent}
-            </CollapsibleContent>
+          {collapsible ? (
+            <>
+              <CollapsibleContent className="col-span-12 grid grid-cols-12 gap-6 pt-2 transition-all">
+                {detailedContent}
+              </CollapsibleContent>
 
-            <div className="col-span-12 border-t pt-3">
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-center gap-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 hover:text-primary"
-                  aria-label="Toggle loadout details"
-                >
-                  <span>
-                    {isOpen ? 'Hide Loadout Details' : 'Expand Loadout Details'}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      'h-4 w-4 transition-transform duration-200',
-                      isOpen && 'rotate-180',
-                    )}
-                  />
-                </Button>
-              </CollapsibleTrigger>
-            </div>
-          </>
-        ) : (
-          detailedContent
-        )}
-      </CardContent>
-    </Card>
+              <div className="col-span-12 border-t pt-3">
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="min-h-11 w-full touch-manipulation justify-center gap-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 hover:text-primary sm:min-h-9"
+                    aria-label="Toggle loadout details"
+                  >
+                    <span>
+                      {isOpen
+                        ? 'Hide Loadout Details'
+                        : 'Expand Loadout Details'}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 transition-transform duration-200',
+                        isOpen && 'rotate-180',
+                      )}
+                    />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+            </>
+          ) : (
+            detailedContent
+          )}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 
   if (collapsible) {

@@ -74,21 +74,22 @@ export function ArmorSetBonusDiffBadge({
             badgeVariants({
               variant: armorSetBonusMatch ? 'secondary' : 'outline',
             }),
+            'min-h-9 cursor-pointer touch-manipulation px-3 py-1.5 text-xs sm:min-h-8 sm:text-xs',
             armorSetBonusMatch
-              ? 'cursor-help gap-1 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
-              : 'cursor-help gap-1.5 border-sky-500/50 bg-sky-500/10 text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-sky-400',
+              ? 'gap-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
+              : 'gap-1.5 border-sky-500/50 bg-sky-500/10 text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-sky-400',
           )}
         >
           {armorSetBonusMatch ? (
             <>
-              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
               <span>
                 {bothLackSetBonuses ? 'No Set Bonuses' : 'Set Bonus Match'}
               </span>
             </>
           ) : (
             <>
-              <ShieldCheckIcon className="h-3 w-3 shrink-0" />
+              <ShieldCheckIcon className="h-3.5 w-3.5 shrink-0" />
               <span>Set: {candidateSummary}</span>
             </>
           )}
@@ -98,7 +99,7 @@ export function ArmorSetBonusDiffBadge({
         {...contentProps}
         className="flex max-w-sm flex-col gap-3 p-3"
       >
-        <div className="border-b border-border/60 pb-1.5 text-xs font-semibold">
+        <div className="border-b border-border/60 pb-1.5 text-xs font-semibold sm:text-sm">
           {tooltipHeading}
         </div>
         <div className="grid grid-cols-1 gap-3">

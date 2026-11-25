@@ -87,7 +87,7 @@ export function WeaponStats({ stats, compact = true }: WeaponStatsProps) {
         {gunStats.map((it) => (
           <div
             key={String(it.hash)}
-            className="flex items-center gap-1 rounded bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium"
+            className="flex items-center gap-1.5 rounded bg-muted/70 px-2 py-1 text-xs font-medium sm:text-sm"
           >
             <span className="text-muted-foreground">{updateNames(it)}</span>
             <span className="font-bold text-foreground">{it.value}</span>
@@ -98,16 +98,16 @@ export function WeaponStats({ stats, compact = true }: WeaponStatsProps) {
   }
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       {gunStats.map((it) => (
         <div
           key={String(it.hash)}
-          className="grid grid-cols-12 items-center gap-4 text-xs"
+          className="grid grid-cols-12 items-center gap-3 text-sm"
         >
-          <div className="col-span-3 font-medium text-muted-foreground">
+          <div className="col-span-4 font-medium text-muted-foreground sm:col-span-3">
             {updateNames(it)}
           </div>
-          <div className="col-span-7">
+          <div className="col-span-6 sm:col-span-7">
             <Bar value={Number(it.value)} max={100} />
           </div>
           <div className="col-span-2 font-bold text-foreground">{it.value}</div>

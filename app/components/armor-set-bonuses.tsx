@@ -81,18 +81,18 @@ export function ArmorSetBonusPerkRow({
       <ArmorSetBonusPerkIcon perk={perk} size="md" className="mt-0.5" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-foreground sm:text-sm">
+          <span className="text-sm font-bold text-foreground sm:text-base">
             {perk.name}
           </span>
           <Badge
             variant="secondary"
-            className="px-2 py-0 text-[10px] font-semibold uppercase tracking-wider"
+            className="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider"
           >
             {perk.requiredSetCount}-Piece
           </Badge>
         </div>
         {perk.description && (
-          <p className="text-xs leading-relaxed text-muted-foreground">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             {perk.description}
           </p>
         )}
@@ -122,14 +122,14 @@ export function ArmorSetBonusGroup({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2.5">
         <div className="flex min-w-0 items-center gap-2">
           <ShieldCheckIcon className="h-4 w-4 shrink-0 text-primary" />
-          <h4 className="truncate font-heading text-lg font-bold tracking-wide text-foreground sm:text-xl">
+          <h4 className="truncate font-heading text-xl font-bold tracking-wide text-foreground sm:text-2xl">
             {bonus.setName}
           </h4>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <Badge
             variant="outline"
-            className="border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-foreground"
+            className="border-primary/40 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-foreground"
           >
             {highestTier}-Piece Set
           </Badge>
@@ -184,13 +184,13 @@ export function ArmorSetBonusesPanel({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
             Active Set Bonuses
           </span>
           {isSplitSet && (
             <Badge
               variant="secondary"
-              className="px-2 py-0 text-[10px] font-semibold"
+              className="px-2 py-0.5 text-xs font-semibold"
             >
               {bonuses.length} Active Sets
             </Badge>
@@ -199,10 +199,7 @@ export function ArmorSetBonusesPanel({
       </div>
 
       <div
-        className={cn(
-          'grid grid-cols-1 gap-3',
-          isSplitSet && 'lg:grid-cols-2',
-        )}
+        className={cn('grid grid-cols-1 gap-3', isSplitSet && 'lg:grid-cols-2')}
       >
         {bonuses.map((bonus) => (
           <ArmorSetBonusGroup
@@ -229,11 +226,11 @@ export function ArmorSetBonusTooltipDetails({
     return (
       <div className="flex flex-col gap-1">
         {heading && (
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {heading}
           </span>
         )}
-        <span className="text-xs text-muted-foreground">
+        <span className="text-sm text-muted-foreground">
           No active set bonuses
         </span>
       </div>
@@ -241,9 +238,9 @@ export function ArmorSetBonusTooltipDetails({
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-3">
       {heading && (
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {heading}
         </span>
       )}
@@ -251,20 +248,20 @@ export function ArmorSetBonusTooltipDetails({
         const highestTier = getHighestActiveTier(bonus);
 
         return (
-          <div key={String(bonus.setHash)} className="flex flex-col gap-1.5">
+          <div key={String(bonus.setHash)} className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-bold text-foreground">
+              <span className="text-sm font-bold text-foreground">
                 {bonus.setName}
               </span>
-              <span className="shrink-0 text-[10px] font-medium text-muted-foreground">
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">
                 {highestTier}-Piece Set
               </span>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               {(bonus.activePerks ?? []).map((perk) => (
                 <div
                   key={`${String(perk.hash)}-${perk.requiredSetCount}`}
-                  className="flex items-start gap-2"
+                  className="flex items-start gap-2.5"
                 >
                   <ArmorSetBonusPerkIcon
                     perk={perk}
@@ -273,15 +270,15 @@ export function ArmorSetBonusTooltipDetails({
                   />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs font-semibold text-foreground">
+                      <span className="text-xs font-semibold text-foreground sm:text-sm">
                         {perk.name}
                       </span>
-                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
                         {perk.requiredSetCount}-Piece
                       </span>
                     </div>
                     {perk.description && (
-                      <p className="text-[11px] leading-snug text-muted-foreground">
+                      <p className="text-xs leading-snug text-muted-foreground">
                         {perk.description}
                       </p>
                     )}
@@ -320,22 +317,24 @@ export function ArmorSetBonusPill({
           data-testid={`armor-set-bonus-pill-${String(bonus.setHash)}`}
           {...triggerProps}
           className={cn(
-            'inline-flex max-w-full cursor-help select-none items-center gap-1.5 rounded-full border border-primary/35 bg-primary/10 font-semibold text-foreground transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-            size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs',
+            'inline-flex max-w-full cursor-pointer touch-manipulation select-none items-center gap-1.5 rounded-full border border-primary/35 bg-primary/10 font-semibold text-foreground transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+            size === 'sm'
+              ? 'min-h-10 px-3 py-1.5 text-xs sm:min-h-8 sm:text-xs'
+              : 'min-h-11 px-3.5 py-2 text-xs sm:min-h-9 sm:text-sm',
             className,
           )}
         >
           {featuredPerk ? (
             <ArmorSetBonusPerkIcon
               perk={featuredPerk}
-              size="xs"
+              size="sm"
               className="rounded-full border-primary/40"
             />
           ) : (
-            <ShieldCheckIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <ShieldCheckIcon className="h-4 w-4 shrink-0 text-primary" />
           )}
           <span className="truncate">{bonus.setName}</span>
-          <span className="shrink-0 font-mono text-[10px] font-bold text-primary">
+          <span className="shrink-0 font-mono text-xs font-bold text-primary">
             ({highestTier}pc)
           </span>
         </button>

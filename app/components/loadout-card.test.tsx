@@ -143,6 +143,41 @@ describe('LoadoutCard', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
+  it('opens weapon tooltip when tapping a gear pill without triggering card navigation', () => {
+    const handleClick = vi.fn();
+    const snapshotWithWeaponStats = {
+      ...mockSnapshot,
+      loadout: {
+        ...mockSnapshot.loadout,
+        1498876634: {
+          ...mockSnapshot.loadout[1498876634],
+          details: {
+            ...mockSnapshot.loadout[1498876634].details,
+            stats: {
+              1240592695: { hash: 1240592695, name: 'Range', value: 72 },
+            },
+          },
+        },
+      },
+    } as unknown as CharacterSnapshot;
+
+    render(
+      <LoadoutCard
+        snapshot={snapshotWithWeaponStats}
+        stats={mockStats}
+        gamesCount={5}
+        onClick={handleClick}
+      />,
+    );
+
+    const rosePill = screen.getByRole('button', { name: /rose/i });
+    fireEvent.pointerDown(rosePill);
+    fireEvent.click(rosePill);
+
+    expect(handleClick).not.toHaveBeenCalled();
+    expect(screen.getAllByText('Range').length).toBeGreaterThan(0);
+  });
+
   it('does not render set bonus pills when armorSetBonuses is empty or undefined', () => {
     render(
       <LoadoutCard snapshot={mockSnapshot} stats={mockStats} gamesCount={5} />,

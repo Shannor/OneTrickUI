@@ -4,8 +4,8 @@ import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { FormattedDate } from '~/components/formatted-date';
 import { HorizontalBanner } from '~/components/horizontal-banner';
-import { Label } from '~/components/label';
 import { Button } from '~/components/ui/button';
+import { TooltipProvider } from '~/components/ui/tooltip';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
@@ -99,191 +99,193 @@ export function SessionGames({ params }: Route.ComponentProps) {
   }
 
   return (
-    <div className="flex flex-col gap-8 md:gap-6">
-      {metaTags}
-      {aggregates
-        .sort(
-          (a, b) =>
-            new Date(b.activityDetails.period).getTime() -
-            new Date(a.activityDetails.period).getTime(),
-        )
-        .map((value, index, arr) => {
-          const {
-            activityDetails,
-            snapshotLinks,
-            performance: performances,
-          } = value;
+    <TooltipProvider>
+      <div className="flex flex-col gap-8 md:gap-6">
+        {metaTags}
+        {aggregates
+          .sort(
+            (a, b) =>
+              new Date(b.activityDetails.period).getTime() -
+              new Date(a.activityDetails.period).getTime(),
+          )
+          .map((value, index, arr) => {
+            const {
+              activityDetails,
+              snapshotLinks,
+              performance: performances,
+            } = value;
 
-          const link = snapshotLinks[characterId];
-          const performance = performances[characterId];
-          const snapshot = link.snapshotId
-            ? snapshots[link.snapshotId]
-            : undefined;
+            const link = snapshotLinks[characterId];
+            const performance = performances[characterId];
+            const snapshot = link.snapshotId
+              ? snapshots[link.snapshotId]
+              : undefined;
 
-          let hasLoadout = false;
-          switch (link?.confidenceLevel) {
-            case 'high':
-              hasLoadout = true;
-              break;
-            case 'medium':
-              hasLoadout = true;
-              break;
-            case 'low':
-              hasLoadout = true;
-              break;
-          }
+            let hasLoadout = false;
+            switch (link?.confidenceLevel) {
+              case 'high':
+                hasLoadout = true;
+                break;
+              case 'medium':
+                hasLoadout = true;
+                break;
+              case 'low':
+                hasLoadout = true;
+                break;
+            }
 
-          const previous = index > 0 ? arr[index - 1] : undefined;
-          const showLoadout =
-            !previous ||
-            previous.snapshotLinks[characterId]?.snapshotId !== link.snapshotId;
-          const won = performance?.playerStats?.standing?.value === 0;
+            const previous = index > 0 ? arr[index - 1] : undefined;
+            const showLoadout =
+              !previous ||
+              previous.snapshotLinks[characterId]?.snapshotId !==
+                link.snapshotId;
+            const won = performance?.playerStats?.standing?.value === 0;
 
-          const stats: StatItem[] = [];
-          const kdStats: StatItem[] = [];
-          if (performance) {
-            const kills = performance.playerStats.kills?.value ?? 0;
-            const assists = performance.playerStats.assists?.value ?? 0;
-            const deaths = performance.playerStats.deaths?.value ?? 0;
-            const kd = calculateRatio(kills, deaths);
-            const kda = calculateRatio(kills + assists, deaths);
-            stats.push(
-              { label: 'Kills', value: kills.toString() },
-              { label: 'Assists', value: assists.toString() },
-              { label: 'Deaths', value: deaths.toString() },
-            );
-            kdStats.push(
-              { label: 'K/D', value: kd.toFixed(2) },
-              { label: 'Efficiency', value: kda.toFixed(2) },
-            );
-          }
+            const stats: StatItem[] = [];
+            const kdStats: StatItem[] = [];
+            if (performance) {
+              const kills = performance.playerStats.kills?.value ?? 0;
+              const assists = performance.playerStats.assists?.value ?? 0;
+              const deaths = performance.playerStats.deaths?.value ?? 0;
+              const kd = calculateRatio(kills, deaths);
+              const kda = calculateRatio(kills + assists, deaths);
+              stats.push(
+                { label: 'Kills', value: kills.toString() },
+                { label: 'Assists', value: assists.toString() },
+                { label: 'Deaths', value: deaths.toString() },
+              );
+              kdStats.push(
+                { label: 'K/D', value: kd.toFixed(2) },
+                { label: 'Efficiency', value: kda.toFixed(2) },
+              );
+            }
 
-          return (
-            <div key={value.id} className={cn('flex flex-col gap-4')}>
-              {!hasLoadout && (
-                <div
-                  className={cn(
-                    'flex flex-row items-center gap-4 py-2 text-sm text-muted-foreground',
-                  )}
-                >
-                  No Found Loadout for Games
-                </div>
-              )}
-              {snapshot && showLoadout && (
-                <div className={cn('flex flex-col gap-4 pb-2 pt-4')}>
-                  <div className="group flex flex-row items-center gap-2">
+            return (
+              <div key={value.id} className={cn('flex flex-col gap-4')}>
+                {!hasLoadout && (
+                  <div
+                    className={cn(
+                      'flex flex-row items-center gap-4 py-2 text-sm text-muted-foreground',
+                    )}
+                  >
+                    No Found Loadout for Games
+                  </div>
+                )}
+                {snapshot && showLoadout && (
+                  <div className={cn('flex flex-col gap-3 pb-2 pt-4')}>
                     <Link
                       to={`/profile/${id}/c/${characterId}/loadouts/${snapshot.id}`}
+                      className="group inline-flex min-h-11 w-full touch-manipulation items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2 text-base font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:w-fit sm:justify-start"
                     >
-                      <Label className="group-hover:text-blue-400 group-hover:underline">
+                      <span className="truncate group-hover:underline">
                         {snapshot?.name ?? 'Snapshot'}
-                      </Label>
+                      </span>
+                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
                     </Link>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
+                    <div
+                      className={cn('flex flex-row flex-wrap gap-3', {
+                        hidden: !hasLoadout,
+                      })}
+                    >
+                      {getWeapons(snapshot.loadout).map((weapon) => (
+                        <WeaponHeader
+                          key={weapon.itemHash}
+                          properties={weapon.details}
+                          onlyIcon
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div
-                    className={cn('flex flex-row gap-4', {
-                      hidden: !hasLoadout,
-                    })}
-                  >
-                    {getWeapons(snapshot.loadout).map((weapon) => (
-                      <WeaponHeader
-                        key={weapon.itemHash}
-                        properties={weapon.details}
-                        onlyIcon
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div
-                className="group flex w-full flex-col gap-4 rounded-lg bg-card p-3 transition-colors hover:cursor-pointer hover:bg-muted/50 md:flex-row md:items-center md:gap-6 md:p-4"
-                onClick={() => {
-                  navigate(
-                    `/profile/${id}/c/${characterId}/activities/${activityDetails.instanceId}`,
-                  );
-                }}
-              >
-                <div className="hidden flex-row gap-2 md:flex">
-                  {won ? (
-                    <VerticalBanner
-                      label="Victory"
-                      className="bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
-                    />
-                  ) : (
-                    <VerticalBanner
-                      label="Defeat"
-                      className="bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
-                    />
-                  )}
-                  <img
-                    src={activityDetails.imageUrl}
-                    className="hidden h-auto w-36 rounded-lg object-cover md:block md:w-28 lg:w-36 xl:w-44"
-                    alt="activity image"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col gap-4">
-                  <div className="flex flex-col gap-4 md:hidden">
+                )}
+                <div
+                  className="group flex w-full flex-col gap-4 rounded-lg bg-card p-3 transition-colors hover:cursor-pointer hover:bg-muted/50 md:flex-row md:items-center md:gap-6 md:p-4"
+                  onClick={() => {
+                    navigate(
+                      `/profile/${id}/c/${characterId}/activities/${activityDetails.instanceId}`,
+                    );
+                  }}
+                >
+                  <div className="hidden flex-row gap-2 md:flex">
                     {won ? (
-                      <HorizontalBanner
+                      <VerticalBanner
                         label="Victory"
-                        className="h-5 bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
+                        className="bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
                       />
                     ) : (
-                      <HorizontalBanner
+                      <VerticalBanner
                         label="Defeat"
-                        className="h-5 bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
+                        className="bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
                       />
                     )}
                     <img
                       src={activityDetails.imageUrl}
-                      className="h-28 w-full rounded-lg object-cover md:hidden"
+                      className="hidden h-auto w-36 rounded-lg object-cover md:block md:w-28 lg:w-36 xl:w-44"
                       alt="activity image"
                     />
                   </div>
-                  <div className="flex flex-row items-center gap-2">
-                    <img
-                      src={activityDetails.activityIcon}
-                      className="h-12 w-12 rounded-lg bg-black/50 object-cover"
-                      alt="activity image"
-                    />
-                    <div className="flex flex-col gap-1">
-                      <Description
-                        activity={activityDetails.activity}
-                        mode={activityDetails.mode}
-                      />
-                      <div className="text-xl font-bold">
-                        {activityDetails.location}
-                      </div>
-
-                      <FormattedDate
-                        date={activityDetails.period}
-                        formatStr="p"
-                        fallbackFormatStr="HH:mm"
-                        className="text-xs text-muted-foreground"
+                  <div className="flex flex-1 flex-col gap-4">
+                    <div className="flex flex-col gap-4 md:hidden">
+                      {won ? (
+                        <HorizontalBanner
+                          label="Victory"
+                          className="h-5 bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
+                        />
+                      ) : (
+                        <HorizontalBanner
+                          label="Defeat"
+                          className="h-5 bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
+                        />
+                      )}
+                      <img
+                        src={activityDetails.imageUrl}
+                        className="h-28 w-full rounded-lg object-cover md:hidden"
+                        alt="activity image"
                       />
                     </div>
+                    <div className="flex flex-row items-center gap-2">
+                      <img
+                        src={activityDetails.activityIcon}
+                        className="h-12 w-12 rounded-lg bg-black/50 object-cover"
+                        alt="activity image"
+                      />
+                      <div className="flex flex-col gap-1">
+                        <Description
+                          activity={activityDetails.activity}
+                          mode={activityDetails.mode}
+                        />
+                        <div className="text-xl font-bold">
+                          {activityDetails.location}
+                        </div>
+
+                        <FormattedDate
+                          date={activityDetails.period}
+                          formatStr="p"
+                          fallbackFormatStr="HH:mm"
+                          className="text-xs text-muted-foreground"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
+                      <Performance stats={stats} className="md:pr-2" />
+                      <Performance stats={kdStats} className={'md:px-2'} />
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-                    <Performance stats={stats} className="md:pr-2" />
-                    <Performance stats={kdStats} className={'md:px-2'} />
+                  <div className="flex shrink-0 items-center justify-end pt-2 md:pt-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="min-h-11 w-full touch-manipulation justify-between gap-2 text-sm group-hover:border-primary group-hover:text-primary md:min-h-9 md:w-auto md:justify-center"
+                    >
+                      <span>View Game Details</span>
+                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </Button>
                   </div>
-                </div>
-                <div className="flex shrink-0 items-center justify-end pt-2 md:pt-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-between gap-2 group-hover:border-primary group-hover:text-primary md:w-auto md:justify-center"
-                  >
-                    <span>View Game Details</span>
-                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </Button>
                 </div>
               </div>
-            </div>
-          );
-        })}
-    </div>
+            );
+          })}
+      </div>
+    </TooltipProvider>
   );
 }
 

@@ -40,14 +40,14 @@ export const Sockets: React.FC<Props> = ({
           return (
             <div
               key={it.plugHash}
-              className={cn('flex flex-row items-center gap-4')}
+              className={cn('flex flex-row items-center gap-3')}
             >
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger className="inline-flex min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                   <Avatar
                     className={cn(
                       'bg-gray-800 dark:bg-transparent',
-                      isIconOnly ? 'h-12 w-12 p-1.5' : 'h-8 w-8 p-1',
+                      isIconOnly ? 'h-12 w-12 p-1.5' : 'h-9 w-9 p-1',
                     )}
                   >
                     <AvatarImage
@@ -78,7 +78,11 @@ export const Sockets: React.FC<Props> = ({
                   )}
                 </TooltipContent>
               </Tooltip>
-              {isIconOnly ? null : <div className="text-sm">{it.name}</div>}
+              {isIconOnly ? null : (
+                <div className="text-sm font-medium sm:text-base">
+                  {it.name}
+                </div>
+              )}
             </div>
           );
         })}

@@ -15,10 +15,30 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-25',
+    date: 'November 25, 2026',
+    title: 'Mobile Loadout Readability, Touch Controls & Tap-to-Open Tooltips',
+    summary:
+      'Read loadouts effortlessly on your phone with larger text across every build view, hit every weapon, perk, and sub-page control comfortably, and tap any gear, perk, or stat badge to inspect full tooltip details.',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Tap any weapon, armor piece, perk socket, kill stat, or set bonus badge on mobile to open and dismiss its tooltip—including tapping gear pills directly on Loadout and Session cards without accidentally leaving the page.',
+      },
+      {
+        type: 'improvement',
+        text: 'Read loadout names, weapon titles, subclass headers, armor pieces, and stat breakdowns much more easily on mobile with larger, higher-legibility typography across Loadouts, Overview, Sessions, and Activity views.',
+      },
+      {
+        type: 'improvement',
+        text: 'Tap loadout links, weapon perk expanders, perk and mod sockets, sub-page tabs, and loadout filters comfortably on phones with generously sized touch targets.',
+      },
+    ],
+  },
+  {
     id: '2026-11-24',
     date: 'November 24, 2026',
-    title:
-      'Faster Page Loads, Snappier Navigation & Reliable Loadout Merging',
+    title: 'Faster Page Loads, Snappier Navigation & Reliable Loadout Merging',
     summary:
       'Open 1 Trick faster even after quiet periods, move across Guardian views smoothly without full-screen loading overlays, enjoy steadier real-time session tracking, and merge multiple similar loadouts at once reliably.',
     changes: [
