@@ -37,7 +37,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 ];
 
 if (typeof window !== 'undefined') {
-  void initTracking();
+  initTracking();
 }
 
 client.setConfig({

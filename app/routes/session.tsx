@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
+import { subscribeToDocument } from '~/lib/firebaseConfig';
 import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/session';
@@ -166,75 +167,55 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
       return;
     }
 
-    let cancelled = false;
-    let unsubscribe: (() => void) | undefined;
     let isInitial = true;
 
-    void Promise.all([
-      import('firebase/firestore'),
-      import('~/lib/firebaseConfig').then((mod) => mod.getFirestoreDb()),
-    ])
-      .then(([{ doc, onSnapshot }, db]) => {
-        if (cancelled) {
-          return;
-        }
-        unsubscribe = onSnapshot(
-          doc(db, 'sessions', sessionId),
-          (snapshot) => {
-            const newData = snapshot.data() as FirestoreSessionData | undefined;
-            if (!newData) return;
+    const unsubscribe = subscribeToDocument<FirestoreSessionData>(
+      'sessions',
+      sessionId,
+      {
+        onData: (newData) => {
+          if (!newData) return;
 
-            if (isInitial) {
-              isInitial = false;
-              const current = sessionRef.current as
-                | FirestoreSessionData
-                | undefined;
-              const currentCount = current?.aggregateIds?.length ?? 0;
-              const newCount = newData.aggregateIds?.length ?? 0;
-              const statusChanged = newData.status !== current?.status;
-              const activityChanged =
-                Boolean(newData.lastSeenActivityId) &&
-                newData.lastSeenActivityId !== current?.lastSeenActivityId;
-              const compFinalized =
-                Boolean(newData.compTracking?.end) &&
-                !current?.compTracking?.end;
+          if (isInitial) {
+            isInitial = false;
+            const current = sessionRef.current as
+              | FirestoreSessionData
+              | undefined;
+            const currentCount = current?.aggregateIds?.length ?? 0;
+            const newCount = newData.aggregateIds?.length ?? 0;
+            const statusChanged = newData.status !== current?.status;
+            const activityChanged =
+              Boolean(newData.lastSeenActivityId) &&
+              newData.lastSeenActivityId !== current?.lastSeenActivityId;
+            const compFinalized =
+              Boolean(newData.compTracking?.end) &&
+              !current?.compTracking?.end;
 
-              if (
-                statusChanged ||
-                newCount !== currentCount ||
-                activityChanged ||
-                compFinalized
-              ) {
-                scheduleRevalidate(true);
-              }
-              return;
+            if (
+              statusChanged ||
+              newCount !== currentCount ||
+              activityChanged ||
+              compFinalized
+            ) {
+              scheduleRevalidate(true);
             }
+            return;
+          }
 
-            scheduleRevalidate(false);
-          },
-          (error) => {
-            log.error({
-              action: 'firestore.snapshot_error',
-              message: 'Firestore session onSnapshot error',
-              error: error instanceof Error ? error.message : String(error),
-            });
-          },
-        );
-      })
-      .catch((error) => {
-        if (cancelled) {
-          return;
-        }
-        log.error({
-          action: 'firestore.init_error',
-          message: 'Failed to initialize Firestore session listener',
-          error: error instanceof Error ? error.message : String(error),
-        });
-      });
+          scheduleRevalidate(false);
+        },
+        onError: (error) => {
+          log.error({
+            action: 'firestore.snapshot_error',
+            message: 'Firestore session onSnapshot error',
+            error: error instanceof Error ? error.message : String(error),
+          });
+        },
+      },
+    );
 
     return () => {
-      cancelled = true;
-      unsubscribe?.();
+      unsubscribe();
       if (debounceTimerRef.current !== null) {
         clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = null;

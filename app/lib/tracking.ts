@@ -1,4 +1,4 @@
-import { createError } from 'evlog';
+import { createError, log } from 'evlog';
 import { isRouteErrorResponse } from 'react-router';
 
 export interface UserTrackData {
@@ -23,8 +23,13 @@ function loadLogRocket(): Promise<LogRocketClient | null> {
         client.init('gruntt/d2-one-trick');
         return client;
       })
-      .catch(() => {
+      .catch((error) => {
         cachedLogRocketPromise = null;
+        log.warn({
+          action: 'tracking.init_failed',
+          message: 'Failed to load or initialize LogRocket',
+          error: error instanceof Error ? error.message : String(error),
+        });
         return null;
       });
   }
