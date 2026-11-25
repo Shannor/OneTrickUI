@@ -17,9 +17,26 @@ describe('initTracking', () => {
     vi.clearAllMocks();
   });
 
-  it('lazily loads and initializes LogRocket in the browser', async () => {
+  it('lazily loads and initializes LogRocket once in the browser', async () => {
     await initTracking();
+    await initTracking();
+    expect(LogRocket.init).toHaveBeenCalledTimes(1);
     expect(LogRocket.init).toHaveBeenCalledWith('gruntt/d2-one-trick');
+  });
+
+  it('does not reject when LogRocket initialization fails and retries on later tracking calls', async () => {
+    vi.resetModules();
+    vi.mocked(LogRocket.init).mockImplementationOnce(() => {
+      throw new Error('Chunk load failure');
+    });
+
+    const freshTracking = await import('./tracking');
+
+    await expect(freshTracking.initTracking()).resolves.toBeUndefined();
+    await freshTracking.trackUserSession({ id: 'user-retry' });
+
+    expect(LogRocket.init).toHaveBeenCalledTimes(2);
+    expect(LogRocket.identify).toHaveBeenCalledWith('user-retry', {});
   });
 });
 

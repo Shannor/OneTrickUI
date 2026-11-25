@@ -12,18 +12,20 @@ export interface UserTrackData {
 
 type LogRocketClient = typeof import('logrocket');
 
-let cachedLogRocketPromise: Promise<LogRocketClient> | null = null;
+let cachedLogRocketPromise: Promise<LogRocketClient | null> | null = null;
 
-function loadLogRocket(): Promise<LogRocketClient> {
+function loadLogRocket(): Promise<LogRocketClient | null> {
   if (!cachedLogRocketPromise) {
     cachedLogRocketPromise = import('logrocket')
       .then((mod) => {
         const interop = mod as unknown as { default?: LogRocketClient };
-        return interop.default ?? mod;
+        const client = interop.default ?? mod;
+        client.init('gruntt/d2-one-trick');
+        return client;
       })
-      .catch((error) => {
+      .catch(() => {
         cachedLogRocketPromise = null;
-        throw error;
+        return null;
       });
   }
   return cachedLogRocketPromise;
@@ -33,8 +35,7 @@ export async function initTracking(): Promise<void> {
   if (typeof window === 'undefined') {
     return;
   }
-  const LogRocket = await loadLogRocket();
-  LogRocket.init('gruntt/d2-one-trick');
+  await loadLogRocket();
 }
 
 export async function trackUserSession(
@@ -60,7 +61,7 @@ export async function trackUserSession(
     traits.primaryMembershipId = user.primaryMembershipId;
   }
   const LogRocket = await loadLogRocket();
-  LogRocket.identify(user.id, traits);
+  LogRocket?.identify(user.id, traits);
 }
 
 export async function trackError(error: unknown): Promise<void> {
@@ -78,6 +79,9 @@ export async function trackError(error: unknown): Promise<void> {
   const pathname = window.location.pathname;
   const href = window.location.href;
   const LogRocket = await loadLogRocket();
+  if (!LogRocket) {
+    return;
+  }
 
   if (is404) {
     LogRocket.track('404_page_not_found', {

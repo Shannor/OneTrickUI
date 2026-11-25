@@ -5,6 +5,7 @@ import type { ComponentProps } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '~/components/ui/tooltip';
+import { getFirestoreDb } from '~/lib/firebaseConfig';
 
 import Session from './session';
 
@@ -483,5 +484,100 @@ describe('Session Page Route Component', () => {
     );
     expect(titles).toEqual(['Weekend Trials - Guardian Metrics | 1 Trick']);
     expect(document.title).toBe('Weekend Trials - Guardian Metrics | 1 Trick');
+  });
+
+  it('does not attach onSnapshot if unmounted before getFirestoreDb resolves', async () => {
+    let resolveDb!: (db: unknown) => void;
+    vi.mocked(getFirestoreDb).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveDb = resolve;
+      }) as never,
+    );
+
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-unmounted',
+          name: 'Pending Session',
+          status: 'pending' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: [],
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Session {...props} />,
+      },
+    ]);
+
+    const { unmount } = render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    unmount();
+    resolveDb({ __mockDb: true });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('keeps the Firestore listener alive across re-renders when revalidate callback is stable', async () => {
+    const unsubscribe = vi.fn();
+    vi.mocked(onSnapshot).mockReturnValueOnce(unsubscribe);
+
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-stable',
+          name: 'Pending Session',
+          status: 'pending' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: [],
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Session {...props} />,
+      },
+    ]);
+
+    const { rerender } = render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => {
+      expect(onSnapshot).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    await Promise.resolve();
+    expect(unsubscribe).not.toHaveBeenCalled();
+    expect(onSnapshot).toHaveBeenCalledTimes(1);
   });
 });

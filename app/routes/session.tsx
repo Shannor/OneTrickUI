@@ -77,7 +77,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   const { session, aggregates, error, path } = loaderData;
   const { characterId } = params;
   const isOwner = type === 'owner';
-  const revalidator = useRevalidator();
+  const { revalidate } = useRevalidator();
 
   const location = useLocation();
 
@@ -152,8 +152,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
                 activityChanged ||
                 compFinalized
               ) {
-                revalidator
-                  .revalidate()
+                revalidate()
                   .then(() =>
                     log.debug({
                       action: 'firestore.revalidated',
@@ -175,8 +174,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
               return;
             }
 
-            revalidator
-              .revalidate()
+            revalidate()
               .then(() =>
                 log.debug({
                   action: 'firestore.revalidated',
@@ -217,7 +215,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
       cancelled = true;
       unsubscribe?.();
     };
-  }, [sessionId, sessionStatus, isCompFinalizing, revalidator]);
+  }, [sessionId, sessionStatus, isCompFinalizing, revalidate]);
 
   if (!session) {
     return (

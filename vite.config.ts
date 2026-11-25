@@ -37,7 +37,14 @@ export default defineConfig(({ command }) => {
       port: worktree.port,
     },
     ssr: {
-      noExternal: ['date-fns', 'lucide-react', 'react-day-picker', 'recharts'],
+      noExternal: [
+        'date-fns',
+        'lucide-react',
+        'react-day-picker',
+        'recharts',
+        'react-is',
+        'lodash',
+      ],
     },
     css: {
       postcss: {
