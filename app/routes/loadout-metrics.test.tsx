@@ -115,6 +115,25 @@ describe('loadout-metrics route loader and component', () => {
     expect(res.matches).toEqual([]);
   });
 
+  it('returns error state when getCharacterTelemetry rejects with a network error', async () => {
+    vi.mocked(getCharacterTelemetry).mockRejectedValueOnce(
+      new Error('fetch failed'),
+    );
+
+    const res = await loader({
+      params: { id: 'user-1', characterId: 'char-1', snapshotId: 'snap-1' },
+      context: new Map(),
+      request: new Request(
+        'http://localhost/profile/user-1/c/char-1/loadouts/snap-1/metrics',
+      ),
+    } as any);
+
+    expect(res.error).toBe('Failed to load loadout metrics');
+    expect(res.matches).toEqual([]);
+    expect(res.totalCount).toBe(0);
+    expect(res.truncated).toBe(false);
+  });
+
   it('renders MetricsTrendPanel, MapTelemetryPanel, and optional truncation notice when matches exist', () => {
     const matches = [
       makeTelemetryMatch('1', 'Javelin-4', 22, 10, true),

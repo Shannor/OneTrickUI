@@ -333,6 +333,7 @@ export function generateMatchSeries(
         kda: calculateRatio(match.kills + match.assists, match.deaths),
       };
     })
+    .filter((m) => !Number.isNaN(m.periodMs))
     .sort((a, b) => a.periodMs - b.periodMs);
 
   const validMatches = allModeMatched.filter(
@@ -410,7 +411,7 @@ export function generateMapTelemetry(
   filterBy?: GameMode,
   snapshots?: Record<string, TelemetrySnapshotSummary>,
 ): MapTelemetryResult[] {
-  const filteredMatches = sortMatches(time, matches, filterBy);
+  const filteredMatches = filterMatches(time, matches, filterBy);
   const mapTotals: Record<string, KDA> = {};
   const perMapSnapshotTotals: Record<string, Record<string, KDA>> = {};
 
@@ -528,7 +529,7 @@ function matchesGameMode(match: TelemetryMatch, filterBy?: GameMode): boolean {
   return match.estimatedGameMode === filterBy;
 }
 
-function sortMatches(
+function filterMatches(
   time: CustomTimeWindow,
   matches: readonly TelemetryMatch[],
   filterBy?: GameMode,
@@ -536,15 +537,11 @@ function sortMatches(
   const startMs = new Date(time.start).getTime();
   const endMs = new Date(time.end).getTime();
 
-  return matches
-    .filter((m) => {
-      if (!matchesGameMode(m, filterBy)) {
-        return false;
-      }
-      const periodMs = new Date(m.period).getTime();
-      return periodMs >= startMs && periodMs <= endMs;
-    })
-    .sort((a, b) => {
-      return new Date(a.period).getTime() - new Date(b.period).getTime();
-    });
+  return matches.filter((m) => {
+    if (!matchesGameMode(m, filterBy)) {
+      return false;
+    }
+    const periodMs = new Date(m.period).getTime();
+    return periodMs >= startMs && periodMs <= endMs;
+  });
 }

@@ -32,15 +32,50 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     snapshot: { id: snapshotId, userId, characterId },
   });
 
-  const { data, error } = await getCharacterTelemetry({
-    path: { userId, characterId },
-    query: { snapshotId },
-  });
-
-  if (error) {
-    log.error('Failed to fetch loadout telemetry', {
-      snapshot: { id: snapshotId, userId, characterId, error },
+  try {
+    const { data, error } = await getCharacterTelemetry({
+      path: { userId, characterId },
+      query: { snapshotId },
     });
+
+    if (error) {
+      log.error('Failed to fetch loadout telemetry', {
+        snapshot: { id: snapshotId, userId, characterId, error },
+      });
+      return {
+        matches: [] as TelemetryMatch[],
+        totalCount: 0,
+        truncated: false,
+        error: 'Failed to load loadout metrics',
+      };
+    }
+
+    const matches = data?.matches ?? [];
+    const totalCount = data?.totalCount ?? matches.length;
+    const truncated = Boolean(data?.truncated);
+
+    log.set({
+      snapshot: {
+        id: snapshotId,
+        userId,
+        characterId,
+        matchCount: matches.length,
+        totalCount,
+        truncated,
+      },
+    });
+
+    return {
+      matches,
+      totalCount,
+      truncated,
+      error: undefined,
+    };
+  } catch (err) {
+    log.error(
+      err instanceof Error ? err : 'Failed to fetch loadout telemetry',
+      { snapshot: { id: snapshotId, userId, characterId } },
+    );
     return {
       matches: [] as TelemetryMatch[],
       totalCount: 0,
@@ -48,28 +83,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       error: 'Failed to load loadout metrics',
     };
   }
-
-  const matches = data?.matches ?? [];
-  const totalCount = data?.totalCount ?? matches.length;
-  const truncated = Boolean(data?.truncated);
-
-  log.set({
-    snapshot: {
-      id: snapshotId,
-      userId,
-      characterId,
-      matchCount: matches.length,
-      totalCount,
-      truncated,
-    },
-  });
-
-  return {
-    matches,
-    totalCount,
-    truncated,
-    error: undefined,
-  };
 }
 
 export function LoadoutMetrics({ loaderData }: Route.ComponentProps) {
