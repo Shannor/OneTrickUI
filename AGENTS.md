@@ -43,6 +43,11 @@ To set up and build the project, run the following commands in the terminal:
 - Use tailwind and breakpoints for mobile friendly designs.
 - Never use cards inside of cards in design.
 
+## GitHub Issues & Project Tracking
+
+- Both `Shannor/OneTrick` and `Shannor/OneTrickUI` track work on the shared **One Trick** GitHub Project (`https://github.com/users/Shannor/projects/1`).
+- Whenever creating a GitHub issue via `gh issue create`, always attach it to the project with `--project "One Trick"` (e.g., `gh issue create --repo Shannor/OneTrickUI --project "One Trick" ...`) and set its initial `Status` to `Backlog` (or `Ready` when actionable) if not handled by the project's Auto-add workflow.
+
 ## Notable Libraries Used
 
 - React
