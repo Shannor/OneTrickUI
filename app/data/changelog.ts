@@ -15,6 +15,23 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-24',
+    date: 'November 24, 2026',
+    title: 'Reliable Multi-Loadout Merging',
+    summary:
+      'Fixed an issue that prevented merging multiple similar loadouts at once and improved merge error feedback.',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Merge multiple similar loadouts at once reliably without hitting unexpected errors.',
+      },
+      {
+        type: 'improvement',
+        text: 'Show clearer error details if a loadout merge request fails instead of reporting a generic network error.',
+      },
+    ],
+  },
+  {
     id: '2026-11-23',
     date: 'November 23, 2026',
     title:

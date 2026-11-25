@@ -1,3 +1,4 @@
+import { isRouteErrorResponse } from 'react-router';
 import { getAuth } from '~/.server/auth';
 import { getRequestLogger } from '~/.server/logger';
 import { mergeSnapshots } from '~/api';
@@ -113,7 +114,16 @@ export async function action({ request, context }: Route.ActionArgs) {
 export async function clientAction({ serverAction }: Route.ClientActionArgs) {
   try {
     return await serverAction();
-  } catch {
+  } catch (err) {
+    if (isRouteErrorResponse(err)) {
+      const statusDetail = err.statusText
+        ? `${err.status} ${err.statusText}`
+        : String(err.status);
+      return {
+        ok: false,
+        error: `Failed to merge loadouts (${statusDetail}). Please try again.`,
+      };
+    }
     return {
       ok: false,
       error:
@@ -121,4 +131,3 @@ export async function clientAction({ serverAction }: Route.ClientActionArgs) {
     };
   }
 }
-
