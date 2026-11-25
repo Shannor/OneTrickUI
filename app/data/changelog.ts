@@ -17,9 +17,9 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-11-24',
     date: 'November 24, 2026',
-    title: 'Faster Page Loads & Snappier Session Viewing',
+    title: 'Faster Page Loads & Reliable Multi-Loadout Merging',
     summary:
-      'Open 1 Trick and jump straight into your Guardian stats, loadouts, and past Crucible sessions with significantly faster initial load times.',
+      'Open 1 Trick with significantly faster initial load times and lighter session browsing, plus reliably merge multiple similar loadouts at once with clearer error feedback.',
     changes: [
       {
         type: 'improvement',
@@ -28,6 +28,14 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'improvement',
         text: 'Browse completed Crucible sessions more smoothly with lighter page downloads, loading live match updates only when a session is actively recording.',
+      },
+      {
+        type: 'fix',
+        text: 'Merge multiple similar loadouts at once reliably without hitting unexpected errors.',
+      },
+      {
+        type: 'improvement',
+        text: 'Show clearer error details if a loadout merge request fails instead of reporting a generic network error.',
       },
     ],
   },

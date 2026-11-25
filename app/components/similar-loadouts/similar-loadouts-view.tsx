@@ -187,10 +187,9 @@ export function SimilarLoadoutsView({
     if (isMerging || !target || selectedIds.length === 0) return;
 
     const formData = new FormData();
-    formData.append('baseLoadoutId', target.id);
-    for (const sourceId of selectedIds) {
-      formData.append('sourceSnapshotIds', sourceId);
-    }
+    formData.set('baseLoadoutId', target.id);
+    // Serialize as a single field so multi-select merges avoid duplicate form keys blocked by Cloud Armor WAF.
+    formData.set('sourceSnapshotIds', selectedIds.join(','));
     setSubmittedTargetId(target.id);
     mergeContextRef.current = {
       mergedAll: items.length > 0 && selectedIds.length >= items.length,
