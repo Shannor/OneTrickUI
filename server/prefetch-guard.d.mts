@@ -1,4 +1,5 @@
 export declare const PREFETCH_VARY_HEADER: string;
+export declare const PREFETCH_SHORT_CIRCUIT_STATUS: number;
 export declare const PREFETCH_SHORT_CIRCUIT_HEADERS: Readonly<{
   Vary: string;
   'Cache-Control': string;

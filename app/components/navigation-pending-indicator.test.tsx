@@ -10,12 +10,14 @@ describe('NavigationPendingIndicator', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders only a non-blocking progress bar without the blurred loading overlay for same-route updates', () => {
+  it('renders only a non-blocking fixed progress bar without the blurred loading overlay for same-route updates', () => {
     render(<NavigationPendingIndicator scope="same-route" />);
 
-    expect(
-      screen.getByRole('progressbar', { name: 'Updating view' }),
-    ).toBeInTheDocument();
+    const progressbar = screen.getByRole('progressbar', {
+      name: 'Updating view',
+    });
+    expect(progressbar).toBeInTheDocument();
+    expect(progressbar).toHaveClass('fixed', 'inset-x-0', 'top-0');
     expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });

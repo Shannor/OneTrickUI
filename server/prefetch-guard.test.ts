@@ -222,7 +222,7 @@ describe('shouldShortCircuitDocumentPrefetch', () => {
 });
 
 describe('createPrefetchGuardMiddleware', () => {
-  it('returns 204 No Content with Vary and Cache-Control headers and skips next() for in-app document prefetches', () => {
+  it('returns 503 Service Unavailable with Vary and Cache-Control headers and skips next() for in-app document prefetches', () => {
     const middleware = createPrefetchGuardMiddleware();
     const next = vi.fn();
     const { res, getHeaders, getStatus, isEnded } = createMockExpressRes();
@@ -240,7 +240,7 @@ describe('createPrefetchGuardMiddleware', () => {
     middleware(req, res, next);
 
     expect(next).not.toHaveBeenCalled();
-    expect(getStatus()).toBe(204);
+    expect(getStatus()).toBe(503);
     expect(isEnded()).toBe(true);
     expect(getHeaders()['vary']).toBe(PREFETCH_VARY_HEADER);
     expect(getHeaders()['cache-control']).toBe('no-store');

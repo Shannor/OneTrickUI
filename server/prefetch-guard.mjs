@@ -1,5 +1,9 @@
 export const PREFETCH_VARY_HEADER = 'Sec-Purpose, Purpose, Sec-Fetch-Dest';
 
+// 503 causes Chromium's Speculation Rules cache to discard the speculative
+// document entry (kPrefetchFailedNon2XX) rather than buffering a 2xx response.
+export const PREFETCH_SHORT_CIRCUIT_STATUS = 503;
+
 export const PREFETCH_SHORT_CIRCUIT_HEADERS = Object.freeze({
   Vary: PREFETCH_VARY_HEADER,
   'Cache-Control': 'no-store',
@@ -134,7 +138,7 @@ export function createPrefetchGuardMiddleware() {
     if (shouldShortCircuitDocumentPrefetch(req)) {
       res.setHeader('Vary', PREFETCH_VARY_HEADER);
       res.setHeader('Cache-Control', 'no-store');
-      res.status(204).end();
+      res.status(PREFETCH_SHORT_CIRCUIT_STATUS).end();
       return;
     }
     next();

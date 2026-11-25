@@ -222,15 +222,11 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   }, [sessionId, shouldSubscribe, scheduleRevalidate]);
 
   useEffect(() => {
-    if (
-      shouldSubscribe &&
-      revalidator.state === 'idle' &&
-      pendingWhileBusyRef.current
-    ) {
+    if (revalidator.state === 'idle' && pendingWhileBusyRef.current) {
       pendingWhileBusyRef.current = false;
       scheduleRevalidate(false);
     }
-  }, [revalidator.state, shouldSubscribe, scheduleRevalidate]);
+  }, [revalidator.state, scheduleRevalidate]);
 
   if (!session) {
     return (

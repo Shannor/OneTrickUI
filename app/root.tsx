@@ -17,6 +17,7 @@ import {
 } from 'remix-themes';
 import { getAuth, getCachedUser } from '~/.server/auth';
 import { evlogMiddleware, getRequestLogger } from '~/.server/logger';
+import { prefetchGuardMiddleware } from '~/.server/prefetch-guard';
 import { themeSessionResolver } from '~/.server/sessions';
 import type { Character } from '~/api';
 import { client } from '~/api/client.gen';
@@ -28,25 +29,8 @@ import { useToastNotification } from '~/hooks/use-toast-notification';
 import { getDefaultBaseUrl } from '~/lib/api-config';
 import { trackUserSession } from '~/lib/tracking';
 
-import {
-  PREFETCH_SHORT_CIRCUIT_HEADERS,
-  shouldShortCircuitDocumentPrefetch,
-} from '../server/prefetch-guard.mjs';
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
-
-export const prefetchGuardMiddleware: Route.MiddlewareFunction = async (
-  { request },
-  next,
-) => {
-  if (shouldShortCircuitDocumentPrefetch(request)) {
-    return new Response(null, {
-      status: 204,
-      headers: PREFETCH_SHORT_CIRCUIT_HEADERS,
-    });
-  }
-  return next();
-};
 
 export const middleware: Route.MiddlewareFunction[] = [
   prefetchGuardMiddleware,

@@ -19,7 +19,7 @@ export function NavigationPendingIndicator({
         aria-label={
           scope === 'cross-route' ? 'Loading page' : 'Updating view'
         }
-        className="pointer-events-none sticky top-0 z-40 -mx-2.5 h-0.5 overflow-hidden bg-primary/15 sm:-mx-6 2xl:-mx-6"
+        className="pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5 overflow-hidden bg-primary/15"
       >
         <div className="h-full w-1/2 animate-indeterminate-progress bg-primary motion-reduce:w-full motion-reduce:animate-pulse" />
       </div>
