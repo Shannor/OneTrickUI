@@ -27,15 +27,57 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
   const { id: userId, characterId } = params;
 
-  const { data, error } = await getCharacterTelemetry({
-    path: { userId, characterId },
+  log.set({
+    route: 'routes/character-metrics',
+    metrics: { userId, characterId },
   });
 
-  if (error) {
-    log.error('Failed to fetch character telemetry', {
-      route: 'routes/character-metrics',
-      metrics: { userId, characterId, error },
+  try {
+    const { data, error } = await getCharacterTelemetry({
+      path: { userId, characterId },
     });
+
+    if (error) {
+      log.error('Failed to fetch character telemetry', {
+        metrics: { userId, characterId, error },
+      });
+      return {
+        matches: [] as TelemetryMatch[],
+        snapshots: {} as Record<string, TelemetrySnapshotSummary>,
+        totalCount: 0,
+        truncated: false,
+        error: 'Failed to load character metrics',
+      };
+    }
+
+    const matches = data?.matches ?? [];
+    const snapshots = data?.snapshots ?? {};
+    const totalCount = data?.totalCount ?? matches.length;
+    const truncated = Boolean(data?.truncated);
+
+    log.set({
+      metrics: {
+        userId,
+        characterId,
+        matchCount: matches.length,
+        snapshotCount: Object.keys(snapshots).length,
+        totalCount,
+        truncated,
+      },
+    });
+
+    return {
+      matches,
+      snapshots,
+      totalCount,
+      truncated,
+      error: undefined,
+    };
+  } catch (err) {
+    log.error(
+      err instanceof Error ? err : 'Failed to fetch character telemetry',
+      { metrics: { userId, characterId } },
+    );
     return {
       matches: [] as TelemetryMatch[],
       snapshots: {} as Record<string, TelemetrySnapshotSummary>,
@@ -44,31 +86,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       error: 'Failed to load character metrics',
     };
   }
-
-  const matches = data?.matches ?? [];
-  const snapshots = data?.snapshots ?? {};
-  const totalCount = data?.totalCount ?? matches.length;
-  const truncated = Boolean(data?.truncated);
-
-  log.set({
-    route: 'routes/character-metrics',
-    metrics: {
-      userId,
-      characterId,
-      matchCount: matches.length,
-      snapshotCount: Object.keys(snapshots).length,
-      totalCount,
-      truncated,
-    },
-  });
-
-  return {
-    matches,
-    snapshots,
-    totalCount,
-    truncated,
-    error: undefined,
-  };
 }
 
 export function CharacterMetrics({ loaderData, params }: Route.ComponentProps) {

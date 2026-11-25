@@ -172,6 +172,47 @@ describe('metrics telemetry helpers', () => {
     expect(summary.winPct).toBe(100);
   });
 
+  it('drops malformed period dates before sorting in generateMatchSeries and ignores them in map telemetry', () => {
+    const matches = [
+      makeMatch({
+        id: 'late',
+        period: '2026-11-15T18:00:00Z',
+        location: 'Midtown',
+        kills: 15,
+        deaths: 10,
+        assists: 4,
+        won: true,
+      }),
+      makeMatch({
+        id: 'invalid',
+        period: 'not-a-valid-date',
+        location: 'Corrupt Map',
+        kills: 99,
+        deaths: 1,
+        assists: 0,
+        won: true,
+      }),
+      makeMatch({
+        id: 'early',
+        period: '2026-11-10T18:00:00Z',
+        location: 'Eternity',
+        kills: 20,
+        deaths: 10,
+        assists: 5,
+        won: false,
+      }),
+    ];
+
+    const window = timeWindowToCustom('all-time', matches);
+    const { points, summary } = generateMatchSeries(matches, window);
+
+    expect(points.map((p) => p.activityId)).toEqual(['act-early', 'act-late']);
+    expect(summary.games).toBe(2);
+
+    const maps = generateMapTelemetry(matches, window);
+    expect(maps.map((m) => m.location).sort()).toEqual(['Eternity', 'Midtown']);
+  });
+
   it('computes pooled rolling K/D and min/max consistency band bounds accurately', () => {
     const matches = [
       makeMatch({
