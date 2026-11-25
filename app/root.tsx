@@ -28,10 +28,30 @@ import { useToastNotification } from '~/hooks/use-toast-notification';
 import { getDefaultBaseUrl } from '~/lib/api-config';
 import { trackUserSession } from '~/lib/tracking';
 
+import {
+  PREFETCH_SHORT_CIRCUIT_HEADERS,
+  shouldShortCircuitDocumentPrefetch,
+} from '../server/prefetch-guard.mjs';
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
 
-export const middleware: Route.MiddlewareFunction[] = [evlogMiddleware];
+export const prefetchGuardMiddleware: Route.MiddlewareFunction = async (
+  { request },
+  next,
+) => {
+  if (shouldShortCircuitDocumentPrefetch(request)) {
+    return new Response(null, {
+      status: 204,
+      headers: PREFETCH_SHORT_CIRCUIT_HEADERS,
+    });
+  }
+  return next();
+};
+
+export const middleware: Route.MiddlewareFunction[] = [
+  prefetchGuardMiddleware,
+  evlogMiddleware,
+];
 
 if (typeof window !== 'undefined') {
   LogRocket.init('gruntt/d2-one-trick');

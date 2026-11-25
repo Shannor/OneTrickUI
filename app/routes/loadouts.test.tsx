@@ -18,9 +18,11 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 }
 
 const mockUseProfileData = vi.fn();
+const mockUseNavigationState = vi.fn();
 
 vi.mock('~/hooks/use-route-loaders', () => ({
   useProfileData: () => mockUseProfileData(),
+  useNavigationState: () => mockUseNavigationState(),
 }));
 
 vi.mock('~/api', async (importOriginal) => {
@@ -42,6 +44,15 @@ describe('Loadouts Route Component', () => {
         displayName: 'TestGuardian',
       },
       character: { id: 'char-1', class: 'Hunter' },
+    });
+    mockUseNavigationState.mockReturnValue({
+      scope: 'idle',
+      isNavigating: false,
+      isCrossRoute: false,
+      isSameRoute: false,
+      isSubTab: false,
+      isScopedPending: false,
+      nextLocation: undefined,
     });
   });
 
@@ -382,6 +393,48 @@ describe('Loadouts Route Component', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'All' }));
     expect(router.state.location.search).toBe('?minimum=0');
+  });
+
+  it('shows a non-blocking updating indicator and marks the loadout list aria-busy during same-route filter transitions', () => {
+    mockUseNavigationState.mockReturnValue({
+      scope: 'same-route',
+      isNavigating: true,
+      isCrossRoute: false,
+      isSameRoute: true,
+      isSubTab: false,
+      isScopedPending: true,
+      nextLocation: { pathname: '/loadouts', search: '?mode=trials' },
+    });
+
+    const props = {
+      loaderData: {
+        loadouts: {
+          items: [olderSnapshot],
+          count: { 'snap-1': 5 },
+          stats: {},
+          similarCounts: {},
+        },
+        gameMode: 'allGameModes' as const,
+        minimumGames: 5,
+        hasSimilar: false,
+        page: 1,
+      },
+    } as unknown as ComponentProps<typeof Loadouts>;
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/loadouts',
+          element: <Loadouts {...props} />,
+        },
+      ],
+      { initialEntries: ['/loadouts'] },
+    );
+
+    const { container } = render(<RouterProvider router={router} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Updating…');
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
   });
 });
 

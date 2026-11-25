@@ -15,6 +15,31 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-24',
+    date: 'November 24, 2026',
+    title: 'Snappier Navigation, Seamless Filtering & Smoother Live Sessions',
+    summary:
+      'Move across Guardian views faster, filter loadouts and switch sub-tabs without full-screen loading overlays, and enjoy steadier real-time updates during active sessions.',
+    changes: [
+      {
+        type: 'improvement',
+        text: 'Jump between sidebar views, Guardian characters, and Session or Loadout tabs noticeably faster with hover-warmed transitions.',
+      },
+      {
+        type: 'improvement',
+        text: 'Filter, sort, and paginate loadouts or switch between Session and Loadout sub-tabs seamlessly—subtle progress indicators replace the full-screen blurred loading overlay so your controls stay accessible.',
+      },
+      {
+        type: 'fix',
+        text: 'Eliminated duplicate background page loads and rapid back-to-back refreshes during active sessions for faster, steadier live stat tracking.',
+      },
+      {
+        type: 'fix',
+        text: 'Fixed the loadout stats radar chart collapsing on desktop screens so all six stat labels display cleanly without clipping.',
+      },
+    ],
+  },
+  {
     id: '2026-11-23',
     date: 'November 23, 2026',
     title:

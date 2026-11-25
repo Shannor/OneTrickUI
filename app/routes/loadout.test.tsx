@@ -25,6 +25,7 @@ function createDeferred<T>() {
 }
 
 const mockUseProfileData = vi.fn();
+const mockUseNavigationState = vi.fn();
 
 vi.mock('~/.server/auth', () => ({
   getAuth: vi.fn(),
@@ -32,6 +33,7 @@ vi.mock('~/.server/auth', () => ({
 
 vi.mock('~/hooks/use-route-loaders', () => ({
   useProfileData: () => mockUseProfileData(),
+  useNavigationState: () => mockUseNavigationState(),
 }));
 
 vi.mock('~/api', async (importOriginal) => {
@@ -61,6 +63,15 @@ describe('loadout route loader and component', () => {
       type: 'owner',
       profile: { id: 'user-1', displayName: 'TestGuardian' },
       character: { id: 'char-1', class: 'Hunter' },
+    });
+    mockUseNavigationState.mockReturnValue({
+      scope: 'idle',
+      isNavigating: false,
+      isCrossRoute: false,
+      isSameRoute: false,
+      isSubTab: false,
+      isScopedPending: false,
+      nextLocation: undefined,
     });
   });
 
@@ -542,5 +553,50 @@ describe('loadout route loader and component', () => {
         'Similar2',
       );
     });
+  });
+
+  it('marks the tab outlet container aria-busy during sub-tab transitions without blocking controls', () => {
+    mockUseNavigationState.mockReturnValue({
+      scope: 'sub-tab',
+      isNavigating: true,
+      isCrossRoute: false,
+      isSameRoute: false,
+      isSubTab: true,
+      isScopedPending: true,
+      nextLocation: {
+        pathname: '/profile/user-1/c/char-1/loadouts/snap-archived/metrics',
+        search: '',
+      },
+    });
+
+    const props = {
+      loaderData: {
+        snapshot: mockSnapshot,
+        error: undefined,
+        path: 'https://d2onetrick.com/profile/user-1/c/char-1/loadouts/snap-archived',
+        similarCount: 3,
+      },
+    } as unknown as ComponentProps<typeof Loadout>;
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/profile/:id/c/:characterId/loadouts/:snapshotId',
+          element: (
+            <TooltipProvider>
+              <Loadout {...props} />
+            </TooltipProvider>
+          ),
+        },
+      ],
+      {
+        initialEntries: ['/profile/user-1/c/char-1/loadouts/snap-archived'],
+      },
+    );
+
+    const { container } = render(<RouterProvider router={router} />);
+
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
   });
 });

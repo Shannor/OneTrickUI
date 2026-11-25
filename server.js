@@ -3,6 +3,8 @@ import compression from 'compression';
 import { log } from 'evlog';
 import express from 'express';
 
+import { createPrefetchGuardMiddleware } from './server/prefetch-guard.mjs';
+
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'production';
 
 const build = await import('./build/server/index.js');
@@ -22,6 +24,8 @@ app.use(
 );
 app.use(express.static('build/client', { maxAge: '1h' }));
 app.use(express.static('public', { maxAge: '1h' }));
+
+app.use(createPrefetchGuardMiddleware());
 
 app.all(
   '/{*splat}',

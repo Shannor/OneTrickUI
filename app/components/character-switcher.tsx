@@ -152,6 +152,7 @@ export function PeekCrestTab({ character, href, depth }: PeekCrestTabProps) {
   return (
     <Link
       to={href}
+      prefetch="intent"
       title={accessibleLabel}
       aria-label={accessibleLabel}
       className={cn(
@@ -236,6 +237,7 @@ export function GuardianSwapMenuList({
           <Link
             key={character.id}
             to={buildCharacterHref(character.id)}
+            prefetch={isCurrent ? 'none' : 'intent'}
             onClick={onSelect}
             className={cn(
               'group relative flex items-center justify-between overflow-hidden rounded-md border px-2.5 py-2 transition-all',

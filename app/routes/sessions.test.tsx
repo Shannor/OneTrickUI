@@ -26,6 +26,15 @@ vi.mock('~/hooks/use-route-loaders', () => ({
     profile: { id: '123', displayName: 'Guardian' },
     character: { characterId: 'char-1' },
   }),
+  useNavigationState: () => ({
+    scope: 'idle',
+    isNavigating: false,
+    isCrossRoute: false,
+    isSameRoute: false,
+    isSubTab: false,
+    isScopedPending: false,
+    nextLocation: undefined,
+  }),
 }));
 
 describe('Sessions page component', () => {

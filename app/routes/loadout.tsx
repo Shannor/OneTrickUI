@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import type { AuditableLogger } from 'evlog';
+import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
 import {
   Await,
@@ -23,7 +24,8 @@ import { LoadoutHeaderActions } from '~/components/loadout-header-actions';
 import { LoadoutUpdateForm } from '~/components/loadout-update-form';
 import { Button } from '~/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
-import { useProfileData } from '~/hooks/use-route-loaders';
+import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
+import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/loadout';
 
@@ -176,26 +178,36 @@ export function SimilarCountBadge({
   );
 }
 
+function resolveLoadoutTab(pathname: string): string {
+  const tabPatterns = {
+    metrics: /\/metrics\/?$/,
+    similar: /\/similar\/?$/,
+    loadout: /.*/,
+  };
+
+  return (
+    Object.entries(tabPatterns).find(([, pattern]) =>
+      pattern.test(pathname),
+    )?.[0] ?? 'loadout'
+  );
+}
+
 export function Loadout({ loaderData }: Route.ComponentProps) {
   const { snapshot, error, path, similarCount = 0 } = loaderData;
   const { profile, type } = useProfileData();
   const { id, characterId } = useParams();
   const isOwner = type === 'owner';
   const location = useLocation();
+  const { isSubTab: isSwitchingTab, nextLocation } = useNavigationState();
 
-  const currentTab = React.useMemo(() => {
-    const tabPatterns = {
-      metrics: /\/metrics\/?$/,
-      similar: /\/similar\/?$/,
-      loadout: /.*/,
-    };
-
-    return (
-      Object.entries(tabPatterns).find(([, pattern]) =>
-        pattern.test(location.pathname),
-      )?.[0] ?? 'loadout'
-    );
-  }, [location.pathname]);
+  const currentTab = React.useMemo(
+    () => resolveLoadoutTab(location.pathname),
+    [location.pathname],
+  );
+  const pendingTab =
+    isSwitchingTab && nextLocation
+      ? resolveLoadoutTab(nextLocation.pathname)
+      : null;
 
   if (!snapshot || error) {
     return (
@@ -260,28 +272,61 @@ export function Loadout({ loaderData }: Route.ComponentProps) {
       <Tabs value={currentTab}>
         <TabsList>
           <TabsTrigger value="loadout" asChild>
-            <NavLink to="." end>
-              Loadout
+            <NavLink
+              to="."
+              end
+              prefetch="intent"
+              className="flex items-center gap-1.5"
+            >
+              <span>Loadout</span>
+              {pendingTab === 'loadout' && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              )}
             </NavLink>
           </TabsTrigger>
           <TabsTrigger value="metrics" asChild>
-            <NavLink to="metrics">Metrics</NavLink>
+            <NavLink
+              to="metrics"
+              prefetch="intent"
+              className="flex items-center gap-1.5"
+            >
+              <span>Metrics</span>
+              {pendingTab === 'metrics' && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              )}
+            </NavLink>
           </TabsTrigger>
           {isOwner && (
             <TabsTrigger value="similar" asChild>
-              <NavLink to="similar" className="flex items-center gap-1.5">
+              <NavLink
+                to="similar"
+                prefetch="intent"
+                className="flex items-center gap-1.5"
+              >
                 <span>Similar</span>
-                <SimilarCountBadge
-                  key={snapshot.id}
-                  snapshotId={snapshot.id}
-                  similarCount={similarCount}
-                />
+                {pendingTab === 'similar' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <SimilarCountBadge
+                    key={snapshot.id}
+                    snapshotId={snapshot.id}
+                    similarCount={similarCount}
+                  />
+                )}
               </NavLink>
             </TabsTrigger>
           )}
         </TabsList>
       </Tabs>
-      <Outlet />
+      <div
+        aria-busy={isSwitchingTab}
+        className={cn(
+          'transition-opacity duration-150',
+          isSwitchingTab && 'opacity-60',
+        )}
+      >
+        <Outlet />
+      </div>
     </div>
   );
 }
