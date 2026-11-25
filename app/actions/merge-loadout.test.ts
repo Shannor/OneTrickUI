@@ -148,6 +148,37 @@ describe('merge-loadout action', () => {
     });
   });
 
+  it('parses comma-separated sourceSnapshotIds from a single form field', async () => {
+    vi.mocked(getAuth).mockResolvedValueOnce({
+      id: 'user-1',
+      accessToken: 'token-abc',
+    } as any);
+    vi.mocked(mergeSnapshots).mockResolvedValueOnce({
+      data: { mergedCount: 2 },
+      error: undefined,
+    } as any);
+
+    const formData = new FormData();
+    formData.set('baseLoadoutId', 'target-1');
+    formData.set('sourceSnapshotIds', 'source-1,source-2,target-1,source-1');
+
+    const request = new Request('http://localhost/action/merge-loadout', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await action({ request, context: new Map() } as any);
+    expect(result).toEqual({ ok: true });
+    expect(mergeSnapshots).toHaveBeenCalledWith({
+      path: { snapshotId: 'target-1' },
+      body: { sourceSnapshotIds: ['source-1', 'source-2'] },
+      headers: {
+        Authorization: 'Bearer token-abc',
+        'X-User-ID': 'user-1',
+      },
+    });
+  });
+
   it('clientAction catches Failed to fetch errors instead of bubbling to root ErrorBoundary', async () => {
     const result = await clientAction({
       serverAction: () => Promise.reject(new TypeError('Failed to fetch')),
@@ -157,6 +188,23 @@ describe('merge-loadout action', () => {
       ok: false,
       error:
         'Network error while merging loadouts. Please check your connection and try again.',
+    });
+  });
+
+  it('clientAction reports HTTP status when serverAction rejects with a route error response', async () => {
+    const result = await clientAction({
+      serverAction: () =>
+        Promise.reject({
+          status: 403,
+          statusText: 'Forbidden',
+          internal: false,
+          data: '403 Forbidden',
+        }),
+    } as any);
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'Failed to merge loadouts (403 Forbidden). Please try again.',
     });
   });
 });
