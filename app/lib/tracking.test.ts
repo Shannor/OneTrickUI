@@ -1,25 +1,58 @@
 import LogRocket from 'logrocket';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { trackError, trackUserSession } from './tracking';
+import { initTracking, trackError, trackUserSession } from './tracking';
 
 vi.mock('logrocket', () => ({
   default: {
+    init: vi.fn(),
     identify: vi.fn(),
     track: vi.fn(),
     captureException: vi.fn(),
   },
 }));
 
+describe('initTracking', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('lazily loads and initializes LogRocket once in the browser', async () => {
+    await initTracking();
+    await initTracking();
+    expect(LogRocket.init).toHaveBeenCalledTimes(1);
+    expect(LogRocket.init).toHaveBeenCalledWith('gruntt/d2-one-trick');
+  });
+
+  it('does not reject when LogRocket initialization fails and retries on later tracking calls', async () => {
+    vi.resetModules();
+    vi.mocked(LogRocket.init).mockImplementationOnce(() => {
+      throw new Error('Chunk load failure');
+    });
+
+    const freshTracking = await import('./tracking');
+
+    await expect(freshTracking.initTracking()).resolves.toBeUndefined();
+    await freshTracking.trackUserSession({ id: 'user-retry' });
+
+    expect(LogRocket.init).toHaveBeenCalledTimes(2);
+    expect(LogRocket.identify).toHaveBeenCalledWith('user-retry', {});
+  });
+});
+
 describe('trackUserSession', () => {
-  it('does nothing if user is null or undefined', () => {
-    trackUserSession(null);
-    trackUserSession(undefined);
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('does nothing if user is null or undefined', async () => {
+    await trackUserSession(null);
+    await trackUserSession(undefined);
     expect(LogRocket.identify).not.toHaveBeenCalled();
   });
 
-  it('identifies user with LogRocket including name and profile traits when provided', () => {
-    trackUserSession({
+  it('identifies user with LogRocket including name and profile traits when provided', async () => {
+    await trackUserSession({
       id: 'user-123',
       name: 'Guardian#1234',
       displayName: 'Guardian#1234',
@@ -37,8 +70,8 @@ describe('trackUserSession', () => {
     });
   });
 
-  it('omits undefined traits when calling LogRocket.identify', () => {
-    trackUserSession({
+  it('omits undefined traits when calling LogRocket.identify', async () => {
+    await trackUserSession({
       id: 'user-456',
     });
 
@@ -47,9 +80,13 @@ describe('trackUserSession', () => {
 });
 
 describe('trackError', () => {
-  it('tracks 404 event and captures exception with LogRocket', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('tracks 404 event and captures exception with LogRocket', async () => {
     const error404 = { status: 404 };
-    trackError(error404);
+    await trackError(error404);
 
     expect(LogRocket.track).toHaveBeenCalledWith(
       '404_page_not_found',

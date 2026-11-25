@@ -1,5 +1,4 @@
 import { log } from 'evlog';
-import { doc, onSnapshot } from 'firebase/firestore';
 import { Info } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
@@ -14,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
-import { db } from '~/lib/firebaseConfig';
+import { subscribeToDocument } from '~/lib/firebaseConfig';
 import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/session';
@@ -169,45 +168,49 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
     }
 
     let isInitial = true;
-    const unsubscribe = onSnapshot(
-      doc(db, 'sessions', sessionId),
-      (snapshot) => {
-        const newData = snapshot.data() as FirestoreSessionData | undefined;
-        if (!newData) return;
 
-        if (isInitial) {
-          isInitial = false;
-          const current = sessionRef.current as
-            | FirestoreSessionData
-            | undefined;
-          const currentCount = current?.aggregateIds?.length ?? 0;
-          const newCount = newData.aggregateIds?.length ?? 0;
-          const statusChanged = newData.status !== current?.status;
-          const activityChanged =
-            Boolean(newData.lastSeenActivityId) &&
-            newData.lastSeenActivityId !== current?.lastSeenActivityId;
-          const compFinalized =
-            Boolean(newData.compTracking?.end) && !current?.compTracking?.end;
+    const unsubscribe = subscribeToDocument<FirestoreSessionData>(
+      'sessions',
+      sessionId,
+      {
+        onData: (newData) => {
+          if (!newData) return;
 
-          if (
-            statusChanged ||
-            newCount !== currentCount ||
-            activityChanged ||
-            compFinalized
-          ) {
-            scheduleRevalidate(true);
+          if (isInitial) {
+            isInitial = false;
+            const current = sessionRef.current as
+              | FirestoreSessionData
+              | undefined;
+            const currentCount = current?.aggregateIds?.length ?? 0;
+            const newCount = newData.aggregateIds?.length ?? 0;
+            const statusChanged = newData.status !== current?.status;
+            const activityChanged =
+              Boolean(newData.lastSeenActivityId) &&
+              newData.lastSeenActivityId !== current?.lastSeenActivityId;
+            const compFinalized =
+              Boolean(newData.compTracking?.end) &&
+              !current?.compTracking?.end;
+
+            if (
+              statusChanged ||
+              newCount !== currentCount ||
+              activityChanged ||
+              compFinalized
+            ) {
+              scheduleRevalidate(true);
+            }
+            return;
           }
-          return;
-        }
 
-        scheduleRevalidate(false);
-      },
-      (error) => {
-        log.error({
-          action: 'firestore.snapshot_error',
-          message: 'Firestore session onSnapshot error',
-          error: error instanceof Error ? error.message : String(error),
-        });
+          scheduleRevalidate(false);
+        },
+        onError: (error) => {
+          log.error({
+            action: 'firestore.snapshot_error',
+            message: 'Firestore session onSnapshot error',
+            error: error instanceof Error ? error.message : String(error),
+          });
+        },
       },
     );
 

@@ -1,10 +1,13 @@
 import '@testing-library/jest-dom';
 import { act, render, screen } from '@testing-library/react';
-import { doc, onSnapshot } from 'firebase/firestore';
 import { type ComponentProps, useState } from 'react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '~/components/ui/tooltip';
+import {
+  type DocumentSubscriptionCallbacks,
+  subscribeToDocument,
+} from '~/lib/firebaseConfig';
 
 import Session, { SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS } from './session';
 
@@ -38,14 +41,9 @@ vi.mock('~/hooks/use-route-loaders', () => ({
   }),
 }));
 
-vi.mock('firebase/firestore', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('firebase/firestore')>();
-  return {
-    ...actual,
-    doc: vi.fn((_db, collection, id) => ({ collection, id })),
-    onSnapshot: vi.fn(() => vi.fn()),
-  };
-});
+vi.mock('~/lib/firebaseConfig', () => ({
+  subscribeToDocument: vi.fn(() => vi.fn()),
+}));
 
 describe('Session Page Route Component', () => {
   beforeEach(() => {
@@ -56,6 +54,7 @@ describe('Session Page Route Component', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
+
   it('renders active recording banner with 2 hour auto-end notice when session status is pending', () => {
     const props = {
       loaderData: {
@@ -132,7 +131,7 @@ describe('Session Page Route Component', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('subscribes to Firestore onSnapshot when session status is pending', () => {
+  it('subscribes to Firestore document updates when session status is pending', () => {
     const props = {
       loaderData: {
         session: {
@@ -163,19 +162,17 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(doc).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(subscribeToDocument).toHaveBeenCalledWith(
       'sessions',
       'session-live',
-    );
-    expect(onSnapshot).toHaveBeenCalledWith(
-      expect.objectContaining({ collection: 'sessions', id: 'session-live' }),
-      expect.any(Function),
-      expect.any(Function),
+      expect.objectContaining({
+        onData: expect.any(Function),
+        onError: expect.any(Function),
+      }),
     );
   });
 
-  it('does not subscribe to Firestore onSnapshot when session status is complete', () => {
+  it('does not subscribe to Firestore document updates when session status is complete', () => {
     const props = {
       loaderData: {
         session: {
@@ -206,18 +203,18 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(onSnapshot).not.toHaveBeenCalled();
+    expect(subscribeToDocument).not.toHaveBeenCalled();
   });
 
-  it('keeps Firestore onSnapshot active for a completed session while compTracking.end is finalizing', () => {
+  it('keeps Firestore subscription active for a completed session while compTracking.end is finalizing', () => {
     vi.useFakeTimers();
-    let snapshotCallback:
-      | ((snapshot: { data: () => unknown }) => void)
-      | undefined;
-    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
-      snapshotCallback = next as never;
-      return vi.fn();
-    });
+    let callbacks: DocumentSubscriptionCallbacks<unknown> | undefined;
+    vi.mocked(subscribeToDocument).mockImplementationOnce(
+      (_collection, _docId, cbs) => {
+        callbacks = cbs as DocumentSubscriptionCallbacks<unknown>;
+        return vi.fn();
+      },
+    );
 
     const props = {
       loaderData: {
@@ -257,21 +254,19 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(onSnapshot).toHaveBeenCalledTimes(1);
-    expect(snapshotCallback).toBeDefined();
+    expect(subscribeToDocument).toHaveBeenCalledTimes(1);
+    expect(callbacks).toBeDefined();
 
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-comp-finalizing',
-        status: 'complete',
-        aggregateIds: ['game-1'],
-        compTracking: {
-          enabled: true,
-          start: { divisionName: 'Platinum III', points: 5820, stepIndex: 21 },
-          end: { divisionName: 'Platinum II', points: 6045, stepIndex: 22 },
-          pointDelta: 225,
-        },
-      }),
+    callbacks!.onData({
+      id: 'session-comp-finalizing',
+      status: 'complete',
+      aggregateIds: ['game-1'],
+      compTracking: {
+        enabled: true,
+        start: { divisionName: 'Platinum III', points: 5820, stepIndex: 21 },
+        end: { divisionName: 'Platinum II', points: 6045, stepIndex: 22 },
+        pointDelta: 225,
+      },
     });
 
     expect(mockRevalidate).not.toHaveBeenCalled();
@@ -283,13 +278,13 @@ describe('Session Page Route Component', () => {
 
   it('revalidates when Firestore sends a subsequent real-time update', () => {
     vi.useFakeTimers();
-    let snapshotCallback:
-      | ((snapshot: { data: () => unknown }) => void)
-      | undefined;
-    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
-      snapshotCallback = next as never;
-      return vi.fn();
-    });
+    let callbacks: DocumentSubscriptionCallbacks<unknown> | undefined;
+    vi.mocked(subscribeToDocument).mockImplementationOnce(
+      (_collection, _docId, cbs) => {
+        callbacks = cbs as DocumentSubscriptionCallbacks<unknown>;
+        return vi.fn();
+      },
+    );
 
     const props = {
       loaderData: {
@@ -321,15 +316,13 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(snapshotCallback).toBeDefined();
+    expect(callbacks).toBeDefined();
 
     // First snapshot represents initial sync with identical state
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-fresh',
-        status: 'pending',
-        aggregateIds: [],
-      }),
+    callbacks!.onData({
+      id: 'session-fresh',
+      status: 'pending',
+      aggregateIds: [],
     });
     act(() => {
       vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
@@ -337,12 +330,10 @@ describe('Session Page Route Component', () => {
     expect(mockRevalidate).not.toHaveBeenCalled();
 
     // Subsequent snapshot represents an incoming match from Firestore
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-fresh',
-        status: 'pending',
-        aggregateIds: ['new-aggregate-1'],
-      }),
+    callbacks!.onData({
+      id: 'session-fresh',
+      status: 'pending',
+      aggregateIds: ['new-aggregate-1'],
     });
     expect(mockRevalidate).not.toHaveBeenCalled();
     act(() => {
@@ -353,13 +344,13 @@ describe('Session Page Route Component', () => {
 
   it('revalidates on initial snapshot if Firestore data is already ahead of loaderData', () => {
     vi.useFakeTimers();
-    let snapshotCallback:
-      | ((snapshot: { data: () => unknown }) => void)
-      | undefined;
-    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
-      snapshotCallback = next as never;
-      return vi.fn();
-    });
+    let callbacks: DocumentSubscriptionCallbacks<unknown> | undefined;
+    vi.mocked(subscribeToDocument).mockImplementationOnce(
+      (_collection, _docId, cbs) => {
+        callbacks = cbs as DocumentSubscriptionCallbacks<unknown>;
+        return vi.fn();
+      },
+    );
 
     const props = {
       loaderData: {
@@ -391,13 +382,13 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
+    expect(callbacks).toBeDefined();
+
     // Initial snapshot arrives with already processed game
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-fresh',
-        status: 'pending',
-        aggregateIds: ['already-recorded-game'],
-      }),
+    callbacks!.onData({
+      id: 'session-fresh',
+      status: 'pending',
+      aggregateIds: ['already-recorded-game'],
     });
 
     act(() => {
@@ -408,13 +399,13 @@ describe('Session Page Route Component', () => {
 
   it('coalesces rapid multi-field Firestore writes into a single debounced revalidation', () => {
     vi.useFakeTimers();
-    let snapshotCallback:
-      | ((snapshot: { data: () => unknown }) => void)
-      | undefined;
-    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
-      snapshotCallback = next as never;
-      return vi.fn();
-    });
+    let callbacks: DocumentSubscriptionCallbacks<unknown> | undefined;
+    vi.mocked(subscribeToDocument).mockImplementationOnce(
+      (_collection, _docId, cbs) => {
+        callbacks = cbs as DocumentSubscriptionCallbacks<unknown>;
+        return vi.fn();
+      },
+    );
 
     const props = {
       loaderData: {
@@ -446,45 +437,39 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
+    expect(callbacks).toBeDefined();
+
     // Initial sync matches loaderData
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-burst',
-        status: 'pending',
-        aggregateIds: [],
-      }),
+    callbacks!.onData({
+      id: 'session-burst',
+      status: 'pending',
+      aggregateIds: [],
     });
 
     // Simulate 3 rapid writes within 135ms (e.g. setLastSnapshot + persistSessionProgress)
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-burst',
-        status: 'pending',
-        aggregateIds: ['game-1'],
-      }),
+    callbacks!.onData({
+      id: 'session-burst',
+      status: 'pending',
+      aggregateIds: ['game-1'],
     });
     act(() => {
       vi.advanceTimersByTime(50);
     });
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-burst',
-        status: 'pending',
-        aggregateIds: ['game-1'],
-        lastSeenActivityId: 'act-1',
-      }),
+    callbacks!.onData({
+      id: 'session-burst',
+      status: 'pending',
+      aggregateIds: ['game-1'],
+      lastSeenActivityId: 'act-1',
     });
     act(() => {
       vi.advanceTimersByTime(85);
     });
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-burst',
-        status: 'pending',
-        aggregateIds: ['game-1'],
-        lastSeenActivityId: 'act-1',
-        summary: { totalMatches: 1 },
-      }),
+    callbacks!.onData({
+      id: 'session-burst',
+      status: 'pending',
+      aggregateIds: ['game-1'],
+      lastSeenActivityId: 'act-1',
+      summary: { totalMatches: 1 },
     });
 
     act(() => {
@@ -501,13 +486,13 @@ describe('Session Page Route Component', () => {
   it('cancels pending debounced revalidation timer on unmount', () => {
     vi.useFakeTimers();
     const mockUnsubscribe = vi.fn();
-    let snapshotCallback:
-      | ((snapshot: { data: () => unknown }) => void)
-      | undefined;
-    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
-      snapshotCallback = next as never;
-      return mockUnsubscribe;
-    });
+    let callbacks: DocumentSubscriptionCallbacks<unknown> | undefined;
+    vi.mocked(subscribeToDocument).mockImplementationOnce(
+      (_collection, _docId, cbs) => {
+        callbacks = cbs as DocumentSubscriptionCallbacks<unknown>;
+        return mockUnsubscribe;
+      },
+    );
 
     const props = {
       loaderData: {
@@ -539,12 +524,12 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-unmount',
-        status: 'pending',
-        aggregateIds: ['game-1'],
-      }),
+    expect(callbacks).toBeDefined();
+
+    callbacks!.onData({
+      id: 'session-unmount',
+      status: 'pending',
+      aggregateIds: ['game-1'],
     });
 
     unmount();
@@ -559,13 +544,13 @@ describe('Session Page Route Component', () => {
   it('guards against overlapping revalidations while revalidator.state is loading and flushes once idle', () => {
     vi.useFakeTimers();
     mockRevalidatorState = 'loading';
-    let snapshotCallback:
-      | ((snapshot: { data: () => unknown }) => void)
-      | undefined;
-    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, next) => {
-      snapshotCallback = next as never;
-      return vi.fn();
-    });
+    let callbacks: DocumentSubscriptionCallbacks<unknown> | undefined;
+    vi.mocked(subscribeToDocument).mockImplementationOnce(
+      (_collection, _docId, cbs) => {
+        callbacks = cbs as DocumentSubscriptionCallbacks<unknown>;
+        return vi.fn();
+      },
+    );
 
     const props = {
       loaderData: {
@@ -604,12 +589,12 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    snapshotCallback!({
-      data: () => ({
-        id: 'session-busy',
-        status: 'pending',
-        aggregateIds: ['game-1'],
-      }),
+    expect(callbacks).toBeDefined();
+
+    callbacks!.onData({
+      id: 'session-busy',
+      status: 'pending',
+      aggregateIds: ['game-1'],
     });
 
     act(() => {
@@ -617,7 +602,7 @@ describe('Session Page Route Component', () => {
     });
     expect(mockRevalidate).not.toHaveBeenCalled();
 
-    // Once revalidator becomes idle, the deferred update flushes cleanly without re-subscribing onSnapshot
+    // Once revalidator becomes idle, the deferred update flushes cleanly without re-subscribing
     mockRevalidatorState = 'idle';
     act(() => {
       triggerRerender();
@@ -626,16 +611,18 @@ describe('Session Page Route Component', () => {
     act(() => {
       vi.advanceTimersByTime(SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS);
     });
-    expect(onSnapshot).toHaveBeenCalledTimes(1);
+    expect(subscribeToDocument).toHaveBeenCalledTimes(1);
     expect(mockRevalidate).toHaveBeenCalledTimes(1);
   });
 
-  it('handles Firestore onSnapshot error gracefully without throwing', () => {
-    let errorCallback: ((err: unknown) => void) | undefined;
-    vi.mocked(onSnapshot).mockImplementationOnce((_docRef, _next, error) => {
-      errorCallback = error as never;
-      return vi.fn();
-    });
+  it('handles Firestore subscription errors gracefully without throwing', () => {
+    let callbacks: DocumentSubscriptionCallbacks<unknown> | undefined;
+    vi.mocked(subscribeToDocument).mockImplementationOnce(
+      (_collection, _docId, cbs) => {
+        callbacks = cbs as DocumentSubscriptionCallbacks<unknown>;
+        return vi.fn();
+      },
+    );
 
     const props = {
       loaderData: {
@@ -667,9 +654,9 @@ describe('Session Page Route Component', () => {
       </TooltipProvider>,
     );
 
-    expect(errorCallback).toBeDefined();
+    expect(callbacks?.onError).toBeDefined();
     expect(() => {
-      errorCallback!(new Error('Connection lost'));
+      callbacks!.onError!(new Error('Connection lost'));
     }).not.toThrow();
   });
 
@@ -722,5 +709,51 @@ describe('Session Page Route Component', () => {
     );
     expect(titles).toEqual(['Weekend Trials - Guardian Metrics | 1 Trick']);
     expect(document.title).toBe('Weekend Trials - Guardian Metrics | 1 Trick');
+  });
+
+  it('keeps the Firestore listener alive across re-renders when revalidate callback is stable', () => {
+    const unsubscribe = vi.fn();
+    vi.mocked(subscribeToDocument).mockReturnValueOnce(unsubscribe);
+
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-stable',
+          name: 'Pending Session',
+          status: 'pending' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: [],
+        },
+        aggregates: [],
+        snapshots: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: <Session {...props} />,
+      },
+    ]);
+
+    const { rerender } = render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    expect(subscribeToDocument).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    expect(unsubscribe).not.toHaveBeenCalled();
+    expect(subscribeToDocument).toHaveBeenCalledTimes(1);
   });
 });
