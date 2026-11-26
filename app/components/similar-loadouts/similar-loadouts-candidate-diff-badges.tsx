@@ -72,7 +72,7 @@ export function SimilarLoadoutCandidateDiffBadges({
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-border/50 pt-3 text-xs sm:text-sm">
+    <div className="flex flex-wrap items-center gap-2 border-t border-border/50 pt-2.5 text-xs">
       <Tooltip>
         <TooltipTrigger asChild>
           {item.exoticArmorMatch ? (
@@ -80,15 +80,15 @@ export function SimilarLoadoutCandidateDiffBadges({
               type="button"
               className={cn(
                 badgeVariants({ variant: 'secondary' }),
-                'min-h-9 cursor-pointer touch-manipulation gap-1.5 px-3 py-1.5 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-8 sm:text-xs',
+                'min-h-9 cursor-pointer touch-manipulation gap-1.5 px-3 py-1.5 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:gap-1 sm:px-2.5 sm:py-0.5',
               )}
             >
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 sm:h-3 sm:w-3" />
               <span>
                 {bothLackExoticArmor ? 'No Exotic Armor' : 'Exotic Armor Match'}
               </span>
               {isSameExoticDiffInstance && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground sm:text-[10px]">
                   (Different Roll)
                 </span>
               )}
@@ -98,13 +98,15 @@ export function SimilarLoadoutCandidateDiffBadges({
               type="button"
               className={cn(
                 badgeVariants({ variant: 'outline' }),
-                'min-h-9 cursor-pointer touch-manipulation gap-1.5 border-amber-500/50 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-amber-400 sm:min-h-8 sm:text-xs',
+                'min-h-9 cursor-pointer touch-manipulation gap-1.5 border-amber-500/50 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-amber-400 sm:min-h-0 sm:px-2.5 sm:py-0.5',
               )}
             >
-              <ShieldIcon className="h-3.5 w-3.5" />
+              <ShieldIcon className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
               <span>Exotic: {candidateExoticName}</span>
               {isSameExoticNameDiffRoll && (
-                <span className="text-xs opacity-85">(Different Roll)</span>
+                <span className="text-xs opacity-85 sm:text-[10px]">
+                  (Different Roll)
+                </span>
               )}
             </button>
           )}
@@ -151,10 +153,10 @@ export function SimilarLoadoutCandidateDiffBadges({
               type="button"
               className={cn(
                 badgeVariants({ variant: 'secondary' }),
-                'min-h-9 cursor-pointer touch-manipulation gap-1.5 px-3 py-1.5 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-8 sm:text-xs',
+                'min-h-9 cursor-pointer touch-manipulation gap-1.5 px-3 py-1.5 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:gap-1 sm:px-2.5 sm:py-0.5',
               )}
             >
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 sm:h-3 sm:w-3" />
               <span>Same Power Weapon</span>
             </button>
           ) : (
@@ -162,13 +164,13 @@ export function SimilarLoadoutCandidateDiffBadges({
               type="button"
               className={cn(
                 badgeVariants({ variant: 'outline' }),
-                'min-h-9 cursor-pointer touch-manipulation gap-1.5 border-primary/40 bg-primary/10 px-3 py-1.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-8 sm:text-xs',
+                'min-h-9 cursor-pointer touch-manipulation gap-1.5 border-primary/40 bg-primary/10 px-3 py-1.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:px-2.5 sm:py-0.5',
               )}
             >
-              <SwordsIcon className="h-3.5 w-3.5 text-primary" />
+              <SwordsIcon className="h-3.5 w-3.5 text-primary sm:h-3 sm:w-3" />
               <span>Power: {candidatePowerName}</span>
               {isSamePowerNameDiffRoll && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground sm:text-[10px]">
                   (Different Roll)
                 </span>
               )}
@@ -214,7 +216,7 @@ export function SimilarLoadoutCandidateDiffBadges({
                   type="button"
                   className={cn(
                     badgeVariants({ variant: 'outline' }),
-                    'min-h-9 cursor-pointer touch-manipulation px-3 py-1.5 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-8 sm:text-xs',
+                    'min-h-9 cursor-pointer touch-manipulation px-3 py-1.5 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:px-2.5 sm:py-0.5',
                     delta > 0
                       ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       : 'border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-400',

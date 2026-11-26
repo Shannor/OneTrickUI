@@ -103,7 +103,7 @@ export function SimilarLoadoutsPrimaryHeader({
             <Badge
               key={st.stat}
               variant="secondary"
-              className="px-2.5 py-0.5 font-mono text-xs sm:text-sm"
+              className="px-2.5 py-1 font-mono text-xs sm:py-0.5"
             >
               {st.stat}: {st.value}
             </Badge>

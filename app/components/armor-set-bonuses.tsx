@@ -319,8 +319,8 @@ export function ArmorSetBonusPill({
           className={cn(
             'inline-flex max-w-full cursor-pointer touch-manipulation select-none items-center gap-1.5 rounded-full border border-primary/35 bg-primary/10 font-semibold text-foreground transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
             size === 'sm'
-              ? 'min-h-10 px-3 py-1.5 text-xs sm:min-h-8 sm:text-xs'
-              : 'min-h-11 px-3.5 py-2 text-xs sm:min-h-9 sm:text-sm',
+              ? 'min-h-10 px-3 py-1.5 text-xs sm:min-h-0 sm:px-2 sm:py-0.5 sm:text-[11px]'
+              : 'min-h-11 px-3.5 py-2 text-xs sm:min-h-0 sm:px-2.5 sm:py-1 sm:text-xs',
             className,
           )}
         >
@@ -328,13 +328,13 @@ export function ArmorSetBonusPill({
             <ArmorSetBonusPerkIcon
               perk={featuredPerk}
               size="sm"
-              className="rounded-full border-primary/40"
+              className="rounded-full border-primary/40 sm:h-4 sm:w-4"
             />
           ) : (
-            <ShieldCheckIcon className="h-4 w-4 shrink-0 text-primary" />
+            <ShieldCheckIcon className="h-4 w-4 shrink-0 text-primary sm:h-3.5 sm:w-3.5" />
           )}
           <span className="truncate">{bonus.setName}</span>
-          <span className="shrink-0 font-mono text-xs font-bold text-primary">
+          <span className="shrink-0 font-mono text-xs font-bold text-primary sm:text-[10px]">
             ({highestTier}pc)
           </span>
         </button>

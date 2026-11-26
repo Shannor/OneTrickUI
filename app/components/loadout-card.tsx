@@ -129,9 +129,9 @@ export function LoadoutCardHeader({
                   e.stopPropagation();
                   onSimilarClick?.(snapshot);
                 }}
-                className="min-h-10 touch-manipulation gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold sm:min-h-9 sm:text-sm"
+                className="min-h-10 touch-manipulation gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold sm:h-7 sm:min-h-0 sm:px-2.5 sm:py-0.5 sm:text-xs"
               >
-                <LayersIcon className="h-4 w-4 text-primary" />
+                <LayersIcon className="h-4 w-4 text-primary sm:h-3.5 sm:w-3.5" />
                 <span>{similarCount} Similar</span>
               </Button>
             )}

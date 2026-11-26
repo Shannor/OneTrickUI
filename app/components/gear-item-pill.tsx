@@ -134,10 +134,10 @@ export function GearItemPill({
         <button
           type="button"
           className={cn(
-            'flex w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2.5 rounded-md border text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+            'flex w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2.5 rounded-md border text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-2 sm:text-xs',
             size === 'md'
-              ? 'min-h-12 gap-3 rounded-lg p-2.5 font-medium sm:p-3'
-              : 'min-h-11 px-3 py-2',
+              ? 'min-h-12 gap-3 rounded-lg p-2.5 font-medium sm:min-h-0 sm:gap-2.5 sm:p-2'
+              : 'min-h-11 px-3 py-2 sm:min-h-0 sm:px-2.5 sm:py-1.5',
             isExotic
               ? 'border-amber-500/40 bg-amber-500/10 text-foreground hover:bg-amber-500/20 dark:bg-amber-500/15'
               : 'border-border/60 bg-muted/20 text-foreground hover:bg-muted/40',
@@ -150,7 +150,9 @@ export function GearItemPill({
               alt={name}
               className={cn(
                 'shrink-0 rounded border object-cover',
-                size === 'md' ? 'h-9 w-9' : 'h-7 w-7',
+                size === 'md'
+                  ? 'h-9 w-9 sm:h-8 sm:w-8'
+                  : 'h-7 w-7 sm:h-6 sm:w-6',
                 isExotic ? 'border-amber-400' : 'border-border/60',
               )}
             />
@@ -158,7 +160,9 @@ export function GearItemPill({
             <div
               className={cn(
                 'flex shrink-0 items-center justify-center rounded border bg-muted font-bold text-muted-foreground',
-                size === 'md' ? 'h-9 w-9 text-sm' : 'h-7 w-7 text-xs',
+                size === 'md'
+                  ? 'h-9 w-9 text-sm sm:h-8 sm:w-8 sm:text-xs'
+                  : 'h-7 w-7 text-xs sm:h-6 sm:w-6 sm:text-[10px]',
               )}
             >
               {name.charAt(0)}
@@ -167,10 +171,10 @@ export function GearItemPill({
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             {label ? (
               <>
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px]">
                   {label}
                 </span>
-                <span className="truncate text-sm font-semibold sm:text-base">
+                <span className="truncate text-sm font-semibold sm:text-xs">
                   {name}
                 </span>
               </>
@@ -178,7 +182,7 @@ export function GearItemPill({
               <>
                 <span
                   className={cn(
-                    'truncate text-sm font-bold sm:text-base',
+                    'truncate text-sm font-bold',
                     isExotic
                       ? 'text-amber-500 dark:text-amber-400'
                       : 'text-foreground',
@@ -186,7 +190,7 @@ export function GearItemPill({
                 >
                   {name}
                 </span>
-                <span className="truncate text-xs text-muted-foreground sm:text-sm">
+                <span className="truncate text-xs text-muted-foreground">
                   {resolvedSubtitle}
                 </span>
               </>
