@@ -110,10 +110,10 @@ export function LoadoutCardHeader({
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
           <h3
             className={cn(
-              'min-w-0 flex-1 truncate font-bold tracking-tight text-foreground transition-colors group-hover:text-primary',
+              'min-w-0 flex-1 truncate font-bold tracking-wide text-foreground transition-colors group-hover:text-primary',
               compact
                 ? 'text-xl sm:text-2xl'
-                : 'text-xl sm:text-2xl lg:text-3xl',
+                : 'text-2xl sm:text-2xl lg:text-3xl',
             )}
           >
             {snapshot.name || 'Loadout'}

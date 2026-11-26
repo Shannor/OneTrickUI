@@ -39,7 +39,7 @@ export const WeaponHeader: React.FC<Props> = ({
         </Tooltip>
       )}
       {onlyIcon && icon ? null : (
-        <h3 className="text-lg font-semibold tracking-tight sm:text-xl">
+        <h3 className="text-xl font-semibold tracking-wide sm:text-2xl">
           {properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun'}
         </h3>
       )}

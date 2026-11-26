@@ -95,7 +95,7 @@ export function SessionLoadouts({ params }: Route.ComponentProps) {
                   to={`/profile/${params?.id}/c/${params.characterId}/loadouts/${snapshot.id}`}
                   className="group flex min-h-11 touch-manipulation items-center justify-between gap-2 rounded-lg px-1 py-1 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <h3 className="truncate text-xl font-bold tracking-tight group-hover:underline sm:text-2xl">
+                  <h3 className="truncate text-2xl font-bold tracking-wide group-hover:underline">
                     {snapshot.name ?? 'Loadout'}
                   </h3>
                   <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />

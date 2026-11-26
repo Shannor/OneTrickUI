@@ -164,7 +164,7 @@ export const Weapon: React.FC<Props> = ({
           <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
             <h5
               className={cn(
-                'truncate font-sans text-sm font-bold tracking-tight sm:text-base',
+                'truncate text-lg font-bold tracking-wide sm:text-xl',
                 isExotic ? 'text-yellow-500' : 'text-purple-400',
               )}
             >
@@ -226,7 +226,7 @@ export const Weapon: React.FC<Props> = ({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h5
                 className={cn(
-                  'truncate font-sans text-base font-bold tracking-tight sm:text-lg',
+                  'truncate text-xl font-bold tracking-wide sm:text-2xl',
                   isExotic ? 'text-yellow-500' : 'text-purple-400',
                 )}
               >
