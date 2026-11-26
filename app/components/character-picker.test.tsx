@@ -139,4 +139,24 @@ describe('CharacterPicker Component', () => {
       screen.getByRole('button', { name: /swap guardian/i }),
     ).toBeInTheDocument();
   });
+
+  it('notifies onCharacterSelect on pick and cancel', () => {
+    const onCharacterSelect = vi.fn();
+
+    render(
+      <CharacterPicker
+        characters={mockCharacters}
+        currentCharacterId="char-1"
+        onCharacterSelect={onCharacterSelect}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /swap guardian/i }));
+
+    fireEvent.click(screen.getByText('Titan'));
+    expect(onCharacterSelect).toHaveBeenCalledWith('char-2');
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(onCharacterSelect).toHaveBeenLastCalledWith('char-1');
+  });
 });

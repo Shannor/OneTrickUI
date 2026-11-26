@@ -88,6 +88,7 @@ export default [
   route('action/logout', 'actions/logout.ts'),
   route('action/set-fireteam', 'actions/set-fireteam.ts'),
   route('action/start-session', 'actions/start-session.ts'),
+  route('action/start-fireteam-sessions', 'actions/start-fireteam-sessions.ts'),
   route('action/end-session', 'actions/end-session.ts'),
   route('action/merge-loadout', 'actions/merge-loadout.ts'),
   route('action/update-session', 'actions/update-session.ts'),

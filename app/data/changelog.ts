@@ -15,6 +15,31 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-26',
+    date: 'November 26, 2026',
+    title: 'One-Click Fireteam Session Start & Live Tracking Badges',
+    summary:
+      'Launch Crucible tracking sessions for your entire squad in a single click and instantly see which teammates already have a live session running.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Start tracking sessions for multiple fireteam teammates at once from the Fireteam page, complete with per-teammate Guardian selection and an optional Competitive Score tracking toggle.',
+      },
+      {
+        type: 'feature',
+        text: 'Spot which teammates are already tracking at a glance with live status badges on each fireteam card and one-click links straight to their active session.',
+      },
+      {
+        type: 'improvement',
+        text: 'Fireteam bulk starts automatically skip teammates who already have an active session and give clear per-player confirmation feedback so no one is double-tracked.',
+      },
+      {
+        type: 'improvement',
+        text: 'Load the Fireteam page faster with active session statuses resolved up front in a single pass.',
+      },
+    ],
+  },
+  {
     id: '2026-11-25',
     date: 'November 25, 2026',
     title: 'Mobile Loadout Readability, Touch Controls & Tap-to-Open Tooltips',
