@@ -5,16 +5,13 @@ import { describe, expect, it, vi } from 'vitest';
 import type { FireteamMember } from '~/api';
 import type { FireteamMemberView } from '~/lib/fireteam-sessions';
 
-import {
-  FireteamContext,
-  type FireteamContextValue,
-  FireteamMemberProvider,
-} from './fireteam-context';
+import { FireteamContext, type FireteamContextValue } from './fireteam-context';
 import {
   FireteamMemberCard,
   MemberCardHeader,
   MemberCharacterForm,
 } from './fireteam-member-card';
+import { FireteamMemberProvider } from './fireteam-member-context';
 import { MemberSessionStatus } from './member-session-status';
 
 const mockMember: FireteamMember = {

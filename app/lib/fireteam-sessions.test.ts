@@ -292,6 +292,74 @@ describe('buildFireteamViewModel', () => {
     expect(viewModel.memberViews[0].otherActiveSession?.id).toBe('sess-w');
     expect(viewModel.memberViews[0].otherActiveCharacterClass).toBe('Warlock');
   });
+
+  it('resolves pre-indexed bulkResults and visibleResults matched by member id or membershipId', () => {
+    const secondMember: FireteamMember = {
+      id: 'user-2',
+      membershipId: 'mem-2',
+      displayName: 'ReadyTitan',
+      characters: [
+        {
+          id: 'char-titan',
+          class: 'Titan',
+          race: 'Exo',
+          light: BigInt(2020),
+          emblemURL: '/emblem-t.png',
+          emblemBackgroundURL: '/bg-t.png',
+          currentTitle: 'Iron Lord',
+          emblemColor: { red: 0, green: 0, blue: 0, alpha: 1 },
+        },
+      ],
+    };
+
+    const bulkResults: FireteamSessionResult[] = [
+      {
+        userId: 'user-1',
+        characterId: 'char-hunter',
+        outcome: 'started',
+        session: {
+          id: 'sess-h',
+          userId: 'user-1',
+          characterId: 'char-hunter',
+          startedAt: new Date('2026-11-25T00:10:00Z'),
+          status: 'pending',
+          aggregateIds: [],
+        },
+      },
+      {
+        userId: 'mem-2',
+        characterId: 'char-titan',
+        outcome: 'skipped_active',
+        session: {
+          id: 'sess-t',
+          userId: 'mem-2',
+          characterId: 'char-titan',
+          startedAt: new Date('2026-11-25T00:05:00Z'),
+          status: 'pending',
+          aggregateIds: [],
+        },
+      },
+    ];
+
+    const viewModel = buildFireteamViewModel({
+      members: [baseMember, secondMember],
+      fireteamMemWithCharacters: {
+        'user-1': 'char-hunter',
+        'user-2': 'char-titan',
+      },
+      draftCharacters: {},
+      excludedMemberIds: {},
+      bulkResults,
+      visibleResults: bulkResults,
+    });
+
+    expect(viewModel.memberViews[0].selectedActiveSession?.id).toBe('sess-h');
+    expect(viewModel.memberViews[0].bulkOutcome).toBe('started');
+    expect(viewModel.memberViews[1].selectedActiveSession?.id).toBe('sess-t');
+    expect(viewModel.memberViews[1].bulkOutcome).toBe('skipped_active');
+    expect(viewModel.activeHeaderCount).toBe(2);
+    expect(viewModel.readyCount).toBe(0);
+  });
 });
 
 describe('formatBulkStartSummary', () => {

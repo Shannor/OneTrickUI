@@ -1,9 +1,6 @@
 import { FlaskConical, Users } from 'lucide-react';
 import { Link, data, useLocation } from 'react-router';
-import {
-  type DevFireteamMockScenario,
-  loadDevMockFireteam,
-} from '~/.server/dev-fireteam-mock';
+import { loadDevMockFireteam } from '~/.server/dev-fireteam-mock';
 import { getFireteamData } from '~/.server/fireteam';
 import { getRequestLogger } from '~/.server/logger';
 import { setPreferences } from '~/.server/preferences';
@@ -14,12 +11,16 @@ import {
   BulkStartResultsSummary,
   FireteamHeader,
   FireteamMemberGrid,
+  FireteamMeta,
   FireteamProvider,
   StartFireteamBar,
 } from '~/components/fireteam';
 import { buttonVariants } from '~/components/ui/button';
-import { buildFireteamCharacterMap } from '~/lib/fireteam-sessions';
-import { cn, getSiteOrigin } from '~/lib/utils';
+import {
+  type DevFireteamMockScenario,
+  buildFireteamCharacterMap,
+} from '~/lib/fireteam-sessions';
+import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/fireteam';
 
@@ -135,39 +136,10 @@ export function Fireteam({ loaderData, params }: Route.ComponentProps) {
   const location = useLocation();
   const { id, characterId } = params ?? {};
 
-  const origin = getSiteOrigin();
-  const pageTitle = 'Fireteam | 1 Trick';
-  const pageDescription =
-    'View your current fireteam and manage active character selections on 1 Trick.';
-  const canonicalUrl =
-    id && characterId
-      ? `https://d2onetrick.com/profile/${id}/c/${characterId}/fireteam`
-      : '';
-
-  const metaTags = (
-    <>
-      <title>{pageTitle}</title>
-      <meta name="description" content={pageDescription} />
-      <meta property="og:title" content={pageTitle} />
-      <meta property="og:description" content={pageDescription} />
-      <meta property="og:type" content="website" />
-      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
-      <meta property="og:image" content={`${origin}/og-image.png`} />
-      <meta property="og:image:type" content="image/png" />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={pageTitle} />
-      <meta name="twitter:description" content={pageDescription} />
-      <meta name="twitter:image" content={`${origin}/twitter-image.png`} />
-      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
-    </>
-  );
-
   if (members.length === 0) {
     return (
       <>
-        {metaTags}
+        <FireteamMeta id={id} characterId={characterId} />
         <div className="flex w-full flex-col items-center gap-4">
           <Empty
             title="You are currently offline."
@@ -200,7 +172,7 @@ export function Fireteam({ loaderData, params }: Route.ComponentProps) {
       devMockScenario={import.meta.env.DEV ? devMockScenario : undefined}
     >
       <div className="flex w-full flex-col gap-6">
-        {metaTags}
+        <FireteamMeta id={id} characterId={characterId} />
 
         {import.meta.env.DEV && devMockScenario && (
           <DevFireteamMockBanner

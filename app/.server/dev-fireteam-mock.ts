@@ -6,9 +6,9 @@ import type {
   FireteamSessionOutcome,
   FireteamSessionResult,
 } from '~/api';
+import type { DevFireteamMockScenario } from '~/lib/fireteam-sessions';
 
-export type DevFireteamMockScenario =
-  'mixed' | 'race' | 'all-active' | 'all-inactive';
+export type { DevFireteamMockScenario };
 
 const VALID_SCENARIOS = new Set<DevFireteamMockScenario>([
   'mixed',

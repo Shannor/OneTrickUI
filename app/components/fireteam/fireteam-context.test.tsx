@@ -5,11 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FireteamMember } from '~/api';
 import { toast } from '~/components/ui/sonner';
 
-import {
-  FireteamProvider,
-  useFireteam,
-  useFireteamMember,
-} from './fireteam-context';
+import { FireteamProvider, useFireteam } from './fireteam-context';
 
 vi.mock('~/hooks/use-route-loaders', () => ({
   useIsNavigating: () => [false],
@@ -79,7 +75,7 @@ function ContextConsumer() {
       </button>
       <button
         type="button"
-        onClick={() => selectMemberCharacter('u1', 'c1', 'c1-alt')}
+        onClick={() => selectMemberCharacter('u1', 'c1-alt')}
       >
         Swap Alpha
       </button>
@@ -107,19 +103,6 @@ describe('FireteamContext', () => {
 
     expect(() => render(<BadConsumer />)).toThrow(
       'useFireteam must be used within a FireteamProvider',
-    );
-    spy.mockRestore();
-  });
-
-  it('throws when useFireteamMember is called outside FireteamMemberProvider', () => {
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    function BadMemberConsumer() {
-      useFireteamMember();
-      return null;
-    }
-
-    expect(() => render(<BadMemberConsumer />)).toThrow(
-      'useFireteamMember must be used within a FireteamMemberProvider',
     );
     spy.mockRestore();
   });

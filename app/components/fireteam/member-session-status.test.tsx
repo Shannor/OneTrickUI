@@ -3,21 +3,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import type { FireteamMember } from '~/api';
-import type { FireteamMemberView } from '~/lib/fireteam-sessions';
+import type {
+  FireteamMemberView,
+  MemberSessionData,
+} from '~/lib/fireteam-sessions';
 
-import {
-  FireteamContext,
-  type FireteamContextValue,
-  FireteamMemberProvider,
-} from './fireteam-context';
+import { FireteamContext, type FireteamContextValue } from './fireteam-context';
+import { FireteamMemberProvider } from './fireteam-member-context';
 import {
   ActiveMemberSession,
   InactiveMemberSession,
   MemberSessionStatus,
-  type SessionData,
 } from './member-session-status';
 
-const mockPendingSession: SessionData = {
+const mockPendingSession: MemberSessionData = {
   id: 'sess-123',
   userId: 'user-1',
   characterId: 'char-100',
@@ -109,7 +108,7 @@ describe('ActiveMemberSession', () => {
   });
 
   it('renders starting Competitive division on active fireteam member session when compTracking is enabled', () => {
-    const activeCompSession: SessionData = {
+    const activeCompSession: MemberSessionData = {
       ...mockPendingSession,
       compTracking: {
         enabled: true,
@@ -142,7 +141,7 @@ describe('ActiveMemberSession', () => {
   });
 
   it('renders active session from GET /fireteam without aggregateIds using startedAt and trackComp', () => {
-    const lightweightSession: SessionData = {
+    const lightweightSession: MemberSessionData = {
       id: 'sess-ft-1',
       userId: 'user-1',
       characterId: 'char-100',
@@ -206,7 +205,7 @@ describe('InactiveMemberSession', () => {
   });
 
   it('renders link to active session on another character when selected character is inactive', () => {
-    const otherActive: SessionData = {
+    const otherActive: MemberSessionData = {
       id: 'sess-warlock',
       userId: 'user-1',
       characterId: 'char-warlock',

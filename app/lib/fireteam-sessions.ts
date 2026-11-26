@@ -7,6 +7,9 @@ import type {
   FireteamSessionResult,
 } from '~/api';
 
+export type DevFireteamMockScenario =
+  'mixed' | 'race' | 'all-active' | 'all-inactive';
+
 export interface MemberSessionData {
   id: string;
   name?: string;
@@ -164,6 +167,41 @@ export function findMemberBulkOutcome(
   return matching[0]?.outcome;
 }
 
+function indexBulkResultsByUserId(
+  results?: FireteamSessionResult[],
+): Map<string, FireteamSessionResult[]> | undefined {
+  if (!results || results.length === 0) return undefined;
+
+  const byUserId = new Map<string, FireteamSessionResult[]>();
+  for (const result of results) {
+    const existing = byUserId.get(result.userId);
+    if (existing) {
+      existing.push(result);
+    } else {
+      byUserId.set(result.userId, [result]);
+    }
+  }
+  return byUserId;
+}
+
+function lookupMemberResults(
+  member: Pick<FireteamMember, 'id' | 'membershipId'>,
+  resultsByUserId?: Map<string, FireteamSessionResult[]>,
+): FireteamSessionResult[] | undefined {
+  if (!resultsByUserId) return undefined;
+
+  const byId = member.id ? resultsByUserId.get(member.id) : undefined;
+  const byMembershipId =
+    member.membershipId && member.membershipId !== member.id
+      ? resultsByUserId.get(member.membershipId)
+      : undefined;
+
+  if (byId && byMembershipId) {
+    return [...byId, ...byMembershipId];
+  }
+  return byId ?? byMembershipId;
+}
+
 export interface FireteamMemberView {
   member: FireteamMember;
   memberKey: string;
@@ -206,6 +244,12 @@ export function buildFireteamViewModel({
   bulkResults,
   visibleResults,
 }: BuildFireteamViewModelInput): FireteamViewModel {
+  const bulkResultsByUserId = indexBulkResultsByUserId(bulkResults);
+  const visibleResultsByUserId =
+    visibleResults === bulkResults
+      ? bulkResultsByUserId
+      : indexBulkResultsByUserId(visibleResults);
+
   const memberViews: FireteamMemberView[] = [];
   const memberNames: Record<string, string> = {};
   const selectedTargets: FireteamSessionMemberTarget[] = [];
@@ -228,7 +272,12 @@ export function buildFireteamViewModel({
         ? fireteamMemWithCharacters[member.membershipId]
         : undefined);
     const effectiveCharId = draftCharacters[memberKey] ?? savedCharId;
-    const activeSessions = getMemberActiveSessions(member, bulkResults);
+    const memberBulkResults = lookupMemberResults(member, bulkResultsByUserId);
+    const memberVisibleResults = lookupMemberResults(
+      member,
+      visibleResultsByUserId,
+    );
+    const activeSessions = getMemberActiveSessions(member, memberBulkResults);
 
     const selectedActiveSession = effectiveCharId
       ? activeSessions.find(
@@ -250,7 +299,7 @@ export function buildFireteamViewModel({
     const bulkOutcome = findMemberBulkOutcome(
       member,
       effectiveCharId,
-      visibleResults,
+      memberVisibleResults,
     );
 
     if (isReadyToStart) {

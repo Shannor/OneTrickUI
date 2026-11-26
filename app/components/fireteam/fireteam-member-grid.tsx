@@ -1,9 +1,10 @@
-import { FireteamMemberProvider, useFireteam } from './fireteam-context';
+import { useFireteam } from './fireteam-context';
 import {
   FireteamMemberCard,
   MemberCardHeader,
   MemberCharacterForm,
 } from './fireteam-member-card';
+import { FireteamMemberProvider } from './fireteam-member-context';
 import { MemberSessionStatus } from './member-session-status';
 
 export function FireteamMemberGrid() {

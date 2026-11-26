@@ -5,7 +5,8 @@ import { CharacterPicker } from '~/components/character-picker';
 import { LoadingButton } from '~/components/loading-button';
 import { cn } from '~/lib/utils';
 
-import { useFireteam, useFireteamMember } from './fireteam-context';
+import { useFireteam } from './fireteam-context';
+import { useFireteamMember } from './fireteam-member-context';
 
 function getMemberCardBorderClass(
   isActive: boolean,
@@ -109,7 +110,7 @@ export function MemberCharacterForm() {
         characters={member.characters ?? []}
         currentCharacterId={savedCharId}
         onCharacterSelect={(nextCharId) =>
-          selectMemberCharacter(memberKey, savedCharId, nextCharId)
+          selectMemberCharacter(memberKey, nextCharId)
         }
       >
         {(current, previous) => {

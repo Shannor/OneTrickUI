@@ -9,9 +9,8 @@ import { buttonVariants } from '~/components/ui/button';
 import type { MemberSessionData } from '~/lib/fireteam-sessions';
 import { cn } from '~/lib/utils';
 
-import { useFireteam, useFireteamMember } from './fireteam-context';
-
-export type SessionData = MemberSessionData;
+import { useFireteam } from './fireteam-context';
+import { useFireteamMember } from './fireteam-member-context';
 
 function formatStartedRelative(startedAt?: Date | string): string | undefined {
   if (!startedAt) return undefined;
@@ -21,7 +20,7 @@ function formatStartedRelative(startedAt?: Date | string): string | undefined {
 }
 
 export interface ActiveMemberSessionProps {
-  session: SessionData;
+  session: MemberSessionData;
   bulkOutcome?: FireteamSessionOutcome;
   userId: string;
   characterId?: string;
@@ -128,7 +127,7 @@ export function ActiveMemberSession({
 }
 
 export interface InactiveMemberSessionProps {
-  otherActiveSession?: SessionData;
+  otherActiveSession?: MemberSessionData;
   otherActiveCharacterClass?: string;
   userId: string;
   characterId?: string;
