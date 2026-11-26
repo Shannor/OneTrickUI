@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { Switch } from '~/components/ui/switch';
 import { slimSnapshotForCard } from '~/hooks/use-loadout';
 import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
 import { cn, getSiteOrigin } from '~/lib/utils';
@@ -122,12 +123,14 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, type } = useProfileData();
-  const { isSameRoute: isUpdating } = useNavigationState();
+  const { isSameRoute: isUpdating, nextLocation } = useNavigationState();
   const isOwner = type === 'owner';
 
+  const activeSearch =
+    isUpdating && nextLocation ? nextLocation.search : location.search;
   const isHasSimilarActive =
-    hasSimilar ??
-    new URLSearchParams(location.search).get('hasSimilar') === 'true';
+    new URLSearchParams(activeSearch).get('hasSimilar') === 'true' ||
+    (activeSearch === '' && Boolean(hasSimilar));
 
   const rawItems = loadouts?.items ?? [];
   const displayLoadouts =
@@ -264,22 +267,22 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               <span className="mb-2 block text-sm font-medium leading-none">
                 Cleanup
               </span>
-              <Button
-                id="has-similar-filter"
-                type="button"
-                variant={isHasSimilarActive ? 'default' : 'outline'}
-                aria-pressed={isHasSimilarActive}
-                onClick={() =>
-                  handleFilterChange(
-                    'hasSimilar',
-                    isHasSimilarActive ? '' : 'true',
-                  )
-                }
-                className="flex min-h-11 w-full touch-manipulation items-center justify-center gap-2 sm:w-auto md:min-h-10"
-              >
-                <LayersIcon className="h-4 w-4" />
-                <span>Has Similar Loadouts</span>
-              </Button>
+              <div className="flex min-h-11 items-center gap-2.5 md:h-10 md:min-h-10">
+                <Switch
+                  id="has-similar-filter"
+                  checked={isHasSimilarActive}
+                  onCheckedChange={(checked) =>
+                    handleFilterChange('hasSimilar', checked ? 'true' : '')
+                  }
+                />
+                <FormLabel
+                  htmlFor="has-similar-filter"
+                  className="flex cursor-pointer touch-manipulation select-none items-center gap-1.5 text-sm font-medium"
+                >
+                  <LayersIcon className="h-4 w-4 text-primary" />
+                  <span>Has Similar Loadouts</span>
+                </FormLabel>
+              </div>
             </div>
           )}
         </div>

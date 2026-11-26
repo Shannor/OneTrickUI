@@ -236,7 +236,7 @@ describe('Loadouts Route Component', () => {
     render(<RouterProvider router={router} />);
 
     expect(
-      screen.getByRole('button', { name: /has similar loadouts/i }),
+      screen.getByRole('switch', { name: /has similar loadouts/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /3 similar/i }),
@@ -281,7 +281,7 @@ describe('Loadouts Route Component', () => {
     render(<RouterProvider router={router} />);
 
     expect(
-      screen.queryByRole('button', { name: /has similar loadouts/i }),
+      screen.queryByRole('switch', { name: /has similar loadouts/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /3 similar/i }),
@@ -318,12 +318,14 @@ describe('Loadouts Route Component', () => {
 
     render(<RouterProvider router={router} />);
 
-    const filterBtn = screen.getByRole('button', {
+    const filterSwitch = screen.getByRole('switch', {
       name: /has similar loadouts/i,
     });
-    fireEvent.click(filterBtn);
+    expect(filterSwitch).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(filterSwitch);
 
     expect(router.state.location.search).toBe('?minimum=0&hasSimilar=true');
+    expect(filterSwitch).toHaveAttribute('aria-checked', 'true');
   });
 
   it('passes hasSimilar=true to getSnapshots in loader when ?hasSimilar=true is set', async () => {
