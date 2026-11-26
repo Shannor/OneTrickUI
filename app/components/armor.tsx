@@ -1,5 +1,4 @@
 import type React from 'react';
-import { useState } from 'react';
 import type { ItemSnapshot as ItemSnapshotType, Socket } from '~/api';
 import { ArmorStats } from '~/components/armor-stats';
 import { Sockets } from '~/components/sockets';
@@ -21,7 +20,6 @@ const isMod = (itemTypeDisplayName: string): boolean =>
 export const Armor: React.FC<ArmorProps> = (props) => {
   const { details, className, hideInlineStats = true } = props;
   const { baseInfo, sockets, stats } = details;
-  const [open, setOpen] = useState(false);
 
   if (!sockets || sockets.length === 0) return null;
 
@@ -40,40 +38,39 @@ export const Armor: React.FC<ArmorProps> = (props) => {
   );
 
   return (
-    <Tooltip open={open} onOpenChange={setOpen}>
-      <TooltipTrigger asChild>
-        <div
-          className={cn(
-            'flex cursor-pointer select-none flex-col gap-2 rounded-lg border p-2.5 transition-colors',
-            isExotic
-              ? 'border-amber-500/40 bg-amber-500/10 dark:bg-amber-500/15'
-              : 'border-border/60 bg-muted/20 hover:bg-muted/40',
-            className,
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpen((prev) => !prev);
-          }}
-        >
-          <div className="flex items-center gap-2.5">
+    <Tooltip>
+      <div
+        className={cn(
+          'flex min-h-14 flex-col gap-2.5 rounded-lg border p-3 transition-colors sm:p-3.5',
+          isExotic
+            ? 'border-amber-500/40 bg-amber-500/10 dark:bg-amber-500/15'
+            : 'border-border/60 bg-muted/20 hover:bg-muted/40',
+          className,
+        )}
+      >
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="flex min-h-11 w-full cursor-pointer touch-manipulation select-none items-center gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
             {iconUrl ? (
               <img
                 src={iconUrl}
                 alt={name}
                 className={cn(
-                  'h-8 w-8 shrink-0 rounded border object-cover',
+                  'h-10 w-10 shrink-0 rounded border object-cover',
                   isExotic ? 'border-amber-400' : 'border-border/60',
                 )}
               />
             ) : (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border bg-muted font-bold text-muted-foreground">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border bg-muted text-sm font-bold text-muted-foreground">
                 {name.charAt(0)}
               </div>
             )}
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span
                 className={cn(
-                  'truncate text-xs font-bold sm:text-sm',
+                  'truncate text-sm font-bold sm:text-base',
                   isExotic
                     ? 'text-amber-500 dark:text-amber-400'
                     : 'text-foreground',
@@ -81,26 +78,28 @@ export const Armor: React.FC<ArmorProps> = (props) => {
               >
                 {name}
               </span>
-              <span className="truncate text-[10px] text-muted-foreground sm:text-xs">
+              <span className="truncate text-xs text-muted-foreground sm:text-sm">
                 {typeName}
               </span>
             </div>
-          </div>
+          </button>
+        </TooltipTrigger>
 
-          {!hideInlineStats && stats && <ArmorStats stats={stats} />}
+        {!hideInlineStats && stats && <ArmorStats stats={stats} />}
 
-          {modSockets.length > 0 && (
-            <Sockets
-              sockets={modSockets}
-              displayMode="iconOnly"
-              className="flex-row flex-wrap items-center border-t border-border/40 pt-1"
-            />
-          )}
-        </div>
-      </TooltipTrigger>
-      <TooltipContent className="flex min-w-[220px] flex-col gap-2">
-        <div className="flex flex-col">
-          <span className={cn('font-bold', isExotic && 'text-amber-400')}>
+        {modSockets.length > 0 && (
+          <Sockets
+            sockets={modSockets}
+            displayMode="iconOnly"
+            className="flex-row flex-wrap items-center gap-2 border-t border-border/40 pt-2"
+          />
+        )}
+      </div>
+      <TooltipContent className="flex w-[calc(100vw-2rem)] flex-col gap-2 p-3 sm:w-auto sm:min-w-[230px]">
+        <div className="flex flex-col gap-0.5">
+          <span
+            className={cn('text-sm font-bold', isExotic && 'text-amber-400')}
+          >
             {name}
           </span>
           <span className="text-xs text-muted-foreground">{typeName}</span>

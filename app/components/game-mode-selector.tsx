@@ -40,7 +40,10 @@ export function GameModeSelector({
           value={value}
           onValueChange={(val) => onValueChange(val as GameMode)}
         >
-          <SelectTrigger aria-label="Game Mode" className="h-9 text-xs">
+          <SelectTrigger
+            aria-label="Game Mode"
+            className="h-11 touch-manipulation text-sm"
+          >
             <SelectValue placeholder="All Modes" />
           </SelectTrigger>
           <SelectContent>

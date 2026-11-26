@@ -35,11 +35,11 @@ export function GearItemDetailsSummary({
     return (
       <div className="flex flex-col gap-1">
         {heading && (
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {heading}
           </span>
         )}
-        <span className="text-xs text-muted-foreground">None equipped</span>
+        <span className="text-sm text-muted-foreground">None equipped</span>
       </div>
     );
   }
@@ -55,27 +55,27 @@ export function GearItemDetailsSummary({
   const perks = (item.details?.perks ?? []).filter((p) => p?.name);
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       {heading && (
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {heading}
         </span>
       )}
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-0.5">
         <span
           className={cn(
-            'text-xs font-bold',
+            'text-sm font-bold',
             isExotic ? 'text-amber-500 dark:text-amber-400' : 'text-foreground',
           )}
         >
           {name}
         </span>
         {typeName && (
-          <span className="text-[11px] text-muted-foreground">{typeName}</span>
+          <span className="text-xs text-muted-foreground">{typeName}</span>
         )}
       </div>
       {stats && Object.keys(stats).length > 0 && (
-        <div className="min-w-[200px] pt-0.5 text-xs">
+        <div className="min-w-0 pt-0.5 text-xs sm:min-w-[200px] sm:text-sm">
           {isArmor ? (
             <ArmorStats stats={stats} />
           ) : (
@@ -84,11 +84,11 @@ export function GearItemDetailsSummary({
         </div>
       )}
       {perks.length > 0 && (
-        <div className="flex flex-wrap gap-1 pt-0.5">
+        <div className="flex flex-wrap gap-1.5 pt-0.5">
           {perks.slice(0, 4).map((perk, idx) => (
             <span
               key={`${String(perk.hash)}-${idx}`}
-              className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+              className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground"
             >
               {perk.name}
             </span>
@@ -131,14 +131,16 @@ export function GearItemPill({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div
-          tabIndex={0}
+        <button
+          type="button"
           className={cn(
-            'flex min-w-0 items-center gap-2 rounded-md border text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-            size === 'md' ? 'gap-2.5 rounded-lg p-2 font-medium' : 'px-2.5 py-1.5',
+            'flex w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2.5 rounded-md text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-2.5 sm:text-xs',
+            size === 'md'
+              ? 'min-h-11 gap-3 p-1.5 font-medium sm:min-h-0 sm:p-1'
+              : 'min-h-11 p-1.5 sm:min-h-0 sm:p-1',
             isExotic
-              ? 'border-amber-500/40 bg-amber-500/10 text-foreground hover:bg-amber-500/20 dark:bg-amber-500/15'
-              : 'border-border/60 bg-muted/20 text-foreground hover:bg-muted/40',
+              ? 'text-foreground hover:bg-amber-500/10'
+              : 'text-foreground hover:bg-muted/50',
             className,
           )}
         >
@@ -148,15 +150,22 @@ export function GearItemPill({
               alt={name}
               className={cn(
                 'shrink-0 rounded border object-cover',
-                size === 'md' ? 'h-8 w-8' : 'h-6 w-6',
+                size === 'md'
+                  ? 'h-9 w-9 sm:h-8 sm:w-8'
+                  : 'h-8 w-8 sm:h-7 sm:w-7',
                 isExotic ? 'border-amber-400' : 'border-border/60',
               )}
             />
           ) : (
             <div
               className={cn(
-                'flex shrink-0 items-center justify-center rounded border bg-muted font-bold text-muted-foreground',
-                size === 'md' ? 'h-8 w-8 text-xs' : 'h-6 w-6 text-[10px]',
+                'flex shrink-0 items-center justify-center rounded border bg-muted font-bold',
+                size === 'md'
+                  ? 'h-9 w-9 text-sm sm:h-8 sm:w-8 sm:text-xs'
+                  : 'h-8 w-8 text-xs sm:h-7 sm:w-7 sm:text-[10px]',
+                isExotic
+                  ? 'border-amber-400 text-amber-500 dark:text-amber-400'
+                  : 'border-border/60 text-muted-foreground',
               )}
             >
               {name.charAt(0)}
@@ -165,16 +174,12 @@ export function GearItemPill({
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             {label ? (
               <>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[10px]">
                   {label}
                 </span>
-                <span className="truncate font-semibold">{name}</span>
-              </>
-            ) : (
-              <>
                 <span
                   className={cn(
-                    'truncate text-xs font-bold sm:text-sm',
+                    'truncate text-sm font-semibold sm:text-xs',
                     isExotic
                       ? 'text-amber-500 dark:text-amber-400'
                       : 'text-foreground',
@@ -182,15 +187,28 @@ export function GearItemPill({
                 >
                   {name}
                 </span>
-                <span className="truncate text-[10px] text-muted-foreground sm:text-xs">
+              </>
+            ) : (
+              <>
+                <span
+                  className={cn(
+                    'truncate text-sm font-bold',
+                    isExotic
+                      ? 'text-amber-500 dark:text-amber-400'
+                      : 'text-foreground',
+                  )}
+                >
+                  {name}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
                   {resolvedSubtitle}
                 </span>
               </>
             )}
           </div>
-        </div>
+        </button>
       </TooltipTrigger>
-      <TooltipContent className="max-w-xs p-3">
+      <TooltipContent className="w-[calc(100vw-2rem)] p-3 sm:w-auto sm:min-w-[280px] sm:max-w-sm">
         {tooltipContent ?? (
           <GearItemDetailsSummary item={item} heading={tooltipHeading} />
         )}

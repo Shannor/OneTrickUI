@@ -71,13 +71,13 @@ export function LoadoutHeaderActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {isOwner && dimQuery && (
-        <Tooltip open={dimCopyStatus ? true : undefined}>
+        <Tooltip disableTapTrigger open={dimCopyStatus ? true : undefined}>
           <TooltipTrigger asChild>
             <Button
               onClick={handleCopyDimQuery}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
+              className="flex min-h-11 items-center gap-2 sm:min-h-9"
             >
               <Copy className="h-4 w-4" />
               <span>Copy DIM Query</span>
@@ -90,13 +90,13 @@ export function LoadoutHeaderActions({
       )}
 
       {shareUrl && (
-        <Tooltip open={copyStatus ? true : undefined}>
+        <Tooltip disableTapTrigger open={copyStatus ? true : undefined}>
           <TooltipTrigger asChild>
             <Button
               onClick={handleCopy}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
+              className="flex min-h-11 items-center gap-2 sm:min-h-9"
             >
               <Share2 className="h-4 w-4" />
               <span>Share</span>
@@ -107,7 +107,7 @@ export function LoadoutHeaderActions({
       )}
 
       {isOwner && (
-        <Tooltip>
+        <Tooltip disableTapTrigger>
           <TooltipTrigger asChild>
             <span className="inline-flex">
               <DeleteSnapshotDialog
@@ -119,7 +119,7 @@ export function LoadoutHeaderActions({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    className="h-11 w-11 text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
                     aria-label="Delete Loadout"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -136,5 +136,3 @@ export function LoadoutHeaderActions({
     </div>
   );
 }
-
-

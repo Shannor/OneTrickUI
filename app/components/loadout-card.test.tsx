@@ -143,13 +143,50 @@ describe('LoadoutCard', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('does not render set bonus pills when armorSetBonuses is empty or undefined', () => {
+  it('opens weapon tooltip when tapping a gear pill without triggering card navigation', () => {
+    const handleClick = vi.fn();
+    const snapshotWithWeaponStats = {
+      ...mockSnapshot,
+      loadout: {
+        ...mockSnapshot.loadout,
+        1498876634: {
+          ...mockSnapshot.loadout[1498876634],
+          details: {
+            ...mockSnapshot.loadout[1498876634].details,
+            stats: {
+              1240592695: { hash: 1240592695, name: 'Range', value: 72 },
+            },
+          },
+        },
+      },
+    } as unknown as CharacterSnapshot;
+
+    render(
+      <LoadoutCard
+        snapshot={snapshotWithWeaponStats}
+        stats={mockStats}
+        gamesCount={5}
+        onClick={handleClick}
+      />,
+    );
+
+    const rosePill = screen.getByRole('button', { name: /rose/i });
+    fireEvent.pointerDown(rosePill);
+    fireEvent.click(rosePill);
+
+    expect(handleClick).not.toHaveBeenCalled();
+    expect(screen.getAllByText('Range').length).toBeGreaterThan(0);
+  });
+
+  it('renders No Set Bonus pill without a Set Bonuses label when armorSetBonuses is empty or undefined', () => {
     render(
       <LoadoutCard snapshot={mockSnapshot} stats={mockStats} gamesCount={5} />,
     );
-    expect(
-      screen.queryByTestId('loadout-card-set-bonuses'),
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('loadout-card-set-bonuses')).toBeInTheDocument();
+    expect(screen.getByTestId('no-armor-set-bonus-pill')).toHaveTextContent(
+      'No Set Bonus',
+    );
+    expect(screen.queryByText('Set Bonuses')).not.toBeInTheDocument();
   });
 
   it('renders compact set bonus pills with perk detail tooltips and stops card click propagation', () => {
@@ -205,6 +242,10 @@ describe('LoadoutCard', () => {
     );
 
     expect(screen.getByTestId('loadout-card-set-bonuses')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('no-armor-set-bonus-pill'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Set Bonuses')).not.toBeInTheDocument();
     const electrumPill = screen.getByTestId('armor-set-bonus-pill-742845781');
     const audaciaPill = screen.getByTestId('armor-set-bonus-pill-2618364783');
     expect(electrumPill).toHaveTextContent('Cruel Electrum');

@@ -1,7 +1,8 @@
 import { ClassStatsRadar } from '~/charts/ClassStatsRadar';
 import { ArmorSet } from '~/components/armor-set';
 import { Empty } from '~/components/empty';
-import { Abilities, Aspects, Fragments, Super } from '~/components/sub-class';
+import { SubClassDetails } from '~/components/sub-class';
+import { TooltipProvider } from '~/components/ui/tooltip';
 import { Weapon } from '~/components/weapon';
 import { getDetailWeapons, useClassStats } from '~/hooks/use-loadout';
 import {
@@ -63,35 +64,32 @@ export function LoadoutDetails() {
   }
 
   return (
-    <div className="flex flex-col gap-20">
-      {metaTags}
-      <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
-        <SubClassProvider snapshot={snapshot}>
-          <div className="flex shrink-0 flex-col gap-4">
-            <Super />
-            <Abilities />
-            <Aspects />
-            <Fragments />
+    <TooltipProvider>
+      <div className="flex flex-col gap-10 sm:gap-14 lg:gap-20">
+        {metaTags}
+        <div className="flex flex-col gap-8 sm:gap-10 lg:flex-row lg:items-center">
+          <SubClassProvider snapshot={snapshot}>
+            <SubClassDetails />
+          </SubClassProvider>
+          <ClassStatsRadar data={values} className="lg:flex-1" />
+        </div>
+        <div className="col-span-12 flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-8 sm:gap-10 xl:grid-cols-3 xl:gap-12">
+            {data.map((item) => (
+              <Weapon
+                key={item.itemHash}
+                referenceId={item.itemHash}
+                properties={item.details}
+                stats={item.stats}
+              />
+            ))}
           </div>
-        </SubClassProvider>
-        <ClassStatsRadar data={values} className="lg:flex-1" />
-      </div>
-      <div className="col-span-12 flex flex-col gap-4">
-        <div className="grid grid-cols-1 gap-10 xl:grid-cols-3 xl:gap-12">
-          {data.map((item) => (
-            <Weapon
-              key={item.itemHash}
-              referenceId={item.itemHash}
-              properties={item.details}
-              stats={item.stats}
-            />
-          ))}
+        </div>
+        <div className="flex w-full flex-col">
+          <ArmorSet snapshot={snapshot} />
         </div>
       </div>
-      <div className="flex w-full flex-col">
-        <ArmorSet snapshot={snapshot} />
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }
 

@@ -47,7 +47,7 @@ export function WeaponKills({ stats }: WeaponKillsProps) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs">
+    <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
       {entries.map(([key, value]) => {
         const meta = getStatMeta(key as StatKeys);
         const displayValue = value.basic?.displayValue ?? '0';
@@ -55,12 +55,18 @@ export function WeaponKills({ stats }: WeaponKillsProps) {
         return (
           <Tooltip key={key}>
             <TooltipTrigger asChild>
-              <div className="flex cursor-help items-center gap-1 font-semibold text-foreground">
+              <button
+                type="button"
+                className="inline-flex min-h-9 cursor-pointer touch-manipulation items-center gap-1.5 rounded-md bg-muted/40 px-2.5 py-1 font-semibold text-foreground transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
                 {meta.icon}
                 <span>{displayValue}</span>
-              </div>
+              </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs font-medium">
+            <TooltipContent
+              side="top"
+              className="text-xs font-medium sm:text-sm"
+            >
               {meta.label}
             </TooltipContent>
           </Tooltip>

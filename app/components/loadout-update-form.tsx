@@ -42,19 +42,19 @@ export function LoadoutUpdateForm({
         name="name"
         defaultValue={defaultName ?? ''}
         placeholder="Loadout Name"
-        className="h-auto border-none bg-transparent px-1 py-1 text-2xl font-semibold tracking-tight shadow-none focus-visible:ring-1 focus-visible:ring-ring md:text-3xl"
+        className="min-h-11 border-none bg-transparent px-1 py-1 text-2xl font-semibold tracking-tight shadow-none focus-visible:ring-1 focus-visible:ring-ring md:text-3xl"
       />
       <Textarea
         name="description"
         placeholder="Add a description..."
-        className="min-h-[80px] w-full resize-y text-sm"
+        className="min-h-[88px] w-full resize-y text-base sm:text-sm"
         defaultValue={defaultDescription ?? ''}
       />
       <div className="flex justify-start">
         <LoadingButton
           type="submit"
           size="sm"
-          className="w-full sm:w-auto"
+          className="min-h-11 w-full touch-manipulation text-sm sm:min-h-9 sm:w-auto"
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >

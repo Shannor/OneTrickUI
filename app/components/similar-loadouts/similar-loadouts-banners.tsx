@@ -15,7 +15,7 @@ export function SimilarLoadoutsScopeNotice() {
 export function SimilarLoadoutsPageHeader() {
   return (
     <div className="flex flex-col gap-1.5">
-      <h2 className="flex items-center gap-2 text-xl font-semibold leading-none tracking-tight">
+      <h2 className="flex items-center gap-2 text-2xl font-bold leading-none tracking-wide sm:text-3xl">
         <LayersIcon className="h-5 w-5 text-primary" />
         <span>Compare & Merge Similar Loadouts</span>
       </h2>
@@ -49,30 +49,30 @@ export function SimilarLoadoutsMergeBanner({
 
 export function SimilarLoadoutsLegend() {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
-      <div className="flex items-center gap-1.5 font-medium text-foreground">
-        <InfoIcon className="h-3.5 w-3.5 text-primary" />
-        <span>Hover any badge to inspect item rolls & stats:</span>
+    <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-md border border-border/60 bg-muted/20 px-3.5 py-2.5 text-xs text-muted-foreground sm:text-sm">
+      <div className="flex items-center gap-1.5 font-semibold text-foreground">
+        <InfoIcon className="h-4 w-4 shrink-0 text-primary" />
+        <span>Tap or hover any badge to inspect item rolls & stats:</span>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-amber-500" />
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500" />
           Different Exotic / Roll
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-sky-500" />
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" />
           Different Set Bonus
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-primary" />
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
           Different Power Weapon
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
           +Stat vs Primary
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-rose-500" />
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-rose-500" />
           -Stat vs Primary
         </span>
       </div>

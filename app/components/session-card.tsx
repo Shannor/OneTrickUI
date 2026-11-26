@@ -241,7 +241,7 @@ export function SessionCardTopWeapons({
   weapons: SessionWeaponSummary[];
 }) {
   return (
-    <TooltipProvider font-sans>
+    <TooltipProvider>
       <div className="flex w-full min-w-0 flex-col gap-1.5 md:gap-2">
         <span className="text-xs font-semibold text-muted-foreground md:text-sm lg:text-base">
           Top Guns:
@@ -253,23 +253,26 @@ export function SessionCardTopWeapons({
             return (
               <Tooltip key={weapon.name || idx}>
                 <TooltipTrigger asChild>
-                  <div className="flex min-w-0 shrink-0 items-center gap-1.5 text-xs font-medium md:text-sm lg:text-base">
+                  <button
+                    type="button"
+                    className="inline-flex min-h-9 min-w-0 shrink-0 cursor-pointer touch-manipulation items-center gap-1.5 rounded-md bg-muted/30 px-2 py-1 text-xs font-medium transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:text-sm lg:text-base"
+                  >
                     {iconUrl ? (
                       <img
                         src={iconUrl}
                         alt={name}
-                        className="h-4 w-4 shrink-0 rounded object-cover md:h-6 md:w-6 lg:h-8 lg:w-8"
+                        className="h-5 w-5 shrink-0 rounded object-cover md:h-6 md:w-6 lg:h-8 lg:w-8"
                       />
                     ) : null}
-                    <span className="max-w-[100px] truncate text-[11px] font-semibold md:max-w-[140px] md:text-xs lg:max-w-[180px] lg:text-sm">
+                    <span className="max-w-[110px] truncate text-xs font-semibold md:max-w-[140px] lg:max-w-[180px] lg:text-sm">
                       {name}
                     </span>
                     {weapon.kills != null && (
-                      <span className="shrink-0 text-[10px] text-muted-foreground md:text-xs lg:text-sm">
+                      <span className="shrink-0 text-xs text-muted-foreground lg:text-sm">
                         ({weapon.kills})
                       </span>
                     )}
-                  </div>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="text-xs lg:text-sm">

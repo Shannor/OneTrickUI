@@ -21,7 +21,7 @@ export const Super: React.FC<Props> = ({ hideName, tooltipContent }) => {
         tooltipContent={tooltipContent}
       />
       {hideName ? null : (
-        <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
+        <h4 className="scroll-m-20 text-2xl font-semibold tracking-tight sm:text-3xl">
           {name}
         </h4>
       )}

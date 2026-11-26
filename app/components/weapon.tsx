@@ -4,7 +4,6 @@ import { useState } from 'react';
 import type { Socket, WeaponInstanceMetrics } from '~/api';
 import { Sockets } from '~/components/sockets';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import { Button } from '~/components/ui/button';
 import { WeaponKills } from '~/components/weapon-kills';
 import { WeaponStats } from '~/components/weapon-stats';
 import { cn, getItemIconUrl } from '~/lib/utils';
@@ -141,57 +140,71 @@ export const Weapon: React.FC<Props> = ({
   if (compact) {
     const allSockets = [...row1, ...row2];
     const hasSockets = Boolean(properties?.sockets && allSockets.length > 0);
+    const canToggleSockets = hasSockets && expandableSockets;
 
-    return (
-      <div className={cn('flex flex-col gap-1 py-0.5', className)}>
-        <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 shrink-0 rounded border bg-black/40 p-0.5">
-            <AvatarImage src={icon} alt={`${name} image`} />
-            <AvatarFallback className="rounded text-[10px] font-bold">
-              {name?.charAt(0).toUpperCase() ?? '?'}
-            </AvatarFallback>
-          </Avatar>
+    const headerContent = (
+      <>
+        <Avatar className="h-10 w-10 shrink-0 rounded border bg-black/40 p-0.5">
+          <AvatarImage src={icon} alt={`${name} image`} />
+          <AvatarFallback className="rounded text-xs font-bold">
+            {name?.charAt(0).toUpperCase() ?? '?'}
+          </AvatarFallback>
+        </Avatar>
 
-          <div className="flex min-w-0 flex-1 items-center justify-between gap-1.5">
-            <h5
-              className={cn(
-                'truncate text-xs font-bold tracking-tight',
-                isExotic ? 'text-yellow-500' : 'text-purple-400',
-              )}
-            >
-              {name}
-            </h5>
-            <div className="flex shrink-0 items-center gap-1">
-              {itemType && (
-                <span className="rounded bg-muted/80 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
-                  {itemType}
-                </span>
-              )}
-              {hasSockets && expandableSockets && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                  onClick={() => setSocketsOpen((prev) => !prev)}
-                  aria-label="Toggle weapon perks"
-                >
-                  <ChevronDown
-                    className={cn(
-                      'h-3.5 w-3.5 transition-transform duration-200',
-                      socketsOpen && 'rotate-180',
-                    )}
-                  />
-                </Button>
-              )}
-            </div>
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+          <span
+            className={cn(
+              'truncate font-heading text-lg font-bold tracking-wide sm:text-xl',
+              isExotic ? 'text-yellow-500' : 'text-purple-400',
+            )}
+          >
+            {name}
+          </span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {itemType && (
+              <span className="rounded bg-muted/80 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {itemType}
+              </span>
+            )}
+            {canToggleSockets && (
+              <ChevronDown
+                aria-hidden="true"
+                className={cn(
+                  'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                  socketsOpen && 'rotate-180',
+                )}
+              />
+            )}
           </div>
         </div>
+      </>
+    );
+
+    return (
+      <div className={cn('flex flex-col gap-1.5 py-1', className)}>
+        {canToggleSockets ? (
+          <button
+            type="button"
+            aria-expanded={socketsOpen}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSocketsOpen((prev) => !prev);
+            }}
+            className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center gap-2.5 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {headerContent}
+          </button>
+        ) : (
+          <div className="flex min-h-11 items-center gap-2.5 rounded-md">
+            {headerContent}
+          </div>
+        )}
 
         {hasSockets && socketsOpen && (
           <Sockets
             sockets={allSockets}
             displayMode="iconOnly"
-            className="flex-row flex-wrap items-center gap-1 pl-10 pt-1"
+            className="flex-row flex-wrap items-center gap-2 pt-1.5 sm:pl-12"
           />
         )}
       </div>
@@ -199,8 +212,7 @@ export const Weapon: React.FC<Props> = ({
   }
 
   return (
-    <div className={cn('flex w-full flex-col gap-2.5 py-1', className)}>
-      {/* Integrated Header Banner (Avatar Icon + Weapon Name + Type + Kills metrics) */}
+    <div className={cn('flex w-full flex-col gap-3 py-1.5', className)}>
       <div className="flex items-center gap-3">
         <Avatar className="h-12 w-12 shrink-0 rounded-md border bg-black/40 object-cover p-0.5">
           <AvatarImage src={icon} alt={`${name} image`} />
@@ -209,19 +221,19 @@ export const Weapon: React.FC<Props> = ({
           </AvatarFallback>
         </Avatar>
 
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
           {showTitle && (
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h5
                 className={cn(
-                  'truncate text-sm font-bold tracking-tight',
+                  'truncate text-xl font-bold tracking-wide sm:text-2xl',
                   isExotic ? 'text-yellow-500' : 'text-purple-400',
                 )}
               >
                 {name}
               </h5>
               {itemType && (
-                <span className="shrink-0 rounded bg-muted/80 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                <span className="shrink-0 rounded bg-muted/80 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {itemType}
                 </span>
               )}
@@ -232,29 +244,27 @@ export const Weapon: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Perks / Sockets */}
       {properties?.sockets && (row1.length > 0 || row2.length > 0) && (
-        <div className="flex flex-col gap-1.5 border-t pt-2">
+        <div className="flex flex-col gap-2 border-t pt-2.5">
           {row1.length > 0 && (
             <Sockets
               sockets={row1}
               displayMode="iconOnly"
-              className="flex-row flex-wrap items-center gap-1"
+              className="flex-row flex-wrap items-center gap-2"
             />
           )}
           {row2.length > 0 && (
             <Sockets
               sockets={row2}
               displayMode="iconOnly"
-              className="flex-row flex-wrap items-center gap-1"
+              className="flex-row flex-wrap items-center gap-2"
             />
           )}
         </div>
       )}
 
-      {/* Compact Weapon Stats */}
       {!hideStats && properties?.stats && (
-        <div className="border-t pt-1.5">
+        <div className="border-t pt-2">
           <WeaponStats stats={properties.stats} compact={true} />
         </div>
       )}

@@ -99,7 +99,7 @@ function MergeLoadoutDialogForm({
           required
           disabled={isMerging}
         >
-          <SelectTrigger>
+          <SelectTrigger className="h-11 touch-manipulation text-sm sm:h-10">
             <SelectValue placeholder="Select a loadout to merge..." />
           </SelectTrigger>
           <SelectContent>
@@ -142,21 +142,21 @@ function MergeLoadoutDialogForm({
           </div>
         )}
 
-        <DialogFooter className="mt-4 flex flex-row justify-end gap-4">
+        <DialogFooter className="mt-4 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end sm:gap-4">
           <Button
             type="button"
             variant="outline"
             disabled={isMerging}
             onClick={onCancel}
+            className="min-h-11 touch-manipulation sm:min-h-10"
           >
             Cancel
           </Button>
           <LoadingButton
             type="submit"
+            className="min-h-11 touch-manipulation sm:min-h-10"
             disabled={
-              isMerging ||
-              compatibleSnapshots.length === 0 ||
-              !selectedSourceId
+              isMerging || compatibleSnapshots.length === 0 || !selectedSourceId
             }
             isLoading={isMerging}
             loadingText={

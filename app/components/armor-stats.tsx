@@ -8,14 +8,16 @@ interface Props {
 export const ArmorStats: React.FC<Props> = ({ stats }) => {
   const barStats = Object.values(stats);
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1.5 text-xs sm:text-sm">
       {barStats.map((it) => (
-        <div key={it.hash} className="grid grid-cols-12 items-center gap-4">
-          <div className="col-span-3">{it.name}</div>
-          <div className="col-span-7">
+        <div key={it.hash} className="grid grid-cols-12 items-center gap-3">
+          <div className="col-span-4 font-medium text-muted-foreground sm:col-span-3">
+            {it.name}
+          </div>
+          <div className="col-span-6 sm:col-span-7">
             <Bar value={Number(it.value)} max={45} />
           </div>
-          <div className="col-span-2">{it.value}</div>
+          <div className="col-span-2 font-bold text-foreground">{it.value}</div>
         </div>
       ))}
     </div>
