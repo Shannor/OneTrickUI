@@ -97,7 +97,7 @@ export function ArmorSetBonusDiffBadge({
       </TooltipTrigger>
       <TooltipContent
         {...contentProps}
-        className="flex max-w-sm flex-col gap-3 p-3"
+        className="flex w-[calc(100vw-2rem)] flex-col gap-3 p-3 sm:w-auto sm:max-w-sm"
       >
         <div className="border-b border-border/60 pb-1.5 text-xs font-semibold sm:text-sm">
           {tooltipHeading}

@@ -107,10 +107,10 @@ export function LoadoutCardHeader({
   return (
     <div className="flex w-full min-w-0 flex-col gap-2.5 border-b border-border/50 pb-3">
       <div className="flex min-w-0 flex-col gap-1">
-        <div className="flex w-full flex-wrap items-center justify-between gap-2">
+        <div className="flex w-full min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
           <h3
             className={cn(
-              'min-w-0 flex-1 truncate font-bold tracking-wide text-foreground transition-colors group-hover:text-primary',
+              'w-full min-w-0 truncate font-bold tracking-wide text-foreground transition-colors group-hover:text-primary sm:w-auto sm:flex-1',
               compact
                 ? 'text-xl sm:text-2xl'
                 : 'text-2xl sm:text-2xl lg:text-3xl',
@@ -118,32 +118,34 @@ export function LoadoutCardHeader({
           >
             {snapshot.name || 'Loadout'}
           </h3>
-          <div className="flex shrink-0 items-center gap-2">
-            {similarCount > 0 && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                data-testid="similar-loadouts-trigger"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSimilarClick?.(snapshot);
-                }}
-                className="min-h-10 touch-manipulation gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold sm:h-7 sm:min-h-0 sm:px-2.5 sm:py-0.5 sm:text-xs"
-              >
-                <LayersIcon className="h-4 w-4 text-primary sm:h-3.5 sm:w-3.5" />
-                <span>{similarCount} Similar</span>
-              </Button>
-            )}
-            {snapshot.createdAt && (
-              <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
-                <FormattedDate
-                  date={snapshot.createdAt}
-                  formatStr="MMM d, yyyy"
-                />
-              </span>
-            )}
-          </div>
+          {(similarCount > 0 || snapshot.createdAt) && (
+            <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
+              {similarCount > 0 && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  data-testid="similar-loadouts-trigger"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSimilarClick?.(snapshot);
+                  }}
+                  className="h-8 min-h-8 touch-manipulation gap-1.5 rounded-full px-3 py-1 text-xs font-semibold sm:h-7 sm:min-h-0 sm:px-2.5 sm:py-0.5"
+                >
+                  <LayersIcon className="h-3.5 w-3.5 text-primary" />
+                  <span>{similarCount} Similar</span>
+                </Button>
+              )}
+              {snapshot.createdAt && (
+                <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
+                  <FormattedDate
+                    date={snapshot.createdAt}
+                    formatStr="MMM d, yyyy"
+                  />
+                </span>
+              )}
+            </div>
+          )}
         </div>
         {snapshot.description && (
           <p className="line-clamp-2 text-sm text-muted-foreground sm:text-base">
@@ -366,7 +368,7 @@ export function LoadoutCardSetBonuses({
   return (
     <div
       data-testid="loadout-card-set-bonuses"
-      className="flex w-full min-w-0 flex-wrap items-center gap-2 border-t border-border/50 pt-3"
+      className="flex w-full min-w-0 flex-col items-start gap-2 border-t border-border/50 pt-3 sm:flex-row sm:flex-wrap sm:items-center"
     >
       <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
         Set Bonuses

@@ -248,20 +248,23 @@ export function ArmorSetBonusTooltipDetails({
         const highestTier = getHighestActiveTier(bonus);
 
         return (
-          <div key={String(bonus.setHash)} className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-bold text-foreground">
+          <div
+            key={String(bonus.setHash)}
+            className="flex min-w-0 flex-col gap-2"
+          >
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <span className="min-w-0 truncate text-sm font-bold text-foreground">
                 {bonus.setName}
               </span>
               <span className="shrink-0 text-xs font-medium text-muted-foreground">
                 {highestTier}-Piece Set
               </span>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-2">
               {(bonus.activePerks ?? []).map((perk) => (
                 <div
                   key={`${String(perk.hash)}-${perk.requiredSetCount}`}
-                  className="flex items-start gap-2.5"
+                  className="flex min-w-0 items-start gap-2.5"
                 >
                   <ArmorSetBonusPerkIcon
                     perk={perk}
@@ -278,7 +281,7 @@ export function ArmorSetBonusTooltipDetails({
                       </span>
                     </div>
                     {perk.description && (
-                      <p className="text-xs leading-snug text-muted-foreground">
+                      <p className="break-words text-xs leading-snug text-muted-foreground">
                         {perk.description}
                       </p>
                     )}
@@ -339,7 +342,10 @@ export function ArmorSetBonusPill({
           </span>
         </button>
       </TooltipTrigger>
-      <TooltipContent {...contentProps} className="max-w-sm p-3">
+      <TooltipContent
+        {...contentProps}
+        className="w-[calc(100vw-2rem)] p-3 sm:w-auto sm:max-w-sm"
+      >
         <ArmorSetBonusTooltipDetails bonuses={[bonus]} />
       </TooltipContent>
     </Tooltip>

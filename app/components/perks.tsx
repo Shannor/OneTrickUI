@@ -23,7 +23,7 @@ export const Perks: React.FC<Props> = ({ perks }) => {
           return (
             <div key={it.hash} className="flex flex-row items-center gap-3">
               <Tooltip>
-                <TooltipContent className="max-w-xs text-sm">
+                <TooltipContent className="text-sm sm:max-w-xs">
                   {it.description}
                 </TooltipContent>
                 <TooltipTrigger className="inline-flex min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">

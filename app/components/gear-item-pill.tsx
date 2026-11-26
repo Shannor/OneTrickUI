@@ -75,7 +75,7 @@ export function GearItemDetailsSummary({
         )}
       </div>
       {stats && Object.keys(stats).length > 0 && (
-        <div className="min-w-[200px] pt-0.5 text-xs sm:text-sm">
+        <div className="min-w-0 pt-0.5 text-xs sm:min-w-[200px] sm:text-sm">
           {isArmor ? (
             <ArmorStats stats={stats} />
           ) : (
@@ -198,7 +198,7 @@ export function GearItemPill({
           </div>
         </button>
       </TooltipTrigger>
-      <TooltipContent className="max-w-xs p-3">
+      <TooltipContent className="w-[calc(100vw-2rem)] p-3 sm:w-auto sm:max-w-xs">
         {tooltipContent ?? (
           <GearItemDetailsSummary item={item} heading={tooltipHeading} />
         )}

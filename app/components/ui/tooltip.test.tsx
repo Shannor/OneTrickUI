@@ -73,4 +73,20 @@ describe('Tooltip mobile tap behavior', () => {
     expect(onActionClick).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('Share loadout link')).not.toBeInTheDocument();
   });
+
+  it('preserves mobile viewport max-width clamp when a desktop max-w class is passed', () => {
+    render(
+      <TooltipProvider>
+        <Tooltip defaultOpen>
+          <TooltipTrigger>Set Bonus</TooltipTrigger>
+          <TooltipContent data-testid="set-bonus-tooltip" className="max-w-sm">
+            Per Audacia Set Bonus Details
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>,
+    );
+
+    const content = screen.getByTestId('set-bonus-tooltip');
+    expect(content).toHaveClass('max-sm:max-w-[calc(100vw-2rem)]');
+  });
 });

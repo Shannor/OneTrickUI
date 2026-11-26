@@ -111,7 +111,7 @@ export function SimilarLoadoutCandidateDiffBadges({
             </button>
           )}
         </TooltipTrigger>
-        <TooltipContent className="flex max-w-sm flex-col gap-3 p-3">
+        <TooltipContent className="flex w-[calc(100vw-2rem)] flex-col gap-3 p-3 sm:w-auto sm:max-w-sm">
           <div className="border-b border-border/60 pb-1.5 text-xs font-semibold sm:text-sm">
             {bothLackExoticArmor
               ? 'Neither loadout has Exotic Armor equipped'
@@ -177,7 +177,7 @@ export function SimilarLoadoutCandidateDiffBadges({
             </button>
           )}
         </TooltipTrigger>
-        <TooltipContent className="flex max-w-sm flex-col gap-3 p-3">
+        <TooltipContent className="flex w-[calc(100vw-2rem)] flex-col gap-3 p-3 sm:w-auto sm:max-w-sm">
           <div className="border-b border-border/60 pb-1.5 text-xs font-semibold sm:text-sm">
             {item.powerWeaponMatch
               ? `Same Power Weapon as Primary (${candidatePowerName})`

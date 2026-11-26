@@ -63,7 +63,7 @@ export const Sockets: React.FC<Props> = ({
                   {tooltipContent ? (
                     tooltipContent
                   ) : (
-                    <div className="max-w-xs text-sm">
+                    <div className="min-w-0 break-words text-sm sm:max-w-xs">
                       {isIconOnly ? (
                         <div className="flex flex-col gap-1">
                           <div className="font-semibold">{it.name}</div>

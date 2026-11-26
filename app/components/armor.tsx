@@ -94,7 +94,7 @@ export const Armor: React.FC<ArmorProps> = (props) => {
           )}
         </div>
       </TooltipTrigger>
-      <TooltipContent className="flex min-w-[230px] flex-col gap-2 p-3">
+      <TooltipContent className="flex w-[calc(100vw-2rem)] flex-col gap-2 p-3 sm:w-auto sm:min-w-[230px]">
         <div className="flex flex-col gap-0.5">
           <span
             className={cn('text-sm font-bold', isExotic && 'text-amber-400')}
