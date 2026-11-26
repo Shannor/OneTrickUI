@@ -142,7 +142,7 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
 
               <div className="self-start sm:self-auto">
                 <FormattedDate
-                  date={activity.period as unknown as Date}
+                  date={activity.period}
                   className="inline-block rounded-md bg-black/50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-200 ring-1 ring-white/20 backdrop-blur-sm"
                 />
               </div>
@@ -187,7 +187,7 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
           </Button>
         </div>
       ) : (
-        <MatchScoreboard viewModel={viewModel} />
+        <MatchScoreboard key={activity.instanceId} viewModel={viewModel} />
       )}
     </div>
   );

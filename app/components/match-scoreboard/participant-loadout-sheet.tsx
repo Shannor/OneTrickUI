@@ -18,6 +18,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '~/components/ui/sheet';
+import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { Weapon } from '~/components/weapon';
 import { WeaponKills } from '~/components/weapon-kills';
 import { useIsMobile } from '~/hooks/use-mobile';
@@ -51,43 +52,39 @@ function TrackedPlayerSwitcher({
   }
 
   return (
-    <div
-      role="tablist"
-      aria-label="Tracked players in this match"
-      className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-2"
+    <Tabs
+      value={selectedCharacterId}
+      onValueChange={onSelectCharacter}
+      className="pt-2"
     >
-      {trackedEntries.map((item) => {
-        const isActive = item.participant.characterId === selectedCharacterId;
-        const emblemSrc = setBungieUrl(item.participant.emblemIconUrl);
-        const initial = item.participant.displayName.charAt(0).toUpperCase();
+      <TabsList
+        aria-label="Tracked players in this match"
+        className="flex h-auto min-h-0 w-full justify-start gap-1.5 overflow-x-auto rounded-none bg-transparent p-0 pb-0.5 sm:min-h-0 sm:w-full"
+      >
+        {trackedEntries.map((item) => {
+          const emblemSrc = setBungieUrl(item.participant.emblemIconUrl);
+          const initial = item.participant.displayName.charAt(0).toUpperCase();
 
-        return (
-          <button
-            key={item.participant.characterId}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            onClick={() => onSelectCharacter(item.participant.characterId)}
-            className={cn(
-              'inline-flex min-h-8 shrink-0 touch-manipulation items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-              isActive
-                ? 'border-primary/50 bg-primary/15 text-primary'
-                : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground',
-            )}
-          >
-            <Avatar className="h-4 w-4 shrink-0 rounded-sm">
-              <AvatarImage src={emblemSrc} alt="" />
-              <AvatarFallback className="rounded-sm text-[9px] font-bold">
-                {initial}
-              </AvatarFallback>
-            </Avatar>
-            <span className="max-w-[10rem] truncate">
-              {item.participant.displayName}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+          return (
+            <TabsTrigger
+              key={item.participant.characterId}
+              value={item.participant.characterId}
+              className="min-h-8 flex-initial shrink-0 gap-1.5 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-semibold text-muted-foreground shadow-none hover:bg-muted hover:text-foreground data-[state=active]:border-primary/50 data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none sm:min-h-8 sm:rounded-full sm:px-2.5 sm:py-1 sm:font-semibold"
+            >
+              <Avatar className="h-4 w-4 shrink-0 rounded-sm">
+                <AvatarImage src={emblemSrc} alt="" />
+                <AvatarFallback className="rounded-sm text-[9px] font-bold">
+                  {initial}
+                </AvatarFallback>
+              </Avatar>
+              <span className="max-w-[10rem] truncate">
+                {item.participant.displayName}
+              </span>
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    </Tabs>
   );
 }
 
@@ -300,23 +297,26 @@ export function ParticipantLoadoutSheet({
   onClose,
 }: ParticipantLoadoutSheetProps) {
   const isMobile = useIsMobile();
-  const isOpen = selectedEntry !== null;
+  const [cachedEntry, setCachedEntry] =
+    useState<ScoreboardParticipantEntry | null>(selectedEntry);
 
+  if (selectedEntry && selectedEntry !== cachedEntry) {
+    setCachedEntry(selectedEntry);
+  }
+
+  const activeEntry = selectedEntry ?? cachedEntry;
+  if (!activeEntry) {
+    return null;
+  }
+
+  const isOpen = selectedEntry !== null;
   const sheetSide = isMobile ? 'bottom' : 'right';
   const sheetContentClass = isMobile
     ? 'flex max-h-[88dvh] w-full flex-col gap-0 rounded-t-2xl p-0'
     : 'flex h-full w-full flex-col gap-0 p-0 sm:max-w-lg lg:max-w-xl';
 
-  if (!selectedEntry) {
-    return (
-      <Sheet open={false} onOpenChange={() => undefined}>
-        <SheetContent side={sheetSide} className={sheetContentClass} />
-      </Sheet>
-    );
-  }
-
   const { participant, snapshot, subclass, trackingKind, stats, weapons } =
-    selectedEntry;
+    activeEntry;
   const targetUserId = participant.userId || snapshot?.userId;
   const emblemSrc = setBungieUrl(participant.emblemIconUrl);
   const initial = participant.displayName.charAt(0).toUpperCase() || '?';

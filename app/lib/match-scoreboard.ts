@@ -39,8 +39,6 @@ export interface ParticipantItemPreview {
   icon?: string;
 }
 
-export type ParticipantSubclassPreview = ParticipantItemPreview;
-
 export interface ParticipantStatsSummary {
   kills: number;
   deaths: number;
@@ -53,7 +51,7 @@ export interface ParticipantStatsSummary {
 export interface ScoreboardParticipantEntry {
   participant: ActivityParticipant;
   snapshot?: CharacterSnapshot;
-  subclass?: ParticipantSubclassPreview;
+  subclass?: ParticipantItemPreview;
   exoticArmor?: ParticipantItemPreview;
   trackingKind: ParticipantTrackingKind;
   stats: ParticipantStatsSummary;
@@ -149,7 +147,8 @@ export function resolveFireteamKey(
   if (
     typeof rawValue === 'number' &&
     Number.isFinite(rawValue) &&
-    rawValue !== 0
+    rawValue !== 0 &&
+    String(rawValue) !== BUNGIE_INT32_MIN_OVERFLOW
   ) {
     return String(rawValue);
   }
@@ -270,7 +269,7 @@ function getAlphaTeamId(teams: Team[]): string {
 
 export function getSnapshotSubclassPreview(
   snapshot?: CharacterSnapshot,
-): ParticipantSubclassPreview | undefined {
+): ParticipantItemPreview | undefined {
   const itemSnapshot = snapshot?.loadout?.[SUBCLASS_BUCKET_HASH];
   if (!itemSnapshot) {
     return undefined;

@@ -388,8 +388,10 @@ describe('MatchScoreboard', () => {
     const teammateTab = within(sheet).getByRole('tab', {
       name: /TeammateNoSnap/i,
     });
+    fireEvent.mouseDown(teammateTab, { button: 0, ctrlKey: false });
     fireEvent.click(teammateTab);
 
+    expect(teammateTab).toHaveAttribute('aria-selected', 'true');
     expect(
       within(sheet).getByRole('link', { name: /view session/i }),
     ).toHaveAttribute(
@@ -400,6 +402,35 @@ describe('MatchScoreboard', () => {
       within(sheet).queryByRole('link', { name: /view loadout/i }),
     ).not.toBeInTheDocument();
     expect(within(sheet).getByText('The Jade Rabbit')).toBeInTheDocument();
+  });
+
+  it('closes the loadout sheet cleanly without emitting DialogTitle console errors', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const viewModel = buildMatchScoreboardViewModel({
+        participants: [LOADOUT_PARTICIPANT, UNTRACKED_PARTICIPANT],
+        teams: TEAMS,
+        snapshots: { 'char-tracked': makeTrackedSnapshot() },
+      });
+
+      render(
+        <MemoryRouter>
+          <MatchScoreboard viewModel={viewModel} />
+        </MemoryRouter>,
+      );
+
+      fireEvent.click(screen.getByText(/Nightstalker · 547/));
+      const sheet = screen.getByRole('dialog');
+      expect(within(sheet).getByText('Zone 6 Weegee')).toBeInTheDocument();
+
+      fireEvent.click(within(sheet).getByRole('button', { name: /close/i }));
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(errorSpy).not.toHaveBeenCalled();
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it('opens the sheet for a session-only (noMatch) player to show View Session, notice, and PGCR weapon metrics', () => {

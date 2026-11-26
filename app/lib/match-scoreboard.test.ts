@@ -283,6 +283,51 @@ describe('match-scoreboard view model helpers', () => {
     expect(vm.groups[1].entries[0].fireteamGroupIndex).toBeUndefined();
   });
 
+  it('ignores Bungie INT32 overflow sentinel when it appears on fireTeamId.value fallback', () => {
+    const soloOverflowA = makeParticipant({
+      characterId: 'solo-overflow-1',
+      displayName: 'SoloOverflowA',
+      teamId: '19',
+      fireteamId: '-2147483648',
+      performance: {
+        playerStats: {
+          kills: { value: 9 },
+          deaths: { value: 4 },
+          assists: { value: 2 },
+          fireTeamId: { value: -2147483648, displayValue: '-2147483648' },
+        },
+        weapons: {},
+      },
+    });
+    const soloOverflowB = makeParticipant({
+      characterId: 'solo-overflow-2',
+      displayName: 'SoloOverflowB',
+      teamId: '19',
+      fireteamId: '-2147483648',
+      performance: {
+        playerStats: {
+          kills: { value: 7 },
+          deaths: { value: 5 },
+          assists: { value: 1 },
+          fireTeamId: { value: -2147483648, displayValue: '-2147483648' },
+        },
+        weapons: {},
+      },
+    });
+
+    expect(resolveFireteamKey(soloOverflowA)).toBeUndefined();
+    expect(resolveFireteamKey(soloOverflowB)).toBeUndefined();
+
+    const vm = buildMatchScoreboardViewModel({
+      participants: [soloOverflowA, soloOverflowB],
+      teams: TEAMS,
+      snapshots: {},
+    });
+
+    expect(vm.groups[0].entries[0].fireteamGroupIndex).toBeUndefined();
+    expect(vm.groups[0].entries[1].fireteamGroupIndex).toBeUndefined();
+  });
+
   it('sorts players who left early to the bottom of their team even with a higher score', () => {
     const finisherLowScore = makeParticipant({
       characterId: 'finisher',
