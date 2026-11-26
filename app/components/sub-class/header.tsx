@@ -1,6 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 import { Sockets } from '~/components/sockets';
 import { Button } from '~/components/ui/button';
+import { setBungieUrl } from '~/lib/utils';
 import { useSubClass } from '~/providers/sub-class-provider';
 
 export interface SubClassHeaderProps {
@@ -12,18 +13,27 @@ export function SubClassHeader({
   showMore,
   onToggleShowMore,
 }: SubClassHeaderProps) {
-  const { name, abilities } = useSubClass();
+  const { name, icon, abilities } = useSubClass();
   const superSocket = abilities.super;
+  const fallbackIconUrl = icon ? setBungieUrl(icon) : undefined;
 
   return (
     <div className="flex items-center justify-between gap-2.5 py-0.5 text-sm">
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
-        {superSocket && (
+        {superSocket ? (
           <Sockets
             sockets={[superSocket]}
             displayMode="iconOnly"
             className="shrink-0 flex-row items-center"
           />
+        ) : (
+          fallbackIconUrl && (
+            <img
+              src={fallbackIconUrl}
+              alt={name}
+              className="h-8 w-8 shrink-0 rounded object-contain"
+            />
+          )
         )}
         <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
           <span className="truncate text-sm font-bold text-foreground sm:text-base">
