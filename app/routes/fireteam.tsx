@@ -3,27 +3,28 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, data, useFetcher, useLocation } from 'react-router';
 import {
   type DevFireteamMockScenario,
-  getDevMockFireteamMembers,
-  parseDevFireteamMockScenario,
+  loadDevMockFireteam,
 } from '~/.server/dev-fireteam-mock';
 import { getFireteamData } from '~/.server/fireteam';
 import { getRequestLogger } from '~/.server/logger';
-import { getPreferences, setPreferences } from '~/.server/preferences';
-import type { FireteamMember, FireteamSessionMemberTarget } from '~/api';
+import { setPreferences } from '~/.server/preferences';
+import type { FireteamMember } from '~/api';
 import { Empty } from '~/components/empty';
 import { FireteamHeader } from '~/components/fireteam-header';
 import { FireteamMemberCard } from '~/components/fireteam-member-card';
-import { StartFireteamBar } from '~/components/start-fireteam-bar';
+import { MemberSessionStatus } from '~/components/member-session-status';
+import {
+  BulkStartResultsSummary,
+  StartFireteamBar,
+} from '~/components/start-fireteam-bar';
 import { buttonVariants } from '~/components/ui/button';
 import { toast } from '~/components/ui/sonner';
 import { useIsNavigating } from '~/hooks/use-route-loaders';
 import {
   type StartFireteamSessionsActionData,
-  findMemberBulkOutcome,
+  buildFireteamCharacterMap,
+  buildFireteamViewModel,
   formatBulkStartSummary,
-  getMemberActiveSessions,
-  getMemberKey,
-  resolveMemberDefaultCharacterId,
 } from '~/lib/fireteam-sessions';
 import { cn, getSiteOrigin } from '~/lib/utils';
 
@@ -86,18 +87,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
   log.set({ route: 'routes/fireteam' });
 
-  const url = new URL(request.url);
-  const devMockScenario = parseDevFireteamMockScenario(
-    url.searchParams.get('mock'),
-  );
-
   let members: FireteamMember[] = [];
   let selectedCharacters: Record<string, string> | undefined;
+  let devMockScenario: DevFireteamMockScenario | undefined;
 
-  if (devMockScenario) {
-    members = getDevMockFireteamMembers(devMockScenario);
-    const prefs = await getPreferences(request);
-    selectedCharacters = prefs.fireteam;
+  const devMock = import.meta.env.DEV
+    ? await loadDevMockFireteam(request)
+    : undefined;
+
+  if (devMock) {
+    members = devMock.members;
+    selectedCharacters = devMock.selectedCharacters;
+    devMockScenario = devMock.devMockScenario;
     log.set({
       fireteam: {
         memberCount: members.length,
@@ -118,19 +119,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     log.set({ fireteam: { memberCount: members.length } });
   }
 
-  const withCharacters = members.reduce<Record<string, string>>((state, m) => {
-    const memberKey = getMemberKey(m);
-    const charId = resolveMemberDefaultCharacterId(m, selectedCharacters);
-    if (charId && memberKey) {
-      if (m.id) {
-        state[m.id] = charId;
-      }
-      if (m.membershipId) {
-        state[m.membershipId] = charId;
-      }
-    }
-    return state;
-  }, {});
+  const withCharacters = buildFireteamCharacterMap(members, selectedCharacters);
 
   const headers = await setPreferences(request, {
     fireteam: withCharacters,
@@ -148,7 +137,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   );
 }
 
-export default function Fireteam({ loaderData, params }: Route.ComponentProps) {
+export function Fireteam({ loaderData, params }: Route.ComponentProps) {
   const { members, fireteamMemWithCharacters, devMockScenario } = loaderData;
   const location = useLocation();
   const [isNavigating] = useIsNavigating();
@@ -254,66 +243,21 @@ export default function Fireteam({ loaderData, params }: Route.ComponentProps) {
       ? bulkFetcher.data.error
       : undefined;
 
-  const memberNames: Record<string, string> = {};
-  const memberViews = members.map((member) => {
-    const memberKey = getMemberKey(member);
-    if (member.id) {
-      memberNames[member.id] = member.displayName;
-    }
-    if (member.membershipId) {
-      memberNames[member.membershipId] = member.displayName;
-    }
-
-    const savedCharId =
-      (member.id ? fireteamMemWithCharacters[member.id] : undefined) ??
-      (member.membershipId
-        ? fireteamMemWithCharacters[member.membershipId]
-        : undefined);
-    const effectiveCharId = draftCharacters[memberKey] ?? savedCharId;
-    const activeSessions = getMemberActiveSessions(member, bulkResults);
-    const isSelectedCharActive = Boolean(
-      effectiveCharId &&
-      activeSessions.some(
-        (s) => s.characterId === effectiveCharId && s.status === 'pending',
-      ),
-    );
-    const hasAnyActive = activeSessions.some((s) => s.status === 'pending');
-    const isReadyToStart = !isSelectedCharActive && Boolean(effectiveCharId);
-    const isSelectedForBulk = isReadyToStart && !excludedMemberIds[memberKey];
-    const bulkOutcome = findMemberBulkOutcome(
-      member,
-      effectiveCharId,
-      visibleResults,
-    );
-
-    return {
-      member,
-      memberKey,
-      savedCharId,
-      effectiveCharId,
-      activeSessions,
-      isSelectedCharActive,
-      hasAnyActive,
-      isReadyToStart,
-      isSelectedForBulk,
-      bulkOutcome,
-    };
+  const {
+    memberViews,
+    memberNames,
+    selectedTargets,
+    readyCount,
+    activeHeaderCount,
+    activeSelectedCount,
+  } = buildFireteamViewModel({
+    members,
+    fireteamMemWithCharacters,
+    draftCharacters,
+    excludedMemberIds,
+    bulkResults,
+    visibleResults,
   });
-
-  const selectedTargets: FireteamSessionMemberTarget[] = memberViews
-    .filter((view) => view.isSelectedForBulk && view.effectiveCharId)
-    .map((view) => ({
-      userId: view.memberKey,
-      characterId: view.effectiveCharId!,
-    }));
-
-  const readyCount = memberViews.filter((view) => view.isReadyToStart).length;
-  const activeHeaderCount = memberViews.filter(
-    (view) => view.hasAnyActive,
-  ).length;
-  const activeSelectedCount = memberViews.filter(
-    (view) => view.isSelectedCharActive,
-  ).length;
 
   const handleBulkStart = () => {
     if (selectedTargets.length === 0 || isBulkSubmitting) return;
@@ -321,7 +265,7 @@ export default function Fireteam({ loaderData, params }: Route.ComponentProps) {
     const formData = new FormData();
     formData.append('members', JSON.stringify(selectedTargets));
     formData.append('trackComp', String(trackComp));
-    if (devMockScenario) {
+    if (import.meta.env.DEV && devMockScenario) {
       formData.append('mockScenario', devMockScenario);
     }
     bulkFetcher.submit(formData, {
@@ -330,11 +274,40 @@ export default function Fireteam({ loaderData, params }: Route.ComponentProps) {
     });
   };
 
+  const handleDismissResults = () => {
+    setDismissedData(bulkFetcher.data);
+  };
+
+  const handleToggleBulkSelect = (memberKey: string, selected: boolean) => {
+    setExcludedMemberIds((prev) => ({
+      ...prev,
+      [memberKey]: !selected,
+    }));
+  };
+
+  const handleCharacterSelect = (
+    memberKey: string,
+    savedCharId: string | undefined,
+    nextCharId?: string | null,
+  ) => {
+    setDraftCharacters((prev) => {
+      if (!nextCharId || nextCharId === savedCharId) {
+        const next = { ...prev };
+        delete next[memberKey];
+        return next;
+      }
+      return {
+        ...prev,
+        [memberKey]: nextCharId,
+      };
+    });
+  };
+
   return (
     <div className="flex w-full flex-col gap-6">
       {metaTags}
 
-      {devMockScenario && (
+      {import.meta.env.DEV && devMockScenario && (
         <DevFireteamMockBanner
           scenario={devMockScenario}
           pathname={location.pathname}
@@ -355,10 +328,15 @@ export default function Fireteam({ loaderData, params }: Route.ComponentProps) {
         onSubmit={handleBulkStart}
         isSubmitting={isBulkSubmitting}
         errorMessage={errorMessage}
-        results={visibleResults}
-        memberNames={memberNames}
-        onDismissResults={() => setDismissedData(bulkFetcher.data)}
-      />
+      >
+        {visibleResults && visibleResults.length > 0 && (
+          <BulkStartResultsSummary
+            results={visibleResults}
+            memberNames={memberNames}
+            onDismiss={handleDismissResults}
+          />
+        )}
+      </StartFireteamBar>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
         {memberViews.map((view) => (
@@ -367,32 +345,34 @@ export default function Fireteam({ loaderData, params }: Route.ComponentProps) {
             member={view.member}
             characterId={view.savedCharId}
             selectedCharacterId={view.effectiveCharId}
-            activeSessions={view.activeSessions}
-            bulkOutcome={view.bulkOutcome}
+            isActive={view.isSelectedCharActive}
             isSelectedForBulk={view.isSelectedForBulk}
-            onToggleBulkSelect={(selected) => {
-              setExcludedMemberIds((prev) => ({
-                ...prev,
-                [view.memberKey]: !selected,
-              }));
-            }}
-            onCharacterSelect={(nextCharId) => {
-              setDraftCharacters((prev) => {
-                if (!nextCharId || nextCharId === view.savedCharId) {
-                  const next = { ...prev };
-                  delete next[view.memberKey];
-                  return next;
-                }
-                return {
-                  ...prev,
-                  [view.memberKey]: nextCharId,
-                };
-              });
-            }}
+            onToggleBulkSelect={(selected) =>
+              handleToggleBulkSelect(view.memberKey, selected)
+            }
+            onCharacterSelect={(nextCharId) =>
+              handleCharacterSelect(
+                view.memberKey,
+                view.savedCharId,
+                nextCharId,
+              )
+            }
             isSubmitting={isSubmitting}
-          />
+          >
+            <MemberSessionStatus
+              session={view.selectedActiveSession}
+              otherActiveSession={view.otherActiveSession}
+              otherActiveCharacterClass={view.otherActiveCharacterClass}
+              bulkOutcome={view.bulkOutcome}
+              userId={view.memberKey}
+              characterId={view.effectiveCharId}
+              isSubmitting={isSubmitting}
+            />
+          </FireteamMemberCard>
         ))}
       </div>
     </div>
   );
 }
+
+export default Fireteam;

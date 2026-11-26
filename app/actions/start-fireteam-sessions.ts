@@ -1,18 +1,14 @@
 import { data, isRouteErrorResponse } from 'react-router';
 import { getAuth } from '~/.server/auth';
-import {
-  buildDevMockBulkStartResults,
-  parseDevFireteamMockScenario,
-} from '~/.server/dev-fireteam-mock';
+import { handleDevMockBulkStart } from '~/.server/dev-fireteam-mock';
 import { getRequestLogger } from '~/.server/logger';
 import { getPreferences, setPreferences } from '~/.server/preferences';
 import { type FireteamSessionMemberTarget, startFireteamSessions } from '~/api';
-import type {
-  BulkFireteamSessionResult,
-  StartFireteamSessionsActionData,
-} from '~/lib/fireteam-sessions';
+import type { StartFireteamSessionsActionData } from '~/lib/fireteam-sessions';
 
 import type { Route } from './+types/start-fireteam-sessions';
+
+export const MAX_FIRETEAM_SESSION_MEMBERS = 12;
 
 function parseMemberTargets(
   rawMembers: FormDataEntryValue | null,
@@ -77,6 +73,22 @@ function getApiErrorMessage(error: unknown): string {
   return 'Failed to start fireteam sessions. Please try again.';
 }
 
+async function saveFireteamMemberPreferences(
+  request: Request,
+  members: FireteamSessionMemberTarget[],
+) {
+  const { fireteam: existingPreferences } = await getPreferences(request);
+  const updatedFireteamPrefs: Record<string, string> = {
+    ...existingPreferences,
+  };
+  for (const target of members) {
+    updatedFireteamPrefs[target.userId] = target.characterId;
+  }
+  return setPreferences(request, {
+    fireteam: updatedFireteamPrefs,
+  });
+}
+
 export async function action({
   request,
   context,
@@ -93,9 +105,6 @@ export async function action({
   const formData = await request.formData();
   const members = parseMemberTargets(formData.get('members'));
   const trackComp = formData.get('trackComp') === 'true';
-  const mockScenario = parseDevFireteamMockScenario(
-    formData.get('mockScenario')?.toString(),
-  );
 
   if (members.length === 0) {
     return {
@@ -103,30 +112,19 @@ export async function action({
       error: 'Select at least one fireteam member to start.',
     };
   }
-  if (members.length > 12) {
+  if (members.length > MAX_FIRETEAM_SESSION_MEMBERS) {
     return {
       ok: false,
-      error: 'You can start sessions for at most 12 fireteam members at once.',
+      error: `You can start sessions for at most ${MAX_FIRETEAM_SESSION_MEMBERS} fireteam members at once.`,
     };
   }
 
-  if (mockScenario) {
-    const results = buildDevMockBulkStartResults(
-      mockScenario,
-      members,
-      trackComp,
-    );
-    const { fireteam: existingPreferences } = await getPreferences(request);
-    const updatedFireteamPrefs: Record<string, string> = {
-      ...existingPreferences,
-    };
-    for (const target of members) {
-      updatedFireteamPrefs[target.userId] = target.characterId;
+  if (import.meta.env.DEV) {
+    const mockResults = handleDevMockBulkStart(formData, members, trackComp);
+    if (mockResults) {
+      const headers = await saveFireteamMemberPreferences(request, members);
+      return data({ ok: true as const, results: mockResults }, { ...headers });
     }
-    const headers = await setPreferences(request, {
-      fireteam: updatedFireteamPrefs,
-    });
-    return data({ ok: true as const, results }, { ...headers });
   }
 
   const auth = await getAuth(request);
@@ -171,33 +169,16 @@ export async function action({
       return { ok: false, error: 'No results returned from server.' };
     }
 
-    const results: BulkFireteamSessionResult[] = responseData.results.map(
-      (item) => ({
-        userId: item.userId,
-        characterId: item.characterId,
-        outcome: item.outcome,
-        session: {
-          id: item.session.id,
-          userId: item.session.userId,
-          characterId: item.session.characterId,
-          startedAt:
-            item.session.startedAt instanceof Date
-              ? item.session.startedAt.toISOString()
-              : String(item.session.startedAt),
-          status: item.session.status,
-          name: item.session.name,
-          aggregateIds: Array.isArray(item.session.aggregateIds)
-            ? [...item.session.aggregateIds]
-            : [],
-          compTracking: item.session.compTracking,
-        },
-      }),
-    );
-
-    const startedCount = results.filter((r) => r.outcome === 'started').length;
-    const skippedCount = results.filter(
-      (r) => r.outcome === 'skipped_active',
-    ).length;
+    const { results } = responseData;
+    let startedCount = 0;
+    let skippedCount = 0;
+    for (const result of results) {
+      if (result.outcome === 'started') {
+        startedCount += 1;
+      } else if (result.outcome === 'skipped_active') {
+        skippedCount += 1;
+      }
+    }
 
     log.set({
       fireteamBulkStart: {
@@ -208,17 +189,7 @@ export async function action({
       },
     });
 
-    const { fireteam: existingPreferences } = await getPreferences(request);
-    const updatedFireteamPrefs: Record<string, string> = {
-      ...existingPreferences,
-    };
-    for (const target of members) {
-      updatedFireteamPrefs[target.userId] = target.characterId;
-    }
-
-    const headers = await setPreferences(request, {
-      fireteam: updatedFireteamPrefs,
-    });
+    const headers = await saveFireteamMemberPreferences(request, members);
 
     return data(
       {

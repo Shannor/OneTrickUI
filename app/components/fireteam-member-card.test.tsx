@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import type { FireteamMember } from '~/api';
+import { MemberSessionStatus } from '~/components/member-session-status';
 
 import { FireteamMemberCard } from './fireteam-member-card';
 
@@ -44,7 +45,7 @@ describe('FireteamMemberCard', () => {
     expect(screen.getByText('Iron Lord')).toBeInTheDocument();
   });
 
-  it('renders Active Session status and link to the live session without duplicate badges', () => {
+  it('renders composed Active Session children and hides bulk checkbox when isActive is true', () => {
     const router = createMemoryRouter([
       {
         path: '/',
@@ -52,16 +53,21 @@ describe('FireteamMemberCard', () => {
           <FireteamMemberCard
             member={mockMember}
             characterId="char-titan"
-            activeSessions={[
-              {
+            isActive={true}
+            onToggleBulkSelect={vi.fn()}
+          >
+            <MemberSessionStatus
+              userId="user-10"
+              characterId="char-titan"
+              session={{
                 id: 'sess-active-99',
                 userId: 'user-10',
                 characterId: 'char-titan',
                 status: 'pending',
                 startedAt: new Date('2026-11-25T00:00:00Z'),
-              },
-            ]}
-          />
+              }}
+            />
+          </FireteamMemberCard>
         ),
       },
     ]);

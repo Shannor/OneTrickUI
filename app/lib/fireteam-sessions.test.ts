@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { FireteamMember } from '~/api';
+import type { FireteamMember, FireteamSessionResult } from '~/api';
 
 import {
-  type BulkFireteamSessionResult,
+  buildFireteamCharacterMap,
+  buildFireteamViewModel,
   findMemberBulkOutcome,
   formatBulkStartSummary,
   getMemberActiveSessions,
@@ -72,6 +73,19 @@ describe('resolveMemberDefaultCharacterId', () => {
   });
 });
 
+describe('buildFireteamCharacterMap', () => {
+  it('maps both id and membershipId to each member default character', () => {
+    const result = buildFireteamCharacterMap([baseMember], {
+      'user-1': 'char-warlock',
+    });
+
+    expect(result).toEqual({
+      'user-1': 'char-warlock',
+      'mem-1': 'char-warlock',
+    });
+  });
+});
+
 describe('getMemberActiveSessions', () => {
   it('maps FireteamMember.activeSessions into pending MemberSessionData', () => {
     const startedAt = new Date('2026-11-25T00:00:00Z');
@@ -101,7 +115,7 @@ describe('getMemberActiveSessions', () => {
   });
 
   it('merges bulk start results for both started and skipped_active outcomes', () => {
-    const bulkResults: BulkFireteamSessionResult[] = [
+    const bulkResults: FireteamSessionResult[] = [
       {
         userId: 'user-1',
         characterId: 'char-warlock',
@@ -110,7 +124,7 @@ describe('getMemberActiveSessions', () => {
           id: 'sess-new-2',
           userId: 'user-1',
           characterId: 'char-warlock',
-          startedAt: '2026-11-25T00:10:00.000Z',
+          startedAt: new Date('2026-11-25T00:10:00.000Z'),
           status: 'pending',
           name: 'Comp Grind',
           aggregateIds: [],
@@ -144,7 +158,7 @@ describe('getMemberActiveSessions', () => {
   });
 
   it('replaces existing active session entry when bulk result matches same characterId', () => {
-    const bulkResults: BulkFireteamSessionResult[] = [
+    const bulkResults: FireteamSessionResult[] = [
       {
         userId: 'user-1',
         characterId: 'char-hunter',
@@ -153,7 +167,7 @@ describe('getMemberActiveSessions', () => {
           id: 'sess-active-1',
           userId: 'user-1',
           characterId: 'char-hunter',
-          startedAt: '2026-11-25T00:00:00.000Z',
+          startedAt: new Date('2026-11-25T00:00:00.000Z'),
           status: 'pending',
           name: 'Existing Session',
           aggregateIds: ['g1', 'g2'],
@@ -183,25 +197,100 @@ describe('getMemberActiveSessions', () => {
 });
 
 describe('findMemberBulkOutcome', () => {
-  it('returns outcome matching member and characterId', () => {
-    const bulkResults: BulkFireteamSessionResult[] = [
-      {
+  const bulkResults: FireteamSessionResult[] = [
+    {
+      userId: 'user-1',
+      characterId: 'char-warlock',
+      outcome: 'started',
+      session: {
+        id: 'sess-2',
         userId: 'user-1',
         characterId: 'char-warlock',
-        outcome: 'started',
-        session: {
-          id: 'sess-2',
-          userId: 'user-1',
-          characterId: 'char-warlock',
-          startedAt: '2026-11-25T00:10:00.000Z',
-          aggregateIds: [],
-        },
+        startedAt: new Date('2026-11-25T00:10:00.000Z'),
+        aggregateIds: [],
       },
-    ];
+    },
+  ];
 
+  it('returns outcome matching member and characterId', () => {
     expect(findMemberBulkOutcome(baseMember, 'char-warlock', bulkResults)).toBe(
       'started',
     );
+  });
+
+  it('returns undefined when characterId is provided and does not match any bulk result', () => {
+    expect(
+      findMemberBulkOutcome(baseMember, 'char-hunter', bulkResults),
+    ).toBeUndefined();
+  });
+
+  it('falls back to first matching outcome only when characterId is omitted', () => {
+    expect(findMemberBulkOutcome(baseMember, undefined, bulkResults)).toBe(
+      'started',
+    );
+  });
+});
+
+describe('buildFireteamViewModel', () => {
+  it('computes views, names, targets, and active/ready counts in a single pass', () => {
+    const activeMember: FireteamMember = {
+      ...baseMember,
+      activeSessions: [
+        {
+          sessionId: 'sess-w',
+          characterId: 'char-warlock',
+          startedAt: new Date('2026-11-25T00:00:00Z'),
+        },
+      ],
+    };
+
+    const inactiveMember: FireteamMember = {
+      id: 'user-2',
+      membershipId: 'mem-2',
+      displayName: 'ReadyTitan',
+      characters: [
+        {
+          id: 'char-titan',
+          class: 'Titan',
+          race: 'Exo',
+          light: BigInt(2020),
+          emblemURL: '/emblem-t.png',
+          emblemBackgroundURL: '/bg-t.png',
+          currentTitle: 'Iron Lord',
+          emblemColor: { red: 0, green: 0, blue: 0, alpha: 1 },
+        },
+      ],
+    };
+
+    const viewModel = buildFireteamViewModel({
+      members: [activeMember, inactiveMember],
+      fireteamMemWithCharacters: {
+        'user-1': 'char-warlock',
+        'user-2': 'char-titan',
+      },
+      draftCharacters: {
+        'user-1': 'char-hunter',
+      },
+      excludedMemberIds: {},
+    });
+
+    expect(viewModel.memberNames).toEqual({
+      'user-1': 'HunterGuardian',
+      'mem-1': 'HunterGuardian',
+      'user-2': 'ReadyTitan',
+      'mem-2': 'ReadyTitan',
+    });
+    expect(viewModel.readyCount).toBe(2);
+    expect(viewModel.activeHeaderCount).toBe(1);
+    expect(viewModel.activeSelectedCount).toBe(0);
+    expect(viewModel.selectedTargets).toEqual([
+      { userId: 'user-1', characterId: 'char-hunter' },
+      { userId: 'user-2', characterId: 'char-titan' },
+    ]);
+
+    expect(viewModel.memberViews[0].selectedActiveSession).toBeUndefined();
+    expect(viewModel.memberViews[0].otherActiveSession?.id).toBe('sess-w');
+    expect(viewModel.memberViews[0].otherActiveCharacterClass).toBe('Warlock');
   });
 });
 
@@ -209,7 +298,7 @@ describe('formatBulkStartSummary', () => {
   const makeResult = (
     userId: string,
     outcome: 'started' | 'skipped_active',
-  ): BulkFireteamSessionResult => ({
+  ): FireteamSessionResult => ({
     userId,
     characterId: `char-${userId}`,
     outcome,
@@ -217,7 +306,7 @@ describe('formatBulkStartSummary', () => {
       id: `sess-${userId}`,
       userId,
       characterId: `char-${userId}`,
-      startedAt: '2026-11-25T00:10:00.000Z',
+      startedAt: new Date('2026-11-25T00:10:00.000Z'),
       aggregateIds: [],
     },
   });

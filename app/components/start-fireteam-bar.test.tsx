@@ -2,11 +2,13 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import type { BulkFireteamSessionResult } from '~/lib/fireteam-sessions';
+import type { FireteamSessionResult } from '~/api';
 
 import {
+  BulkStartResultsSummary,
   StartFireteamBar,
   type StartFireteamBarProps,
+  getBulkStartStatusText,
 } from './start-fireteam-bar';
 
 function renderBar(props: StartFireteamBarProps) {
@@ -19,6 +21,46 @@ function renderBar(props: StartFireteamBarProps) {
 
   return render(<RouterProvider router={router} />);
 }
+
+describe('getBulkStartStatusText', () => {
+  it('returns distinct status copy for all-active, none-selected, mixed, and ready-only states', () => {
+    expect(
+      getBulkStartStatusText({
+        readyCount: 0,
+        selectedCount: 0,
+        activeCount: 3,
+      }),
+    ).toBe('All teammates are actively tracking a session.');
+    expect(
+      getBulkStartStatusText({
+        readyCount: 2,
+        selectedCount: 0,
+        activeCount: 1,
+      }),
+    ).toBe('Select at least one inactive teammate below to start.');
+    expect(
+      getBulkStartStatusText({
+        readyCount: 2,
+        selectedCount: 2,
+        activeCount: 1,
+      }),
+    ).toBe('2 selected to start · 1 already tracking (skipped)');
+    expect(
+      getBulkStartStatusText({
+        readyCount: 1,
+        selectedCount: 1,
+        activeCount: 0,
+      }),
+    ).toBe('1 teammate ready to start');
+    expect(
+      getBulkStartStatusText({
+        readyCount: 2,
+        selectedCount: 2,
+        activeCount: 0,
+      }),
+    ).toBe('2 teammates ready to start');
+  });
+});
 
 describe('StartFireteamBar', () => {
   it('renders mixed fireteam counts, trackComp toggle, and invokes onSubmit on click', () => {
@@ -36,7 +78,6 @@ describe('StartFireteamBar', () => {
       onTrackCompChange,
       onSubmit,
       isSubmitting: false,
-      memberNames: { u1: 'Alpha', u2: 'Bravo', u3: 'Charlie' },
     });
 
     expect(
@@ -66,7 +107,6 @@ describe('StartFireteamBar', () => {
       onTrackCompChange: vi.fn(),
       onSubmit: vi.fn(),
       isSubmitting: false,
-      memberNames: {},
     });
 
     expect(
@@ -77,9 +117,9 @@ describe('StartFireteamBar', () => {
     ).toBeDisabled();
   });
 
-  it('renders per-member started and skipped_active results with session links', () => {
-    const onDismissResults = vi.fn();
-    const results: BulkFireteamSessionResult[] = [
+  it('renders composed BulkStartResultsSummary children with session links and dismiss handler', () => {
+    const onDismiss = vi.fn();
+    const results: FireteamSessionResult[] = [
       {
         userId: 'u1',
         characterId: 'c1',
@@ -88,7 +128,7 @@ describe('StartFireteamBar', () => {
           id: 'sess-1',
           userId: 'u1',
           characterId: 'c1',
-          startedAt: '2026-11-25T00:00:00.000Z',
+          startedAt: new Date('2026-11-25T00:00:00.000Z'),
           status: 'pending',
           aggregateIds: [],
         },
@@ -101,7 +141,7 @@ describe('StartFireteamBar', () => {
           id: 'sess-2',
           userId: 'u2',
           characterId: 'c2',
-          startedAt: '2026-11-25T00:05:00.000Z',
+          startedAt: new Date('2026-11-25T00:05:00.000Z'),
           status: 'pending',
           aggregateIds: [],
         },
@@ -116,9 +156,13 @@ describe('StartFireteamBar', () => {
       onTrackCompChange: vi.fn(),
       onSubmit: vi.fn(),
       isSubmitting: false,
-      results,
-      memberNames: { u1: 'Alpha', u2: 'Bravo' },
-      onDismissResults,
+      children: (
+        <BulkStartResultsSummary
+          results={results}
+          memberNames={{ u1: 'Alpha', u2: 'Bravo' }}
+          onDismiss={onDismiss}
+        />
+      ),
     });
 
     expect(
@@ -140,7 +184,7 @@ describe('StartFireteamBar', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /dismiss results/i }));
-    expect(onDismissResults).toHaveBeenCalledTimes(1);
+    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
   it('renders error alert when errorMessage is provided', () => {
@@ -153,7 +197,6 @@ describe('StartFireteamBar', () => {
       onSubmit: vi.fn(),
       isSubmitting: false,
       errorMessage: 'Target user is not in your fireteam',
-      memberNames: {},
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent(

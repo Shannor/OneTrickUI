@@ -3,7 +3,10 @@ import { getAuth } from '~/.server/auth';
 import { getPreferences, setPreferences } from '~/.server/preferences';
 import { startFireteamSessions } from '~/api';
 
-import { action } from './start-fireteam-sessions';
+import {
+  MAX_FIRETEAM_SESSION_MEMBERS,
+  action,
+} from './start-fireteam-sessions';
 
 vi.mock('~/.server/auth', () => ({
   getAuth: vi.fn(),
@@ -42,6 +45,33 @@ describe('start-fireteam-sessions action', () => {
     expect(result).toEqual({
       ok: false,
       error: 'Select at least one fireteam member to start.',
+    });
+    expect(startFireteamSessions).not.toHaveBeenCalled();
+  });
+
+  it('returns an error when member count exceeds MAX_FIRETEAM_SESSION_MEMBERS', async () => {
+    const tooManyMembers = Array.from(
+      { length: MAX_FIRETEAM_SESSION_MEMBERS + 1 },
+      (_, index) => ({
+        userId: `user-${index}`,
+        characterId: `char-${index}`,
+      }),
+    );
+
+    const formData = new FormData();
+    formData.append('members', JSON.stringify(tooManyMembers));
+    const request = new Request(
+      'http://localhost/action/start-fireteam-sessions',
+      {
+        method: 'POST',
+        body: formData,
+      },
+    );
+
+    const result = await action({ request } as never);
+    expect(result).toEqual({
+      ok: false,
+      error: `You can start sessions for at most ${MAX_FIRETEAM_SESSION_MEMBERS} fireteam members at once.`,
     });
     expect(startFireteamSessions).not.toHaveBeenCalled();
   });
@@ -99,7 +129,7 @@ describe('start-fireteam-sessions action', () => {
     });
   });
 
-  it('calls POST /fireteam/sessions once with deduplicated members and returns started + skipped_active results', async () => {
+  it('calls POST /fireteam/sessions once with deduplicated members and returns backend results directly', async () => {
     vi.mocked(getAuth).mockResolvedValueOnce({
       id: 'user-1',
       accessToken: 'token-abc',
@@ -111,52 +141,54 @@ describe('start-fireteam-sessions action', () => {
     });
 
     const startedAt = new Date('2026-11-25T00:00:00.000Z');
+    const backendResults = [
+      {
+        userId: 'user-1',
+        characterId: 'char-1',
+        outcome: 'skipped_active' as const,
+        session: {
+          id: 'sess-existing',
+          userId: 'user-1',
+          characterId: 'char-1',
+          startedAt,
+          status: 'pending' as const,
+          name: 'Existing Comp Session',
+          aggregateIds: ['g1'],
+        },
+      },
+      {
+        userId: 'user-2',
+        characterId: 'char-2',
+        outcome: 'started' as const,
+        session: {
+          id: 'sess-new-2',
+          userId: 'user-2',
+          characterId: 'char-2',
+          startedAt,
+          status: 'pending' as const,
+          aggregateIds: [],
+          compTracking: { enabled: true },
+        },
+      },
+      {
+        userId: 'user-3',
+        characterId: 'char-3',
+        outcome: 'started' as const,
+        session: {
+          id: 'sess-new-3',
+          userId: 'user-3',
+          characterId: 'char-3',
+          startedAt,
+          status: 'pending' as const,
+          aggregateIds: [],
+          compTracking: { enabled: true },
+        },
+      },
+    ];
+
     vi.mocked(startFireteamSessions).mockResolvedValueOnce({
       data: {
-        results: [
-          {
-            userId: 'user-1',
-            characterId: 'char-1',
-            outcome: 'skipped_active',
-            session: {
-              id: 'sess-existing',
-              userId: 'user-1',
-              characterId: 'char-1',
-              startedAt,
-              status: 'pending',
-              name: 'Existing Comp Session',
-              aggregateIds: ['g1'],
-            },
-          },
-          {
-            userId: 'user-2',
-            characterId: 'char-2',
-            outcome: 'started',
-            session: {
-              id: 'sess-new-2',
-              userId: 'user-2',
-              characterId: 'char-2',
-              startedAt,
-              status: 'pending',
-              aggregateIds: [],
-              compTracking: { enabled: true },
-            },
-          },
-          {
-            userId: 'user-3',
-            characterId: 'char-3',
-            outcome: 'started',
-            session: {
-              id: 'sess-new-3',
-              userId: 'user-3',
-              characterId: 'char-3',
-              startedAt,
-              status: 'pending',
-              aggregateIds: [],
-              compTracking: { enabled: true },
-            },
-          },
-        ],
+        results: backendResults,
       },
       error: undefined,
     } as never);
@@ -214,53 +246,7 @@ describe('start-fireteam-sessions action', () => {
 
     expect(result.data).toEqual({
       ok: true,
-      results: [
-        {
-          userId: 'user-1',
-          characterId: 'char-1',
-          outcome: 'skipped_active',
-          session: {
-            id: 'sess-existing',
-            userId: 'user-1',
-            characterId: 'char-1',
-            startedAt: '2026-11-25T00:00:00.000Z',
-            status: 'pending',
-            name: 'Existing Comp Session',
-            aggregateIds: ['g1'],
-            compTracking: undefined,
-          },
-        },
-        {
-          userId: 'user-2',
-          characterId: 'char-2',
-          outcome: 'started',
-          session: {
-            id: 'sess-new-2',
-            userId: 'user-2',
-            characterId: 'char-2',
-            startedAt: '2026-11-25T00:00:00.000Z',
-            status: 'pending',
-            name: undefined,
-            aggregateIds: [],
-            compTracking: { enabled: true },
-          },
-        },
-        {
-          userId: 'user-3',
-          characterId: 'char-3',
-          outcome: 'started',
-          session: {
-            id: 'sess-new-3',
-            userId: 'user-3',
-            characterId: 'char-3',
-            startedAt: '2026-11-25T00:00:00.000Z',
-            status: 'pending',
-            name: undefined,
-            aggregateIds: [],
-            compTracking: { enabled: true },
-          },
-        },
-      ],
+      results: backendResults,
     });
   });
 });

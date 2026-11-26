@@ -2,7 +2,9 @@ import type {
   CompTracking,
   FireteamActiveSession,
   FireteamMember,
+  FireteamSessionMemberTarget,
   FireteamSessionOutcome,
+  FireteamSessionResult,
 } from '~/api';
 
 export interface MemberSessionData {
@@ -17,26 +19,10 @@ export interface MemberSessionData {
   compTracking?: CompTracking;
 }
 
-export interface BulkFireteamSessionResult {
-  userId: string;
-  characterId: string;
-  outcome: FireteamSessionOutcome;
-  session: {
-    id: string;
-    userId: string;
-    characterId: string;
-    startedAt: string;
-    status?: 'pending' | 'complete';
-    name?: string;
-    aggregateIds: string[];
-    compTracking?: CompTracking;
-  };
-}
-
 export type StartFireteamSessionsActionData =
   | {
       ok: true;
-      results: BulkFireteamSessionResult[];
+      results: FireteamSessionResult[];
     }
   | {
       ok: false;
@@ -77,6 +63,28 @@ export function resolveMemberDefaultCharacterId(
   return activeSessionChar ?? characters[0]?.id;
 }
 
+export function buildFireteamCharacterMap(
+  members: FireteamMember[],
+  selectedCharacters?: Record<string, string>,
+): Record<string, string> {
+  const withCharacters: Record<string, string> = {};
+
+  for (const member of members) {
+    const memberKey = getMemberKey(member);
+    const charId = resolveMemberDefaultCharacterId(member, selectedCharacters);
+    if (!charId || !memberKey) continue;
+
+    if (member.id) {
+      withCharacters[member.id] = charId;
+    }
+    if (member.membershipId) {
+      withCharacters[member.membershipId] = charId;
+    }
+  }
+
+  return withCharacters;
+}
+
 export function toMemberSessionData(
   userId: string,
   activeSession: FireteamActiveSession,
@@ -92,7 +100,7 @@ export function toMemberSessionData(
 }
 
 export function toBulkResultSessionData(
-  result: BulkFireteamSessionResult,
+  result: FireteamSessionResult,
 ): MemberSessionData {
   const { session } = result;
   return {
@@ -110,7 +118,7 @@ export function toBulkResultSessionData(
 
 export function getMemberActiveSessions(
   member: FireteamMember,
-  bulkResults?: BulkFireteamSessionResult[],
+  bulkResults?: FireteamSessionResult[],
 ): MemberSessionData[] {
   const userId = getMemberKey(member);
   const byCharacter = new Map<string, MemberSessionData>();
@@ -138,7 +146,7 @@ export function getMemberActiveSessions(
 export function findMemberBulkOutcome(
   member: FireteamMember,
   characterId: string | undefined,
-  bulkResults?: BulkFireteamSessionResult[],
+  bulkResults?: FireteamSessionResult[],
 ): FireteamSessionOutcome | undefined {
   if (!bulkResults || bulkResults.length === 0) return undefined;
 
@@ -150,11 +158,142 @@ export function findMemberBulkOutcome(
   if (matching.length === 0) return undefined;
 
   if (characterId) {
-    const exact = matching.find((r) => r.characterId === characterId);
-    if (exact) return exact.outcome;
+    return matching.find((r) => r.characterId === characterId)?.outcome;
   }
 
   return matching[0]?.outcome;
+}
+
+export interface FireteamMemberView {
+  member: FireteamMember;
+  memberKey: string;
+  savedCharId?: string;
+  effectiveCharId?: string;
+  activeSessions: MemberSessionData[];
+  selectedActiveSession?: MemberSessionData;
+  otherActiveSession?: MemberSessionData;
+  otherActiveCharacterClass?: string;
+  isSelectedCharActive: boolean;
+  hasAnyActive: boolean;
+  isReadyToStart: boolean;
+  isSelectedForBulk: boolean;
+  bulkOutcome?: FireteamSessionOutcome;
+}
+
+export interface FireteamViewModel {
+  memberViews: FireteamMemberView[];
+  memberNames: Record<string, string>;
+  selectedTargets: FireteamSessionMemberTarget[];
+  readyCount: number;
+  activeHeaderCount: number;
+  activeSelectedCount: number;
+}
+
+export interface BuildFireteamViewModelInput {
+  members: FireteamMember[];
+  fireteamMemWithCharacters: Record<string, string>;
+  draftCharacters: Record<string, string>;
+  excludedMemberIds: Record<string, boolean>;
+  bulkResults?: FireteamSessionResult[];
+  visibleResults?: FireteamSessionResult[];
+}
+
+export function buildFireteamViewModel({
+  members,
+  fireteamMemWithCharacters,
+  draftCharacters,
+  excludedMemberIds,
+  bulkResults,
+  visibleResults,
+}: BuildFireteamViewModelInput): FireteamViewModel {
+  const memberViews: FireteamMemberView[] = [];
+  const memberNames: Record<string, string> = {};
+  const selectedTargets: FireteamSessionMemberTarget[] = [];
+  let readyCount = 0;
+  let activeHeaderCount = 0;
+  let activeSelectedCount = 0;
+
+  for (const member of members) {
+    const memberKey = getMemberKey(member);
+    if (member.id) {
+      memberNames[member.id] = member.displayName;
+    }
+    if (member.membershipId) {
+      memberNames[member.membershipId] = member.displayName;
+    }
+
+    const savedCharId =
+      (member.id ? fireteamMemWithCharacters[member.id] : undefined) ??
+      (member.membershipId
+        ? fireteamMemWithCharacters[member.membershipId]
+        : undefined);
+    const effectiveCharId = draftCharacters[memberKey] ?? savedCharId;
+    const activeSessions = getMemberActiveSessions(member, bulkResults);
+
+    const selectedActiveSession = effectiveCharId
+      ? activeSessions.find(
+          (s) => s.characterId === effectiveCharId && s.status === 'pending',
+        )
+      : undefined;
+    const otherActiveSession = selectedActiveSession
+      ? undefined
+      : activeSessions.find((s) => s.status === 'pending');
+    const otherActiveCharacterClass = otherActiveSession
+      ? member.characters?.find((c) => c.id === otherActiveSession.characterId)
+          ?.class
+      : undefined;
+
+    const isSelectedCharActive = Boolean(selectedActiveSession);
+    const hasAnyActive = isSelectedCharActive || Boolean(otherActiveSession);
+    const isReadyToStart = !isSelectedCharActive && Boolean(effectiveCharId);
+    const isSelectedForBulk = isReadyToStart && !excludedMemberIds[memberKey];
+    const bulkOutcome = findMemberBulkOutcome(
+      member,
+      effectiveCharId,
+      visibleResults,
+    );
+
+    if (isReadyToStart) {
+      readyCount += 1;
+    }
+    if (hasAnyActive) {
+      activeHeaderCount += 1;
+    }
+    if (isSelectedCharActive) {
+      activeSelectedCount += 1;
+    }
+    if (isSelectedForBulk && effectiveCharId) {
+      selectedTargets.push({
+        userId: memberKey,
+        characterId: effectiveCharId,
+      });
+    }
+
+    memberViews.push({
+      member,
+      memberKey,
+      savedCharId,
+      effectiveCharId,
+      activeSessions,
+      selectedActiveSession,
+      otherActiveSession,
+      otherActiveCharacterClass,
+      isSelectedCharActive,
+      hasAnyActive,
+      isReadyToStart,
+      isSelectedForBulk,
+      bulkOutcome,
+    });
+  }
+
+  return {
+    memberViews,
+    memberNames,
+    selectedTargets,
+    readyCount,
+    activeHeaderCount,
+    activeSelectedCount,
+  };
 }
 
 export interface BulkStartSummary {
@@ -164,7 +303,7 @@ export interface BulkStartSummary {
 }
 
 export function formatBulkStartSummary(
-  results: BulkFireteamSessionResult[],
+  results: FireteamSessionResult[],
 ): BulkStartSummary {
   let startedCount = 0;
   let skippedCount = 0;

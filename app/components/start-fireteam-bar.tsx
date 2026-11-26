@@ -6,23 +6,21 @@ import {
   SwordsIcon,
   X,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import type { FireteamSessionMemberTarget } from '~/api';
+import type { FireteamSessionMemberTarget, FireteamSessionResult } from '~/api';
 import { LoadingButton } from '~/components/loading-button';
 import { Button } from '~/components/ui/button';
-import {
-  type BulkFireteamSessionResult,
-  formatBulkStartSummary,
-} from '~/lib/fireteam-sessions';
+import { formatBulkStartSummary } from '~/lib/fireteam-sessions';
 import { cn } from '~/lib/utils';
 
-interface BulkStartResultsSummaryProps {
-  results: BulkFireteamSessionResult[];
+export interface BulkStartResultsSummaryProps {
+  results: FireteamSessionResult[];
   memberNames: Record<string, string>;
   onDismiss?: () => void;
 }
 
-function BulkStartResultsSummary({
+export function BulkStartResultsSummary({
   results,
   memberNames,
   onDismiss,
@@ -87,6 +85,30 @@ function BulkStartResultsSummary({
   );
 }
 
+interface BulkStartStatusTextInput {
+  readyCount: number;
+  selectedCount: number;
+  activeCount: number;
+}
+
+export function getBulkStartStatusText({
+  readyCount,
+  selectedCount,
+  activeCount,
+}: BulkStartStatusTextInput): string {
+  if (readyCount === 0) {
+    return 'All teammates are actively tracking a session.';
+  }
+  if (selectedCount === 0) {
+    return 'Select at least one inactive teammate below to start.';
+  }
+  if (activeCount > 0) {
+    return `${selectedCount} selected to start · ${activeCount} already tracking (skipped)`;
+  }
+  const teammateLabel = selectedCount === 1 ? 'teammate' : 'teammates';
+  return `${selectedCount} ${teammateLabel} ready to start`;
+}
+
 export interface StartFireteamBarProps {
   selectedTargets: FireteamSessionMemberTarget[];
   readyCount: number;
@@ -96,9 +118,7 @@ export interface StartFireteamBarProps {
   onSubmit: () => void;
   isSubmitting: boolean;
   errorMessage?: string;
-  results?: BulkFireteamSessionResult[];
-  memberNames: Record<string, string>;
-  onDismissResults?: () => void;
+  children?: ReactNode;
 }
 
 export function StartFireteamBar({
@@ -110,21 +130,15 @@ export function StartFireteamBar({
   onSubmit,
   isSubmitting,
   errorMessage,
-  results,
-  memberNames,
-  onDismissResults,
+  children,
 }: StartFireteamBarProps) {
   const selectedCount = selectedTargets.length;
   const isDisabled = selectedCount === 0 || isSubmitting;
-
-  const statusText =
-    readyCount === 0
-      ? 'All teammates are actively tracking a session.'
-      : selectedCount === 0
-        ? 'Select at least one inactive teammate below to start.'
-        : activeCount > 0
-          ? `${selectedCount} selected to start · ${activeCount} already tracking (skipped)`
-          : `${selectedCount} ${selectedCount === 1 ? 'teammate' : 'teammates'} ready to start`;
+  const statusText = getBulkStartStatusText({
+    readyCount,
+    selectedCount,
+    activeCount,
+  });
 
   return (
     <section
@@ -192,13 +206,7 @@ export function StartFireteamBar({
         </div>
       )}
 
-      {results && results.length > 0 && (
-        <BulkStartResultsSummary
-          results={results}
-          memberNames={memberNames}
-          onDismiss={onDismissResults}
-        />
-      )}
+      {children}
     </section>
   );
 }

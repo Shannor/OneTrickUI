@@ -1,5 +1,11 @@
-import type { FireteamMember, FireteamSessionMemberTarget } from '~/api';
-import type { BulkFireteamSessionResult } from '~/lib/fireteam-sessions';
+import { subMinutes } from 'date-fns';
+import { getPreferences } from '~/.server/preferences';
+import type {
+  FireteamMember,
+  FireteamSessionMemberTarget,
+  FireteamSessionOutcome,
+  FireteamSessionResult,
+} from '~/api';
 
 export type DevFireteamMockScenario =
   'mixed' | 'race' | 'all-active' | 'all-inactive';
@@ -10,6 +16,9 @@ const VALID_SCENARIOS = new Set<DevFireteamMockScenario>([
   'all-active',
   'all-inactive',
 ]);
+
+const MIXED_ACTIVE_MINUTES_AGO = 12;
+const ALL_ACTIVE_STAGGER_MINUTES = 9;
 
 export function isDevMockAllowed(): boolean {
   return Boolean(
@@ -39,6 +48,16 @@ const MOCK_SESSION_IDS_BY_USER: Record<string, string> = {
   PKmxjnMbBeDkGyzp2ICa: 'Xb5WKJNQJeqHvQNA4eX4',
   zUk4BWzsezGpYAs0TIzY: 'dZ3FQ4BXX6bXHOx9l09E',
 };
+
+function getMockSessionName(
+  outcome: FireteamSessionOutcome,
+  trackComp: boolean,
+): string {
+  if (outcome === 'skipped_active') {
+    return 'Already Running Session';
+  }
+  return trackComp ? 'Comp Fireteam Grind' : 'Crucible Fireteam Session';
+}
 
 function buildBaseMockMembers(): FireteamMember[] {
   return [
@@ -165,7 +184,7 @@ function buildBaseMockMembers(): FireteamMember[] {
 export function getDevMockFireteamMembers(
   scenario: DevFireteamMockScenario,
 ): FireteamMember[] {
-  const now = Date.now();
+  const now = new Date();
   const members = buildBaseMockMembers();
 
   if (scenario === 'all-inactive') {
@@ -180,7 +199,7 @@ export function getDevMockFireteamMembers(
           sessionId:
             MOCK_SESSION_IDS_BY_USER[member.id] ?? `mock-session-${index + 1}`,
           characterId: member.characters[0].id,
-          startedAt: new Date(now - (index + 1) * 9 * 60 * 1000),
+          startedAt: subMinutes(now, (index + 1) * ALL_ACTIVE_STAGGER_MINUTES),
           trackComp: index === 0,
         },
       ],
@@ -195,7 +214,7 @@ export function getDevMockFireteamMembers(
             {
               sessionId: MOCK_SESSION_IDS_BY_USER[member.id],
               characterId: member.characters[0].id,
-              startedAt: new Date(now - 12 * 60 * 1000),
+              startedAt: subMinutes(now, MIXED_ACTIVE_MINUTES_AGO),
               trackComp: true,
             },
           ],
@@ -208,13 +227,13 @@ export function buildDevMockBulkStartResults(
   scenario: DevFireteamMockScenario,
   members: FireteamSessionMemberTarget[],
   trackComp: boolean,
-): BulkFireteamSessionResult[] {
-  const nowIso = new Date().toISOString();
+): FireteamSessionResult[] {
+  const now = new Date();
 
   return members.map((target, index) => {
     const isRaceSkipped = scenario === 'race' && index === 0;
     const isAllActiveSkipped = scenario === 'all-active';
-    const outcome =
+    const outcome: FireteamSessionOutcome =
       isRaceSkipped || isAllActiveSkipped ? 'skipped_active' : 'started';
 
     return {
@@ -227,14 +246,9 @@ export function buildDevMockBulkStartResults(
           `mock-started-${index + 1}`,
         userId: target.userId,
         characterId: target.characterId,
-        startedAt: nowIso,
+        startedAt: now,
         status: 'pending',
-        name:
-          outcome === 'skipped_active'
-            ? 'Already Running Session'
-            : trackComp
-              ? 'Comp Fireteam Grind'
-              : 'Crucible Fireteam Session',
+        name: getMockSessionName(outcome, trackComp),
         aggregateIds: outcome === 'skipped_active' ? ['mock-game-1'] : [],
         compTracking: trackComp
           ? {
@@ -249,4 +263,38 @@ export function buildDevMockBulkStartResults(
       },
     };
   });
+}
+
+export async function loadDevMockFireteam(request: Request): Promise<
+  | {
+      members: FireteamMember[];
+      selectedCharacters?: Record<string, string>;
+      devMockScenario: DevFireteamMockScenario;
+    }
+  | undefined
+> {
+  const url = new URL(request.url);
+  const devMockScenario = parseDevFireteamMockScenario(
+    url.searchParams.get('mock'),
+  );
+  if (!devMockScenario) return undefined;
+
+  const prefs = await getPreferences(request);
+  return {
+    members: getDevMockFireteamMembers(devMockScenario),
+    selectedCharacters: prefs.fireteam,
+    devMockScenario,
+  };
+}
+
+export function handleDevMockBulkStart(
+  formData: FormData,
+  members: FireteamSessionMemberTarget[],
+  trackComp: boolean,
+): FireteamSessionResult[] | undefined {
+  const mockScenario = parseDevFireteamMockScenario(
+    formData.get('mockScenario')?.toString(),
+  );
+  if (!mockScenario) return undefined;
+  return buildDevMockBulkStartResults(mockScenario, members, trackComp);
 }

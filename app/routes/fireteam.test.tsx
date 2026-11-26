@@ -8,13 +8,14 @@ import { setPreferences } from '~/.server/preferences';
 import type { FireteamMember } from '~/api';
 import { toast } from '~/components/ui/sonner';
 
-import Fireteam, { loader } from './fireteam';
+import { Fireteam, loader } from './fireteam';
 
 vi.mock('~/.server/fireteam', () => ({
   getFireteamData: vi.fn(),
 }));
 
 vi.mock('~/.server/preferences', () => ({
+  getPreferences: vi.fn(),
   setPreferences: vi.fn(),
 }));
 
@@ -180,7 +181,7 @@ describe('Fireteam Route Component', () => {
               id: 'sess-new-2',
               userId: 'user-2',
               characterId: 'char-2-warlock',
-              startedAt: '2026-11-25T00:10:00.000Z',
+              startedAt: new Date('2026-11-25T00:10:00.000Z'),
               status: 'pending',
               aggregateIds: [],
               compTracking: { enabled: true },
@@ -194,7 +195,7 @@ describe('Fireteam Route Component', () => {
               id: 'sess-new-3',
               userId: 'user-3',
               characterId: 'char-3-warlock',
-              startedAt: '2026-11-25T00:10:00.000Z',
+              startedAt: new Date('2026-11-25T00:10:00.000Z'),
               status: 'pending',
               aggregateIds: [],
               compTracking: { enabled: true },
@@ -298,7 +299,7 @@ describe('Fireteam Route Component', () => {
             id: 'sess-race-2',
             userId: 'user-2',
             characterId: 'char-2-titan',
-            startedAt: '2026-11-25T00:08:00.000Z',
+            startedAt: new Date('2026-11-25T00:08:00.000Z'),
             status: 'pending',
             aggregateIds: ['g1'],
           },
@@ -311,7 +312,7 @@ describe('Fireteam Route Component', () => {
             id: 'sess-new-3',
             userId: 'user-3',
             characterId: 'char-3-warlock',
-            startedAt: '2026-11-25T00:10:00.000Z',
+            startedAt: new Date('2026-11-25T00:10:00.000Z'),
             status: 'pending',
             aggregateIds: [],
           },
