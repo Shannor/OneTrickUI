@@ -19,6 +19,8 @@ const ORDER: Record<number, number> = {
   3614673599: 2, // Blast Radius
   4043523819: 2, // Impact
   1240592695: 3, // Range
+  2523465841: 3, // Velocity
+  1591432999: 3, // Accuracy
   155624089: 4, // Stability
   943549884: 5, // Handling
   4188031367: 6, // Reload
@@ -27,24 +29,33 @@ const ORDER: Record<number, number> = {
   3555269338: 9, // Zoom
   2715839340: 10, // Recoil
   1931675084: 11, // Ammo Generation
-  3871231066: 12, // Mag
+  3481294762: 12, // Heat Generated
+  4006394725: 13, // Cooling Efficiency
+  3871231066: 14, // Mag
 };
 
 enum StatEnum {
-  RPM = 4284893193, // Rounds Per Minute
-  ChargeTime = 2961396640, // Charge Time
-  Impact = 4043523819, // Impact
-  Range = 1240592695, // Range
-  Stability = 155624089, // Stability
-  Handling = 943549884, // Handling
-  Reload = 4188031367, // Reload
-  AA = 1345609583, // Aim Assistance
-  AE = 2714457168, // Airborne Effectiveness
-  Zoom = 3555269338, // Zoom
-  Recoil = 2715839340, // Recoil Direction
-  Mag = 3871231066, // Magazine
-  AG = 1931675084, // Ammo Generation
-  BlastRadius = 3614673599, // Blast Radius
+  RPM = 4284893193,
+  ChargeTime = 2961396640,
+  Impact = 4043523819,
+  Range = 1240592695,
+  Stability = 155624089,
+  Handling = 943549884,
+  Reload = 4188031367,
+  AA = 1345609583,
+  AE = 2714457168,
+  Zoom = 3555269338,
+  Recoil = 2715839340,
+  Mag = 3871231066,
+  AG = 1931675084,
+  BlastRadius = 3614673599,
+  GuardResistance = 209426660,
+  GuardEndurance = 3736848092,
+  SwingSpeed = 2837207746,
+  ChargeRate = 3022301683,
+  AmmoCapacity = 925767036,
+  HeatGenerated = 3481294762,
+  CoolingEfficiency = 4006394725,
 }
 
 function updateNames(stat: GunStat): string {
@@ -62,6 +73,20 @@ function updateNames(stat: GunStat): string {
       return 'A.G.';
     case StatEnum.BlastRadius:
       return 'Blast';
+    case StatEnum.GuardResistance:
+      return 'Guard Res.';
+    case StatEnum.GuardEndurance:
+      return 'Guard End.';
+    case StatEnum.SwingSpeed:
+      return 'Swing';
+    case StatEnum.ChargeRate:
+      return 'Charge';
+    case StatEnum.AmmoCapacity:
+      return 'Ammo';
+    case StatEnum.HeatGenerated:
+      return 'Heat';
+    case StatEnum.CoolingEfficiency:
+      return 'Cooling';
     default:
       return stat.name;
   }
@@ -83,14 +108,21 @@ export function WeaponStats({ stats, compact = true }: WeaponStatsProps) {
 
   if (compact) {
     return (
-      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+      <div
+        data-testid="weapon-stats-grid"
+        className="grid grid-cols-3 gap-1.5 pt-1"
+      >
         {gunStats.map((it) => (
           <div
             key={String(it.hash)}
-            className="flex items-center gap-1.5 rounded bg-muted/70 px-2 py-1 text-xs font-medium sm:text-sm"
+            className="flex min-w-0 items-center justify-between gap-1.5 rounded bg-muted/70 px-2 py-1 text-xs font-medium"
           >
-            <span className="text-muted-foreground">{updateNames(it)}</span>
-            <span className="font-bold text-foreground">{it.value}</span>
+            <span className="truncate text-muted-foreground">
+              {updateNames(it)}
+            </span>
+            <span className="shrink-0 font-bold tabular-nums text-foreground">
+              {it.value}
+            </span>
           </div>
         ))}
       </div>

@@ -208,7 +208,7 @@ export function GearItemPill({
           </div>
         </button>
       </TooltipTrigger>
-      <TooltipContent className="w-[calc(100vw-2rem)] p-3 sm:w-auto sm:max-w-xs">
+      <TooltipContent className="w-[calc(100vw-2rem)] p-3 sm:w-auto sm:min-w-[280px] sm:max-w-sm">
         {tooltipContent ?? (
           <GearItemDetailsSummary item={item} heading={tooltipHeading} />
         )}
