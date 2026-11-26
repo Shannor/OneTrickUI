@@ -26,9 +26,9 @@ export function LoadoutCardSkeleton() {
       aria-hidden="true"
       className="flex h-full w-full min-w-0 flex-col overflow-hidden border"
     >
-      <CardContent className="flex h-full w-full min-w-0 flex-1 flex-col justify-between gap-3.5 p-4 sm:p-5">
-        <div className="flex w-full min-w-0 flex-col gap-3.5">
-          <div className="flex w-full min-w-0 flex-col gap-2.5 border-b border-border/50 pb-3">
+      <CardContent className="flex h-full w-full min-w-0 flex-1 flex-col justify-between gap-4 p-4 sm:p-5">
+        <div className="flex w-full min-w-0 flex-col gap-4">
+          <div className="flex w-full min-w-0 flex-col gap-2">
             <div className="flex w-full items-center justify-between gap-2">
               <Skeleton className="h-6 w-2/3" />
               <Skeleton className="h-4 w-20 shrink-0" />
@@ -48,17 +48,24 @@ export function LoadoutCardSkeleton() {
             ))}
           </div>
 
-          <div className="flex w-full min-w-0 flex-col gap-2 border-t border-border/50 pt-3">
+          <div className="flex w-full min-w-0 flex-col gap-3 border-t border-border/40 pt-3.5">
             <Skeleton className="h-3.5 w-24" />
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {Array.from({ length: 4 }).map((_, idx) => (
-                <Skeleton key={idx} className="h-10 w-full rounded-md" />
+                <div key={idx} className="flex items-center gap-2.5">
+                  <Skeleton className="h-8 w-8 shrink-0 rounded" />
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Skeleton className="h-3.5 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
               ))}
             </div>
+            <Skeleton className="h-6 w-28 rounded-full" />
           </div>
         </div>
 
-        <div className="flex min-w-0 items-center justify-end border-t border-border/40 pt-3">
+        <div className="flex min-w-0 items-center justify-end pt-1">
           <Skeleton className="h-4 w-32" />
         </div>
       </CardContent>

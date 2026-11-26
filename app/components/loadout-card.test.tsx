@@ -178,13 +178,15 @@ describe('LoadoutCard', () => {
     expect(screen.getAllByText('Range').length).toBeGreaterThan(0);
   });
 
-  it('does not render set bonus pills when armorSetBonuses is empty or undefined', () => {
+  it('renders No Set Bonus pill without a Set Bonuses label when armorSetBonuses is empty or undefined', () => {
     render(
       <LoadoutCard snapshot={mockSnapshot} stats={mockStats} gamesCount={5} />,
     );
-    expect(
-      screen.queryByTestId('loadout-card-set-bonuses'),
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('loadout-card-set-bonuses')).toBeInTheDocument();
+    expect(screen.getByTestId('no-armor-set-bonus-pill')).toHaveTextContent(
+      'No Set Bonus',
+    );
+    expect(screen.queryByText('Set Bonuses')).not.toBeInTheDocument();
   });
 
   it('renders compact set bonus pills with perk detail tooltips and stops card click propagation', () => {
@@ -240,6 +242,10 @@ describe('LoadoutCard', () => {
     );
 
     expect(screen.getByTestId('loadout-card-set-bonuses')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('no-armor-set-bonus-pill'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Set Bonuses')).not.toBeInTheDocument();
     const electrumPill = screen.getByTestId('armor-set-bonus-pill-742845781');
     const audaciaPill = screen.getByTestId('armor-set-bonus-pill-2618364783');
     expect(electrumPill).toHaveTextContent('Cruel Electrum');

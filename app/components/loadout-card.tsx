@@ -7,7 +7,10 @@ import {
   TrophyIcon,
 } from 'lucide-react';
 import type { CharacterSnapshot } from '~/api';
-import { ArmorSetBonusPill } from '~/components/armor-set-bonuses';
+import {
+  ArmorSetBonusPill,
+  NoArmorSetBonusPill,
+} from '~/components/armor-set-bonuses';
 import { ArmorStats } from '~/components/armor-stats';
 import { FormattedDate } from '~/components/formatted-date';
 import { GearItemPill, hasArmorStats } from '~/components/gear-item-pill';
@@ -68,10 +71,10 @@ export function LoadoutCard({
         <CardContent
           className={cn(
             'flex h-full w-full min-w-0 flex-1 flex-col justify-between',
-            compact ? 'gap-3.5 p-4 sm:p-5' : 'gap-4 p-4 sm:p-5 md:p-6 lg:p-7',
+            compact ? 'gap-4 p-4 sm:p-5' : 'gap-4 p-4 sm:p-5 md:p-6 lg:p-7',
           )}
         >
-          <div className="flex w-full min-w-0 flex-col gap-3.5">
+          <div className="flex w-full min-w-0 flex-col gap-4">
             <LoadoutCardHeader
               snapshot={snapshot}
               similarCount={similarCount}
@@ -83,8 +86,10 @@ export function LoadoutCard({
               gamesCount={gamesCount}
               compact={compact}
             />
-            <LoadoutCardGear snapshot={snapshot} compact={compact} />
-            <LoadoutCardSetBonuses snapshot={snapshot} compact={compact} />
+            <div className="flex w-full min-w-0 flex-col gap-3 border-t border-border/40 pt-3.5">
+              <LoadoutCardGear snapshot={snapshot} compact={compact} />
+              <LoadoutCardSetBonuses snapshot={snapshot} compact={compact} />
+            </div>
           </div>
           <LoadoutCardFooter />
         </CardContent>
@@ -105,7 +110,7 @@ export function LoadoutCardHeader({
   compact?: boolean;
 }) {
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2.5 border-b border-border/50 pb-3">
+    <div className="flex w-full min-w-0 flex-col gap-1.5">
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex w-full min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
           <h3
@@ -183,15 +188,10 @@ export function LoadoutCardSummary({
     <div
       className={cn(
         'grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3',
-        !compact && 'sm:grid-cols-4 md:divide-x md:divide-border/60',
+        !compact && 'sm:grid-cols-4 sm:gap-x-6',
       )}
     >
-      <div
-        className={cn(
-          'flex min-w-0 flex-col gap-0.5',
-          !compact && 'md:pr-4 lg:pr-6',
-        )}
-      >
+      <div className="flex min-w-0 flex-col gap-0.5">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
           <Gamepad2Icon className="h-4 w-4 shrink-0 text-primary" />
           Games
@@ -210,12 +210,7 @@ export function LoadoutCardSummary({
         </div>
       </div>
 
-      <div
-        className={cn(
-          'flex min-w-0 flex-col gap-0.5',
-          !compact && 'md:px-4 lg:px-6',
-        )}
-      >
+      <div className="flex min-w-0 flex-col gap-0.5">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
           <TrophyIcon className="h-4 w-4 shrink-0 text-primary" />
           Win Rate
@@ -244,12 +239,7 @@ export function LoadoutCardSummary({
         </div>
       </div>
 
-      <div
-        className={cn(
-          'flex min-w-0 flex-col gap-0.5',
-          !compact && 'md:px-4 lg:px-6',
-        )}
-      >
+      <div className="flex min-w-0 flex-col gap-0.5">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
           <CrosshairIcon className="h-4 w-4 shrink-0 text-primary" />K / D
         </span>
@@ -267,12 +257,7 @@ export function LoadoutCardSummary({
         </div>
       </div>
 
-      <div
-        className={cn(
-          'flex min-w-0 flex-col gap-0.5',
-          !compact && 'md:px-4 lg:px-6',
-        )}
-      >
+      <div className="flex min-w-0 flex-col gap-0.5">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
           <SwordsIcon className="h-4 w-4 shrink-0 text-primary" />
           Efficiency
@@ -309,13 +294,13 @@ export function LoadoutCardGear({
   if (gearItems.length === 0) return null;
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2.5 border-t border-border/50 pt-3">
-      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
+    <div className="flex w-full min-w-0 flex-col gap-2">
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Gear & Weapons
       </span>
       <div
         className={cn(
-          'grid grid-cols-1 gap-2.5 sm:grid-cols-2',
+          'grid grid-cols-1 gap-2 sm:grid-cols-2',
           !compact && 'lg:grid-cols-4',
         )}
       >
@@ -362,33 +347,31 @@ export function LoadoutCardSetBonuses({
   snapshot: CharacterSnapshot;
   compact?: boolean;
 }) {
-  const bonuses = snapshot.armorSetBonuses;
-  if (!bonuses || bonuses.length === 0) return null;
+  const bonuses = snapshot.armorSetBonuses ?? [];
 
   return (
     <div
       data-testid="loadout-card-set-bonuses"
-      className="flex w-full min-w-0 flex-col items-start gap-2 border-t border-border/50 pt-3 sm:flex-row sm:flex-wrap sm:items-center"
+      className="flex min-w-0 flex-wrap items-center gap-2"
     >
-      <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
-        Set Bonuses
-      </span>
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        {bonuses.map((bonus) => (
+      {bonuses.length > 0 ? (
+        bonuses.map((bonus) => (
           <ArmorSetBonusPill
             key={String(bonus.setHash)}
             bonus={bonus}
             size={compact ? 'sm' : 'md'}
           />
-        ))}
-      </div>
+        ))
+      ) : (
+        <NoArmorSetBonusPill size={compact ? 'sm' : 'md'} />
+      )}
     </div>
   );
 }
 
 export function LoadoutCardFooter() {
   return (
-    <div className="flex min-h-9 min-w-0 items-center justify-end gap-1.5 border-t border-border/40 pt-3 text-sm font-semibold text-primary transition-all group-hover:translate-x-0.5">
+    <div className="flex min-h-8 min-w-0 items-center justify-end gap-1.5 pt-1 text-sm font-semibold text-primary transition-all group-hover:translate-x-0.5">
       <span className="truncate">View Loadout Details</span>
       <ArrowRightIcon className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
     </div>

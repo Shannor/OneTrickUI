@@ -693,6 +693,14 @@ describe('SimilarLoadoutsView', () => {
 
     render(<RouterProvider router={router} />);
 
+    const primaryBonuses = screen.getByTestId('primary-armor-set-bonuses');
+    expect(primaryBonuses).toHaveTextContent('No Set Bonus');
+    expect(screen.queryByText(/Set Bonuses:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Class Stats:/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('combined-stats-preview')).not.toHaveClass(
+      'rounded-md',
+    );
+
     const bothNoneBadge = screen
       .getByTestId('similar-candidate-cand-empty')
       .querySelector(

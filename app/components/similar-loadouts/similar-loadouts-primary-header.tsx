@@ -1,7 +1,10 @@
 import { CrosshairIcon, Gamepad2Icon, TrophyIcon } from 'lucide-react';
 import type { CharacterSnapshot, ItemSnapshot } from '~/api';
 import type { CombinedStatsResult } from '~/calculations/precision';
-import { ArmorSetBonusPill } from '~/components/armor-set-bonuses';
+import {
+  ArmorSetBonusPill,
+  NoArmorSetBonusPill,
+} from '~/components/armor-set-bonuses';
 import { GearItemPill } from '~/components/gear-item-pill';
 import { Badge } from '~/components/ui/badge';
 import {
@@ -49,7 +52,7 @@ export function SimilarLoadoutsPrimaryHeader({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
         <GearItemPill
           label="Subclass"
           item={target.loadout?.[SUBCLASS_BUCKET]}
@@ -78,48 +81,43 @@ export function SimilarLoadoutsPrimaryHeader({
         />
       </div>
 
-      {armorSetBonuses.length > 0 && (
-        <div
-          data-testid="primary-armor-set-bonuses"
-          className="flex flex-col items-start gap-2 pt-1 sm:flex-row sm:flex-wrap sm:items-center"
-        >
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
-            Set Bonuses:
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
-            {armorSetBonuses.map((bonus) => (
-              <ArmorSetBonusPill
-                key={String(bonus.setHash)}
-                bonus={bonus}
-                size="sm"
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <div
+        data-testid="primary-armor-set-bonuses"
+        className="flex flex-wrap items-center gap-2"
+      >
+        {armorSetBonuses.length > 0 ? (
+          armorSetBonuses.map((bonus) => (
+            <ArmorSetBonusPill
+              key={String(bonus.setHash)}
+              bonus={bonus}
+              size="sm"
+            />
+          ))
+        ) : (
+          <NoArmorSetBonusPill size="sm" />
+        )}
+      </div>
 
       {classStats.length > 0 && (
-        <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:flex-wrap sm:items-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
-            Class Stats:
-          </span>
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
-            {classStats.map((st) => (
-              <Badge
-                key={st.stat}
-                variant="secondary"
-                className="w-full justify-center px-2.5 py-1 font-mono text-xs sm:w-auto sm:py-0.5"
-              >
-                {st.stat}: {st.value}
-              </Badge>
-            ))}
-          </div>
+        <div
+          data-testid="primary-class-stats"
+          className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center"
+        >
+          {classStats.map((st) => (
+            <Badge
+              key={st.stat}
+              variant="secondary"
+              className="w-full justify-center px-2.5 py-1 font-mono text-xs sm:w-auto sm:py-0.5"
+            >
+              {st.stat}: {st.value}
+            </Badge>
+          ))}
         </div>
       )}
 
       <div
         data-testid="combined-stats-preview"
-        className="mt-1 grid grid-cols-1 gap-3 rounded-md border border-border/60 bg-background/80 p-3 sm:grid-cols-3"
+        className="mt-0.5 grid grid-cols-1 gap-3 border-t border-primary/20 pt-3.5 sm:grid-cols-3 sm:gap-6"
       >
         <div className="flex flex-col gap-0.5">
           <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

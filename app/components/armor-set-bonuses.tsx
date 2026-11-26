@@ -351,3 +351,29 @@ export function ArmorSetBonusPill({
     </Tooltip>
   );
 }
+
+export interface NoArmorSetBonusPillProps {
+  size?: 'sm' | 'md';
+  className?: string;
+}
+
+export function NoArmorSetBonusPill({
+  size = 'md',
+  className,
+}: NoArmorSetBonusPillProps) {
+  return (
+    <span
+      data-testid="no-armor-set-bonus-pill"
+      className={cn(
+        'inline-flex max-w-full select-none items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 font-medium text-muted-foreground',
+        size === 'sm'
+          ? 'min-h-7 px-2.5 py-1 text-xs sm:min-h-0 sm:px-2 sm:py-0.5 sm:text-[11px]'
+          : 'min-h-8 px-2.5 py-1 text-xs sm:min-h-0 sm:px-2.5 sm:py-1 sm:text-xs',
+        className,
+      )}
+    >
+      <ShieldIcon className="h-3.5 w-3.5 shrink-0 opacity-70 sm:h-3 sm:w-3" />
+      <span className="truncate">No Set Bonus</span>
+    </span>
+  );
+}
