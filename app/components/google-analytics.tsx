@@ -8,12 +8,14 @@ const GTAG_INIT_SCRIPT = [
 
 export interface GoogleAnalyticsProps {
   measurementId?: string;
+  enabled?: boolean;
 }
 
 export function GoogleAnalytics({
   measurementId = GOOGLE_ANALYTICS_ID,
+  enabled = import.meta.env.PROD,
 }: GoogleAnalyticsProps) {
-  if (!measurementId) {
+  if (!enabled || !measurementId) {
     return null;
   }
 
