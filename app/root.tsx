@@ -22,6 +22,7 @@ import type { Character } from '~/api';
 import { client } from '~/api/client.gen';
 import { DevWorktreeBadge } from '~/components/dev-worktree-badge';
 import { ErrorBoundaryContent } from '~/components/error-boundary-content';
+import { GoogleAnalytics } from '~/components/google-analytics';
 import { ModeToggle } from '~/components/mode-toggle';
 import { Toaster } from '~/components/ui/sonner';
 import { useToastNotification } from '~/hooks/use-toast-notification';
@@ -200,6 +201,7 @@ export function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <GoogleAnalytics />
         <meta
           name="keywords"
           content="destiny, destiny 2, d2, one trick, tracker, destiny pvp, pvp, loadouts, sessions, stats, min-max"
@@ -236,6 +238,7 @@ function ErrorBoundaryWithTheme({ error }: { error: unknown }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <GoogleAnalytics />
         <title>Error — 1 Trick</title>
         <meta
           name="description"
