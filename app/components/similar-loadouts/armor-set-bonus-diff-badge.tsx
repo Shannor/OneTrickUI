@@ -74,7 +74,7 @@ export function ArmorSetBonusDiffBadge({
             badgeVariants({
               variant: armorSetBonusMatch ? 'secondary' : 'outline',
             }),
-            'min-h-9 cursor-pointer touch-manipulation px-3 py-1.5 text-xs sm:min-h-0 sm:px-2.5 sm:py-0.5',
+            'min-h-7 cursor-pointer touch-manipulation px-2.5 py-1 text-xs sm:min-h-0 sm:py-0.5',
             armorSetBonusMatch
               ? 'gap-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-1'
               : 'gap-1.5 border-sky-500/50 bg-sky-500/10 text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-sky-400',
