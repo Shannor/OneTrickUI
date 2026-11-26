@@ -596,6 +596,22 @@ export type SnapshotLink = {
   confidenceLevel: ConfidenceLevel;
   confidenceSource: ConfidenceSource;
   createdAt: Date;
+  /**
+   * Owner user ID stamped at write time for zero-read participant resolution
+   */
+  userId?: string;
+  /**
+   * Owner display name stamped at write time
+   */
+  displayName?: string;
+  /**
+   * Character class name stamped at write time
+   */
+  characterClass?: string;
+  /**
+   * Character emblem URL stamped at write time
+   */
+  emblemUrl?: string;
 };
 
 export type Display = {
@@ -631,6 +647,14 @@ export type WeaponInstanceMetrics = {
    */
   referenceId?: bigint;
   display?: Display;
+  /**
+   * Equipment slot bucket hash (e.g., Kinetic, Energy, Power) resolved from the Manifest.
+   */
+  bucketHash?: bigint;
+  /**
+   * Weapon archetype display name (e.g., Hand Cannon, Shotgun) resolved from the Manifest.
+   */
+  itemTypeDisplayName?: string;
   properties?: ItemProperties;
   stats?: {
     [key: string]: UniqueStatValue;
@@ -676,6 +700,72 @@ export type Team = {
   standing: string;
   score: string;
   teamName?: string;
+};
+
+export type ActivityParticipant = {
+  /**
+   * Destiny 2 character ID for this match participant.
+   */
+  characterId: string;
+  /**
+   * Destiny 2 platform membership ID for this match participant.
+   */
+  membershipId: string;
+  /**
+   * Bungie membership type enum value for this participant's platform.
+   */
+  membershipType: number;
+  /**
+   * Bungie global display name, falling back to platform display name.
+   */
+  displayName: string;
+  /**
+   * Optional four-digit Bungie global display name code (e.g., "0042" or "1234"), without leading '#'.
+   */
+  displayNameCode?: string;
+  /**
+   * Character class name (Hunter, Titan, or Warlock).
+   */
+  characterClass: string;
+  /**
+   * Character light level during the match.
+   */
+  lightLevel: number;
+  /**
+   * Full Bungie CDN URL for the participant's equipped emblem icon, resolved from the Manifest.
+   */
+  emblemIconUrl?: string;
+  /**
+   * Team ID matching teams[].id; omitted for free-for-all modes (e.g., Rumble).
+   */
+  teamId?: string;
+  /**
+   * Match standing (0 for Victory, 1 for Defeat, or placement rank in FFA modes).
+   */
+  standing: number;
+  score?: StatsValuePair;
+  /**
+   * Whether the participant remained until the end of the match (false indicates DNF).
+   */
+  completed: boolean;
+  /**
+   * Optional Bungie fireteam identifier shared by pre-made fireteam members.
+   */
+  fireteamId?: string;
+  performance: InstancePerformance;
+  /**
+   * 1 Trick user ID when this participant has a registered 1 Trick account.
+   */
+  userId?: string;
+  /**
+   * 1 Trick session ID when this match was tracked by a 1 Trick session for this character.
+   */
+  sessionId?: string;
+  /**
+   * 1 Trick character snapshot ID when a loadout snapshot was matched for this character in this match.
+   */
+  snapshotId?: string;
+  confidenceLevel?: ConfidenceLevel;
 };
 
 export type Membership = {
@@ -1204,10 +1294,6 @@ export type GetSnapshotsData = {
     minimumGames?: number;
     includeStats?: boolean;
     sortBy?: 'created_at' | 'win_rate' | 'kd_ratio' | 'matches_played';
-    /**
-     * When true, filters returned snapshots to those with at least one active mergeable similar snapshot
-     */
-    hasSimilar?: boolean;
   };
   url: '/snapshots';
 };
@@ -1602,11 +1688,12 @@ export type GetActivityError = GetActivityErrors[keyof GetActivityErrors];
 
 export type GetActivityResponses = {
   /**
-   * Array of used guns during an activity
+   * Match details, teams, full participant roster, and 1 Trick tracking metadata for an activity
    */
   200: {
     activity: ActivityHistory;
     teams: Array<Team>;
+    participants: Array<ActivityParticipant>;
     aggregate?: Aggregate;
     snapshots: {
       [key: string]: CharacterSnapshot;

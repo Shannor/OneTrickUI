@@ -57,6 +57,7 @@ export const Weapon: React.FC<Props> = ({
   properties,
   stats,
   display,
+  itemTypeDisplayName,
   hideStats,
   showTitle = true,
   className,
@@ -135,7 +136,8 @@ export const Weapon: React.FC<Props> = ({
   const icon = getItemIconUrl(properties, display?.icon);
   const name = properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun';
   const isExotic = properties?.baseInfo?.tierTypeName === 'Exotic';
-  const itemType = properties?.baseInfo?.itemTypeDisplayName;
+  const itemType =
+    properties?.baseInfo?.itemTypeDisplayName ?? itemTypeDisplayName;
 
   if (compact) {
     const allSockets = [...row1, ...row2];

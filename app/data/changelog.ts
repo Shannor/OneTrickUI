@@ -17,10 +17,18 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-11-26',
     date: 'November 26, 2026',
-    title: 'One-Click Fireteam Session Start & Live Tracking Badges',
+    title: 'Full Match Scoreboards & One-Click Fireteam Sessions',
     summary:
-      'Launch Crucible tracking sessions for your entire squad in a single click and instantly see which teammates already have a live session running.',
+      'Review every Guardian in a Crucible match side-by-side with a slide-over loadout inspector for 1 Trick tracked players, and launch tracking sessions for your fireteam in one click.',
     changes: [
+      {
+        type: 'feature',
+        text: 'Inspect the full post-game match roster grouped by Alpha and Bravo teams (or standings in Free-for-All modes), complete with emblem, class, light level, K/D/A, efficiency, color-coded fireteam stack bars, dimmed rows for players who left early, and weapon kill summaries for every Guardian.',
+      },
+      {
+        type: 'feature',
+        text: 'Spot Guardians tracked in 1 Trick right on the scoreboard with live subclass and exotic armor previews, then tap any highlighted row to open a responsive side drawer (or mobile bottom sheet) to browse full subclass builds, stats, weapon rolls, and switch between multiple tracked players without losing your place.',
+      },
       {
         type: 'feature',
         text: 'Start tracking sessions for multiple fireteam teammates at once from the Fireteam page, complete with per-teammate Guardian selection and an optional Competitive Score tracking toggle.',
