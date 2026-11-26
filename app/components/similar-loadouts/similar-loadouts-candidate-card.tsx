@@ -99,7 +99,7 @@ export function SimilarLoadoutCandidateCard({
               tabIndex={isMerging ? -1 : undefined}
             >
               <span>View Loadout</span>
-              <ArrowUpRight className="!h-4 !w-4" />
+              <ArrowUpRight className="h-4 w-4" />
             </Link>
           </Button>
         )}

@@ -89,4 +89,32 @@ describe('Tooltip mobile tap behavior', () => {
     const content = screen.getByTestId('set-bonus-tooltip');
     expect(content).toHaveClass('max-sm:max-w-[calc(100vw-2rem)]');
   });
+
+  it('closes an already open sibling tooltip when another trigger receives a synthetic click without pointerdown', () => {
+    render(
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>First Perk</TooltipTrigger>
+          <TooltipContent>First perk details</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger>Second Perk</TooltipTrigger>
+          <TooltipContent>Second perk details</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>,
+    );
+
+    const firstTrigger = screen.getByRole('button', { name: 'First Perk' });
+    const secondTrigger = screen.getByRole('button', { name: 'Second Perk' });
+
+    fireEvent.click(firstTrigger);
+    expect(screen.getAllByText('First perk details').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Second perk details')).not.toBeInTheDocument();
+
+    fireEvent.click(secondTrigger);
+    expect(screen.queryByText('First perk details')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Second perk details').length).toBeGreaterThan(
+      0,
+    );
+  });
 });

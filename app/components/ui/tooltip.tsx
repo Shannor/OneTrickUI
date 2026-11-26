@@ -34,12 +34,15 @@ function Tooltip({
 
   const setOpen = React.useCallback(
     (nextOpen: boolean) => {
+      if (nextOpen && !open && typeof document !== 'undefined') {
+        document.dispatchEvent(new CustomEvent('tooltip.open'));
+      }
       if (!isControlled) {
         setUncontrolledOpen(nextOpen);
       }
       onOpenChange?.(nextOpen);
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange, open],
   );
 
   const contextValue = React.useMemo(
@@ -49,12 +52,7 @@ function Tooltip({
 
   return (
     <TapTooltipContext.Provider value={contextValue}>
-      <TooltipPrimitive.Root
-        open={open}
-        defaultOpen={defaultOpen}
-        onOpenChange={setOpen}
-        {...props}
-      />
+      <TooltipPrimitive.Root open={open} onOpenChange={setOpen} {...props} />
     </TapTooltipContext.Provider>
   );
 }

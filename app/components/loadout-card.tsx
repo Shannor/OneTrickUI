@@ -70,8 +70,8 @@ export function LoadoutCard({
       >
         <CardContent
           className={cn(
-            'flex h-full w-full min-w-0 flex-1 flex-col justify-between',
-            compact ? 'gap-4 p-4 sm:p-5' : 'gap-4 p-4 sm:p-5 md:p-6 lg:p-7',
+            'flex h-full w-full min-w-0 flex-1 flex-col justify-between gap-4 p-4 sm:p-5',
+            !compact && 'md:p-6 lg:p-7',
           )}
         >
           <div className="flex w-full min-w-0 flex-col gap-4">
@@ -116,9 +116,7 @@ export function LoadoutCardHeader({
           <h3
             className={cn(
               'w-full min-w-0 truncate font-bold tracking-wide text-foreground transition-colors group-hover:text-primary sm:w-auto sm:flex-1',
-              compact
-                ? 'text-xl sm:text-2xl'
-                : 'text-2xl sm:text-2xl lg:text-3xl',
+              compact ? 'text-xl sm:text-2xl' : 'text-2xl lg:text-3xl',
             )}
           >
             {snapshot.name || 'Loadout'}
@@ -183,6 +181,10 @@ export function LoadoutCardSummary({
   const winRatio = stats?.standing?.value ?? 0;
   const winPercentage = Math.round(winRatio * 100);
   const isPositiveWinRate = winRatio >= 0.5;
+  const statValueClassName = cn(
+    'font-heading text-2xl font-extrabold tracking-wide text-foreground',
+    !compact && 'lg:text-3xl',
+  );
 
   return (
     <div
@@ -197,16 +199,7 @@ export function LoadoutCardSummary({
           Games
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
-          <span
-            className={cn(
-              'font-heading font-extrabold tracking-wide text-foreground',
-              compact
-                ? 'text-2xl sm:text-2xl'
-                : 'text-2xl sm:text-2xl lg:text-3xl',
-            )}
-          >
-            {gamesCount}
-          </span>
+          <span className={statValueClassName}>{gamesCount}</span>
         </div>
       </div>
 
@@ -216,16 +209,7 @@ export function LoadoutCardSummary({
           Win Rate
         </span>
         <div className="flex flex-wrap items-baseline gap-1.5">
-          <span
-            className={cn(
-              'font-heading font-extrabold tracking-wide text-foreground',
-              compact
-                ? 'text-2xl sm:text-2xl'
-                : 'text-2xl sm:text-2xl lg:text-3xl',
-            )}
-          >
-            {winPercentage}%
-          </span>
+          <span className={statValueClassName}>{winPercentage}%</span>
           <span
             className={cn(
               'text-xs font-semibold sm:text-sm',
@@ -244,16 +228,7 @@ export function LoadoutCardSummary({
           <CrosshairIcon className="h-4 w-4 shrink-0 text-primary" />K / D
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
-          <span
-            className={cn(
-              'font-heading font-extrabold tracking-wide text-foreground',
-              compact
-                ? 'text-2xl sm:text-2xl'
-                : 'text-2xl sm:text-2xl lg:text-3xl',
-            )}
-          >
-            {kd.toFixed(2)}
-          </span>
+          <span className={statValueClassName}>{kd.toFixed(2)}</span>
         </div>
       </div>
 
@@ -263,16 +238,7 @@ export function LoadoutCardSummary({
           Efficiency
         </span>
         <div className="flex flex-wrap items-baseline gap-2">
-          <span
-            className={cn(
-              'font-heading font-extrabold tracking-wide text-foreground',
-              compact
-                ? 'text-2xl sm:text-2xl'
-                : 'text-2xl sm:text-2xl lg:text-3xl',
-            )}
-          >
-            {kda.toFixed(2)}
-          </span>
+          <span className={statValueClassName}>{kda.toFixed(2)}</span>
         </div>
       </div>
     </div>

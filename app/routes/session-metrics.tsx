@@ -5,7 +5,6 @@ import type { Aggregate, CharacterSnapshot } from '~/api';
 import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 import { MapTelemetryPanel } from '~/charts/map-telemetry';
 import { Empty } from '~/components/empty';
-import { Label } from '~/components/label';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
 import {
@@ -135,14 +134,15 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
 
           return (
             <div className="flex flex-col gap-5" key={snapshotId}>
-              <div className="group flex flex-row items-center gap-2">
-                <Link to={`${loadoutBasePath}/${snapshotId}`}>
-                  <Label className="group-hover:text-blue-400 group-hover:underline">
-                    {snapshot?.name ?? 'Snapshot'}
-                  </Label>
-                </Link>
-                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 group-hover:underline" />
-              </div>
+              <Link
+                to={`${loadoutBasePath}/${snapshotId}`}
+                className="group inline-flex min-h-11 w-full touch-manipulation items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2 text-base font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:w-fit sm:justify-start sm:rounded-md sm:px-2.5 sm:py-1 sm:text-sm"
+              >
+                <span className="truncate group-hover:underline">
+                  {snapshot?.name ?? 'Snapshot'}
+                </span>
+                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary sm:h-3.5 sm:w-3.5" />
+              </Link>
               <div className="flex flex-row gap-4">
                 {weapons.map((weapon) => (
                   <WeaponHeader

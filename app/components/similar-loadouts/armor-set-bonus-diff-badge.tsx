@@ -10,7 +10,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { useTapTooltip } from '~/hooks/use-tap-tooltip';
 import { cn } from '~/lib/utils';
 
 export interface ArmorSetBonusDiffHeadingParams {
@@ -53,7 +52,6 @@ export function ArmorSetBonusDiffBadge({
   candidateBonuses = [],
   targetBonuses = [],
 }: ArmorSetBonusDiffBadgeProps) {
-  const { open, onOpenChange, triggerProps, contentProps } = useTapTooltip();
   const bothLackSetBonuses =
     candidateBonuses.length === 0 && targetBonuses.length === 0;
   const candidateSummary = formatArmorSetBonusSummary(candidateBonuses);
@@ -64,12 +62,11 @@ export function ArmorSetBonusDiffBadge({
   });
 
   return (
-    <Tooltip open={open} onOpenChange={onOpenChange}>
+    <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
           data-testid="armor-set-bonus-diff-badge"
-          {...triggerProps}
           className={cn(
             badgeVariants({
               variant: armorSetBonusMatch ? 'secondary' : 'outline',
@@ -95,10 +92,7 @@ export function ArmorSetBonusDiffBadge({
           )}
         </button>
       </TooltipTrigger>
-      <TooltipContent
-        {...contentProps}
-        className="flex w-[calc(100vw-2rem)] flex-col gap-3 p-3 sm:w-auto sm:max-w-sm"
-      >
+      <TooltipContent className="flex w-[calc(100vw-2rem)] flex-col gap-3 p-3 sm:w-auto sm:max-w-sm">
         <div className="border-b border-border/60 pb-1.5 text-xs font-semibold sm:text-sm">
           {tooltipHeading}
         </div>

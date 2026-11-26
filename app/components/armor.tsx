@@ -39,19 +39,20 @@ export const Armor: React.FC<ArmorProps> = (props) => {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          role="button"
-          tabIndex={0}
-          className={cn(
-            'flex min-h-14 cursor-pointer touch-manipulation select-none flex-col gap-2.5 rounded-lg border p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:p-3.5',
-            isExotic
-              ? 'border-amber-500/40 bg-amber-500/10 dark:bg-amber-500/15'
-              : 'border-border/60 bg-muted/20 hover:bg-muted/40',
-            className,
-          )}
-        >
-          <div className="flex items-center gap-3">
+      <div
+        className={cn(
+          'flex min-h-14 flex-col gap-2.5 rounded-lg border p-3 transition-colors sm:p-3.5',
+          isExotic
+            ? 'border-amber-500/40 bg-amber-500/10 dark:bg-amber-500/15'
+            : 'border-border/60 bg-muted/20 hover:bg-muted/40',
+          className,
+        )}
+      >
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="flex min-h-11 w-full cursor-pointer touch-manipulation select-none items-center gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
             {iconUrl ? (
               <img
                 src={iconUrl}
@@ -81,19 +82,19 @@ export const Armor: React.FC<ArmorProps> = (props) => {
                 {typeName}
               </span>
             </div>
-          </div>
+          </button>
+        </TooltipTrigger>
 
-          {!hideInlineStats && stats && <ArmorStats stats={stats} />}
+        {!hideInlineStats && stats && <ArmorStats stats={stats} />}
 
-          {modSockets.length > 0 && (
-            <Sockets
-              sockets={modSockets}
-              displayMode="iconOnly"
-              className="flex-row flex-wrap items-center gap-2 border-t border-border/40 pt-2"
-            />
-          )}
-        </div>
-      </TooltipTrigger>
+        {modSockets.length > 0 && (
+          <Sockets
+            sockets={modSockets}
+            displayMode="iconOnly"
+            className="flex-row flex-wrap items-center gap-2 border-t border-border/40 pt-2"
+          />
+        )}
+      </div>
       <TooltipContent className="flex w-[calc(100vw-2rem)] flex-col gap-2 p-3 sm:w-auto sm:min-w-[230px]">
         <div className="flex flex-col gap-0.5">
           <span

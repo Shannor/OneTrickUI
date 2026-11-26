@@ -64,10 +64,23 @@ function processSockets(sockets: Socket[]): ClassAbilities {
   );
 }
 
+function hasResolvedAbilities(abilities: ClassAbilities): boolean {
+  return Boolean(
+    abilities.super ||
+      abilities.classAbility ||
+      abilities.movementAbility ||
+      abilities.melee ||
+      abilities.grenade ||
+      abilities.aspects.length > 0 ||
+      abilities.fragments.length > 0,
+  );
+}
+
 interface SubClassContextType {
   abilities: ClassAbilities;
   name: string;
   icon?: string;
+  hasSockets: boolean;
 }
 
 const SubClassContext = createContext<SubClassContextType | null>(null);
@@ -96,9 +109,10 @@ export const SubClassProvider: React.FC<Props> = ({ snapshot, children }) => {
   const icon = itemSnapshot.details?.baseInfo?.icon;
   const sockets = itemSnapshot.details?.sockets ?? [];
   const abilities = processSockets(sockets);
+  const hasSockets = hasResolvedAbilities(abilities);
 
   return (
-    <SubClassContext.Provider value={{ abilities, name, icon }}>
+    <SubClassContext.Provider value={{ abilities, name, icon, hasSockets }}>
       {children}
     </SubClassContext.Provider>
   );

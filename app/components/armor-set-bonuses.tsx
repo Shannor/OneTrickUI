@@ -6,7 +6,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { useTapTooltip } from '~/hooks/use-tap-tooltip';
 import { cn, setBungieUrl } from '~/lib/utils';
 
 export function getHighestActiveTier(bonus: ArmorSetBonus): number {
@@ -307,23 +306,21 @@ export function ArmorSetBonusPill({
   size = 'md',
   className,
 }: ArmorSetBonusPillProps) {
-  const { open, onOpenChange, triggerProps, contentProps } = useTapTooltip();
   const highestTier = getHighestActiveTier(bonus);
   const featuredPerk =
     bonus.activePerks?.[bonus.activePerks.length - 1] ?? bonus.activePerks?.[0];
 
   return (
-    <Tooltip open={open} onOpenChange={onOpenChange}>
+    <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
           data-testid={`armor-set-bonus-pill-${String(bonus.setHash)}`}
-          {...triggerProps}
           className={cn(
             'inline-flex max-w-full cursor-pointer touch-manipulation select-none items-center gap-1.5 rounded-full border border-primary/35 bg-primary/10 font-semibold text-foreground transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
             size === 'sm'
               ? 'min-h-7 px-2.5 py-1 text-xs sm:min-h-0 sm:px-2 sm:py-0.5 sm:text-[11px]'
-              : 'min-h-8 px-2.5 py-1 text-xs sm:min-h-0 sm:px-2.5 sm:py-1 sm:text-xs',
+              : 'min-h-8 px-2.5 py-1 text-xs sm:min-h-0',
             className,
           )}
         >
@@ -342,10 +339,7 @@ export function ArmorSetBonusPill({
           </span>
         </button>
       </TooltipTrigger>
-      <TooltipContent
-        {...contentProps}
-        className="w-[calc(100vw-2rem)] p-3 sm:w-auto sm:max-w-sm"
-      >
+      <TooltipContent className="w-[calc(100vw-2rem)] p-3 sm:w-auto sm:max-w-sm">
         <ArmorSetBonusTooltipDetails bonuses={[bonus]} />
       </TooltipContent>
     </Tooltip>
@@ -368,7 +362,7 @@ export function NoArmorSetBonusPill({
         'inline-flex max-w-full select-none items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 font-medium text-muted-foreground',
         size === 'sm'
           ? 'min-h-7 px-2.5 py-1 text-xs sm:min-h-0 sm:px-2 sm:py-0.5 sm:text-[11px]'
-          : 'min-h-8 px-2.5 py-1 text-xs sm:min-h-0 sm:px-2.5 sm:py-1 sm:text-xs',
+          : 'min-h-8 px-2.5 py-1 text-xs sm:min-h-0',
         className,
       )}
     >

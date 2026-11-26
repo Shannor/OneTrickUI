@@ -65,6 +65,8 @@ describe('Armor', () => {
     const armorTrigger = buttons[0];
     const modSocketTrigger = buttons[1];
 
+    expect(armorTrigger.tagName).toBe('BUTTON');
+    expect(armorTrigger).not.toContainElement(modSocketTrigger);
     expect(screen.queryByText('Health')).not.toBeInTheDocument();
 
     fireEvent.pointerDown(armorTrigger);
@@ -72,6 +74,14 @@ describe('Armor', () => {
     expect(screen.getAllByText('Health').length).toBeGreaterThan(0);
 
     fireEvent.pointerDown(armorTrigger);
+    fireEvent.click(armorTrigger);
+    expect(screen.queryByText('Health')).not.toBeInTheDocument();
+
+    fireEvent.keyDown(armorTrigger, { key: 'Enter' });
+    fireEvent.click(armorTrigger);
+    expect(screen.getAllByText('Health').length).toBeGreaterThan(0);
+
+    fireEvent.keyDown(armorTrigger, { key: 'Enter' });
     fireEvent.click(armorTrigger);
     expect(screen.queryByText('Health')).not.toBeInTheDocument();
 
