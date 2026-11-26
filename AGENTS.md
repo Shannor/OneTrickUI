@@ -53,7 +53,8 @@ To set up and build the project, run the following commands in the terminal:
 ### Branching, Commits & Automatic Stage Sync
 
 - **Branch naming**: Always include the YouTrack ticket ID in branches using `<type>/ot-<id>-<short-slug>` (or `<type>/ot-<id>`), where `<type>` is `feat`, `fix`, `refactor`, `perf`, `chore`, or `docs` (e.g., `feat/ot-5-open-in-dim`, `fix/ot-16-mid-session-comp`).
-- **Commits & Pull Requests**: Include `OT-<id>` in commit subjects (e.g., `feat(loadouts): ... (OT-5)`) and PR titles/descriptions so YouTrack's GitHub VCS integration attaches commits and PR status events to the ticket.
+- **Pull Request titles**: Prefix every PR title with `[OT-<id>]: ` so the ticket is immediately scannable and YouTrack attaches PR status events automatically (e.g., `[OT-54]: Add fireteam overview`).
+- **Commits**: Include `OT-<id>` in commit subjects (e.g., `feat(loadouts): ... (OT-5)`) so YouTrack's GitHub VCS integration attaches commits to the ticket.
 - **Automated Kanban transitions** (via the `One Trick GitHub Stage Sync` workflow attached to project `OT`):
   - First pushed commit referencing `OT-<id>` moves `Backlog` / `Ready` -> **`In Progress`**.
   - Opening a PR referencing `OT-<id>` moves `Stage` -> **`In Review`** (unless already `Done`).
