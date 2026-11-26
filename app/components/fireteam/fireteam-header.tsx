@@ -1,15 +1,12 @@
 import { Users } from 'lucide-react';
 import { Badge } from '~/components/ui/badge';
 
-interface FireteamHeaderProps {
-  memberCount: number;
-  activeCount?: number;
-}
+import { useFireteam } from './fireteam-context';
 
-export function FireteamHeader({
-  memberCount,
-  activeCount = 0,
-}: FireteamHeaderProps) {
+export function FireteamHeader() {
+  const { memberViews, activeHeaderCount } = useFireteam();
+  const memberCount = memberViews.length;
+
   return (
     <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -22,7 +19,7 @@ export function FireteamHeader({
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {activeCount > 0 && (
+        {activeHeaderCount > 0 && (
           <Badge
             variant="outline"
             className="w-fit shrink-0 gap-1.5 border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-600 dark:text-emerald-400"
@@ -31,7 +28,7 @@ export function FireteamHeader({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            {activeCount} Active
+            {activeHeaderCount} Active
           </Badge>
         )}
         <Badge

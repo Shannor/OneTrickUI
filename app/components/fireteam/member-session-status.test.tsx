@@ -1,9 +1,21 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { RouterProvider, createMemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { FireteamMember } from '~/api';
+import type { FireteamMemberView } from '~/lib/fireteam-sessions';
 
-import { MemberSessionStatus, type SessionData } from './member-session-status';
+import {
+  FireteamContext,
+  type FireteamContextValue,
+  FireteamMemberProvider,
+} from './fireteam-context';
+import {
+  ActiveMemberSession,
+  InactiveMemberSession,
+  MemberSessionStatus,
+  type SessionData,
+} from './member-session-status';
 
 const mockPendingSession: SessionData = {
   id: 'sess-123',
@@ -14,13 +26,67 @@ const mockPendingSession: SessionData = {
   aggregateIds: ['g1', 'g2', 'g3'],
 };
 
-describe('MemberSessionStatus', () => {
+const mockMember: FireteamMember = {
+  id: 'user-1',
+  membershipId: 'mem-1',
+  displayName: 'GuardianOne',
+  characters: [],
+};
+
+function renderWithContext(viewOverrides: Partial<FireteamMemberView> = {}) {
+  const view: FireteamMemberView = {
+    member: mockMember,
+    memberKey: 'user-1',
+    savedCharId: 'char-100',
+    effectiveCharId: 'char-100',
+    activeSessions: [],
+    isSelectedCharActive: false,
+    hasAnyActive: false,
+    isReadyToStart: true,
+    isSelectedForBulk: true,
+    ...viewOverrides,
+  };
+
+  const ctx: FireteamContextValue = {
+    memberViews: [view],
+    memberNames: { 'user-1': 'GuardianOne' },
+    selectedTargets: [],
+    readyCount: 1,
+    activeHeaderCount: 0,
+    activeSelectedCount: 0,
+    trackComp: false,
+    setTrackComp: vi.fn(),
+    isBulkSubmitting: false,
+    isSubmitting: false,
+    submitBulkStart: vi.fn(),
+    dismissResults: vi.fn(),
+    toggleMemberBulkSelect: vi.fn(),
+    selectMemberCharacter: vi.fn(),
+  };
+
+  const router = createMemoryRouter([
+    {
+      path: '/',
+      element: (
+        <FireteamContext.Provider value={ctx}>
+          <FireteamMemberProvider view={view}>
+            <MemberSessionStatus />
+          </FireteamMemberProvider>
+        </FireteamContext.Provider>
+      ),
+    },
+  ]);
+
+  return render(<RouterProvider router={router} />);
+}
+
+describe('ActiveMemberSession', () => {
   it('renders active session badge, title, games count and link when status is pending', () => {
     const router = createMemoryRouter([
       {
         path: '/',
         element: (
-          <MemberSessionStatus
+          <ActiveMemberSession
             session={mockPendingSession}
             userId="user-1"
             characterId="char-100"
@@ -42,29 +108,6 @@ describe('MemberSessionStatus', () => {
     );
   });
 
-  it('renders inactive status and opens StartSessionDialog when Start a Session is clicked', () => {
-    const router = createMemoryRouter([
-      {
-        path: '/',
-        element: <MemberSessionStatus userId="user-1" characterId="char-100" />,
-      },
-    ]);
-
-    render(<RouterProvider router={router} />);
-
-    expect(screen.getByText('Inactive')).toBeInTheDocument();
-    const startButton = screen.getByRole('button', {
-      name: /start a session/i,
-    });
-    expect(startButton).toBeInTheDocument();
-
-    fireEvent.click(startButton);
-
-    expect(
-      screen.getByRole('checkbox', { name: /track competitive score/i }),
-    ).toBeInTheDocument();
-  });
-
   it('renders starting Competitive division on active fireteam member session when compTracking is enabled', () => {
     const activeCompSession: SessionData = {
       ...mockPendingSession,
@@ -82,7 +125,7 @@ describe('MemberSessionStatus', () => {
       {
         path: '/',
         element: (
-          <MemberSessionStatus
+          <ActiveMemberSession
             session={activeCompSession}
             userId="user-1"
             characterId="char-100"
@@ -112,7 +155,7 @@ describe('MemberSessionStatus', () => {
       {
         path: '/',
         element: (
-          <MemberSessionStatus
+          <ActiveMemberSession
             session={lightweightSession}
             bulkOutcome="started"
             userId="user-1"
@@ -134,6 +177,33 @@ describe('MemberSessionStatus', () => {
       screen.getByRole('link', { name: /view live session/i }),
     ).toHaveAttribute('href', '/profile/user-1/c/char-100/sessions/sess-ft-1');
   });
+});
+
+describe('InactiveMemberSession', () => {
+  it('renders inactive status and opens StartSessionDialog when Start a Session is clicked', () => {
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <InactiveMemberSession userId="user-1" characterId="char-100" />
+        ),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByText('Inactive')).toBeInTheDocument();
+    const startButton = screen.getByRole('button', {
+      name: /start a session/i,
+    });
+    expect(startButton).toBeInTheDocument();
+
+    fireEvent.click(startButton);
+
+    expect(
+      screen.getByRole('checkbox', { name: /track competitive score/i }),
+    ).toBeInTheDocument();
+  });
 
   it('renders link to active session on another character when selected character is inactive', () => {
     const otherActive: SessionData = {
@@ -147,7 +217,7 @@ describe('MemberSessionStatus', () => {
       {
         path: '/',
         element: (
-          <MemberSessionStatus
+          <InactiveMemberSession
             otherActiveSession={otherActive}
             otherActiveCharacterClass="Warlock"
             userId="user-1"
@@ -164,5 +234,23 @@ describe('MemberSessionStatus', () => {
       'href',
       '/profile/user-1/c/char-warlock/sessions/sess-warlock',
     );
+  });
+});
+
+describe('MemberSessionStatus', () => {
+  it('delegates to ActiveMemberSession when selectedActiveSession is pending in context', () => {
+    renderWithContext({
+      selectedActiveSession: mockPendingSession,
+      isSelectedCharActive: true,
+    });
+
+    expect(screen.getByText('Active Session')).toBeInTheDocument();
+    expect(screen.getByText('PvP Trials Grind')).toBeInTheDocument();
+  });
+
+  it('delegates to InactiveMemberSession when selected character has no active session', () => {
+    renderWithContext({ selectedActiveSession: undefined });
+
+    expect(screen.getByText('Inactive')).toBeInTheDocument();
   });
 });
