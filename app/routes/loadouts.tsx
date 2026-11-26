@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
-import { Switch } from '~/components/ui/switch';
 import { slimSnapshotForCard } from '~/hooks/use-loadout';
 import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
 import { cn, getSiteOrigin } from '~/lib/utils';
@@ -38,7 +37,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   const minParams = url.searchParams.get('minimum');
   const sortParam = (url.searchParams.get('sortBy') ??
     'created_at') as SortByOption;
-  const hasSimilar = url.searchParams.get('hasSimilar') === 'true';
 
   let minimumGames = DEFAULT_MINIMUM_GAMES;
   if (minParams !== null && minParams !== '') {
@@ -53,7 +51,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       page: apiPage,
       ...(mode && mode !== 'allGameModes' ? { gameMode: mode } : {}),
       ...(minimumGames > 0 ? { minimumGames } : {}),
-      ...(hasSimilar ? { hasSimilar: true } : {}),
       includeStats: true,
       sortBy: sortParam,
     },
@@ -68,7 +65,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       mode,
       minimumGames,
       sortBy: sortParam,
-      hasSimilar,
     },
   });
 
@@ -86,7 +82,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       gameMode: mode,
       minimumGames,
       sortBy: sortParam,
-      hasSimilar,
       page,
     };
   }
@@ -106,7 +101,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     gameMode: mode,
     minimumGames,
     sortBy: sortParam,
-    hasSimilar,
     page,
   };
 }
@@ -117,20 +111,13 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
     gameMode = 'allGameModes',
     minimumGames = DEFAULT_MINIMUM_GAMES,
     sortBy = 'created_at',
-    hasSimilar,
     page = 1,
   } = loaderData;
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, type } = useProfileData();
-  const { isSameRoute: isUpdating, nextLocation } = useNavigationState();
+  const { isSameRoute: isUpdating } = useNavigationState();
   const isOwner = type === 'owner';
-
-  const activeSearch =
-    isUpdating && nextLocation ? nextLocation.search : location.search;
-  const isHasSimilarActive =
-    new URLSearchParams(activeSearch).get('hasSimilar') === 'true' ||
-    (activeSearch === '' && Boolean(hasSimilar));
 
   const rawItems = loadouts?.items ?? [];
   const displayLoadouts =
@@ -149,8 +136,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
     const isDefaultValue =
       (key === 'mode' && val === 'allGameModes') ||
       (key === 'minimum' && val === DEFAULT_MINIMUM_GAMES.toString()) ||
-      (key === 'sortBy' && val === 'created_at') ||
-      (key === 'hasSimilar' && (val === 'false' || val === ''));
+      (key === 'sortBy' && val === 'created_at');
 
     if (val !== undefined && val !== '' && !isDefaultValue) {
       params.set(key, val);
@@ -262,23 +248,6 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               </SelectContent>
             </Select>
           </div>
-          {isOwner && (
-            <div className="flex min-h-11 items-center gap-2.5 md:mt-5 md:h-10 md:min-h-10">
-              <Switch
-                id="has-similar-filter"
-                checked={isHasSimilarActive}
-                onCheckedChange={(checked) =>
-                  handleFilterChange('hasSimilar', checked ? 'true' : '')
-                }
-              />
-              <FormLabel
-                htmlFor="has-similar-filter"
-                className="cursor-pointer touch-manipulation select-none text-sm font-medium"
-              >
-                Has Similar Loadouts
-              </FormLabel>
-            </div>
-          )}
         </div>
       </div>
 
