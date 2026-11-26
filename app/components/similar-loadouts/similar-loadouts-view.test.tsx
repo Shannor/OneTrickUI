@@ -323,6 +323,25 @@ describe('SimilarLoadoutsView', () => {
 
     render(<RouterProvider router={router} />);
 
+    const primaryHeader = screen.getByTestId('primary-loadout-header');
+    expect(primaryHeader).toHaveTextContent('Threadrunner');
+
+    const gearButtons = screen
+      .getByTestId('primary-gear-grid')
+      .querySelectorAll('button');
+    expect(Array.from(gearButtons).map((btn) => btn.textContent)).toEqual([
+      expect.stringContaining('KineticRose'),
+      expect.stringContaining('EnergyMatador 64'),
+      expect.stringContaining('Power WeaponBoomslang-4fr'),
+      expect.stringContaining('Exotic ArmorWormhusk Crown'),
+    ]);
+
+    const combinedSection = screen.getByTestId('combined-stats-preview');
+    expect(combinedSection).toHaveTextContent('Combined');
+    expect(combinedSection).not.toHaveTextContent('Combined Matches');
+    expect(combinedSection).not.toHaveTextContent('Combined Win Rate');
+    expect(combinedSection).not.toHaveTextContent('Combined K/D');
+
     expect(screen.getByTestId('combined-matches-value')).toHaveTextContent(
       '20',
     );
@@ -692,6 +711,14 @@ describe('SimilarLoadoutsView', () => {
     ]);
 
     render(<RouterProvider router={router} />);
+
+    const primaryBonuses = screen.getByTestId('primary-armor-set-bonuses');
+    expect(primaryBonuses).toHaveTextContent('No Set Bonus');
+    expect(screen.queryByText(/Set Bonuses:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Class Stats:/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('combined-stats-preview')).not.toHaveClass(
+      'rounded-md',
+    );
 
     const bothNoneBadge = screen
       .getByTestId('similar-candidate-cand-empty')

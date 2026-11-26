@@ -10,7 +10,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
-import { useTapTooltip } from '~/hooks/use-tap-tooltip';
 import { cn } from '~/lib/utils';
 
 export interface ArmorSetBonusDiffHeadingParams {
@@ -53,7 +52,6 @@ export function ArmorSetBonusDiffBadge({
   candidateBonuses = [],
   targetBonuses = [],
 }: ArmorSetBonusDiffBadgeProps) {
-  const { open, onOpenChange, triggerProps, contentProps } = useTapTooltip();
   const bothLackSetBonuses =
     candidateBonuses.length === 0 && targetBonuses.length === 0;
   const candidateSummary = formatArmorSetBonusSummary(candidateBonuses);
@@ -64,41 +62,38 @@ export function ArmorSetBonusDiffBadge({
   });
 
   return (
-    <Tooltip open={open} onOpenChange={onOpenChange}>
+    <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
           data-testid="armor-set-bonus-diff-badge"
-          {...triggerProps}
           className={cn(
             badgeVariants({
               variant: armorSetBonusMatch ? 'secondary' : 'outline',
             }),
+            'min-h-7 cursor-pointer touch-manipulation px-2.5 py-1 text-xs sm:min-h-0 sm:py-0.5',
             armorSetBonusMatch
-              ? 'cursor-help gap-1 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
-              : 'cursor-help gap-1.5 border-sky-500/50 bg-sky-500/10 text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-sky-400',
+              ? 'gap-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-1'
+              : 'gap-1.5 border-sky-500/50 bg-sky-500/10 text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-sky-400',
           )}
         >
           {armorSetBonusMatch ? (
             <>
-              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 sm:h-3 sm:w-3" />
               <span>
                 {bothLackSetBonuses ? 'No Set Bonuses' : 'Set Bonus Match'}
               </span>
             </>
           ) : (
             <>
-              <ShieldCheckIcon className="h-3 w-3 shrink-0" />
+              <ShieldCheckIcon className="h-3.5 w-3.5 shrink-0 sm:h-3 sm:w-3" />
               <span>Set: {candidateSummary}</span>
             </>
           )}
         </button>
       </TooltipTrigger>
-      <TooltipContent
-        {...contentProps}
-        className="flex max-w-sm flex-col gap-3 p-3"
-      >
-        <div className="border-b border-border/60 pb-1.5 text-xs font-semibold">
+      <TooltipContent className="flex w-[calc(100vw-2rem)] flex-col gap-3 p-3 sm:w-auto sm:max-w-sm">
+        <div className="border-b border-border/60 pb-1.5 text-xs font-semibold sm:text-sm">
           {tooltipHeading}
         </div>
         <div className="grid grid-cols-1 gap-3">

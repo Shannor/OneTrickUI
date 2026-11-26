@@ -39,15 +39,15 @@ export const ArmorSet: React.FC<Props> = ({
     <TooltipProvider>
       <div className="flex w-full flex-col gap-4">
         {items.length > 0 && (
-          <div className="flex w-full flex-col gap-2">
+          <div className="flex w-full flex-col gap-2.5">
             {showHint && (
-              <p className="text-xs font-medium text-muted-foreground">
+              <p className="text-sm font-medium text-muted-foreground">
                 Hover or tap any armor piece to view exact stats
               </p>
             )}
             <div
               className={cn(
-                'grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5',
+                'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5',
                 className,
               )}
             >

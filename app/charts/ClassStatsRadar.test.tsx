@@ -24,7 +24,12 @@ describe('ClassStatsRadar', () => {
     const { container } = render(<ClassStatsRadar data={mockData} />);
     const chartEl = container.querySelector('[data-chart]');
     expect(chartEl).not.toBeNull();
-    expect(chartEl).toHaveClass('w-full', 'min-w-0', 'min-h-[260px]');
+    expect(chartEl).toHaveClass(
+      'w-full',
+      'min-w-0',
+      'min-h-[280px]',
+      'sm:min-h-[320px]',
+    );
   });
 
   it('merges custom className onto the chart container', () => {

@@ -7,6 +7,7 @@ import { TooltipProvider } from '~/components/ui/tooltip';
 import {
   ArmorSetBonusPill,
   ArmorSetBonusesPanel,
+  NoArmorSetBonusPill,
   formatArmorSetBonusLabel,
   formatArmorSetBonusSummary,
   getHighestActiveTier,
@@ -184,5 +185,19 @@ describe('ArmorSetBonusPill', () => {
 
     expect(screen.queryByText('Primary Survivor')).not.toBeInTheDocument();
     expect(screen.queryByText('Primary Phantom')).not.toBeInTheDocument();
+  });
+});
+
+describe('NoArmorSetBonusPill', () => {
+  it('renders No Set Bonus pill in both sm and md sizes', () => {
+    const { rerender } = render(<NoArmorSetBonusPill size="sm" />);
+    const pill = screen.getByTestId('no-armor-set-bonus-pill');
+    expect(pill).toHaveTextContent('No Set Bonus');
+    expect(pill).toHaveClass('min-h-7');
+
+    rerender(<NoArmorSetBonusPill size="md" />);
+    expect(screen.getByTestId('no-armor-set-bonus-pill')).toHaveClass(
+      'min-h-8',
+    );
   });
 });

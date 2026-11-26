@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LayersIcon, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshots } from '~/api';
@@ -24,10 +24,7 @@ const PAGE_SIZE = 10;
 const DEFAULT_MINIMUM_GAMES = 5;
 
 export type SortByOption =
-  | 'created_at'
-  | 'win_rate'
-  | 'kd_ratio'
-  | 'matches_played';
+  'created_at' | 'win_rate' | 'kd_ratio' | 'matches_played';
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
@@ -40,7 +37,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   const minParams = url.searchParams.get('minimum');
   const sortParam = (url.searchParams.get('sortBy') ??
     'created_at') as SortByOption;
-  const hasSimilar = url.searchParams.get('hasSimilar') === 'true';
 
   let minimumGames = DEFAULT_MINIMUM_GAMES;
   if (minParams !== null && minParams !== '') {
@@ -55,7 +51,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       page: apiPage,
       ...(mode && mode !== 'allGameModes' ? { gameMode: mode } : {}),
       ...(minimumGames > 0 ? { minimumGames } : {}),
-      ...(hasSimilar ? { hasSimilar: true } : {}),
       includeStats: true,
       sortBy: sortParam,
     },
@@ -70,7 +65,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       mode,
       minimumGames,
       sortBy: sortParam,
-      hasSimilar,
     },
   });
 
@@ -88,7 +82,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       gameMode: mode,
       minimumGames,
       sortBy: sortParam,
-      hasSimilar,
       page,
     };
   }
@@ -108,11 +101,9 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     gameMode: mode,
     minimumGames,
     sortBy: sortParam,
-    hasSimilar,
     page,
   };
 }
-
 
 export function Loadouts({ loaderData }: Route.ComponentProps) {
   const {
@@ -120,7 +111,6 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
     gameMode = 'allGameModes',
     minimumGames = DEFAULT_MINIMUM_GAMES,
     sortBy = 'created_at',
-    hasSimilar,
     page = 1,
   } = loaderData;
   const navigate = useNavigate();
@@ -128,10 +118,6 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
   const { isSameRoute: isUpdating } = useNavigationState();
   const isOwner = type === 'owner';
-
-  const isHasSimilarActive =
-    hasSimilar ??
-    new URLSearchParams(location.search).get('hasSimilar') === 'true';
 
   const rawItems = loadouts?.items ?? [];
   const displayLoadouts =
@@ -150,8 +136,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
     const isDefaultValue =
       (key === 'mode' && val === 'allGameModes') ||
       (key === 'minimum' && val === DEFAULT_MINIMUM_GAMES.toString()) ||
-      (key === 'sortBy' && val === 'created_at') ||
-      (key === 'hasSimilar' && (val === 'false' || val === ''));
+      (key === 'sortBy' && val === 'created_at');
 
     if (val !== undefined && val !== '' && !isDefaultValue) {
       params.set(key, val);
@@ -230,7 +215,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               name="minimum"
               onValueChange={(val) => handleFilterChange('minimum', val)}
             >
-              <SelectTrigger className="w-full md:max-w-[200px]">
+              <SelectTrigger className="h-11 w-full touch-manipulation text-sm md:h-10 md:max-w-[200px]">
                 <SelectValue placeholder="Minimum Games" />
               </SelectTrigger>
               <SelectContent>
@@ -252,7 +237,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               name="sortBy"
               onValueChange={(val) => handleFilterChange('sortBy', val)}
             >
-              <SelectTrigger className="w-full md:max-w-[200px]">
+              <SelectTrigger className="h-11 w-full touch-manipulation text-sm md:h-10 md:max-w-[200px]">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
@@ -263,29 +248,6 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               </SelectContent>
             </Select>
           </div>
-          {isOwner && (
-            <div className="flex flex-col">
-              <span className="mb-2 block text-sm font-medium leading-none">
-                Cleanup
-              </span>
-              <Button
-                id="has-similar-filter"
-                type="button"
-                variant={isHasSimilarActive ? 'default' : 'outline'}
-                aria-pressed={isHasSimilarActive}
-                onClick={() =>
-                  handleFilterChange(
-                    'hasSimilar',
-                    isHasSimilarActive ? '' : 'true',
-                  )
-                }
-                className="flex items-center gap-2"
-              >
-                <LayersIcon className="h-4 w-4" />
-                <span>Has Similar Loadouts</span>
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -325,7 +287,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               disabled
               variant="outline"
               size="sm"
-              className="sm:size-default"
+              className="min-h-11 px-4 text-sm sm:min-h-10"
             >
               <ChevronLeft className="mr-1 h-4 w-4" />
               <span>Previous</span>
@@ -335,7 +297,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               asChild
               variant="outline"
               size="sm"
-              className="sm:size-default"
+              className="min-h-11 touch-manipulation px-4 text-sm sm:min-h-10"
             >
               <Link to={buildPageUrl(page - 1)}>
                 <ChevronLeft className="mr-1 h-4 w-4" />
@@ -344,7 +306,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
             </Button>
           )}
 
-          <span className="text-xs font-semibold text-muted-foreground">
+          <span className="text-sm font-semibold text-muted-foreground">
             Page {page}
           </span>
 
@@ -353,7 +315,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               asChild
               variant="outline"
               size="sm"
-              className="sm:size-default"
+              className="min-h-11 touch-manipulation px-4 text-sm sm:min-h-10"
             >
               <Link to={buildPageUrl(page + 1)}>
                 <span>Next</span>
@@ -365,7 +327,7 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
               disabled
               variant="outline"
               size="sm"
-              className="sm:size-default"
+              className="min-h-11 px-4 text-sm sm:min-h-10"
             >
               <span>Next</span>
               <ChevronRight className="ml-1 h-4 w-4" />

@@ -47,12 +47,14 @@ export function SimilarLoadoutCandidateGroup({
 
   return (
     <div data-testid={testId} className="flex flex-col gap-2.5">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h4 className="text-sm font-bold text-foreground">
+          <h4 className="text-xl font-bold tracking-wide text-foreground sm:text-2xl">
             {title} ({items.length})
           </h4>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-xs text-muted-foreground sm:text-sm">
+            {description}
+          </p>
         </div>
         {actionButton}
       </div>

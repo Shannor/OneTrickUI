@@ -15,8 +15,8 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
-    id: '2026-11-25',
-    date: 'November 25, 2026',
+    id: '2026-11-26',
+    date: 'November 26, 2026',
     title: 'One-Click Fireteam Session Start & Live Tracking Badges',
     summary:
       'Launch Crucible tracking sessions for your entire squad in a single click and instantly see which teammates already have a live session running.',
@@ -36,6 +36,27 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'improvement',
         text: 'Load the Fireteam page faster with active session statuses resolved up front in a single pass.',
+      },
+    ],
+  },
+  {
+    id: '2026-11-25',
+    date: 'November 25, 2026',
+    title: 'Mobile Loadout Readability, Touch Controls & Tap-to-Open Tooltips',
+    summary:
+      'Read loadouts effortlessly on your phone with larger text across every build view, hit every weapon, perk, and sub-page control comfortably, and tap any gear, perk, or stat badge to inspect full tooltip details.',
+    changes: [
+      {
+        type: 'fix',
+        text: 'Tap any weapon, armor piece, perk socket, kill stat, or set bonus badge on mobile to open and dismiss its tooltip—including tapping gear pills directly on Loadout and Session cards without accidentally leaving the page.',
+      },
+      {
+        type: 'improvement',
+        text: 'Read loadout names, weapon titles, subclass headers, armor pieces, and stat breakdowns much more easily on mobile with larger, higher-legibility typography across Loadouts, Overview, Sessions, and Activity views.',
+      },
+      {
+        type: 'improvement',
+        text: 'Tap loadout links, weapon perk expanders, perk and mod sockets, sub-page tabs, and loadout filters comfortably on phones with generously sized touch targets.',
       },
     ],
   },

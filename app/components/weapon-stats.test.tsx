@@ -6,26 +6,70 @@ import type { Stats } from '~/api';
 import { WeaponStats } from './weapon-stats';
 
 describe('WeaponStats', () => {
-  const mockStats: Stats = {
-    '4043523819': {
-      hash: 4043523819n as any,
-      name: 'Impact',
-      description: '',
-      value: 80 as any,
-    },
-    '1240592695': {
-      hash: 1240592695n as any,
-      name: 'Range',
-      description: '',
-      value: 65 as any,
-    },
-  };
+  it('renders compact stat pills in a 3-column grid sorted in Destiny stat order', () => {
+    const nineStats: Stats = {
+      '1931675084': {
+        hash: 1931675084n as any,
+        name: 'Ammo Generation',
+        description: '',
+        value: 56 as any,
+      },
+      '3555269338': {
+        hash: 3555269338n as any,
+        name: 'Zoom',
+        description: '',
+        value: 14 as any,
+      },
+      '4043523819': {
+        hash: 4043523819n as any,
+        name: 'Impact',
+        description: '',
+        value: 92 as any,
+      },
+      '1240592695': {
+        hash: 1240592695n as any,
+        name: 'Range',
+        description: '',
+        value: 87 as any,
+      },
+      '155624089': {
+        hash: 155624089n as any,
+        name: 'Stability',
+        description: '',
+        value: 56 as any,
+      },
+      '943549884': {
+        hash: 943549884n as any,
+        name: 'Handling',
+        description: '',
+        value: 31 as any,
+      },
+      '4188031367': {
+        hash: 4188031367n as any,
+        name: 'Reload Speed',
+        description: '',
+        value: 24 as any,
+      },
+      '1345609583': {
+        hash: 1345609583n as any,
+        name: 'Aim Assistance',
+        description: '',
+        value: 67 as any,
+      },
+      '2714457168': {
+        hash: 2714457168n as any,
+        name: 'Airborne Effectiveness',
+        description: '',
+        value: 21 as any,
+      },
+    };
 
-  it('renders compact stat pills by default', () => {
-    render(<WeaponStats stats={mockStats} compact={true} />);
-    expect(screen.getByText('Impact')).toBeInTheDocument();
-    expect(screen.getByText('80')).toBeInTheDocument();
-    expect(screen.getByText('Range')).toBeInTheDocument();
-    expect(screen.getByText('65')).toBeInTheDocument();
+    render(<WeaponStats stats={nineStats} compact={true} />);
+    const grid = screen.getByTestId('weapon-stats-grid');
+    expect(grid).toHaveClass('grid', 'grid-cols-3');
+    expect(grid.children).toHaveLength(9);
+    expect(grid.children[0]).toHaveTextContent('Impact92');
+    expect(grid.children[1]).toHaveTextContent('Range87');
+    expect(grid.children[8]).toHaveTextContent('A.G.56');
   });
 });

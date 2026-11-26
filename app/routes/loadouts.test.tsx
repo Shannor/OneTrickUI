@@ -210,7 +210,7 @@ describe('Loadouts Route Component', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders "Has Similar Loadouts" filter and "X Similar" card badges when type === "owner"', () => {
+  it('renders "X Similar" card badges when type === "owner"', () => {
     const props = {
       loaderData: {
         loadouts: {
@@ -221,7 +221,6 @@ describe('Loadouts Route Component', () => {
         },
         gameMode: 'allGameModes' as const,
         minimumGames: 5,
-        hasSimilar: false,
         page: 1,
       },
     } as unknown as ComponentProps<typeof Loadouts>;
@@ -236,8 +235,8 @@ describe('Loadouts Route Component', () => {
     render(<RouterProvider router={router} />);
 
     expect(
-      screen.getByRole('button', { name: /has similar loadouts/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole('switch', { name: /has similar loadouts/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /3 similar/i }),
     ).toBeInTheDocument();
@@ -246,7 +245,7 @@ describe('Loadouts Route Component', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('hides "Has Similar Loadouts" filter and "X Similar" badges when type !== "owner"', () => {
+  it('hides "X Similar" badges when type !== "owner"', () => {
     mockUseProfileData.mockReturnValue({
       type: 'public',
       profile: {
@@ -266,7 +265,6 @@ describe('Loadouts Route Component', () => {
         },
         gameMode: 'allGameModes' as const,
         minimumGames: 5,
-        hasSimilar: false,
         page: 1,
       },
     } as unknown as ComponentProps<typeof Loadouts>;
@@ -281,52 +279,11 @@ describe('Loadouts Route Component', () => {
     render(<RouterProvider router={router} />);
 
     expect(
-      screen.queryByRole('button', { name: /has similar loadouts/i }),
-    ).not.toBeInTheDocument();
-    expect(
       screen.queryByRole('button', { name: /3 similar/i }),
     ).not.toBeInTheDocument();
   });
 
-  it('updates URL query params (?hasSimilar=true and resets page) when toggling Has Similar filter', () => {
-    const props = {
-      loaderData: {
-        loadouts: {
-          items: [olderSnapshot],
-          count: { 'snap-1': 5 },
-          stats: {},
-          similarCounts: { 'snap-1': 2 },
-        },
-        gameMode: 'allGameModes' as const,
-        minimumGames: 5,
-        hasSimilar: false,
-        page: 3,
-      },
-    } as unknown as ComponentProps<typeof Loadouts>;
-
-    const router = createMemoryRouter(
-      [
-        {
-          path: '/loadouts',
-          element: <Loadouts {...props} />,
-        },
-      ],
-      {
-        initialEntries: ['/loadouts?page=3&minimum=0'],
-      },
-    );
-
-    render(<RouterProvider router={router} />);
-
-    const filterBtn = screen.getByRole('button', {
-      name: /has similar loadouts/i,
-    });
-    fireEvent.click(filterBtn);
-
-    expect(router.state.location.search).toBe('?minimum=0&hasSimilar=true');
-  });
-
-  it('passes hasSimilar=true to getSnapshots in loader when ?hasSimilar=true is set', async () => {
+  it('omits hasSimilar from getSnapshots query even if present in URL search params', async () => {
     vi.mocked(getSnapshots).mockResolvedValueOnce({
       data: {
         items: [olderSnapshot],
@@ -340,22 +297,23 @@ describe('Loadouts Route Component', () => {
     const request = new Request(
       'http://localhost/profile/user-1/c/char-1/loadouts?hasSimilar=true&page=1',
     );
-    const result = await loader({
+    await loader({
       params: { id: 'user-1', characterId: 'char-1' },
       request,
       context: new Map(),
     } as any);
 
-    expect(getSnapshots).toHaveBeenCalledWith(
-      expect.objectContaining({
-        query: expect.objectContaining({
-          userId: 'user-1',
-          characterId: 'char-1',
-          hasSimilar: true,
-        }),
-      }),
-    );
-    expect(result.hasSimilar).toBe(true);
+    expect(getSnapshots).toHaveBeenCalledWith({
+      query: {
+        userId: 'user-1',
+        characterId: 'char-1',
+        count: 10,
+        page: 0,
+        minimumGames: 5,
+        includeStats: true,
+        sortBy: 'created_at',
+      },
+    });
   });
 
   it('updates URL mode query param and resets page when selecting a game mode pill', () => {
@@ -369,7 +327,6 @@ describe('Loadouts Route Component', () => {
         },
         gameMode: 'allGameModes' as const,
         minimumGames: 5,
-        hasSimilar: false,
         page: 2,
       },
     } as unknown as ComponentProps<typeof Loadouts>;
@@ -416,7 +373,6 @@ describe('Loadouts Route Component', () => {
         },
         gameMode: 'allGameModes' as const,
         minimumGames: 5,
-        hasSimilar: false,
         page: 1,
       },
     } as unknown as ComponentProps<typeof Loadouts>;

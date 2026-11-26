@@ -68,13 +68,13 @@ export function SessionHeaderActions({
         </fetcher.Form>
       )}
 
-      <Tooltip open={copyStatus ? true : undefined}>
+      <Tooltip disableTapTrigger open={copyStatus ? true : undefined}>
         <TooltipTrigger asChild>
           <Button
             onClick={handleCopy}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2"
+            className="flex min-h-11 items-center gap-2 sm:min-h-9"
           >
             <Share2 className="h-4 w-4" />
             <span>Share</span>
@@ -84,7 +84,7 @@ export function SessionHeaderActions({
       </Tooltip>
 
       {isOwner && (
-        <Tooltip>
+        <Tooltip disableTapTrigger>
           <TooltipTrigger asChild>
             <span className="inline-flex">
               <DeleteSessionDialog
@@ -96,7 +96,7 @@ export function SessionHeaderActions({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    className="h-11 w-11 text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
                     aria-label="Delete Session"
                   >
                     <Trash2 className="h-4 w-4" />

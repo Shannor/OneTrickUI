@@ -64,9 +64,23 @@ function processSockets(sockets: Socket[]): ClassAbilities {
   );
 }
 
+function hasResolvedAbilities(abilities: ClassAbilities): boolean {
+  return Boolean(
+    abilities.super ||
+      abilities.classAbility ||
+      abilities.movementAbility ||
+      abilities.melee ||
+      abilities.grenade ||
+      abilities.aspects.length > 0 ||
+      abilities.fragments.length > 0,
+  );
+}
+
 interface SubClassContextType {
   abilities: ClassAbilities;
   name: string;
+  icon?: string;
+  hasSockets: boolean;
 }
 
 const SubClassContext = createContext<SubClassContextType | null>(null);
@@ -87,19 +101,18 @@ interface Props {
 export const SubClassProvider: React.FC<Props> = ({ snapshot, children }) => {
   if (!snapshot) return null;
 
-  const itemSnapshot = snapshot.loadout[SUB_CLASS_HASH];
+  const itemSnapshot = snapshot.loadout?.[SUB_CLASS_HASH];
   if (!itemSnapshot) return <Empty title="Unknown Subclass" />;
 
-  const {
-    name,
-    details: { sockets },
-  } = itemSnapshot;
-  if (!sockets) return <Empty title="No Sockets Found" />;
-
+  const name =
+    itemSnapshot.details?.baseInfo?.name || itemSnapshot.name || 'Subclass';
+  const icon = itemSnapshot.details?.baseInfo?.icon;
+  const sockets = itemSnapshot.details?.sockets ?? [];
   const abilities = processSockets(sockets);
+  const hasSockets = hasResolvedAbilities(abilities);
 
   return (
-    <SubClassContext.Provider value={{ abilities, name }}>
+    <SubClassContext.Provider value={{ abilities, name, icon, hasSockets }}>
       {children}
     </SubClassContext.Provider>
   );
