@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LayersIcon, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { type GameMode, getSnapshots } from '~/api';
@@ -263,26 +263,20 @@ export function Loadouts({ loaderData }: Route.ComponentProps) {
             </Select>
           </div>
           {isOwner && (
-            <div className="flex flex-col">
-              <span className="mb-2 block text-sm font-medium leading-none">
-                Cleanup
-              </span>
-              <div className="flex min-h-11 items-center gap-2.5 md:h-10 md:min-h-10">
-                <Switch
-                  id="has-similar-filter"
-                  checked={isHasSimilarActive}
-                  onCheckedChange={(checked) =>
-                    handleFilterChange('hasSimilar', checked ? 'true' : '')
-                  }
-                />
-                <FormLabel
-                  htmlFor="has-similar-filter"
-                  className="flex cursor-pointer touch-manipulation select-none items-center gap-1.5 text-sm font-medium"
-                >
-                  <LayersIcon className="h-4 w-4 text-primary" />
-                  <span>Has Similar Loadouts</span>
-                </FormLabel>
-              </div>
+            <div className="flex min-h-11 items-center gap-2.5 md:mt-5 md:h-10 md:min-h-10">
+              <Switch
+                id="has-similar-filter"
+                checked={isHasSimilarActive}
+                onCheckedChange={(checked) =>
+                  handleFilterChange('hasSimilar', checked ? 'true' : '')
+                }
+              />
+              <FormLabel
+                htmlFor="has-similar-filter"
+                className="cursor-pointer touch-manipulation select-none text-sm font-medium"
+              >
+                Has Similar Loadouts
+              </FormLabel>
             </div>
           )}
         </div>

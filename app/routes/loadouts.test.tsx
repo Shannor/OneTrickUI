@@ -238,6 +238,7 @@ describe('Loadouts Route Component', () => {
     expect(
       screen.getByRole('switch', { name: /has similar loadouts/i }),
     ).toBeInTheDocument();
+    expect(screen.queryByText('Cleanup')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /3 similar/i }),
     ).toBeInTheDocument();
