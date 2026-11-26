@@ -43,10 +43,21 @@ To set up and build the project, run the following commands in the terminal:
 - Use tailwind and breakpoints for mobile friendly designs.
 - Never use cards inside of cards in design.
 
-## GitHub Issues & Project Tracking
+## Issue & Project Tracking (YouTrack)
 
-- Both `Shannor/OneTrick` and `Shannor/OneTrickUI` track work on the shared **One Trick** GitHub Project (`https://github.com/users/Shannor/projects/1`).
-- Whenever creating a GitHub issue via `gh issue create`, always attach it to the project with `--project "One Trick"` (e.g., `gh issue create --repo Shannor/OneTrickUI --project "One Trick" ...`) and set its initial `Status` to `Backlog` (or `Ready` when actionable) if not handled by the project's Auto-add workflow.
+- `Shannor/OneTrick`, `Shannor/OneTrickUI`, and `Shannor/OneTrick-Scripts` track all work in **YouTrack** under the **One Trick (`OT`)** Kanban board (`https://gruntt.youtrack.cloud/agiles/218-1/current`) — do **not** create new GitHub Issues.
+- Use the `youtrack` CLI (`/opt/homebrew/bin/youtrack`, see the `youtrack-cli` skill) to read, create, and transition tickets:
+  - Set `Subsystem` to `UI` (for `OneTrickUI`), `Backend` (for `OneTrick`), `Full-Stack` (cross-repo), or `Scripts` (for `OneTrick-Scripts`).
+  - Set initial `Stage` to `Backlog` (or `Ready` when actionable): `youtrack issue create --project OT --summary "..." --custom-fields '{"Stage":"Backlog","Subsystem":"UI"}' --description-file -`.
+
+### Branching, Commits & Automatic Stage Sync
+
+- **Branch naming**: Always include the YouTrack ticket ID in branches using `<type>/ot-<id>-<short-slug>` (or `<type>/ot-<id>`), where `<type>` is `feat`, `fix`, `refactor`, `perf`, `chore`, or `docs` (e.g., `feat/ot-5-open-in-dim`, `fix/ot-16-mid-session-comp`).
+- **Commits & Pull Requests**: Include `OT-<id>` in commit subjects (e.g., `feat(loadouts): ... (OT-5)`) and PR titles/descriptions so YouTrack's GitHub VCS integration attaches commits and PR status events to the ticket.
+- **Automated Kanban transitions** (via the `One Trick GitHub Stage Sync` workflow attached to project `OT`):
+  - First pushed commit referencing `OT-<id>` moves `Backlog` / `Ready` -> **`In Progress`**.
+  - Opening a PR referencing `OT-<id>` moves `Stage` -> **`In Review`** (unless already `Done`).
+  - Merging the PR moves `Stage` -> **`Done`** (closing/declining an `In Review` PR moves it back to **`In Progress`**).
 
 ## Notable Libraries Used
 
