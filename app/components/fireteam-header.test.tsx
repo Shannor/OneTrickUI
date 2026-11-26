@@ -24,5 +24,12 @@ describe('FireteamHeader', () => {
   it('renders singular teammate count badge correctly', () => {
     render(<FireteamHeader memberCount={1} />);
     expect(screen.getByText('1 Teammate')).toBeInTheDocument();
+    expect(screen.queryByText(/Active/)).not.toBeInTheDocument();
+  });
+
+  it('renders active count badge when activeCount is greater than zero', () => {
+    render(<FireteamHeader memberCount={3} activeCount={2} />);
+    expect(screen.getByText('3 Teammates')).toBeInTheDocument();
+    expect(screen.getByText('2 Active')).toBeInTheDocument();
   });
 });

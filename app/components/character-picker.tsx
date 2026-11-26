@@ -7,12 +7,14 @@ import { Button } from '~/components/ui/button';
 interface Props {
   characters: Character[];
   currentCharacterId?: string | null;
+  onCharacterSelect?: (characterId?: string | null) => void;
   children?: (current?: string | null, previous?: string | null) => ReactNode;
 }
 
 export function CharacterPicker({
   characters,
   currentCharacterId,
+  onCharacterSelect,
   children,
 }: Props) {
   const [prevCharacterId, setPrevCharacterId] = useState(currentCharacterId);
@@ -37,11 +39,13 @@ export function CharacterPicker({
 
   const handleSelectCharacter = (it: Character) => {
     setChecked(it.id);
+    onCharacterSelect?.(it.id);
   };
 
   const handleCancelSwap = () => {
     setChecked(currentCharacterId);
     setIsExpanded(false);
+    onCharacterSelect?.(currentCharacterId);
   };
 
   return (

@@ -97,4 +97,72 @@ describe('MemberSessionStatus', () => {
     expect(screen.getByText(/Adept II/)).toBeInTheDocument();
     expect(screen.getByText('(7,640)')).toBeInTheDocument();
   });
+
+  it('renders active session from GET /fireteam without aggregateIds using startedAt and trackComp', () => {
+    const lightweightSession: SessionData = {
+      id: 'sess-ft-1',
+      userId: 'user-1',
+      characterId: 'char-100',
+      status: 'pending',
+      startedAt: new Date(Date.now() - 5 * 60 * 1000),
+      trackComp: true,
+    };
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <MemberSessionStatus
+            session={lightweightSession}
+            bulkOutcome="started"
+            userId="user-1"
+            characterId="char-100"
+          />
+        ),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByText('Active Session')).toBeInTheDocument();
+    expect(screen.getByText(/Started .* ago/i)).toBeInTheDocument();
+    expect(screen.queryByText(/0 games/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Comp')).toBeInTheDocument();
+    expect(screen.getByText('Tracking')).toBeInTheDocument();
+    expect(screen.getByText('Started via Fireteam')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /view live session/i }),
+    ).toHaveAttribute('href', '/profile/user-1/c/char-100/sessions/sess-ft-1');
+  });
+
+  it('renders link to active session on another character when selected character is inactive', () => {
+    const otherActive: SessionData = {
+      id: 'sess-warlock',
+      userId: 'user-1',
+      characterId: 'char-warlock',
+      status: 'pending',
+    };
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <MemberSessionStatus
+            otherActiveSession={otherActive}
+            otherActiveCharacterClass="Warlock"
+            userId="user-1"
+            characterId="char-hunter"
+          />
+        ),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByText('Active session on Warlock')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^view$/i })).toHaveAttribute(
+      'href',
+      '/profile/user-1/c/char-warlock/sessions/sess-warlock',
+    );
+  });
 });
