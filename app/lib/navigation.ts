@@ -3,6 +3,7 @@ import type { NavigateFunction } from 'react-router';
 export interface BackNavigationParams {
   id?: string;
   characterId?: string;
+  sessionId?: string;
 }
 
 export function handleBackNavigation(
@@ -18,10 +19,17 @@ export function handleBackNavigation(
     return;
   }
 
-  const { id, characterId } = params;
+  const { id, characterId, sessionId } = params;
   if (id && characterId) {
     const charBaseUrl = `/profile/${id}/c/${characterId}`;
     const cleanPath = pathname.replace(/\/$/, '') || '/';
+    if (sessionId) {
+      const sessionBaseUrl = `${charBaseUrl}/sessions/${sessionId}`;
+      if (cleanPath.startsWith(`${sessionBaseUrl}/activities/`)) {
+        navigate(sessionBaseUrl);
+        return;
+      }
+    }
     if (cleanPath === charBaseUrl) {
       navigate('/');
     } else {

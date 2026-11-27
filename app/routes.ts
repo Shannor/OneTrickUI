@@ -15,8 +15,13 @@ export default [
       index('routes/character-select.tsx'),
       route('c/:characterId', 'layouts/character-layout.tsx', [
         index('routes/home.tsx'),
-        route(`activities/:instanceId`, 'routes/activity.tsx'),
+        route('activities/:instanceId', 'routes/activity.tsx'),
         route('sessions', 'routes/sessions.tsx'),
+        route(
+          'sessions/:sessionId/activities/:instanceId',
+          'routes/activity.tsx',
+          { id: 'session-activity' },
+        ),
         route('sessions/:sessionId', 'routes/session.tsx', [
           index('routes/session-games.tsx', { id: 'session-games' }),
           route('metrics', 'routes/session-metrics.tsx', {

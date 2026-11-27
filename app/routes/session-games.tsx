@@ -21,7 +21,8 @@ import type { Route } from './+types/session-games';
 export function SessionGames({ params }: Route.ComponentProps) {
   const { session, aggregates, snapshots, path } = useSessionData();
   const { profile } = useOptionalProfileData() ?? {};
-  const { characterId, id } = params;
+  const { characterId, id, sessionId } = params;
+  const activeSessionId = sessionId ?? session?.id;
   const navigate = useNavigate();
 
   const sessionName = session?.name || 'Session';
@@ -200,9 +201,10 @@ export function SessionGames({ params }: Route.ComponentProps) {
                 <div
                   className="group flex w-full flex-col gap-4 rounded-lg bg-card p-3 transition-colors hover:cursor-pointer hover:bg-muted/50 md:flex-row md:items-center md:gap-6 md:p-4"
                   onClick={() => {
-                    navigate(
-                      `/profile/${id}/c/${characterId}/activities/${activityDetails.instanceId}`,
-                    );
+                    const activityPath = activeSessionId
+                      ? `/profile/${id}/c/${characterId}/sessions/${activeSessionId}/activities/${activityDetails.instanceId}`
+                      : `/profile/${id}/c/${characterId}/activities/${activityDetails.instanceId}`;
+                    navigate(activityPath);
                   }}
                 >
                   <div className="hidden flex-row gap-2 md:flex">

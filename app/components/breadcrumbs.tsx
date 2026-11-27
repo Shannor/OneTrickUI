@@ -71,7 +71,6 @@ export function generateBreadcrumbs(
             break;
           }
 
-          crumbs.push({ label: 'Overview', url: charBaseUrl });
           i += 4;
           continue;
         } else {
@@ -106,6 +105,12 @@ export function generateBreadcrumbs(
           crumbs.push({ label: sessionLabel, url: sessionUrl });
           crumbs.push({ label: 'Loadouts' });
           i += 3;
+          continue;
+        } else if (segments[i + 2] === 'activities' && segments[i + 3]) {
+          const sessionUrl = `${sessionsUrl}/${nextSeg}`;
+          crumbs.push({ label: sessionLabel, url: sessionUrl });
+          crumbs.push({ label: ctx.activityName || 'Game Details' });
+          i += 4;
           continue;
         } else {
           crumbs.push({ label: sessionLabel });
@@ -177,6 +182,13 @@ export function generateBreadcrumbs(
   return crumbs;
 }
 
+interface BreadcrumbMatchData {
+  session?: { name?: string };
+  snapshot?: { name?: string };
+  activityDetails?: { activity?: { location?: string } };
+  profile?: { displayName?: string };
+}
+
 export function AppBreadcrumbs() {
   const location = useLocation();
   const params = useParams();
@@ -190,7 +202,7 @@ export function AppBreadcrumbs() {
     profileResponse?.profile?.displayName;
 
   for (const m of matches) {
-    const data = (m as any).data as Record<string, any> | undefined;
+    const data = m.loaderData as BreadcrumbMatchData | undefined;
     if (data) {
       if (data.session?.name) {
         sessionName = data.session.name;

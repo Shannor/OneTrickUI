@@ -4,12 +4,13 @@ import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getRequestLogger } from '~/.server/logger';
-import { getActivity } from '~/api';
+import { getActivity, getSession } from '~/api';
 
 import { Activity, loader } from './activity';
 
 vi.mock('~/api', () => ({
   getActivity: vi.fn(),
+  getSession: vi.fn(),
 }));
 
 vi.mock('~/.server/logger', () => ({
@@ -172,9 +173,51 @@ describe('Activity route loader', () => {
 
     expect(result).toEqual({
       activityDetails: undefined,
+      session: undefined,
       error: 'Failed to load activity',
     });
     expect(mockLog.error).toHaveBeenCalled();
+  });
+
+  it('loads originating session in parallel when sessionId param is provided', async () => {
+    const sampleSession = { id: 'sess-1', name: 'Trials Card' };
+    vi.mocked(getActivity).mockResolvedValue({
+      data: sampleActivityResponse,
+      error: undefined,
+    } as never);
+    vi.mocked(getSession).mockResolvedValue({
+      data: sampleSession,
+      error: undefined,
+    } as never);
+
+    const result = await loader({
+      params: { instanceId: '17183272072', sessionId: 'sess-1' },
+      context: {},
+    } as never);
+
+    expect(getSession).toHaveBeenCalledWith({
+      path: { sessionId: 'sess-1' },
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.activityDetails).toBe(sampleActivityResponse);
+    expect(result.session).toBe(sampleSession);
+  });
+
+  it('still loads activity when optional originating session lookup rejects', async () => {
+    vi.mocked(getActivity).mockResolvedValue({
+      data: sampleActivityResponse,
+      error: undefined,
+    } as never);
+    vi.mocked(getSession).mockRejectedValue(new Error('Network error'));
+
+    const result = await loader({
+      params: { instanceId: '17183272072', sessionId: 'sess-1' },
+      context: {},
+    } as never);
+
+    expect(result.error).toBeUndefined();
+    expect(result.activityDetails).toBe(sampleActivityResponse);
+    expect(result.session).toBeUndefined();
   });
 });
 
@@ -239,5 +282,31 @@ describe('Activity route component', () => {
     expect(
       screen.getByRole('link', { name: 'Back to Sessions' }),
     ).toHaveAttribute('href', '/profile/user-1/c/char-1/sessions');
+  });
+
+  it('links back to the originating session in not-found empty state when sessionId is present', () => {
+    const props = {
+      loaderData: {
+        activityDetails: undefined,
+        session: { id: 'sess-1', name: 'Trials Card' },
+        error: 'Activity Not Found',
+      },
+      params: {
+        id: 'user-1',
+        characterId: 'char-1',
+        sessionId: 'sess-1',
+        instanceId: 'missing-id',
+      },
+    } as unknown as ComponentProps<typeof Activity>;
+
+    render(
+      <MemoryRouter>
+        <Activity {...props} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole('link', { name: 'Back to Session' }),
+    ).toHaveAttribute('href', '/profile/user-1/c/char-1/sessions/sess-1');
   });
 });
