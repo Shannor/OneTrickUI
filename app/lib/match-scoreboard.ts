@@ -259,12 +259,19 @@ function compareForFfaStandings(
   return compareByPerformanceDesc(a, b);
 }
 
-function getAlphaTeamId(teams: Team[]): string {
+interface TeamPairIds {
+  alphaId: string;
+  bravoId: string;
+}
+
+function getTeamPairIds(teams: Team[]): TeamPairIds | null {
   if (teams.length !== TEAM_PAIR_COUNT) {
-    return '';
+    return null;
   }
   const [first, second] = teams;
-  return Number(first.id) < Number(second.id) ? first.id : second.id;
+  return Number(first.id) < Number(second.id)
+    ? { alphaId: first.id, bravoId: second.id }
+    : { alphaId: second.id, bravoId: first.id };
 }
 
 export function getSnapshotSubclassPreview(
@@ -389,13 +396,15 @@ function buildGroupEntries(
 
 function resolveTeamLabel(
   team: Team,
-  alphaId: string,
+  pairIds: TeamPairIds | null,
 ): { label: string; teamTone: ScoreboardTeamTone } {
-  if (alphaId && team.id === alphaId) {
-    return { label: 'Alpha', teamTone: 'alpha' };
-  }
-  if (alphaId) {
-    return { label: 'Bravo', teamTone: 'bravo' };
+  if (pairIds) {
+    if (team.id === pairIds.alphaId) {
+      return { label: 'Alpha', teamTone: 'alpha' };
+    }
+    if (team.id === pairIds.bravoId) {
+      return { label: 'Bravo', teamTone: 'bravo' };
+    }
   }
   return { label: team.teamName || `Team ${team.id}`, teamTone: 'neutral' };
 }
@@ -448,12 +457,8 @@ export function buildMatchScoreboardViewModel({
     };
   }
 
-  const alphaId = getAlphaTeamId(teams);
-  const orderedTeams = [...teams].sort((a, b) => {
-    if (a.id === alphaId) return -1;
-    if (b.id === alphaId) return 1;
-    return Number(a.id) - Number(b.id);
-  });
+  const teamPairIds = getTeamPairIds(teams);
+  const orderedTeams = [...teams].sort((a, b) => Number(a.id) - Number(b.id));
 
   const groups: ScoreboardTeamGroup[] = [];
   const consumedTeamIds = new Set<string>();
@@ -463,7 +468,7 @@ export function buildMatchScoreboardViewModel({
     const members = [...(teamBuckets.get(team.id) ?? [])].sort(
       compareByPerformanceDesc,
     );
-    const { label, teamTone } = resolveTeamLabel(team, alphaId);
+    const { label, teamTone } = resolveTeamLabel(team, teamPairIds);
     const { entries, hasTrackedPlayers } = buildGroupEntries(
       members,
       snapshots,
