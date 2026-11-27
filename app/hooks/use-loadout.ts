@@ -11,8 +11,11 @@ import type {
 } from '~/api';
 import { calculatePercentage } from '~/calculations/precision';
 import { getItemIconUrl } from '~/lib/utils';
-
-
+import {
+  findCatalystMarkerSocket,
+  findEnhancedSocket,
+  toSlimEnhancedSocket,
+} from '~/lib/weapon-enhancement';
 
 const PRECISION_KILLS_KEY = 'uniqueWeaponPrecisionKills';
 const UNIQUE_KILLS_KEY = 'uniqueWeaponKills';
@@ -159,7 +162,6 @@ export function groupSnapshotsByCompatibility(
   return compatibleById;
 }
 
-
 export function isExoticItem(item?: ItemSnapshotWithLegacyProps): boolean {
   if (!item) return false;
   const baseInfo = item.details?.baseInfo ?? item.itemProperties?.baseInfo;
@@ -290,10 +292,63 @@ export function useClassStats(snapshot?: CharacterSnapshot) {
     .filter((it) => it.stat !== 'Power');
 }
 
+type SlimItemKind = 'subclass' | 'weapon' | 'armor';
+
+function slimItemSockets(
+  sockets: Socket[] | undefined,
+  kind: SlimItemKind,
+  isExotic: boolean,
+): Socket[] {
+  if (!sockets || sockets.length === 0) {
+    return [];
+  }
+
+  if (kind === 'subclass') {
+    return sockets
+      .filter(
+        (socket) =>
+          socket.isVisible &&
+          socket.isEnabled &&
+          socket.itemTypeDisplayName?.toLowerCase().includes('super'),
+      )
+      .map((socket) => ({
+        name: socket.name,
+        icon: socket.icon,
+        isVisible: socket.isVisible,
+        isEnabled: socket.isEnabled,
+        itemTypeDisplayName: socket.itemTypeDisplayName,
+        itemTypeTieredDisplayName: socket.itemTypeTieredDisplayName ?? '',
+        plugHash: socket.plugHash,
+        description: '',
+      }));
+  }
+
+  if (kind === 'weapon') {
+    const slimWeaponSockets: Socket[] = [];
+    const enhancedSocket = findEnhancedSocket(sockets);
+    if (enhancedSocket) {
+      slimWeaponSockets.push(toSlimEnhancedSocket(enhancedSocket));
+    }
+
+    const catalystSocket = findCatalystMarkerSocket(sockets, isExotic);
+    if (
+      catalystSocket &&
+      catalystSocket.plugHash !== enhancedSocket?.plugHash
+    ) {
+      slimWeaponSockets.push(toSlimEnhancedSocket(catalystSocket));
+    }
+
+    return slimWeaponSockets;
+  }
+
+  return [];
+}
+
 function slimItemSnapshot(
   item: ItemSnapshot,
-  isSubclass: boolean,
+  kind: SlimItemKind,
 ): ItemSnapshot {
+  const isSubclass = kind === 'subclass';
   const baseInfo = item.details?.baseInfo;
   const slimStats: Record<string, GunStat> = {};
 
@@ -323,26 +378,11 @@ function slimItemSnapshot(
           }))
       : [];
 
-  const slimSockets: Socket[] =
-    isSubclass && item.details?.sockets
-      ? item.details.sockets
-          .filter(
-            (socket) =>
-              socket.isVisible &&
-              socket.isEnabled &&
-              socket.itemTypeDisplayName?.toLowerCase().includes('super'),
-          )
-          .map((socket) => ({
-            name: socket.name,
-            icon: socket.icon,
-            isVisible: socket.isVisible,
-            isEnabled: socket.isEnabled,
-            itemTypeDisplayName: socket.itemTypeDisplayName,
-            itemTypeTieredDisplayName: socket.itemTypeTieredDisplayName ?? '',
-            plugHash: socket.plugHash,
-            description: '',
-          }))
-      : [];
+  const slimSockets = slimItemSockets(
+    item.details?.sockets,
+    kind,
+    isExoticItem(item),
+  );
 
   return {
     itemHash: item.itemHash,
@@ -389,7 +429,7 @@ export function slimSnapshotForCard(
       if (item) {
         slimLoadout[bucket] = slimItemSnapshot(
           item,
-          bucket === SUBCLASS_BUCKET,
+          bucket === SUBCLASS_BUCKET ? 'subclass' : 'weapon',
         );
       }
     }
@@ -397,7 +437,7 @@ export function slimSnapshotForCard(
     for (const armorBucket of ARMOR_BUCKETS) {
       const armorItem = snapshot.loadout[armorBucket];
       if (armorItem && isExoticItem(armorItem)) {
-        slimLoadout[armorBucket] = slimItemSnapshot(armorItem, false);
+        slimLoadout[armorBucket] = slimItemSnapshot(armorItem, 'armor');
       }
     }
   }
@@ -434,5 +474,3 @@ export function slimSimilarSnapshotPage(
     })),
   };
 }
-
-

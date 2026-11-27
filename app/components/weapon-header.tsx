@@ -7,11 +7,16 @@ import {
   TooltipTrigger,
 } from '~/components/ui/tooltip';
 import { cn, getItemIconUrl } from '~/lib/utils';
+import {
+  getExoticCatalystState,
+  isEnhancedWeapon,
+} from '~/lib/weapon-enhancement';
 
 interface Props extends WeaponInstanceMetrics {
   className?: string;
   onlyIcon?: boolean;
 }
+
 export const WeaponHeader: React.FC<Props> = ({
   properties,
   display,
@@ -20,9 +25,16 @@ export const WeaponHeader: React.FC<Props> = ({
 }) => {
   const icon = getItemIconUrl(properties, display?.icon);
   const name = properties?.baseInfo?.name ?? display?.name;
+  const enhanced = isEnhancedWeapon(properties);
+  const catalystState = getExoticCatalystState(properties);
+  const hasYellowBorder = enhanced || catalystState === 'active';
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
+    <div
+      data-enhanced={enhanced ? 'true' : undefined}
+      data-catalyst={catalystState !== 'none' ? catalystState : undefined}
+      className={cn('flex flex-col gap-3', className)}
+    >
       {icon && name && (
         <Tooltip>
           <TooltipContent>
@@ -33,7 +45,11 @@ export const WeaponHeader: React.FC<Props> = ({
             <img
               alt={`${name} image`}
               src={icon}
-              className="h-auto w-12 rounded-lg object-cover"
+              className={cn(
+                'h-auto w-12 rounded-lg object-cover',
+                hasYellowBorder &&
+                  'border-2 border-yellow-500 dark:border-yellow-400',
+              )}
             />
           </TooltipTrigger>
         </Tooltip>

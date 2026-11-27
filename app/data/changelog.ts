@@ -17,9 +17,10 @@ export const CHANGELOG: ReleaseNote[] = [
   {
     id: '2026-11-26',
     date: 'November 26, 2026',
-    title: 'Full Match Scoreboards & One-Click Fireteam Sessions',
+    title:
+      'Full Match Scoreboards, Enhanced Weapons & One-Click Fireteam Sessions',
     summary:
-      'Review every Guardian in a Crucible match side-by-side with a slide-over loadout inspector for 1 Trick tracked players, and launch tracking sessions for your fireteam in one click.',
+      'Review every Guardian in a Crucible match side-by-side with a slide-over loadout inspector, spot enhanced weapons and Exotic catalysts at a glance, and launch tracking sessions for your fireteam in one click.',
     changes: [
       {
         type: 'feature',
@@ -28,6 +29,10 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'feature',
         text: 'Spot Guardians tracked in 1 Trick right on the scoreboard with live subclass and exotic armor previews, then tap any highlighted row to open a responsive side drawer (or mobile bottom sheet) to browse full subclass builds, stats, weapon rolls, and switch between multiple tracked players without losing your place.',
+      },
+      {
+        type: 'feature',
+        text: 'Spot enhanced weapons, enhanced perks, and Exotic catalysts at a glance with Destiny-style yellow borders and catalyst sockets across Loadout Cards, Loadout Details, Similar Loadouts, and Activity Performance views.',
       },
       {
         type: 'feature',

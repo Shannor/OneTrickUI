@@ -7,9 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { WeaponKills } from '~/components/weapon-kills';
 import { WeaponStats } from '~/components/weapon-stats';
 import { cn, getItemIconUrl } from '~/lib/utils';
+import {
+  getExoticCatalystState,
+  isEnhancedWeapon,
+  isExoticCatalystSocket,
+} from '~/lib/weapon-enhancement';
 
 interface WeaponSockets {
   intrinsic: Socket | null;
+  catalyst: Socket | null;
   barrel: Socket | null;
   magazine: Socket | null;
   traits: Socket[];
@@ -43,6 +49,101 @@ const isOriginTrait = (itemTypeDisplayName: string): boolean =>
 const isMemento = (itemTypeDisplayName: string): boolean =>
   itemTypeDisplayName.toLowerCase().includes('memento');
 
+interface WeaponAvatarProps {
+  icon?: string;
+  name: string;
+  hasYellowBorder: boolean;
+  size: 'compact' | 'full';
+}
+
+function WeaponAvatar({
+  icon,
+  name,
+  hasYellowBorder,
+  size,
+}: WeaponAvatarProps) {
+  const isCompact = size === 'compact';
+
+  return (
+    <Avatar
+      data-testid="weapon-avatar"
+      className={cn(
+        'shrink-0 border bg-black/40 p-0.5',
+        isCompact ? 'h-10 w-10 rounded' : 'h-12 w-12 rounded-md object-cover',
+        hasYellowBorder && 'border-2 border-yellow-500 dark:border-yellow-400',
+      )}
+    >
+      <AvatarImage src={icon} alt={`${name} image`} />
+      <AvatarFallback
+        className={cn(
+          'text-xs font-bold',
+          isCompact ? 'rounded' : 'rounded-md',
+        )}
+      >
+        {name?.charAt(0).toUpperCase() ?? '?'}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+interface CompactWeaponHeaderProps {
+  icon?: string;
+  name: string;
+  isExotic: boolean;
+  hasYellowBorder: boolean;
+  itemType?: string;
+  canToggleSockets: boolean;
+  socketsOpen: boolean;
+}
+
+function CompactWeaponHeader({
+  icon,
+  name,
+  isExotic,
+  hasYellowBorder,
+  itemType,
+  canToggleSockets,
+  socketsOpen,
+}: CompactWeaponHeaderProps) {
+  return (
+    <>
+      <WeaponAvatar
+        icon={icon}
+        name={name}
+        hasYellowBorder={hasYellowBorder}
+        size="compact"
+      />
+
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+        <span
+          className={cn(
+            'truncate font-heading text-lg font-bold tracking-wide sm:text-xl',
+            isExotic ? 'text-yellow-500' : 'text-purple-400',
+          )}
+        >
+          {name}
+        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {itemType && (
+            <span className="rounded bg-muted/80 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {itemType}
+            </span>
+          )}
+          {canToggleSockets && (
+            <ChevronDown
+              aria-hidden="true"
+              className={cn(
+                'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                socketsOpen && 'rotate-180',
+              )}
+            />
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 interface Props extends WeaponInstanceMetrics {
   hideStats?: boolean;
   showTitle?: boolean;
@@ -66,13 +167,22 @@ export const Weapon: React.FC<Props> = ({
   defaultSocketsOpen = false,
 }) => {
   const [socketsOpen, setSocketsOpen] = useState(defaultSocketsOpen);
+  const isExotic =
+    properties?.baseInfo?.tierType === 6 ||
+    properties?.baseInfo?.tierTypeName?.toLowerCase() === 'exotic';
+
   const weaponSockets: WeaponSockets = properties?.sockets?.reduce(
     (acc, socket) => {
-      if (
-        !socket.itemTypeDisplayName ||
-        !socket.isVisible ||
-        !socket.isEnabled
-      ) {
+      if (!socket.isVisible || !socket.isEnabled) {
+        return acc;
+      }
+
+      if (isExotic && isExoticCatalystSocket(socket, { isExotic: true })) {
+        acc.catalyst = socket;
+        return acc;
+      }
+
+      if (!socket.itemTypeDisplayName) {
         return acc;
       }
 
@@ -100,6 +210,7 @@ export const Weapon: React.FC<Props> = ({
     },
     {
       intrinsic: null,
+      catalyst: null,
       barrel: null,
       magazine: null,
       traits: [],
@@ -110,6 +221,7 @@ export const Weapon: React.FC<Props> = ({
     } as WeaponSockets,
   ) ?? {
     intrinsic: null,
+    catalyst: null,
     barrel: null,
     magazine: null,
     traits: [],
@@ -121,6 +233,7 @@ export const Weapon: React.FC<Props> = ({
 
   const row1 = [
     weaponSockets.intrinsic,
+    weaponSockets.catalyst,
     weaponSockets.weaponMod,
     weaponSockets.shader,
     weaponSockets.memento,
@@ -135,55 +248,23 @@ export const Weapon: React.FC<Props> = ({
 
   const icon = getItemIconUrl(properties, display?.icon);
   const name = properties?.baseInfo?.name ?? display?.name ?? 'Unknown Gun';
-  const isExotic = properties?.baseInfo?.tierTypeName === 'Exotic';
   const itemType =
     properties?.baseInfo?.itemTypeDisplayName ?? itemTypeDisplayName;
+  const enhanced = isEnhancedWeapon(properties);
+  const catalystState = getExoticCatalystState(properties);
+  const hasYellowBorder = enhanced || catalystState === 'active';
 
   if (compact) {
     const allSockets = [...row1, ...row2];
     const hasSockets = Boolean(properties?.sockets && allSockets.length > 0);
     const canToggleSockets = hasSockets && expandableSockets;
 
-    const headerContent = (
-      <>
-        <Avatar className="h-10 w-10 shrink-0 rounded border bg-black/40 p-0.5">
-          <AvatarImage src={icon} alt={`${name} image`} />
-          <AvatarFallback className="rounded text-xs font-bold">
-            {name?.charAt(0).toUpperCase() ?? '?'}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-          <span
-            className={cn(
-              'truncate font-heading text-lg font-bold tracking-wide sm:text-xl',
-              isExotic ? 'text-yellow-500' : 'text-purple-400',
-            )}
-          >
-            {name}
-          </span>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {itemType && (
-              <span className="rounded bg-muted/80 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {itemType}
-              </span>
-            )}
-            {canToggleSockets && (
-              <ChevronDown
-                aria-hidden="true"
-                className={cn(
-                  'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                  socketsOpen && 'rotate-180',
-                )}
-              />
-            )}
-          </div>
-        </div>
-      </>
-    );
-
     return (
-      <div className={cn('flex flex-col gap-1.5 py-1', className)}>
+      <div
+        data-enhanced={enhanced ? 'true' : undefined}
+        data-catalyst={catalystState !== 'none' ? catalystState : undefined}
+        className={cn('flex flex-col gap-1.5 py-1', className)}
+      >
         {canToggleSockets ? (
           <button
             type="button"
@@ -194,11 +275,27 @@ export const Weapon: React.FC<Props> = ({
             }}
             className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center gap-2.5 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            {headerContent}
+            <CompactWeaponHeader
+              icon={icon}
+              name={name}
+              isExotic={isExotic}
+              hasYellowBorder={hasYellowBorder}
+              itemType={itemType}
+              canToggleSockets={canToggleSockets}
+              socketsOpen={socketsOpen}
+            />
           </button>
         ) : (
           <div className="flex min-h-11 items-center gap-2.5 rounded-md">
-            {headerContent}
+            <CompactWeaponHeader
+              icon={icon}
+              name={name}
+              isExotic={isExotic}
+              hasYellowBorder={hasYellowBorder}
+              itemType={itemType}
+              canToggleSockets={canToggleSockets}
+              socketsOpen={socketsOpen}
+            />
           </div>
         )}
 
@@ -206,6 +303,7 @@ export const Weapon: React.FC<Props> = ({
           <Sockets
             sockets={allSockets}
             displayMode="iconOnly"
+            isExotic={isExotic}
             className="flex-row flex-wrap items-center gap-2 pt-1.5 sm:pl-12"
           />
         )}
@@ -214,14 +312,18 @@ export const Weapon: React.FC<Props> = ({
   }
 
   return (
-    <div className={cn('flex w-full flex-col gap-3 py-1.5', className)}>
+    <div
+      data-enhanced={enhanced ? 'true' : undefined}
+      data-catalyst={catalystState !== 'none' ? catalystState : undefined}
+      className={cn('flex w-full flex-col gap-3 py-1.5', className)}
+    >
       <div className="flex items-center gap-3">
-        <Avatar className="h-12 w-12 shrink-0 rounded-md border bg-black/40 object-cover p-0.5">
-          <AvatarImage src={icon} alt={`${name} image`} />
-          <AvatarFallback className="rounded-md text-xs font-bold">
-            {name?.charAt(0).toUpperCase() ?? '?'}
-          </AvatarFallback>
-        </Avatar>
+        <WeaponAvatar
+          icon={icon}
+          name={name}
+          hasYellowBorder={hasYellowBorder}
+          size="full"
+        />
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
           {showTitle && (
@@ -252,6 +354,7 @@ export const Weapon: React.FC<Props> = ({
             <Sockets
               sockets={row1}
               displayMode="iconOnly"
+              isExotic={isExotic}
               className="flex-row flex-wrap items-center gap-2"
             />
           )}
@@ -259,6 +362,7 @@ export const Weapon: React.FC<Props> = ({
             <Sockets
               sockets={row2}
               displayMode="iconOnly"
+              isExotic={isExotic}
               className="flex-row flex-wrap items-center gap-2"
             />
           )}

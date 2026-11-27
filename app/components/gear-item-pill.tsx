@@ -9,6 +9,10 @@ import {
 import { WeaponStats } from '~/components/weapon-stats';
 import { isExoticItem } from '~/hooks/use-loadout';
 import { cn, getItemIconUrl } from '~/lib/utils';
+import {
+  getExoticCatalystState,
+  isEnhancedWeapon,
+} from '~/lib/weapon-enhancement';
 
 export function getGearItemName(item?: ItemSnapshot): string {
   return item?.details?.baseInfo?.name || item?.name || 'None';
@@ -99,6 +103,57 @@ export function GearItemDetailsSummary({
   );
 }
 
+interface GearItemPillIconProps {
+  iconUrl?: string;
+  name: string;
+  size: 'sm' | 'md';
+  isExotic: boolean;
+  hasYellowBorder: boolean;
+}
+
+function GearItemPillIcon({
+  iconUrl,
+  name,
+  size,
+  isExotic,
+  hasYellowBorder,
+}: GearItemPillIconProps) {
+  const borderClass = hasYellowBorder
+    ? 'border-2 border-yellow-500 dark:border-yellow-400'
+    : 'border-border/60';
+
+  if (iconUrl) {
+    return (
+      <img
+        src={iconUrl}
+        alt={name}
+        className={cn(
+          'shrink-0 rounded border object-cover',
+          size === 'md' ? 'h-9 w-9 sm:h-8 sm:w-8' : 'h-8 w-8 sm:h-7 sm:w-7',
+          borderClass,
+        )}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded border bg-muted font-bold',
+        size === 'md'
+          ? 'h-9 w-9 text-sm sm:h-8 sm:w-8 sm:text-xs'
+          : 'h-8 w-8 text-xs sm:h-7 sm:w-7 sm:text-[10px]',
+        borderClass,
+        isExotic
+          ? 'text-amber-500 dark:text-amber-400'
+          : 'text-muted-foreground',
+      )}
+    >
+      {name.charAt(0)}
+    </div>
+  );
+}
+
 export interface GearItemPillProps {
   item?: ItemSnapshot;
   label?: string;
@@ -121,6 +176,9 @@ export function GearItemPill({
   className,
 }: GearItemPillProps) {
   const isExotic = highlight ?? isExoticItem(item);
+  const enhanced = isEnhancedWeapon(item);
+  const catalystState = getExoticCatalystState(item);
+  const hasYellowBorder = enhanced || catalystState === 'active';
   const name = getGearItemName(item);
   const iconUrl = getItemIconUrl(item?.details);
   const resolvedSubtitle =
@@ -133,6 +191,8 @@ export function GearItemPill({
       <TooltipTrigger asChild>
         <button
           type="button"
+          data-enhanced={enhanced ? 'true' : undefined}
+          data-catalyst={catalystState !== 'none' ? catalystState : undefined}
           className={cn(
             'flex w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2.5 rounded-md text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-2.5 sm:text-xs',
             size === 'md'
@@ -144,33 +204,13 @@ export function GearItemPill({
             className,
           )}
         >
-          {iconUrl ? (
-            <img
-              src={iconUrl}
-              alt={name}
-              className={cn(
-                'shrink-0 rounded border object-cover',
-                size === 'md'
-                  ? 'h-9 w-9 sm:h-8 sm:w-8'
-                  : 'h-8 w-8 sm:h-7 sm:w-7',
-                isExotic ? 'border-amber-400' : 'border-border/60',
-              )}
-            />
-          ) : (
-            <div
-              className={cn(
-                'flex shrink-0 items-center justify-center rounded border bg-muted font-bold',
-                size === 'md'
-                  ? 'h-9 w-9 text-sm sm:h-8 sm:w-8 sm:text-xs'
-                  : 'h-8 w-8 text-xs sm:h-7 sm:w-7 sm:text-[10px]',
-                isExotic
-                  ? 'border-amber-400 text-amber-500 dark:text-amber-400'
-                  : 'border-border/60 text-muted-foreground',
-              )}
-            >
-              {name.charAt(0)}
-            </div>
-          )}
+          <GearItemPillIcon
+            iconUrl={iconUrl}
+            name={name}
+            size={size}
+            isExotic={isExotic}
+            hasYellowBorder={hasYellowBorder}
+          />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             {label ? (
               <>

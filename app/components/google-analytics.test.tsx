@@ -1,17 +1,30 @@
 import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { GOOGLE_ANALYTICS_ID, GoogleAnalytics } from './google-analytics';
 
 describe('GoogleAnalytics', () => {
   afterEach(() => {
+    vi.unstubAllEnvs();
     document
       .querySelectorAll('script[src*="googletagmanager.com"]')
       .forEach((script) => script.remove());
   });
 
-  it('renders the Google Tag Manager async script and gtag init script in SSR markup', () => {
+  it('renders nothing outside production by default', () => {
+    const html = renderToStaticMarkup(
+      <head>
+        <GoogleAnalytics />
+      </head>,
+    );
+
+    expect(html).toBe('<head></head>');
+  });
+
+  it('renders the Google Tag Manager async script and gtag init script in production SSR markup', () => {
+    vi.stubEnv('PROD', true);
+
     const html = renderToStaticMarkup(
       <head>
         <GoogleAnalytics />
@@ -26,10 +39,10 @@ describe('GoogleAnalytics', () => {
     expect(html).toContain("gtag('js', new Date());");
   });
 
-  it('supports a custom measurementId', () => {
+  it('supports a custom measurementId when enabled', () => {
     const html = renderToStaticMarkup(
       <head>
-        <GoogleAnalytics measurementId="G-CUSTOM1234" />
+        <GoogleAnalytics enabled measurementId="G-CUSTOM1234" />
       </head>,
     );
 
@@ -38,8 +51,20 @@ describe('GoogleAnalytics', () => {
     );
   });
 
+  it('renders nothing when explicitly disabled even in production', () => {
+    vi.stubEnv('PROD', true);
+
+    const html = renderToStaticMarkup(
+      <head>
+        <GoogleAnalytics enabled={false} />
+      </head>,
+    );
+
+    expect(html).toBe('<head></head>');
+  });
+
   it('renders nothing when measurementId is empty', () => {
-    const { container } = render(<GoogleAnalytics measurementId="" />);
+    const { container } = render(<GoogleAnalytics enabled measurementId="" />);
 
     expect(container.innerHTML).toBe('');
     expect(
