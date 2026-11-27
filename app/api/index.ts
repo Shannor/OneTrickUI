@@ -40,6 +40,7 @@ export {
 export type {
   ActivityHistory,
   ActivityMode,
+  ActivityParticipant,
   Aggregate,
   ArmorSetBonus,
   ArmorSetBonusPerk,
