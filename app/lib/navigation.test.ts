@@ -60,4 +60,26 @@ describe('handleBackNavigation', () => {
 
     vi.unstubAllGlobals();
   });
+
+  it('navigates to originating session when landing directly on a session-scoped activity without history', () => {
+    const navigate = vi.fn();
+    vi.stubGlobal('window', {
+      history: { state: { idx: 0 } },
+    });
+
+    handleBackNavigation(
+      navigate,
+      '/profile/user-1/c/char-1/sessions/sess-1/activities/act-1',
+      {
+        id: 'user-1',
+        characterId: 'char-1',
+        sessionId: 'sess-1',
+      },
+    );
+    expect(navigate).toHaveBeenCalledWith(
+      '/profile/user-1/c/char-1/sessions/sess-1',
+    );
+
+    vi.unstubAllGlobals();
+  });
 });

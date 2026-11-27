@@ -2,7 +2,7 @@ import { SquareArrowOutUpRight } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
-import { getActivity } from '~/api';
+import { getActivity, getSession } from '~/api';
 import { Empty } from '~/components/empty';
 import { FormattedDate } from '~/components/formatted-date';
 import { ActivityMeta, MatchScoreboard } from '~/components/match-scoreboard';
@@ -24,23 +24,54 @@ import type { Route } from './+types/activity';
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   const log = getRequestLogger(context);
-  const { instanceId } = params;
-  log.set({ route: 'routes/activity', activity: { instanceId } });
-
-  const res = await getActivity({
-    path: { activityId: instanceId },
+  const { instanceId, sessionId } = params;
+  log.set({
+    route: 'routes/activity',
+    activity: { instanceId },
+    ...(sessionId ? { session: { id: sessionId } } : {}),
   });
+
+  const [res, sessionRes] = await Promise.all([
+    getActivity({
+      path: { activityId: instanceId },
+    }),
+    sessionId
+      ? getSession({
+          path: { sessionId },
+        }).catch((err: unknown) => ({ data: undefined, error: err }))
+      : Promise.resolve(undefined),
+  ]);
+
+  const session = sessionRes?.data;
+
+  if (sessionId) {
+    log.set({
+      session: {
+        id: sessionId,
+        found: Boolean(session),
+        ...(sessionRes?.error ? { loadFailed: true } : {}),
+      },
+    });
+  }
 
   if (res.error) {
     log.error('Failed to fetch activity in loader', {
       activity: { instanceId, error: res.error },
     });
-    return { activityDetails: undefined, error: 'Failed to load activity' };
+    return {
+      activityDetails: undefined,
+      session,
+      error: 'Failed to load activity',
+    };
   }
 
   if (!res.data || isEmptyObject(res.data)) {
     log.set({ activity: { instanceId, found: false } });
-    return { activityDetails: undefined, error: 'Activity Not Found' };
+    return {
+      activityDetails: undefined,
+      session,
+      error: 'Activity Not Found',
+    };
   }
 
   const { participantCount, trackedLoadoutCount, trackedSessionCount } =
@@ -58,7 +89,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     },
   });
 
-  return { activityDetails: res.data, error: undefined };
+  return { activityDetails: res.data, session, error: undefined };
 }
 
 const DESTINY_TRACKER_PGCR_URL = 'https://destinytracker.com/destiny-2/pgcr';
@@ -66,7 +97,10 @@ const CRUCIBLE_REPORT_PGCR_URL = 'https://crucible.report/pgcr';
 
 export function Activity({ loaderData, params }: Route.ComponentProps) {
   const { activityDetails, error } = loaderData;
-  const { characterId, id, instanceId } = params;
+  const { characterId, id, instanceId, sessionId } = params;
+  const backHref = sessionId
+    ? `/profile/${id}/c/${characterId}/sessions/${sessionId}`
+    : `/profile/${id}/c/${characterId}/sessions`;
 
   const viewModel = useMemo(
     () =>
@@ -91,8 +125,8 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
           description="We couldn't find this activity report. It may still be processing or no longer exists."
         >
           <Button asChild variant="outline">
-            <Link to={`/profile/${id}/c/${characterId}/sessions`}>
-              Back to Sessions
+            <Link to={backHref}>
+              {sessionId ? 'Back to Session' : 'Back to Sessions'}
             </Link>
           </Button>
         </Empty>
@@ -181,8 +215,8 @@ export function Activity({ loaderData, params }: Route.ComponentProps) {
             No participants found for this activity.
           </p>
           <Button asChild variant="outline">
-            <Link to={`/profile/${id}/c/${characterId}/sessions`}>
-              View Sessions
+            <Link to={backHref}>
+              {sessionId ? 'Back to Session' : 'View Sessions'}
             </Link>
           </Button>
         </div>

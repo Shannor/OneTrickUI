@@ -50,6 +50,10 @@ export const CHANGELOG: ReleaseNote[] = [
         type: 'improvement',
         text: 'Load the Fireteam page faster with active session statuses resolved up front in a single pass.',
       },
+      {
+        type: 'fix',
+        text: 'Navigate cleanly between matches and sessions—post-game match reports now show the originating session in the breadcrumb trail, and profile sections like Sessions, Loadouts, Metrics, and Fireteam no longer repeat Overview alongside your Guardian name.',
+      },
     ],
   },
   {
