@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CharacterSnapshot } from '~/api';
+import { slimSnapshotForCard } from '~/hooks/use-loadout';
 
 import { LoadoutCard } from './loadout-card';
 
@@ -268,5 +269,132 @@ describe('LoadoutCard', () => {
     fireEvent.click(audaciaPill);
     expect(handleClick).not.toHaveBeenCalled();
     expect(screen.queryByText('Primary Chain')).not.toBeInTheDocument();
+  });
+
+  it('displays enhanced weapon status on LoadoutCard after slimSnapshotForCard', () => {
+    const snapshotWithEnhancedWeapon = {
+      ...mockSnapshot,
+      loadout: {
+        ...mockSnapshot.loadout,
+        1498876634: {
+          ...mockSnapshot.loadout[1498876634],
+          details: {
+            ...mockSnapshot.loadout[1498876634].details,
+            sockets: [
+              {
+                plugHash: 1001,
+                name: 'Smallbore',
+                description: 'Dual strength barrel.',
+                icon: '/smallbore.png',
+                isEnabled: true,
+                isVisible: true,
+                itemTypeDisplayName: 'Barrel',
+              },
+              {
+                plugHash: 1002,
+                name: 'Slideshot',
+                description: 'Enhanced slideshot description.',
+                icon: '/slideshot.png',
+                isEnabled: true,
+                isVisible: true,
+                itemTypeDisplayName: 'Enhanced Trait',
+                itemTypeTieredDisplayName: 'Common Enhanced Trait',
+              },
+            ],
+          },
+        },
+      },
+    } as unknown as CharacterSnapshot;
+
+    render(
+      <LoadoutCard
+        snapshot={slimSnapshotForCard(snapshotWithEnhancedWeapon)}
+        stats={mockStats}
+        gamesCount={10}
+      />,
+    );
+
+    const rosePill = screen.getByRole('button', { name: /rose/i });
+    expect(rosePill).toHaveAttribute('data-enhanced', 'true');
+    expect(screen.getByAltText('Rose')).toHaveClass(
+      'border-2',
+      'border-yellow-500',
+    );
+    expect(screen.getByAltText('Matador 64')).not.toHaveClass(
+      'border-yellow-500',
+    );
+    expect(screen.queryByText('Enhanced')).not.toBeInTheDocument();
+  });
+
+  it('displays Exotic catalyst yellow border on LoadoutCard after slimSnapshotForCard', () => {
+    const snapshotWithCatalyst = {
+      ...mockSnapshot,
+      loadout: {
+        ...mockSnapshot.loadout,
+        953998645: {
+          ...mockSnapshot.loadout[953998645],
+          details: {
+            ...mockSnapshot.loadout[953998645].details,
+            sockets: [
+              {
+                plugHash: 1498917124,
+                name: 'Empty Catalyst Socket',
+                description: 'Insert a catalyst.',
+                icon: '/empty.png',
+                isEnabled: true,
+                isVisible: true,
+                itemTypeDisplayName: '',
+              },
+            ],
+          },
+        },
+        1498876634: {
+          ...mockSnapshot.loadout[1498876634],
+          details: {
+            ...mockSnapshot.loadout[1498876634].details,
+            baseInfo: {
+              ...mockSnapshot.loadout[1498876634].details.baseInfo,
+              name: 'Ace of Spades',
+              tierType: 6,
+              tierTypeName: 'Exotic',
+            },
+            sockets: [
+              {
+                plugHash: 3947093900,
+                name: 'Ace of Spades Catalyst',
+                description: 'Upgrades Firefly.',
+                icon: '/ace-catalyst.png',
+                isEnabled: true,
+                isVisible: true,
+                itemTypeDisplayName: '',
+              },
+            ],
+          },
+        },
+      },
+    } as unknown as CharacterSnapshot;
+
+    render(
+      <LoadoutCard
+        snapshot={slimSnapshotForCard(snapshotWithCatalyst)}
+        stats={mockStats}
+        gamesCount={10}
+      />,
+    );
+
+    const acePill = screen.getByRole('button', { name: /ace of spades/i });
+    expect(acePill).toHaveAttribute('data-catalyst', 'active');
+    expect(screen.getByAltText('Ace of Spades')).toHaveClass(
+      'border-2',
+      'border-yellow-500',
+    );
+    expect(screen.queryByText('Catalyst')).not.toBeInTheDocument();
+
+    const ghornPill = screen.getByRole('button', { name: /gjallarhorn/i });
+    expect(ghornPill).toHaveAttribute('data-catalyst', 'empty');
+    expect(screen.getByAltText('Gjallarhorn')).not.toHaveClass(
+      'border-yellow-500',
+    );
+    expect(screen.queryByText('No Catalyst')).not.toBeInTheDocument();
   });
 });

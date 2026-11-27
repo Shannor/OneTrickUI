@@ -23,6 +23,10 @@ export const CHANGELOG: ReleaseNote[] = [
     changes: [
       {
         type: 'feature',
+        text: 'Spot enhanced weapons, enhanced perks, and Exotic catalysts at a glance with Destiny-style yellow borders and catalyst sockets across Loadout Cards, Loadout Details, Similar Loadouts, and Activity Performance views.',
+      },
+      {
+        type: 'feature',
         text: 'Start tracking sessions for multiple fireteam teammates at once from the Fireteam page, complete with per-teammate Guardian selection and an optional Competitive Score tracking toggle.',
       },
       {
