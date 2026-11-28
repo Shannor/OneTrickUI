@@ -1,13 +1,7 @@
 import { log } from 'evlog';
 import { Info } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  NavLink,
-  Outlet,
-  useLocation,
-  useRevalidator,
-  useSearchParams,
-} from 'react-router';
+import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
@@ -20,14 +14,8 @@ import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
+import { useSessionCompanionFilter } from '~/hooks/use-session-companion-filter';
 import { subscribeToDocument } from '~/lib/firebaseConfig';
-import {
-  TEAMMATE_QUERY_PARAM,
-  filterAggregatesByCompanions,
-  parseSelectedTeammateIds,
-  resolveSelectedCompanions,
-  resolveSessionCompanions,
-} from '~/lib/session-companions';
 import { cn } from '~/lib/utils';
 
 import type { Route } from './+types/session';
@@ -99,8 +87,6 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
   const { characterId } = params;
   const isOwner = type === 'owner';
   const revalidator = useRevalidator();
-  const [searchParams, setSearchParams] = useSearchParams();
-
   const location = useLocation();
 
   const currentTab = useMemo(() => {
@@ -119,72 +105,19 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
 
   const showCompanionsBar = currentTab === 'games' || currentTab === 'metrics';
 
-  const companions = useMemo(
-    () =>
-      resolveSessionCompanions(session, aggregates, participants, characterId),
-    [session, aggregates, participants, characterId],
-  );
-
-  const selectedUserIds = useMemo(
-    () => parseSelectedTeammateIds(searchParams, companions),
-    [searchParams, companions],
-  );
-
-  const selectedCompanions = useMemo(
-    () => resolveSelectedCompanions(searchParams, companions),
-    [searchParams, companions],
-  );
-
-  const filteredAggregates = useMemo(
-    () =>
-      filterAggregatesByCompanions(
-        aggregates ?? [],
-        characterId,
-        selectedCompanions,
-        participants,
-      ),
-    [aggregates, characterId, selectedCompanions, participants],
-  );
-
-  const handleToggleCompanion = useCallback(
-    (userId: string) => {
-      const nextParams = new URLSearchParams(searchParams);
-      const nextSelected = selectedUserIds.includes(userId)
-        ? selectedUserIds.filter((id) => id !== userId)
-        : [...selectedUserIds, userId];
-
-      nextParams.delete(TEAMMATE_QUERY_PARAM);
-      for (const id of nextSelected) {
-        nextParams.append(TEAMMATE_QUERY_PARAM, id);
-      }
-
-      setSearchParams(nextParams, {
-        replace: true,
-        preventScrollReset: true,
-      });
-    },
-    [searchParams, selectedUserIds, setSearchParams],
-  );
-
-  const handleClearFilters = useCallback(() => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete(TEAMMATE_QUERY_PARAM);
-    setSearchParams(nextParams, {
-      replace: true,
-      preventScrollReset: true,
-    });
-  }, [searchParams, setSearchParams]);
-
-  const teammateSearch = useMemo(() => {
-    if (selectedUserIds.length === 0) {
-      return '';
-    }
-    const params = new URLSearchParams();
-    for (const id of selectedUserIds) {
-      params.append(TEAMMATE_QUERY_PARAM, id);
-    }
-    return `?${params.toString()}`;
-  }, [selectedUserIds]);
+  const {
+    companions,
+    selectedUserIds,
+    filteredAggregates,
+    teammateSearch,
+    toggleCompanion: handleToggleCompanion,
+    clearFilters: handleClearFilters,
+  } = useSessionCompanionFilter({
+    session,
+    aggregates,
+    participants,
+    characterId,
+  });
 
   const sessionRef = useRef(session);
   useEffect(() => {

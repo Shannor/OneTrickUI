@@ -17,7 +17,6 @@ import {
   areFireteamCompanions,
   filterAggregatesByCompanions,
   filterOwnerSnapshots,
-  formatCompanionRecord,
   formatSelectedCompanionNames,
   formatSharedMatchCount,
   getCompanionCharacterIds,
@@ -709,7 +708,6 @@ describe('session-companions domain helpers', () => {
     expect(formatSharedMatchCount(1)).toBe('1 match');
     expect(formatSharedMatchCount(3)).toBe('3 matches');
     expect(formatSharedMatchCount(3, 6)).toBe('3/6 matches');
-    expect(formatCompanionRecord(2, 1)).toBe('2W-1L');
 
     const ownerSnap = makeSnapshot('snap-owner', 'char-owner');
     const companionSnap = makeSnapshot('snap-tragic', 'char-tragic');
@@ -719,5 +717,45 @@ describe('session-companions domain helpers', () => {
         'char-owner',
       ).map((s) => s.id),
     ).toEqual(['snap-owner']);
+  });
+
+  it('does not count a phantom loss when owner standing is missing on an aggregate', () => {
+    const partialAggregate = {
+      id: 'agg-missing-owner-perf',
+      activityDetails: { instanceId: 'inst-1', isPrivate: false },
+      snapshotLinks: {
+        'char-tragic': {
+          sessionId: 'sess-tragic',
+          displayName: 'Tragic',
+        },
+      },
+      performance: {},
+    } as unknown as Aggregate;
+
+    const participants: Record<string, SessionParticipant> = {
+      'char-tragic': {
+        userId: 'user-tragic',
+        characterId: 'char-tragic',
+        displayName: 'Tragic',
+      },
+    };
+
+    const session = {
+      id: 'sess-owner',
+      userId: 'user-owner',
+      characterId: 'char-owner',
+    } as unknown as Session;
+
+    const resolved = resolveSessionCompanions(
+      session,
+      [partialAggregate],
+      participants,
+      'char-owner',
+    );
+
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].sharedMatches).toBe(1);
+    expect(resolved[0].wins).toBe(0);
+    expect(resolved[0].losses).toBe(0);
   });
 });

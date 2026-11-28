@@ -1,30 +1,25 @@
 import { log } from 'evlog';
 import { ExternalLink } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { useMemo } from 'react';
+import { Link } from 'react-router';
 import type { Aggregate, CharacterSnapshot } from '~/api';
 import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 import { MapTelemetryPanel } from '~/charts/map-telemetry';
 import { Empty } from '~/components/empty';
-import { Button } from '~/components/ui/button';
+import { EmptyFilteredMatches } from '~/components/session-companions';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
 import {
   useOptionalProfileData,
   useSessionData,
 } from '~/hooks/use-route-loaders';
+import { useSessionCompanionFilter } from '~/hooks/use-session-companion-filter';
 import {
   aggregatesToTelemetryMatches,
   generateMapTelemetry,
   timeWindowToCustom,
 } from '~/lib/metrics';
-import {
-  TEAMMATE_QUERY_PARAM,
-  filterAggregatesByCompanions,
-  formatSelectedCompanionNames,
-  resolveSelectedCompanions,
-  resolveSessionCompanions,
-} from '~/lib/session-companions';
+import { formatSelectedCompanionNames } from '~/lib/session-companions';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
@@ -34,39 +29,30 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
     useSessionData();
   const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id } = params;
-  const [searchParams, setSearchParams] = useSearchParams();
 
-  const companions = useMemo(
-    () =>
-      resolveSessionCompanions(session, aggregates, participants, characterId),
-    [session, aggregates, participants, characterId],
-  );
-
-  const selectedCompanions = useMemo(
-    () => resolveSelectedCompanions(searchParams, companions),
-    [searchParams, companions],
-  );
-
-  const filteredAggregates = useMemo(() => {
-    if (!aggregates || aggregates.length === 0) {
-      return [];
-    }
-    return filterAggregatesByCompanions(
+  const { selectedCompanions, filteredAggregates, clearFilters } =
+    useSessionCompanionFilter({
+      session,
       aggregates,
-      characterId,
-      selectedCompanions,
       participants,
-    );
-  }, [aggregates, characterId, selectedCompanions, participants]);
-
-  const clearTeammateFilter = useCallback(() => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete(TEAMMATE_QUERY_PARAM);
-    setSearchParams(nextParams, {
-      replace: true,
-      preventScrollReset: true,
+      characterId,
     });
-  }, [searchParams, setSearchParams]);
+
+  const { data, overallItem } = useMemo(() => {
+    if (filteredAggregates.length === 0) {
+      return { data: [], overallItem: undefined };
+    }
+    const groupedBySnapshot = groupAggregates(filteredAggregates, characterId);
+    const loadoutData = getLoadoutData(groupedBySnapshot, characterId);
+    const overallTuple = [['overall', filteredAggregates]] as GroupTuple[];
+    const [overall] = getLoadoutData(
+      overallTuple,
+      characterId,
+      true,
+      snapshots,
+    );
+    return { data: loadoutData, overallItem: overall };
+  }, [filteredAggregates, characterId, snapshots]);
 
   const sessionName = session?.name || 'Session';
   const displayName = profile?.displayName;
@@ -133,40 +119,23 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
   const hasTeammateFilter = selectedCompanions.length > 0;
   const selectedNamesLabel = formatSelectedCompanionNames(selectedCompanions);
 
-  if (hasTeammateFilter && filteredAggregates.length === 0) {
-    const emptyDescription =
-      selectedCompanions.length > 1
-        ? 'No matches in this session included all selected teammates. Clear the filter to view metrics for all matches.'
-        : 'Clear the teammate filter to view metrics for all matches in this session.';
-
+  if (hasTeammateFilter && (!overallItem || filteredAggregates.length === 0)) {
     return (
-      <div className="mt-4 flex flex-col items-center gap-3">
+      <div className="mt-4">
         {metaTags}
-        <Empty
-          title={`No Matches Found with ${selectedNamesLabel}`}
-          description={emptyDescription}
+        <EmptyFilteredMatches
+          selectedCompanions={selectedCompanions}
+          onClearFilters={clearFilters}
+          context="metrics"
         />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={clearTeammateFilter}
-        >
-          Show All Matches
-        </Button>
       </div>
     );
   }
 
-  const groupedBySnapshot = groupAggregates(filteredAggregates, characterId);
-  const data = getLoadoutData(groupedBySnapshot, characterId);
-  const overallTuple = [['overall', filteredAggregates]] as GroupTuple[];
-  const [overallItem] = getLoadoutData(
-    overallTuple,
-    characterId,
-    true,
-    snapshots,
-  );
+  if (!overallItem) {
+    return null;
+  }
+
   const { stats, matchStats, rawStats, mapData: overallMapData } = overallItem;
   const loadoutBasePath = `/profile/${id}/c/${characterId}/loadouts`;
   const overallCaption = hasTeammateFilter
@@ -185,10 +154,10 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
             Overall
           </h2>
         </div>
-        <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-          <Performance stats={stats} className="md:pr-2" />
-          <Performance stats={matchStats} className="md:px-2" />
-          <Performance stats={rawStats} className="md:px-2" />
+        <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-border/60">
+          <Performance stats={stats} className="md:pr-4" />
+          <Performance stats={matchStats} className="md:px-4" />
+          <Performance stats={rawStats} className="md:pl-4" />
         </div>
         <div className="text-sm text-muted-foreground">{overallCaption}</div>
         <MapTelemetryPanel
@@ -234,10 +203,10 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
                         />
                       ))}
                     </div>
-                    <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-                      <Performance stats={stats} className="md:pr-2" />
-                      <Performance stats={matchStats} className="md:px-2" />
-                      <Performance stats={rawStats} className="md:px-2" />
+                    <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-border/60">
+                      <Performance stats={stats} className="md:pr-4" />
+                      <Performance stats={matchStats} className="md:px-4" />
+                      <Performance stats={rawStats} className="md:pl-4" />
                     </div>
                     <MapTelemetryPanel
                       data={mapData}

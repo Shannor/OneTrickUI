@@ -216,7 +216,6 @@ export function resolveSessionCompanions(
     const ownerStanding = getStatNumber(
       aggregate.performance?.[ownerCharacterId]?.playerStats?.standing,
     );
-    const ownerWon = ownerStanding === 0;
     const seenUsersInMatch = new Set<string>();
     const seenSessionsInMatch = new Set<string>();
 
@@ -253,9 +252,9 @@ export function resolveSessionCompanions(
       if (!seenUsersInMatch.has(participant.userId)) {
         seenUsersInMatch.add(participant.userId);
         acc.sharedMatches += 1;
-        if (ownerWon) {
+        if (ownerStanding === 0) {
           acc.wins += 1;
-        } else {
+        } else if (ownerStanding !== undefined) {
           acc.losses += 1;
         }
       }
@@ -517,10 +516,6 @@ export function formatSharedMatchCount(
     return `${sharedMatches}/${totalMatches} ${totalMatches === 1 ? 'match' : 'matches'}`;
   }
   return `${sharedMatches} ${sharedMatches === 1 ? 'match' : 'matches'}`;
-}
-
-export function formatCompanionRecord(wins: number, losses: number): string {
-  return `${wins}W-${losses}L`;
 }
 
 /**

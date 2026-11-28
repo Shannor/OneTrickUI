@@ -1,4 +1,8 @@
 export {
+  EmptyFilteredMatches,
+  type EmptyFilteredMatchesProps,
+} from './empty-filtered-matches';
+export {
   MatchCompanionsRow,
   type MatchCompanionsRowProps,
 } from './match-companions-row';
