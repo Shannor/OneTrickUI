@@ -1,10 +1,12 @@
 import { log } from 'evlog';
 import { ExternalLink } from 'lucide-react';
-import { Link } from 'react-router';
+import { useCallback, useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import type { Aggregate, CharacterSnapshot } from '~/api';
 import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 import { MapTelemetryPanel } from '~/charts/map-telemetry';
 import { Empty } from '~/components/empty';
+import { Button } from '~/components/ui/button';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
 import {
@@ -16,14 +18,55 @@ import {
   generateMapTelemetry,
   timeWindowToCustom,
 } from '~/lib/metrics';
+import {
+  TEAMMATE_QUERY_PARAM,
+  filterAggregatesByCompanions,
+  formatSelectedCompanionNames,
+  resolveSelectedCompanions,
+  resolveSessionCompanions,
+} from '~/lib/session-companions';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
 
 export function SessionMetrics({ params }: Route.ComponentProps) {
-  const { aggregates, snapshots, session, path } = useSessionData();
+  const { aggregates, snapshots, participants, session, path } =
+    useSessionData();
   const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id } = params;
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const companions = useMemo(
+    () =>
+      resolveSessionCompanions(session, aggregates, participants, characterId),
+    [session, aggregates, participants, characterId],
+  );
+
+  const selectedCompanions = useMemo(
+    () => resolveSelectedCompanions(searchParams, companions),
+    [searchParams, companions],
+  );
+
+  const filteredAggregates = useMemo(() => {
+    if (!aggregates || aggregates.length === 0) {
+      return [];
+    }
+    return filterAggregatesByCompanions(
+      aggregates,
+      characterId,
+      selectedCompanions,
+      participants,
+    );
+  }, [aggregates, characterId, selectedCompanions, participants]);
+
+  const clearTeammateFilter = useCallback(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete(TEAMMATE_QUERY_PARAM);
+    setSearchParams(nextParams, {
+      replace: true,
+      preventScrollReset: true,
+    });
+  }, [searchParams, setSearchParams]);
 
   const sessionName = session?.name || 'Session';
   const displayName = profile?.displayName;
@@ -87,9 +130,37 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
     );
   }
 
-  const groupedBySnapshot = groupAggregates(aggregates, characterId);
+  const hasTeammateFilter = selectedCompanions.length > 0;
+  const selectedNamesLabel = formatSelectedCompanionNames(selectedCompanions);
+
+  if (hasTeammateFilter && filteredAggregates.length === 0) {
+    const emptyDescription =
+      selectedCompanions.length > 1
+        ? 'No matches in this session included all selected teammates. Clear the filter to view metrics for all matches.'
+        : 'Clear the teammate filter to view metrics for all matches in this session.';
+
+    return (
+      <div className="mt-4 flex flex-col items-center gap-3">
+        {metaTags}
+        <Empty
+          title={`No Matches Found with ${selectedNamesLabel}`}
+          description={emptyDescription}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={clearTeammateFilter}
+        >
+          Show All Matches
+        </Button>
+      </div>
+    );
+  }
+
+  const groupedBySnapshot = groupAggregates(filteredAggregates, characterId);
   const data = getLoadoutData(groupedBySnapshot, characterId);
-  const overallTuple = [['overall', aggregates]] as GroupTuple[];
+  const overallTuple = [['overall', filteredAggregates]] as GroupTuple[];
   const [overallItem] = getLoadoutData(
     overallTuple,
     characterId,
@@ -98,23 +169,28 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
   );
   const { stats, matchStats, rawStats, mapData: overallMapData } = overallItem;
   const loadoutBasePath = `/profile/${id}/c/${characterId}/loadouts`;
+  const overallCaption = hasTeammateFilter
+    ? `Stats for ${filteredAggregates.length} ${filteredAggregates.length === 1 ? 'match' : 'matches'} with ${selectedNamesLabel}, including games where no snapshot was found.`
+    : 'Stats for all games including ones where no snapshot was found.';
 
   return (
-    <div className="mt-8 flex flex-col gap-14">
+    <div className="mt-4 flex flex-col gap-14">
       {metaTags}
       <div className="flex flex-col gap-6">
-        <h4 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight">
-          Session Metrics
-        </h4>
-        <h5 className="text-xl font-semibold tracking-tight">Overall</h5>
+        <div className="flex flex-col gap-1 border-b border-border pb-3">
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground sm:text-sm">
+            Session Metrics
+          </span>
+          <h2 className="scroll-m-20 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Overall
+          </h2>
+        </div>
         <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
           <Performance stats={stats} className="md:pr-2" />
           <Performance stats={matchStats} className="md:px-2" />
           <Performance stats={rawStats} className="md:px-2" />
         </div>
-        <div className="text-sm text-muted-foreground">
-          Stats for all games including ones where no snapshot was found.
-        </div>
+        <div className="text-sm text-muted-foreground">{overallCaption}</div>
         <MapTelemetryPanel
           data={overallMapData}
           title="Session Map Telemetry"
@@ -124,48 +200,57 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
         />
       </div>
 
-      <div className="flex flex-col gap-16">
-        {data?.map(({ snapshotId, stats, mapData, matchStats, rawStats }) => {
-          const snapshot = snapshots[snapshotId];
-          if (!snapshot) {
-            return null;
-          }
-          const weapons = getWeapons(snapshot.loadout);
+      {data.length > 0 && (
+        <div className="flex flex-col gap-12">
+          <h3 className="scroll-m-20 border-b border-border pb-2 font-heading text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            By Loadout
+          </h3>
+          <div className="flex flex-col gap-16">
+            {data.map(
+              ({ snapshotId, stats, mapData, matchStats, rawStats }) => {
+                const snapshot = snapshots[snapshotId];
+                if (!snapshot) {
+                  return null;
+                }
+                const weapons = getWeapons(snapshot.loadout);
 
-          return (
-            <div className="flex flex-col gap-5" key={snapshotId}>
-              <Link
-                to={`${loadoutBasePath}/${snapshotId}`}
-                className="group inline-flex min-h-11 w-full touch-manipulation items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2 text-base font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:w-fit sm:justify-start sm:rounded-md sm:px-2.5 sm:py-1 sm:text-sm"
-              >
-                <span className="truncate group-hover:underline">
-                  {snapshot?.name ?? 'Snapshot'}
-                </span>
-                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary sm:h-3.5 sm:w-3.5" />
-              </Link>
-              <div className="flex flex-row gap-4">
-                {weapons.map((weapon) => (
-                  <WeaponHeader
-                    key={weapon.itemHash}
-                    properties={weapon.details}
-                    onlyIcon
-                  />
-                ))}
-              </div>
-              <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-                <Performance stats={stats} className="md:pr-2" />
-                <Performance stats={matchStats} className="md:px-2" />
-                <Performance stats={rawStats} className="md:px-2" />
-              </div>
-              <MapTelemetryPanel
-                data={mapData}
-                title="Loadout Map Telemetry"
-                description="Strong vs. swap-candidate maps for this loadout during the session."
-              />
-            </div>
-          );
-        })}
-      </div>
+                return (
+                  <div className="flex flex-col gap-5" key={snapshotId}>
+                    <Link
+                      to={`${loadoutBasePath}/${snapshotId}`}
+                      className="group inline-flex min-h-11 w-full touch-manipulation items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2 text-base font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:w-fit sm:justify-start sm:rounded-md sm:px-2.5 sm:py-1 sm:text-sm"
+                    >
+                      <span className="truncate group-hover:underline">
+                        {snapshot?.name ?? 'Snapshot'}
+                      </span>
+                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary sm:h-3.5 sm:w-3.5" />
+                    </Link>
+                    <div className="flex flex-row gap-4">
+                      {weapons.map((weapon) => (
+                        <WeaponHeader
+                          key={weapon.itemHash}
+                          properties={weapon.details}
+                          onlyIcon
+                        />
+                      ))}
+                    </div>
+                    <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
+                      <Performance stats={stats} className="md:pr-2" />
+                      <Performance stats={matchStats} className="md:px-2" />
+                      <Performance stats={rawStats} className="md:px-2" />
+                    </div>
+                    <MapTelemetryPanel
+                      data={mapData}
+                      title="Loadout Map Telemetry"
+                      description="Strong vs. swap-candidate maps for this loadout during the session."
+                    />
+                  </div>
+                );
+              },
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

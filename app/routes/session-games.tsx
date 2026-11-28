@@ -1,10 +1,13 @@
-import { ChevronRight, ExternalLink } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import { ArrowRight, ExternalLink } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { calculateRatio } from '~/calculations/precision';
 import { Empty } from '~/components/empty';
 import { FormattedDate } from '~/components/formatted-date';
 import { HorizontalBanner } from '~/components/horizontal-banner';
+import { MatchCompanionsRow } from '~/components/session-companions';
 import { Button } from '~/components/ui/button';
+import { Card, CardContent } from '~/components/ui/card';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
@@ -13,17 +16,64 @@ import {
   useOptionalProfileData,
   useSessionData,
 } from '~/hooks/use-route-loaders';
+import {
+  TEAMMATE_QUERY_PARAM,
+  filterAggregatesByCompanions,
+  formatSelectedCompanionNames,
+  getMatchCompanions,
+  resolveSelectedCompanions,
+  resolveSessionCompanions,
+} from '~/lib/session-companions';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
 
 import type { Route } from './+types/session-games';
 
 export function SessionGames({ params }: Route.ComponentProps) {
-  const { session, aggregates, snapshots, path } = useSessionData();
+  const { session, aggregates, snapshots, participants, path } =
+    useSessionData();
   const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id, sessionId } = params;
   const activeSessionId = sessionId ?? session?.id;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const companions = useMemo(
+    () =>
+      resolveSessionCompanions(session, aggregates, participants, characterId),
+    [session, aggregates, participants, characterId],
+  );
+
+  const selectedCompanions = useMemo(
+    () => resolveSelectedCompanions(searchParams, companions),
+    [searchParams, companions],
+  );
+
+  const clearTeammateFilter = useCallback(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete(TEAMMATE_QUERY_PARAM);
+    setSearchParams(nextParams, {
+      replace: true,
+      preventScrollReset: true,
+    });
+  }, [searchParams, setSearchParams]);
+
+  const sortedFilteredAggregates = useMemo(() => {
+    if (!aggregates || aggregates.length === 0) {
+      return [];
+    }
+    const filtered = filterAggregatesByCompanions(
+      aggregates,
+      characterId,
+      selectedCompanions,
+      participants,
+    );
+    return [...filtered].sort(
+      (a, b) =>
+        new Date(b.activityDetails.period).getTime() -
+        new Date(a.activityDetails.period).getTime(),
+    );
+  }, [aggregates, characterId, selectedCompanions, participants]);
 
   const sessionName = session?.name || 'Session';
   const displayName = profile?.displayName;
@@ -99,17 +149,35 @@ export function SessionGames({ params }: Route.ComponentProps) {
     );
   }
 
+  const selectedNamesLabel = formatSelectedCompanionNames(selectedCompanions);
+  const emptyFilterDescription =
+    selectedCompanions.length > 1
+      ? 'No matches in this session included all selected teammates. Clear the filter to view all matches.'
+      : 'Clear the teammate filter to view all matches in this session.';
+
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-8 md:gap-6">
         {metaTags}
-        {aggregates
-          .sort(
-            (a, b) =>
-              new Date(b.activityDetails.period).getTime() -
-              new Date(a.activityDetails.period).getTime(),
-          )
-          .map((value, index, arr) => {
+
+        {sortedFilteredAggregates.length === 0 &&
+        selectedCompanions.length > 0 ? (
+          <div className="flex flex-col items-center gap-3">
+            <Empty
+              title={`No Matches Found with ${selectedNamesLabel}`}
+              description={emptyFilterDescription}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={clearTeammateFilter}
+            >
+              Show All Matches
+            </Button>
+          </div>
+        ) : (
+          sortedFilteredAggregates.map((value, index, arr) => {
             const {
               activityDetails,
               snapshotLinks,
@@ -118,7 +186,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
 
             const link = snapshotLinks[characterId];
             const performance = performances[characterId];
-            const snapshot = link.snapshotId
+            const snapshot = link?.snapshotId
               ? snapshots[link.snapshotId]
               : undefined;
 
@@ -139,7 +207,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
             const showLoadout =
               !previous ||
               previous.snapshotLinks[characterId]?.snapshotId !==
-                link.snapshotId;
+                link?.snapshotId;
             const won = performance?.playerStats?.standing?.value === 0;
 
             const stats: StatItem[] = [];
@@ -160,6 +228,14 @@ export function SessionGames({ params }: Route.ComponentProps) {
                 { label: 'Efficiency', value: kda.toFixed(2) },
               );
             }
+
+            const matchCompanions = getMatchCompanions(
+              value,
+              characterId,
+              session?.userId ?? id,
+              participants,
+              snapshots,
+            );
 
             return (
               <div key={value.id} className={cn('flex flex-col gap-4')}>
@@ -198,8 +274,8 @@ export function SessionGames({ params }: Route.ComponentProps) {
                     </div>
                   </div>
                 )}
-                <div
-                  className="group flex w-full flex-col gap-4 rounded-lg bg-card p-3 transition-colors hover:cursor-pointer hover:bg-muted/50 md:flex-row md:items-center md:gap-6 md:p-4"
+                <Card
+                  className="group w-full min-w-0 cursor-pointer overflow-hidden border transition-all duration-200 hover:border-primary hover:shadow-lg"
                   onClick={() => {
                     const activityPath = activeSessionId
                       ? `/profile/${id}/c/${characterId}/sessions/${activeSessionId}/activities/${activityDetails.instanceId}`
@@ -207,85 +283,94 @@ export function SessionGames({ params }: Route.ComponentProps) {
                     navigate(activityPath);
                   }}
                 >
-                  <div className="hidden flex-row gap-2 md:flex">
-                    {won ? (
-                      <VerticalBanner
-                        label="Victory"
-                        className="bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
-                      />
-                    ) : (
-                      <VerticalBanner
-                        label="Defeat"
-                        className="bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
-                      />
-                    )}
-                    <img
-                      src={activityDetails.imageUrl}
-                      className="hidden h-auto w-36 rounded-lg object-cover md:block md:w-28 lg:w-36 xl:w-44"
-                      alt="activity image"
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-4">
-                    <div className="flex flex-col gap-4 md:hidden">
-                      {won ? (
-                        <HorizontalBanner
-                          label="Victory"
-                          className="h-5 bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
-                        />
-                      ) : (
-                        <HorizontalBanner
-                          label="Defeat"
-                          className="h-5 bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
-                        />
-                      )}
-                      <img
-                        src={activityDetails.imageUrl}
-                        className="h-28 w-full rounded-lg object-cover md:hidden"
-                        alt="activity image"
-                      />
-                    </div>
-                    <div className="flex flex-row items-center gap-2">
-                      <img
-                        src={activityDetails.activityIcon}
-                        className="h-12 w-12 rounded-lg bg-black/50 object-cover"
-                        alt="activity image"
-                      />
-                      <div className="flex flex-col gap-1">
-                        <Description
-                          activity={activityDetails.activity}
-                          mode={activityDetails.mode}
-                        />
-                        <div className="text-xl font-bold">
-                          {activityDetails.location}
-                        </div>
-
-                        <FormattedDate
-                          date={activityDetails.period}
-                          formatStr="p"
-                          fallbackFormatStr="HH:mm"
-                          className="text-xs text-muted-foreground"
+                  <CardContent className="flex w-full min-w-0 flex-col gap-4 p-4 sm:p-5 md:p-6">
+                    <div className="flex w-full flex-col gap-4 md:flex-row md:items-center md:gap-6">
+                      <div className="hidden flex-row gap-2 md:flex">
+                        {won ? (
+                          <VerticalBanner
+                            label="Victory"
+                            className="bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
+                          />
+                        ) : (
+                          <VerticalBanner
+                            label="Defeat"
+                            className="bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
+                          />
+                        )}
+                        <img
+                          src={activityDetails.imageUrl}
+                          className="hidden h-auto w-36 rounded-lg object-cover md:block md:w-28 lg:w-36 xl:w-44"
+                          alt="activity image"
                         />
                       </div>
+                      <div className="flex flex-1 flex-col gap-4">
+                        <div className="flex flex-col gap-4 md:hidden">
+                          {won ? (
+                            <HorizontalBanner
+                              label="Victory"
+                              className="h-5 bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100"
+                            />
+                          ) : (
+                            <HorizontalBanner
+                              label="Defeat"
+                              className="h-5 bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100"
+                            />
+                          )}
+                          <img
+                            src={activityDetails.imageUrl}
+                            className="h-28 w-full rounded-lg object-cover md:hidden"
+                            alt="activity image"
+                          />
+                        </div>
+                        <div className="flex flex-row items-center gap-3">
+                          <img
+                            src={activityDetails.activityIcon}
+                            className="h-12 w-12 shrink-0 rounded-lg bg-black/50 object-cover"
+                            alt="activity image"
+                          />
+                          <div className="flex min-w-0 flex-col gap-0.5">
+                            <Description
+                              activity={activityDetails.activity}
+                              mode={activityDetails.mode}
+                            />
+                            <h3 className="truncate font-heading text-lg font-bold tracking-wide text-foreground transition-colors group-hover:text-primary sm:text-xl lg:text-2xl">
+                              {activityDetails.location}
+                            </h3>
+
+                            <FormattedDate
+                              date={activityDetails.period}
+                              formatStr="p"
+                              fallbackFormatStr="HH:mm"
+                              className="text-xs text-muted-foreground"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-border/60">
+                          <Performance stats={stats} className="md:pr-4" />
+                          <Performance stats={kdStats} className="md:pl-4" />
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-                      <Performance stats={stats} className="md:pr-2" />
-                      <Performance stats={kdStats} className={'md:px-2'} />
+
+                    <MatchCompanionsRow companions={matchCompanions} />
+
+                    <div className="flex w-full items-center justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="min-h-11 w-full touch-manipulation justify-between gap-1.5 px-2 text-xs font-semibold text-primary hover:bg-primary/10 hover:text-primary md:min-h-9 md:w-auto md:justify-end lg:text-sm"
+                      >
+                        <span>View Game Details</span>
+                        <ArrowRight className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-1 lg:h-4 lg:w-4" />
+                      </Button>
                     </div>
-                  </div>
-                  <div className="flex shrink-0 items-center justify-end pt-2 md:pt-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="min-h-11 w-full touch-manipulation justify-between gap-2 text-sm group-hover:border-primary group-hover:text-primary md:min-h-9 md:w-auto md:justify-center"
-                    >
-                      <span>View Game Details</span>
-                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                    </Button>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </div>
             );
-          })}
+          })
+        )}
       </div>
     </TooltipProvider>
   );
@@ -295,7 +380,7 @@ function Description({ activity, mode }: { activity: string; mode?: string }) {
   const ironBanner = 'iron banner';
   if (activity.toLowerCase().includes(ironBanner)) {
     return (
-      <div className="text-sm uppercase tracking-wide text-muted-foreground">
+      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {activity}
       </div>
     );
@@ -323,7 +408,7 @@ function Description({ activity, mode }: { activity: string; mode?: string }) {
     }
   }
   return (
-    <div className="text-sm uppercase tracking-wide text-muted-foreground">
+    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
       {label}
       {modeLabel && <span>{' - ' + modeLabel}</span>}
     </div>

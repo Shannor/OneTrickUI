@@ -756,4 +756,382 @@ describe('Session Page Route Component', () => {
     expect(unsubscribe).not.toHaveBeenCalled();
     expect(subscribeToDocument).toHaveBeenCalledTimes(1);
   });
+
+  it('renders solo sessions unchanged without empty fireteam companion chrome', () => {
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-solo',
+          userId: 'user-1',
+          characterId: 'char-1',
+          name: 'Solo Grind',
+          status: 'complete' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: ['agg-1'],
+          summary: {
+            totalMatches: 1,
+            companions: [],
+          },
+        },
+        aggregates: [],
+        snapshots: {},
+        participants: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter([
+      { path: '/', element: <Session {...props} /> },
+    ]);
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    expect(
+      screen.queryByRole('region', { name: /fireteam companions/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders companion pills below tabs on Games and Metrics, supports multi-teammate AND toggling, preserves filter on Games/Metrics tabs, and links to single and multi-session character swaps', async () => {
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-fireteam',
+          userId: 'user-1',
+          characterId: 'char-1',
+          name: 'Friday Trials',
+          status: 'complete' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: ['g1', 'g2', 'g3'],
+          summary: {
+            totalMatches: 3,
+            companions: [
+              {
+                userId: 'user-tragic',
+                displayName: 'Tragic',
+                sharedMatches: 2,
+                wins: 2,
+                losses: 0,
+                sessions: [
+                  {
+                    sessionId: 'sess-tragic-1',
+                    characterId: 'char-tragic-titan',
+                    class: 'Titan',
+                    emblemUrl: '/img/tragic.jpg',
+                    sharedMatches: 2,
+                  },
+                ],
+              },
+              {
+                userId: 'user-swap',
+                displayName: 'Swapper',
+                sharedMatches: 2,
+                wins: 1,
+                losses: 1,
+                sessions: [
+                  {
+                    sessionId: 'sess-swap-hunter',
+                    characterId: 'char-swap-hunter',
+                    class: 'Hunter',
+                    sharedMatches: 1,
+                  },
+                  {
+                    sessionId: 'sess-swap-warlock',
+                    characterId: 'char-swap-warlock',
+                    class: 'Warlock',
+                    sharedMatches: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        aggregates: [
+          {
+            id: 'g1',
+            activityDetails: { isPrivate: false },
+            snapshotLinks: {
+              'char-1': { snapshotId: 's1' },
+              'char-tragic-titan': { sessionId: 'sess-tragic-1' },
+              'char-swap-hunter': { sessionId: 'sess-swap-hunter' },
+            },
+            performance: {
+              'char-1': {
+                playerStats: {
+                  standing: { value: 0 },
+                  fireTeamId: { value: 1 },
+                },
+              },
+              'char-tragic-titan': {
+                playerStats: {
+                  standing: { value: 0 },
+                  fireTeamId: { value: 1 },
+                },
+              },
+              'char-swap-hunter': {
+                playerStats: {
+                  standing: { value: 0 },
+                  fireTeamId: { value: 1 },
+                },
+              },
+            },
+          },
+          {
+            id: 'g2',
+            activityDetails: { isPrivate: false },
+            snapshotLinks: {
+              'char-1': { snapshotId: 's1' },
+              'char-tragic-titan': { sessionId: 'sess-tragic-1' },
+            },
+            performance: {
+              'char-1': {
+                playerStats: {
+                  standing: { value: 0 },
+                  fireTeamId: { value: 2 },
+                },
+              },
+              'char-tragic-titan': {
+                playerStats: {
+                  standing: { value: 0 },
+                  fireTeamId: { value: 2 },
+                },
+              },
+            },
+          },
+          {
+            id: 'g3',
+            activityDetails: { isPrivate: false },
+            snapshotLinks: {
+              'char-1': { snapshotId: 's1' },
+              'char-swap-warlock': { sessionId: 'sess-swap-warlock' },
+            },
+            performance: {
+              'char-1': {
+                playerStats: {
+                  standing: { value: 1 },
+                  fireTeamId: { value: 3 },
+                },
+              },
+              'char-swap-warlock': {
+                playerStats: {
+                  standing: { value: 1 },
+                  fireTeamId: { value: 3 },
+                },
+              },
+            },
+          },
+        ],
+        snapshots: {},
+        participants: {
+          'char-tragic-titan': {
+            userId: 'user-tragic',
+            displayName: 'Tragic',
+            characterId: 'char-tragic-titan',
+            class: 'Titan',
+          },
+          'char-swap-hunter': {
+            userId: 'user-swap',
+            displayName: 'Swapper',
+            characterId: 'char-swap-hunter',
+            class: 'Hunter',
+          },
+          'char-swap-warlock': {
+            userId: 'user-swap',
+            displayName: 'Swapper',
+            characterId: 'char-swap-warlock',
+            class: 'Warlock',
+          },
+        },
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/profile/user-1/c/char-1/sessions/session-fireteam',
+          element: <Session {...props} />,
+          children: [
+            { index: true, element: <div>Games Tab</div> },
+            { path: 'metrics', element: <div>Metrics Tab</div> },
+            { path: 'loadouts', element: <div>Loadouts Tab</div> },
+          ],
+        },
+      ],
+      {
+        initialEntries: ['/profile/user-1/c/char-1/sessions/session-fireteam'],
+      },
+    );
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>,
+    );
+
+    const tragicToggle = screen.getByRole('button', { name: /tragic/i });
+    const swapperToggle = screen.getByRole('button', {
+      name: /swapper.*matches/i,
+    });
+    expect(tragicToggle).toHaveAttribute('aria-pressed', 'false');
+
+    const tragicLink = screen.getByRole('link', {
+      name: /view tragic's session \(titan\)/i,
+    });
+    expect(tragicLink).toHaveAttribute(
+      'href',
+      '/profile/user-tragic/c/char-tragic-titan/sessions/sess-tragic-1',
+    );
+
+    await act(async () => {
+      tragicToggle.click();
+    });
+
+    expect(router.state.location.search).toBe('?teammate=user-tragic');
+    expect(tragicToggle).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('2 of 3')).toBeInTheDocument();
+
+    await act(async () => {
+      swapperToggle.click();
+    });
+
+    expect(router.state.location.search).toBe(
+      '?teammate=user-tragic&teammate=user-swap',
+    );
+    expect(swapperToggle).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('1 of 3')).toBeInTheDocument();
+    expect(screen.getByText('Tragic & Swapper')).toBeInTheDocument();
+
+    expect(screen.getByRole('tab', { name: /^metrics$/i })).toHaveAttribute(
+      'href',
+      '/profile/user-1/c/char-1/sessions/session-fireteam/metrics?teammate=user-tragic&teammate=user-swap',
+    );
+    expect(screen.getByRole('tab', { name: /^loadouts$/i })).toHaveAttribute(
+      'href',
+      '/profile/user-1/c/char-1/sessions/session-fireteam/loadouts',
+    );
+
+    await act(async () => {
+      screen
+        .getByRole('button', { name: /view swapper's 2 sessions/i })
+        .click();
+    });
+
+    expect(screen.getByRole('link', { name: /hunter/i })).toHaveAttribute(
+      'href',
+      '/profile/user-swap/c/char-swap-hunter/sessions/sess-swap-hunter',
+    );
+    expect(screen.getByRole('link', { name: /warlock/i })).toHaveAttribute(
+      'href',
+      '/profile/user-swap/c/char-swap-warlock/sessions/sess-swap-warlock',
+    );
+
+    await act(async () => {
+      screen.getByRole('button', { name: /clear filter/i }).click();
+    });
+    expect(router.state.location.search).toBe('');
+  });
+
+  it('shows the fireteam filter bar on Metrics and hides it on Loadouts', () => {
+    const props = {
+      loaderData: {
+        session: {
+          id: 'session-fireteam',
+          userId: 'user-1',
+          characterId: 'char-1',
+          name: 'Friday Trials',
+          status: 'complete' as const,
+          startedAt: new Date().toISOString(),
+          aggregateIds: ['g1'],
+          summary: {
+            totalMatches: 1,
+            companions: [
+              {
+                userId: 'user-tragic',
+                displayName: 'Tragic',
+                sharedMatches: 1,
+                wins: 1,
+                losses: 0,
+                sessions: [
+                  {
+                    sessionId: 'sess-tragic-1',
+                    characterId: 'char-tragic-titan',
+                    class: 'Titan',
+                    sharedMatches: 1,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        aggregates: [],
+        snapshots: {},
+        participants: {},
+        error: undefined,
+        path: 'http://localhost/test',
+      },
+      params: { characterId: 'char-1' },
+    } as unknown as ComponentProps<typeof Session>;
+
+    const metricsRouter = createMemoryRouter(
+      [
+        {
+          path: '/profile/user-1/c/char-1/sessions/session-fireteam',
+          element: <Session {...props} />,
+          children: [
+            { path: 'metrics', element: <div>Metrics Tab</div> },
+            { path: 'loadouts', element: <div>Loadouts Tab</div> },
+          ],
+        },
+      ],
+      {
+        initialEntries: [
+          '/profile/user-1/c/char-1/sessions/session-fireteam/metrics',
+        ],
+      },
+    );
+
+    const { unmount } = render(
+      <TooltipProvider>
+        <RouterProvider router={metricsRouter} />
+      </TooltipProvider>,
+    );
+
+    expect(
+      screen.getByRole('region', { name: /fireteam companions/i }),
+    ).toBeInTheDocument();
+    unmount();
+
+    const loadoutsRouter = createMemoryRouter(
+      [
+        {
+          path: '/profile/user-1/c/char-1/sessions/session-fireteam',
+          element: <Session {...props} />,
+          children: [{ path: 'loadouts', element: <div>Loadouts Tab</div> }],
+        },
+      ],
+      {
+        initialEntries: [
+          '/profile/user-1/c/char-1/sessions/session-fireteam/loadouts',
+        ],
+      },
+    );
+
+    render(
+      <TooltipProvider>
+        <RouterProvider router={loadoutsRouter} />
+      </TooltipProvider>,
+    );
+
+    expect(
+      screen.queryByRole('region', { name: /fireteam companions/i }),
+    ).not.toBeInTheDocument();
+  });
 });

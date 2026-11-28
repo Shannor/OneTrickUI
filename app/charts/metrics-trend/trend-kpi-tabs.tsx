@@ -1,3 +1,4 @@
+import { getWinLossColorClass } from '~/components/win-loss-record';
 import {
   EVEN_KD_TARGET,
   EVEN_WIN_RATE_PCT,
@@ -16,6 +17,7 @@ export interface KpiItemDescriptor {
   primaryValue: string;
   subText?: string | null;
   subPositive?: boolean;
+  subClassName?: string;
   valueClassName: string;
   activeBorderClassName: string;
   sparkValues: number[];
@@ -66,6 +68,7 @@ export function buildKpiItems(
       primaryValue: `${summary.winPct}%`,
       subText: `${summary.wins}W–${summary.losses}L${winDeltaText ? ` (${winDeltaText})` : ''}`,
       subPositive: isPositiveWin,
+      subClassName: getWinLossColorClass(summary.wins, summary.losses),
       valueClassName: isPositiveWin
         ? 'text-emerald-600 dark:text-emerald-400'
         : 'text-red-600 dark:text-red-400',
@@ -82,6 +85,7 @@ export function buildKpiItems(
       primaryValue: `${summary.avgKills.toFixed(1)} / ${summary.avgDeaths.toFixed(1)} / ${summary.avgAssists.toFixed(1)}`,
       subText: `${summary.games} ${summary.games === 1 ? 'Match' : 'Matches'}`,
       subPositive: true,
+      subClassName: 'text-muted-foreground',
       valueClassName: 'text-foreground',
       activeBorderClassName: 'border-b-primary md:bg-primary/[0.04]',
       sparkValues: sparkSource.map((p) => p.rollingKills),
@@ -99,6 +103,10 @@ export function KpiStatCellContent({
   item,
   showSparkline,
 }: KpiStatCellContentProps) {
+  const defaultSubClassName = item.subPositive
+    ? 'text-emerald-600 dark:text-emerald-400'
+    : 'text-red-600 dark:text-red-400';
+
   return (
     <>
       <div className="min-w-0">
@@ -124,11 +132,7 @@ export function KpiStatCellContent({
             <span
               className={cn(
                 'hidden text-xs font-medium tabular-nums md:inline',
-                item.key === 'combat' || item.key === 'winPct'
-                  ? 'text-muted-foreground'
-                  : item.subPositive
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-red-600 dark:text-red-400',
+                item.subClassName ?? defaultSubClassName,
               )}
             >
               {item.subText}

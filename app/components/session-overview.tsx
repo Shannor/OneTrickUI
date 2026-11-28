@@ -9,6 +9,7 @@ import type { Aggregate, Session } from '~/api';
 import { MetricsTrendPanel } from '~/charts/metrics-trend';
 import { SessionCompTrackingBanner } from '~/components/comp-tracking';
 import { TooltipProvider } from '~/components/ui/tooltip';
+import { WinLossRecord } from '~/components/win-loss-record';
 import {
   aggregatesToTelemetryMatches,
   generateMatchSeries,
@@ -109,7 +110,7 @@ export function SessionOverviewStats({
   kda: number;
 }) {
   return (
-    <div className="grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3 rounded-lg border bg-card p-4 sm:grid-cols-4 md:divide-x md:divide-border/60">
+    <div className="grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-3 rounded-lg border bg-card p-4 shadow-sm sm:grid-cols-4 sm:p-5 md:divide-x md:divide-border/60 md:p-6">
       <div className="flex min-w-0 flex-col gap-1 md:pr-4 lg:pr-6">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
           <Gamepad2Icon className="h-3.5 w-3.5 shrink-0 text-primary lg:h-4 lg:w-4" />
@@ -119,9 +120,12 @@ export function SessionOverviewStats({
           <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
             {gamesCount}
           </span>
-          <span className="text-xs font-medium text-muted-foreground lg:text-sm">
-            ({wins}W - {losses}L)
-          </span>
+          <WinLossRecord
+            wins={wins}
+            losses={losses}
+            format="spaced-parens"
+            className="text-xs lg:text-sm"
+          />
         </div>
       </div>
 

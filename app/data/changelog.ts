@@ -15,6 +15,27 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-27',
+    date: 'November 27, 2026',
+    title: 'Fireteam Companions on Sessions & Teammate Filtering',
+    summary:
+      'See who ran with you across every Crucible session, filter both Games and Metrics by one or more teammates at once, and inspect your squad’s K/D and equipped weapons right inside your session game log.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Spot who you queued with directly on session cards with compact fireteam badges showing each teammate, shared match count, and your win-loss record together.',
+      },
+      {
+        type: 'feature',
+        text: 'Filter both the Games and Metrics tabs by one or more teammates at once—requiring every selected teammate to be in the match—and jump straight to any teammate’s linked session, even when they swapped Guardians mid-run.',
+      },
+      {
+        type: 'feature',
+        text: 'Review fireteam companions inline on shared match rows with their emblem, K/D, subclass, and equipped weapon icons at a glance, while solo sessions stay completely clean and clutter-free.',
+      },
+    ],
+  },
+  {
     id: '2026-11-26',
     date: 'November 26, 2026',
     title:

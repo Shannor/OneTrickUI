@@ -42,7 +42,7 @@ export function SessionUpdateForm({
         name="name"
         defaultValue={defaultName ?? ''}
         placeholder="Session Name"
-        className="h-auto border-none bg-transparent px-1 py-1 text-2xl font-semibold tracking-tight shadow-none focus-visible:ring-1 focus-visible:ring-ring md:text-3xl"
+        className="h-auto border-none bg-transparent px-1 py-1 font-heading text-2xl font-bold tracking-wide shadow-none focus-visible:ring-1 focus-visible:ring-ring md:text-3xl"
       />
       <Textarea
         name="description"

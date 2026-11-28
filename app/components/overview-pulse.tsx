@@ -20,6 +20,7 @@ import { LoadingButton } from '~/components/loading-button';
 import { StartSessionDialog } from '~/components/start-session-dialog';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
+import { WinLossRecord } from '~/components/win-loss-record';
 import { cn } from '~/lib/utils';
 
 export interface RecentFormStats {
@@ -347,9 +348,12 @@ export function RecentFormPulse({
               {stats.totalMatches}
             </span>
             {(stats.wins > 0 || stats.losses > 0) && (
-              <span className="text-xs font-medium text-muted-foreground sm:text-sm">
-                ({stats.wins}W - {stats.losses}L)
-              </span>
+              <WinLossRecord
+                wins={stats.wins}
+                losses={stats.losses}
+                format="spaced-parens"
+                className="text-xs sm:text-sm"
+              />
             )}
           </div>
         </div>

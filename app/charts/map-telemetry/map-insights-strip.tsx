@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router';
+import { WinLossRecord } from '~/components/win-loss-record';
 import { EVEN_KD_TARGET, type MapTelemetryResult } from '~/lib/metrics';
 import { cn } from '~/lib/utils';
 
@@ -92,9 +93,11 @@ export function MapInsightItem({
       <span className={cn('font-semibold tabular-nums', kdClassName)}>
         {map.kd.toFixed(2)}
       </span>
-      <span className="text-muted-foreground">
-        ({map.wins}-{map.loses})
-      </span>
+      <WinLossRecord
+        wins={map.wins}
+        losses={map.loses}
+        format="numeric-parens"
+      />
       {showSwapLink && map.bestLoadout && loadoutBasePath && (
         <Link
           to={`${loadoutBasePath}/${map.bestLoadout.snapshotId}`}
