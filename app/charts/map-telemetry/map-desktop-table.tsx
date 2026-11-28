@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { Link } from 'react-router';
+import { WinLossRecord } from '~/components/win-loss-record';
 import {
   EVEN_KD_TARGET,
   EVEN_WIN_RATE_PCT,
@@ -185,9 +186,12 @@ export function MapDesktopTable({
                   >
                     {map.winPct}%
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {map.wins}W–{map.loses}L
-                  </span>
+                  <WinLossRecord
+                    wins={map.wins}
+                    losses={map.loses}
+                    format="en-dash"
+                    className="text-xs"
+                  />
                 </div>
               </td>
               <td className="px-3 py-2.5">

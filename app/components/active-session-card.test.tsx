@@ -108,4 +108,49 @@ describe('ActiveSessionCard', () => {
     expect(screen.getByText('(7,135)')).toBeInTheDocument();
     expect(screen.getByText('+225 pts')).toBeInTheDocument();
   });
+
+  it('renders solo active sessions without fireteam chrome and displays compact companion pills when present', () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <ActiveSessionCard session={mockSession} profile={mockProfile} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText('Fireteam')).not.toBeInTheDocument();
+
+    const coPlaySession: Session = {
+      ...mockSession,
+      summary: {
+        totalMatches: 4,
+        companions: [
+          {
+            userId: 'user-tragic',
+            displayName: 'Tragic',
+            sharedMatches: 4,
+            wins: 3,
+            losses: 1,
+            sessions: [
+              {
+                sessionId: 'sess-tragic',
+                characterId: 'char-tragic',
+                class: 'Titan',
+                sharedMatches: 4,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    rerender(
+      <MemoryRouter>
+        <ActiveSessionCard session={coPlaySession} profile={mockProfile} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Fireteam')).toBeInTheDocument();
+    expect(screen.getByText('Tragic')).toBeInTheDocument();
+    expect(screen.getByText('4 matches')).toBeInTheDocument();
+    expect(screen.getByText('3W-1L')).toBeInTheDocument();
+  });
 });

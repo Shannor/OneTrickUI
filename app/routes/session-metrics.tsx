@@ -1,29 +1,58 @@
 import { log } from 'evlog';
 import { ExternalLink } from 'lucide-react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
 import type { Aggregate, CharacterSnapshot } from '~/api';
 import { calculatePercentage, calculateRatio } from '~/calculations/precision';
 import { MapTelemetryPanel } from '~/charts/map-telemetry';
 import { Empty } from '~/components/empty';
+import { EmptyFilteredMatches } from '~/components/session-companions';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
 import {
   useOptionalProfileData,
   useSessionData,
 } from '~/hooks/use-route-loaders';
+import { useSessionOutletCompanionFilter } from '~/hooks/use-session-companion-filter';
 import {
   aggregatesToTelemetryMatches,
   generateMapTelemetry,
   timeWindowToCustom,
 } from '~/lib/metrics';
+import { formatSelectedCompanionNames } from '~/lib/session-companions';
 import { Performance } from '~/organisims/performance';
 
 import type { Route } from './+types/session-metrics';
 
 export function SessionMetrics({ params }: Route.ComponentProps) {
-  const { aggregates, snapshots, session, path } = useSessionData();
+  const { aggregates, snapshots, participants, session, path } =
+    useSessionData();
   const { profile } = useOptionalProfileData() ?? {};
   const { characterId, id } = params;
+
+  const { selectedCompanions, filteredAggregates, clearFilters } =
+    useSessionOutletCompanionFilter({
+      session,
+      aggregates,
+      participants,
+      characterId,
+    });
+
+  const { data, overallItem } = useMemo(() => {
+    if (filteredAggregates.length === 0) {
+      return { data: [], overallItem: undefined };
+    }
+    const groupedBySnapshot = groupAggregates(filteredAggregates, characterId);
+    const loadoutData = getLoadoutData(groupedBySnapshot, characterId);
+    const overallTuple = [['overall', filteredAggregates]] as GroupTuple[];
+    const [overall] = getLoadoutData(
+      overallTuple,
+      characterId,
+      true,
+      snapshots,
+    );
+    return { data: loadoutData, overallItem: overall };
+  }, [filteredAggregates, characterId, snapshots]);
 
   const sessionName = session?.name || 'Session';
   const displayName = profile?.displayName;
@@ -87,34 +116,50 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
     );
   }
 
-  const groupedBySnapshot = groupAggregates(aggregates, characterId);
-  const data = getLoadoutData(groupedBySnapshot, characterId);
-  const overallTuple = [['overall', aggregates]] as GroupTuple[];
-  const [overallItem] = getLoadoutData(
-    overallTuple,
-    characterId,
-    true,
-    snapshots,
-  );
+  const hasTeammateFilter = selectedCompanions.length > 0;
+  const selectedNamesLabel = formatSelectedCompanionNames(selectedCompanions);
+
+  if (hasTeammateFilter && (!overallItem || filteredAggregates.length === 0)) {
+    return (
+      <div className="mt-4">
+        {metaTags}
+        <EmptyFilteredMatches
+          selectedCompanions={selectedCompanions}
+          onClearFilters={clearFilters}
+          context="metrics"
+        />
+      </div>
+    );
+  }
+
+  if (!overallItem) {
+    return null;
+  }
+
   const { stats, matchStats, rawStats, mapData: overallMapData } = overallItem;
   const loadoutBasePath = `/profile/${id}/c/${characterId}/loadouts`;
+  const overallCaption = hasTeammateFilter
+    ? `Stats for ${filteredAggregates.length} ${filteredAggregates.length === 1 ? 'match' : 'matches'} with ${selectedNamesLabel}, including games where no snapshot was found.`
+    : 'Stats for all games including ones where no snapshot was found.';
 
   return (
-    <div className="mt-8 flex flex-col gap-14">
+    <div className="mt-4 flex flex-col gap-14">
       {metaTags}
       <div className="flex flex-col gap-6">
-        <h4 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight">
-          Session Metrics
-        </h4>
-        <h5 className="text-xl font-semibold tracking-tight">Overall</h5>
-        <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-          <Performance stats={stats} className="md:pr-2" />
-          <Performance stats={matchStats} className="md:px-2" />
-          <Performance stats={rawStats} className="md:px-2" />
+        <div className="flex flex-col gap-1 border-b border-border pb-3">
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground sm:text-sm">
+            Session Metrics
+          </span>
+          <h2 className="scroll-m-20 font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Overall
+          </h2>
         </div>
-        <div className="text-sm text-muted-foreground">
-          Stats for all games including ones where no snapshot was found.
+        <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-border/60">
+          <Performance stats={stats} className="md:pr-4" />
+          <Performance stats={matchStats} className="md:px-4" />
+          <Performance stats={rawStats} className="md:pl-4" />
         </div>
+        <div className="text-sm text-muted-foreground">{overallCaption}</div>
         <MapTelemetryPanel
           data={overallMapData}
           title="Session Map Telemetry"
@@ -124,48 +169,57 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
         />
       </div>
 
-      <div className="flex flex-col gap-16">
-        {data?.map(({ snapshotId, stats, mapData, matchStats, rawStats }) => {
-          const snapshot = snapshots[snapshotId];
-          if (!snapshot) {
-            return null;
-          }
-          const weapons = getWeapons(snapshot.loadout);
+      {data.length > 0 && (
+        <div className="flex flex-col gap-12">
+          <h3 className="scroll-m-20 border-b border-border pb-2 font-heading text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            By Loadout
+          </h3>
+          <div className="flex flex-col gap-16">
+            {data.map(
+              ({ snapshotId, stats, mapData, matchStats, rawStats }) => {
+                const snapshot = snapshots[snapshotId];
+                if (!snapshot) {
+                  return null;
+                }
+                const weapons = getWeapons(snapshot.loadout);
 
-          return (
-            <div className="flex flex-col gap-5" key={snapshotId}>
-              <Link
-                to={`${loadoutBasePath}/${snapshotId}`}
-                className="group inline-flex min-h-11 w-full touch-manipulation items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2 text-base font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:w-fit sm:justify-start sm:rounded-md sm:px-2.5 sm:py-1 sm:text-sm"
-              >
-                <span className="truncate group-hover:underline">
-                  {snapshot?.name ?? 'Snapshot'}
-                </span>
-                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary sm:h-3.5 sm:w-3.5" />
-              </Link>
-              <div className="flex flex-row gap-4">
-                {weapons.map((weapon) => (
-                  <WeaponHeader
-                    key={weapon.itemHash}
-                    properties={weapon.details}
-                    onlyIcon
-                  />
-                ))}
-              </div>
-              <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-gray-500">
-                <Performance stats={stats} className="md:pr-2" />
-                <Performance stats={matchStats} className="md:px-2" />
-                <Performance stats={rawStats} className="md:px-2" />
-              </div>
-              <MapTelemetryPanel
-                data={mapData}
-                title="Loadout Map Telemetry"
-                description="Strong vs. swap-candidate maps for this loadout during the session."
-              />
-            </div>
-          );
-        })}
-      </div>
+                return (
+                  <div className="flex flex-col gap-5" key={snapshotId}>
+                    <Link
+                      to={`${loadoutBasePath}/${snapshotId}`}
+                      className="group inline-flex min-h-11 w-full touch-manipulation items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2 text-base font-semibold text-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0 sm:w-fit sm:justify-start sm:rounded-md sm:px-2.5 sm:py-1 sm:text-sm"
+                    >
+                      <span className="truncate group-hover:underline">
+                        {snapshot?.name ?? 'Snapshot'}
+                      </span>
+                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary sm:h-3.5 sm:w-3.5" />
+                    </Link>
+                    <div className="flex flex-row gap-4">
+                      {weapons.map((weapon) => (
+                        <WeaponHeader
+                          key={weapon.itemHash}
+                          properties={weapon.details}
+                          onlyIcon
+                        />
+                      ))}
+                    </div>
+                    <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:divide-x md:divide-border/60">
+                      <Performance stats={stats} className="md:pr-4" />
+                      <Performance stats={matchStats} className="md:px-4" />
+                      <Performance stats={rawStats} className="md:pl-4" />
+                    </div>
+                    <MapTelemetryPanel
+                      data={mapData}
+                      title="Loadout Map Telemetry"
+                      description="Strong vs. swap-candidate maps for this loadout during the session."
+                    />
+                  </div>
+                );
+              },
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

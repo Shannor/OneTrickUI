@@ -1,5 +1,6 @@
 import type { ActivityHistory } from '~/api';
 import { FormattedDate } from '~/components/formatted-date';
+import { formatActivityLabel } from '~/lib/activity-display';
 
 export function ActivityCard({
   activity,
@@ -38,20 +39,12 @@ export function ActivityCard({
   );
 }
 
-const ironBanner = 'iron banner';
-
 function Description({ activity, mode }: { activity: string; mode?: string }) {
-  if (activity.toLowerCase().includes(ironBanner)) {
-    return (
-      <div className="text-sm uppercase tracking-wide text-muted-foreground">
-        {activity}
-      </div>
-    );
-  }
+  const { label, modeLabel } = formatActivityLabel(activity, mode);
   return (
     <div className="text-sm uppercase tracking-wide text-muted-foreground">
-      {activity}
-      {mode && <span>{' - ' + mode}</span>}
+      {label}
+      {modeLabel && <span>{' - ' + modeLabel}</span>}
     </div>
   );
 }

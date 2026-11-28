@@ -336,4 +336,49 @@ describe('effectiveInstanceId & SessionLoadouts compatibility filtering', () => 
       screen.getByText('Merge with Session Loadout B'),
     ).toBeInTheDocument();
   });
+
+  it('excludes hydrated fireteam companion snapshots belonging to other characters', () => {
+    const ownerSnap = makeSnapshot({ id: 'snap-owner', name: 'Owner Loadout' });
+    const companionSnap: CharacterSnapshot = {
+      ...makeSnapshot({
+        id: 'snap-companion',
+        name: 'Companion Titan Loadout',
+      }),
+      userId: 'user-tragic',
+      characterId: 'char-tragic',
+    };
+
+    mockUseSessionData.mockReturnValue({
+      snapshots: {
+        'snap-owner': ownerSnap,
+        'snap-companion': companionSnap,
+      },
+    });
+
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <SessionLoadouts
+            {...({
+              params: {
+                id: 'user-1',
+                characterId: 'char-1',
+                sessionId: 'sess-1',
+              },
+            } as any)}
+          />
+        ),
+      },
+    ]);
+
+    render(<RouterProvider router={router} />);
+
+    expect(
+      screen.getByRole('heading', { name: 'Owner Loadout' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Companion Titan Loadout' }),
+    ).not.toBeInTheDocument();
+  });
 });
