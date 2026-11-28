@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { getAuth } from '~/.server/auth';
 import { evlogMiddleware } from '~/.server/logger';
+import { cloudRunAuthMiddleware } from '~/.server/cloud-run-auth';
 import { prefetchGuardMiddleware } from '~/.server/prefetch-guard';
 import { getUser } from '~/api';
 
@@ -158,6 +159,10 @@ describe('root loader', () => {
 
 describe('root middleware', () => {
   it('runs prefetchGuardMiddleware ahead of evlogMiddleware', () => {
-    expect(middleware).toEqual([prefetchGuardMiddleware, evlogMiddleware]);
+    expect(middleware).toEqual([
+      prefetchGuardMiddleware,
+      cloudRunAuthMiddleware,
+      evlogMiddleware,
+    ]);
   });
 });

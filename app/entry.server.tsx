@@ -10,7 +10,10 @@ import type {
   RouterContextProvider,
 } from 'react-router';
 import { ServerRouter } from 'react-router';
+import { registerCloudRunApiInterceptor } from '~/.server/cloud-run-auth';
 import { getRequestLogger, logServerError } from '~/.server/logger';
+
+registerCloudRunApiInterceptor();
 
 export const streamTimeout = 10_000;
 

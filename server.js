@@ -5,6 +5,7 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { createOriginalHostMiddleware } from './server/original-host.mjs';
 import { createPrefetchGuardMiddleware } from './server/prefetch-guard.mjs';
 
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'production';
@@ -31,6 +32,7 @@ export function createServerApp(build, mode = process.env.NODE_ENV) {
   app.use(express.static('build/client', { maxAge: '1h' }));
   app.use(express.static('public', { maxAge: '1h' }));
 
+  app.use(createOriginalHostMiddleware());
   app.use(createPrefetchGuardMiddleware());
 
   app.all(

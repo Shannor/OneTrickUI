@@ -15,6 +15,7 @@ import {
   useTheme,
 } from 'remix-themes';
 import { getAuth, getCachedUser } from '~/.server/auth';
+import { cloudRunAuthMiddleware } from '~/.server/cloud-run-auth';
 import { evlogMiddleware, getRequestLogger } from '~/.server/logger';
 import { prefetchGuardMiddleware } from '~/.server/prefetch-guard';
 import { themeSessionResolver } from '~/.server/sessions';
@@ -34,6 +35,7 @@ import stylesheet from './app.css?url';
 
 export const middleware: Route.MiddlewareFunction[] = [
   prefetchGuardMiddleware,
+  cloudRunAuthMiddleware,
   evlogMiddleware,
 ];
 
