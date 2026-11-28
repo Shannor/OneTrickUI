@@ -157,4 +157,21 @@ describe('CompDivisionSnapshot & SessionCompTrackingBanner', () => {
       screen.getByText('Competitive score snapshot pending'),
     ).toBeInTheDocument();
   });
+
+  it('renders Relegated badge with red styling instead of amber', () => {
+    render(
+      <SessionCompTrackingBanner
+        compTracking={{
+          enabled: true,
+          start: { divisionName: 'Platinum III', points: 5550 },
+          end: { divisionName: 'Gold I', points: 5400 },
+        }}
+        isPending={false}
+      />,
+    );
+
+    const badge = screen.getByText('Relegated');
+    expect(badge).toHaveClass('text-red-600', 'border-red-500/40');
+    expect(badge).not.toHaveClass('text-amber-600');
+  });
 });

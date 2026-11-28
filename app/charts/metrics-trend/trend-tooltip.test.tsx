@@ -94,6 +94,16 @@ describe('MatchOutcomeDot, TrendTooltipRow, and TrendTooltipContent', () => {
       <TrendTooltipContent
         active
         payload={[{ payload: samplePoint }]}
+        activeMetric="kda"
+      />,
+    );
+    expect(screen.getByText('2.15')).toHaveClass('text-sky-600');
+    expect(screen.getByText('2.15')).not.toHaveClass('text-amber-600');
+
+    rerender(
+      <TrendTooltipContent
+        active
+        payload={[{ payload: samplePoint }]}
         activeMetric="winPct"
       />,
     );

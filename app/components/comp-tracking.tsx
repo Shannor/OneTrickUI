@@ -237,7 +237,7 @@ export function SessionCompTrackingBanner({
         {divisionChange === 'relegated' && (
           <Badge
             variant="outline"
-            className="border-amber-500/40 bg-amber-500/10 px-2 py-0 text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400"
+            className="border-red-500/40 bg-red-500/10 px-2 py-0 text-[10px] font-semibold uppercase tracking-wider text-red-600 dark:text-red-400"
           >
             Relegated
           </Badge>

@@ -164,4 +164,33 @@ describe('SessionOverview', () => {
     expect(screen.getByText('Promoted')).toBeInTheDocument();
     expect(screen.getByText('+225 pts')).toBeInTheDocument();
   });
+
+  it('renders negative win rate label with red styling instead of amber', () => {
+    const lossAggregate = {
+      ...mockAggregate,
+      performance: {
+        'char-1': {
+          playerStats: {
+            kills: { value: 8 },
+            deaths: { value: 14 },
+            assists: { value: 2 },
+            standing: { value: 1 },
+          },
+          weapons: {},
+        },
+      },
+    } as unknown as Aggregate;
+
+    render(
+      <SessionOverview
+        session={mockSession}
+        aggregates={[lossAggregate]}
+        characterId="char-1"
+      />,
+    );
+
+    const negativeLabel = screen.getByText('Negative');
+    expect(negativeLabel).toHaveClass('text-red-600');
+    expect(negativeLabel).not.toHaveClass('text-amber-600');
+  });
 });

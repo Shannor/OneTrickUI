@@ -83,4 +83,19 @@ describe('MapInsightsStrip and MapInsightsCallout', () => {
     );
     expect(screen.getByText('No problem maps flagged.')).toBeInTheDocument();
   });
+
+  it('uses neutral text instead of amber for swap-candidate maps with K/D at or above 1.0', () => {
+    render(
+      <MemoryRouter>
+        <MapInsightsStrip
+          strongMaps={[]}
+          swapMaps={[{ ...swapMap, location: 'Burnout', kd: 1.15 }]}
+        />
+      </MemoryRouter>,
+    );
+
+    const kdLabel = screen.getByText('1.15');
+    expect(kdLabel).toHaveClass('text-foreground');
+    expect(kdLabel).not.toHaveClass('text-amber-600');
+  });
 });

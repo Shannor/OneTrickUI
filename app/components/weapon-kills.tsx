@@ -25,12 +25,16 @@ function getStatMeta(key: StatKeys) {
     case 'uniqueWeaponKillsPrecisionKills':
       return {
         label: 'Accuracy',
-        icon: <Target className="h-3.5 w-3.5 shrink-0 text-blue-400" />,
+        icon: (
+          <Target className="h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
+        ),
       };
     case 'uniqueWeaponPrecisionKills':
       return {
         label: 'Headshots / Precision',
-        icon: <Zap className="h-3.5 w-3.5 shrink-0 text-yellow-400" />,
+        icon: (
+          <Zap className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+        ),
       };
     default:
       return {

@@ -15,6 +15,27 @@ export interface ReleaseNote {
 
 export const CHANGELOG: ReleaseNote[] = [
   {
+    id: '2026-11-28',
+    date: 'November 28, 2026',
+    title: 'Clearer Performance Colors & Consistent Chart Accents',
+    summary:
+      'Refined colors across sessions, metrics, and charts so negative stats stand out immediately in red, Efficiency (KDA) has its own dedicated accent, and yellow stays focused on Exotics and Destiny gear.',
+    changes: [
+      {
+        type: 'improvement',
+        text: 'Read negative performance at a glance—negative win rates, downward trend deltas, and Competitive relegations now display in clear red across Overview, Sessions, and Loadouts.',
+      },
+      {
+        type: 'improvement',
+        text: 'Track Efficiency (KDA) and Assists with a consistent sky-blue accent across performance trend charts and map breakdowns, keeping yellow reserved for Exotic gear, enhanced weapons, Power levels, and Guardian titles.',
+      },
+      {
+        type: 'fix',
+        text: 'Enjoy better readability in dark mode on Loadout Details—class stat radar charts now stay vibrant 1 Trick orange instead of switching to low-contrast blue.',
+      },
+    ],
+  },
+  {
     id: '2026-11-26',
     date: 'November 26, 2026',
     title:

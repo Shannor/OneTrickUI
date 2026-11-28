@@ -96,7 +96,7 @@ export function buildTooltipRows(
         {
           label: 'Your 5-Game Avg',
           value: point.rollingKda.toFixed(2),
-          valueClassName: 'font-bold text-amber-600 dark:text-amber-400',
+          valueClassName: 'font-bold text-sky-600 dark:text-sky-400',
         },
       ];
     case 'winPct':

@@ -178,7 +178,7 @@ export function ChangelogModal({
 
                   {fixes.length > 0 && (
                     <div className="flex flex-col gap-2">
-                      <h4 className="text-lg font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400">
+                      <h4 className="text-lg font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
                         Fixes
                       </h4>
                       <ul className="flex list-disc flex-col gap-2 pl-5 text-sm leading-relaxed text-foreground/90">
