@@ -77,7 +77,7 @@ export function MapInsightItem({
       ? 'text-emerald-600 dark:text-emerald-400'
       : map.kd < EVEN_KD_TARGET
         ? 'text-red-600 dark:text-red-400'
-        : 'text-amber-600 dark:text-amber-400';
+        : 'text-foreground';
 
   const showSwapLink =
     tone === 'swap' &&

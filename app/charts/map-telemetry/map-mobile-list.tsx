@@ -43,7 +43,7 @@ export function MapMobileRow({
             {map.kd.toFixed(2)}
           </span>{' '}
           <span className="text-muted-foreground">K/D ·</span>{' '}
-          <span className="font-semibold text-amber-600 dark:text-amber-400">
+          <span className="font-semibold text-sky-600 dark:text-sky-400">
             {map.kda.toFixed(2)}
           </span>
         </div>

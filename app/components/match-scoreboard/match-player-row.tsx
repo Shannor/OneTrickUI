@@ -157,7 +157,7 @@ function ParticipantSubline({ entry }: ParticipantSublineProps) {
       <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground sm:text-xs">
         <Hourglass
           aria-hidden="true"
-          className="h-3 w-3 shrink-0 text-amber-500"
+          className="h-3 w-3 shrink-0 text-sky-600 dark:text-sky-400"
         />
         <span>
           {participant.characterClass}
@@ -207,7 +207,7 @@ function TrackedTriggerIcon({
   return (
     <Hourglass
       aria-hidden="true"
-      className="h-3.5 w-3.5 shrink-0 text-amber-500"
+      className="h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-400"
     />
   );
 }

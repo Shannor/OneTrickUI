@@ -9,7 +9,7 @@ export function getWinLossColorClass(wins: number, losses: number): string {
   }
   return wins >= losses
     ? 'text-emerald-600 dark:text-emerald-400'
-    : 'text-amber-600 dark:text-amber-400';
+    : 'text-red-600 dark:text-red-400';
 }
 
 export function formatWinLossRecord(

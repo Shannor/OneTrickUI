@@ -61,6 +61,8 @@ describe('MapDesktopTable', () => {
     );
 
     expect(screen.getByText('Eternity')).toBeInTheDocument();
+    expect(screen.getByText('2.94')).toHaveClass('text-sky-600');
+    expect(screen.getByText('2.94')).not.toHaveClass('text-amber-600');
     expect(screen.getByText('Pulse Build')).toBeInTheDocument();
     expect(screen.getByText('Unlinked match')).toBeInTheDocument();
 

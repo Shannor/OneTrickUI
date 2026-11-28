@@ -29,13 +29,22 @@ describe('ChartLegend, ChartLegendItem, and TrendLegend', () => {
   });
 
   it('renders metric-specific legend items in TrendLegend', () => {
-    const { rerender } = render(<TrendLegend activeMetric="kd" />);
+    const { container, rerender } = render(<TrendLegend activeMetric="kd" />);
     expect(screen.getByText('Match K/D (Win / Loss)')).toBeInTheDocument();
     expect(screen.getByText('1.00 Even K/D')).toBeInTheDocument();
+
+    rerender(<TrendLegend activeMetric="kda" />);
+    expect(
+      screen.getByText('Match Efficiency (Win / Loss)'),
+    ).toBeInTheDocument();
+    expect(container.querySelector('.bg-sky-500')).toBeInTheDocument();
+    expect(container.querySelector('.bg-amber-400')).not.toBeInTheDocument();
 
     rerender(<TrendLegend activeMetric="combat" />);
     expect(screen.getByText('5-Game Avg Kills')).toBeInTheDocument();
     expect(screen.getByText('5-Game Avg Assists')).toBeInTheDocument();
     expect(screen.getByText('5-Game Avg Deaths')).toBeInTheDocument();
+    expect(container.querySelector('.bg-sky-500')).toBeInTheDocument();
+    expect(container.querySelector('.bg-amber-400')).not.toBeInTheDocument();
   });
 });

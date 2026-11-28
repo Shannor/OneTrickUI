@@ -86,7 +86,7 @@ export function ActiveMemberSession({
               'text-[11px] font-medium',
               bulkOutcome === 'started'
                 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+                : 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300',
             )}
           >
             {bulkOutcome === 'started'

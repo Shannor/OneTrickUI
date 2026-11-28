@@ -20,10 +20,8 @@ describe('getWinLossColorClass', () => {
     );
   });
 
-  it('returns amber classes for negative records', () => {
-    expect(getWinLossColorClass(2, 3)).toBe(
-      'text-amber-600 dark:text-amber-400',
-    );
+  it('returns red classes for negative records', () => {
+    expect(getWinLossColorClass(2, 3)).toBe('text-red-600 dark:text-red-400');
   });
 
   it('returns muted class when both wins and losses are zero', () => {
@@ -48,10 +46,10 @@ describe('WinLossRecord', () => {
     expect(el).toHaveClass('text-emerald-600', 'dark:text-emerald-400');
   });
 
-  it('renders negative record with amber classes', () => {
+  it('renders negative record with red classes', () => {
     render(<WinLossRecord wins={2} losses={3} format="spaced-parens" />);
     const el = screen.getByText('(2W - 3L)');
-    expect(el).toHaveClass('text-amber-600', 'dark:text-amber-400');
+    expect(el).toHaveClass('text-red-600', 'dark:text-red-400');
   });
 
   it('renders 0-0 record with muted styling and merges custom className', () => {

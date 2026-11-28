@@ -530,7 +530,7 @@ export async function generateSessionOgPng({
                 style={{
                   fontFamily: 'Iceland',
                   fontSize: '56px',
-                  color: winRate >= 50 ? '#34d399' : '#fbbf24',
+                  color: winRate >= 50 ? '#34d399' : '#f87171',
                   lineHeight: 1,
                 }}
               >
@@ -602,7 +602,7 @@ export async function generateSessionOgPng({
                 style={{
                   fontFamily: 'Iceland',
                   fontSize: '56px',
-                  color: '#f97316',
+                  color: '#38bdf8',
                   lineHeight: 1,
                 }}
               >

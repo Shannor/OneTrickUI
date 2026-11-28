@@ -91,6 +91,8 @@ describe('TrendKpiTabs', () => {
     expect(screen.getByText('1.50')).toBeInTheDocument();
     expect(screen.getByText('+0.2')).toBeInTheDocument();
     expect(screen.getByText('6W–4L (+10%)')).toBeInTheDocument();
+    expect(screen.getByText('2.00')).toHaveClass('text-sky-600');
+    expect(screen.getByText('2.00')).not.toHaveClass('text-amber-600');
 
     fireEvent.click(screen.getByRole('tab', { name: /Efficiency/i }));
     expect(onSelectMetric).toHaveBeenCalledWith('kda');

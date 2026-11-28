@@ -80,7 +80,7 @@ export const TREND_LEGEND_ITEMS: Record<
     { swatch: 'outcome-dots', label: 'Match Efficiency (Win / Loss)' },
     {
       swatch: 'solid',
-      colorClassName: 'bg-amber-400',
+      colorClassName: 'bg-sky-500 dark:bg-sky-400',
       label: 'Your 5-Game Avg',
     },
     {
@@ -110,7 +110,7 @@ export const TREND_LEGEND_ITEMS: Record<
     },
     {
       swatch: 'solid',
-      colorClassName: 'bg-amber-400',
+      colorClassName: 'bg-sky-500 dark:bg-sky-400',
       label: '5-Game Avg Assists',
     },
     {

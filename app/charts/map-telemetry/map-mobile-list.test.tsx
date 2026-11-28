@@ -43,6 +43,8 @@ describe('MapMobileList', () => {
     expect(screen.getByText('Eternity')).toBeInTheDocument();
     expect(screen.getByText('Strong')).toBeInTheDocument();
     expect(screen.getByText('2.06')).toBeInTheDocument();
+    expect(screen.getByText('2.94')).toHaveClass('text-sky-600');
+    expect(screen.getByText('2.94')).not.toHaveClass('text-amber-600');
     expect(screen.getByRole('link', { name: 'Pulse Build' })).toHaveAttribute(
       'href',
       '/profile/u1/c/c1/loadouts/snap-1',

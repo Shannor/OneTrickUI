@@ -56,10 +56,11 @@ export function buildKpiItems(
       primaryValue: summary.kda.toFixed(2),
       subText: kdaDeltaText,
       subPositive: (summary.kdaDelta ?? 0) >= 0,
-      valueClassName: 'text-amber-600 dark:text-amber-400',
-      activeBorderClassName: 'border-b-amber-400 md:bg-amber-400/[0.04]',
+      valueClassName: 'text-sky-600 dark:text-sky-400',
+      activeBorderClassName:
+        'border-b-sky-500 md:bg-sky-500/[0.04] dark:border-b-sky-400 dark:md:bg-sky-400/[0.04]',
       sparkValues: sparkSource.map((p) => p.rollingKda),
-      sparkColor: '#eab308',
+      sparkColor: 'var(--chart-secondary)',
     },
     {
       key: 'winPct',

@@ -209,7 +209,7 @@ export function MapDesktopTable({
                   </span>
                 </div>
               </td>
-              <td className="px-3 py-2.5 font-bold text-amber-600 dark:text-amber-400">
+              <td className="px-3 py-2.5 font-bold text-sky-600 dark:text-sky-400">
                 {map.kda.toFixed(2)}
               </td>
               <td className="px-5 py-2.5 text-xs">

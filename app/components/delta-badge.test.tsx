@@ -9,8 +9,8 @@ describe('getDeltaColorClass', () => {
     expect(getDeltaColorClass(10)).toBe('text-emerald-600 dark:text-emerald-400');
   });
 
-  it('returns amber color class for negative delta', () => {
-    expect(getDeltaColorClass(-5)).toBe('text-amber-600 dark:text-amber-400');
+  it('returns red color class for negative delta', () => {
+    expect(getDeltaColorClass(-5)).toBe('text-red-600 dark:text-red-400');
   });
 
   it('returns muted foreground class for zero delta', () => {
@@ -27,11 +27,11 @@ describe('DeltaBadge', () => {
     expect(container.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('renders negative delta with amber styling and downward trend icon', () => {
+  it('renders negative delta with red styling and downward trend icon', () => {
     const { container } = render(<DeltaBadge delta={-120} label="-120 pts" />);
 
     expect(screen.getByText('-120 pts')).toBeInTheDocument();
-    expect(container.firstChild).toHaveClass('text-amber-600');
+    expect(container.firstChild).toHaveClass('text-red-600');
     expect(container.querySelector('svg')).toBeInTheDocument();
   });
 
