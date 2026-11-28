@@ -45,7 +45,7 @@ export function SessionCardCompanions({
       <span
         className={cn(
           'flex items-center gap-1.5 font-semibold uppercase tracking-wider text-muted-foreground',
-          compact ? 'text-[11px]' : 'text-xs lg:text-sm',
+          compact ? 'text-xs' : 'text-xs lg:text-sm',
         )}
       >
         <Users
@@ -75,7 +75,7 @@ export function SessionCardCompanions({
             className={cn(
               'inline-flex shrink-0 items-center rounded-full border border-border/60 bg-muted/40 font-semibold text-muted-foreground',
               compact
-                ? 'px-2 py-0.5 text-[11px]'
+                ? 'px-2 py-0.5 text-xs'
                 : 'px-2.5 py-1 text-xs md:text-sm',
             )}
           >
@@ -107,7 +107,7 @@ function SessionCardCompanionItem({
       className={cn(
         'inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 text-foreground',
         compact
-          ? 'px-2 py-0.5 text-[11px]'
+          ? 'px-2 py-0.5 text-xs'
           : 'px-2.5 py-1 text-xs md:px-3 md:text-sm',
       )}
     >

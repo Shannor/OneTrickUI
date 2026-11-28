@@ -8,7 +8,7 @@ import type {
   SessionParticipant,
   StatsValuePair,
 } from '~/api';
-import { calculateRatio } from '~/calculations/precision';
+import { computePlayerCombatStats } from '~/calculations/precision';
 import { getWeapons } from '~/hooks/use-loadout';
 import { getSnapshotSubclassPreview } from '~/lib/match-scoreboard';
 import { getItemIconUrl, setBungieUrl } from '~/lib/utils';
@@ -124,24 +124,7 @@ export function isCompanionInAggregate(
 
   const ownerStats = aggregate.performance?.[ownerCharacterId]?.playerStats;
   const companionStats = companionPerf?.playerStats;
-  if (!ownerStats || !companionStats) {
-    return true;
-  }
-
-  const hasFireteamIds =
-    getStatNumber(ownerStats.fireTeamId) !== undefined &&
-    getStatNumber(companionStats.fireTeamId) !== undefined;
-  if (hasFireteamIds) {
-    return areFireteamCompanions(ownerStats, companionStats);
-  }
-
-  const ownerTeam = getStatNumber(ownerStats.team);
-  const companionTeam = getStatNumber(companionStats.team);
-  if (ownerTeam !== undefined && companionTeam !== undefined) {
-    return ownerTeam >= 0 && companionTeam >= 0 && ownerTeam === companionTeam;
-  }
-
-  return true;
+  return areFireteamCompanions(ownerStats, companionStats);
 }
 
 function compareCompanions(a: SessionCompanion, b: SessionCompanion): number {
@@ -445,11 +428,13 @@ export function getMatchCompanions(
     const perf = aggregate.performance?.[charId];
     const stats = perf?.playerStats;
     const hasPerformance = Boolean(stats);
-    const kills = getStatNumber(stats?.kills) ?? 0;
-    const deaths = getStatNumber(stats?.deaths) ?? 0;
-    const assists = getStatNumber(stats?.assists) ?? 0;
-    const kd = calculateRatio(kills, deaths);
-    const kda = calculateRatio(kills + assists, deaths);
+    const {
+      kills,
+      deaths,
+      assists,
+      kd,
+      efficiency: kda,
+    } = computePlayerCombatStats(stats);
 
     const snapshot =
       link?.snapshotId && snapshots ? snapshots[link.snapshotId] : undefined;

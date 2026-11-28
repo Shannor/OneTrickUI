@@ -13,7 +13,7 @@ import {
   useOptionalProfileData,
   useSessionData,
 } from '~/hooks/use-route-loaders';
-import { useSessionCompanionFilter } from '~/hooks/use-session-companion-filter';
+import { useSessionOutletCompanionFilter } from '~/hooks/use-session-companion-filter';
 import {
   aggregatesToTelemetryMatches,
   generateMapTelemetry,
@@ -31,7 +31,7 @@ export function SessionMetrics({ params }: Route.ComponentProps) {
   const { characterId, id } = params;
 
   const { selectedCompanions, filteredAggregates, clearFilters } =
-    useSessionCompanionFilter({
+    useSessionOutletCompanionFilter({
       session,
       aggregates,
       participants,

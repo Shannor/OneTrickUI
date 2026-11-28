@@ -282,7 +282,7 @@ describe('session-companions domain helpers', () => {
     ).toBe(false);
   });
 
-  it('excludes private matches and opposing-team tracked players in isCompanionInAggregate', () => {
+  it('excludes private matches, opposing teams, and missing fireTeamId/playerStats in isCompanionInAggregate', () => {
     const privateAgg = makeAggregate('priv', {
       isPrivate: true,
       companions: [
@@ -307,6 +307,44 @@ describe('session-companions domain helpers', () => {
     });
     expect(
       isCompanionInAggregate(opponentAgg, 'char-owner', 'char-tragic'),
+    ).toBe(false);
+
+    const missingStatsAgg = makeAggregate('no-stats', {
+      ownerStats: makeStats({ fireTeamId: 12345, standing: 0, team: 17 }),
+      companions: [{ charId: 'char-tragic' }],
+    });
+    expect(
+      isCompanionInAggregate(missingStatsAgg, 'char-owner', 'char-tragic'),
+    ).toBe(false);
+
+    const sameTeamNoFireteamAgg = makeAggregate('same-team-solo', {
+      ownerStats: makeStats({ standing: 0, team: 17 }),
+      companions: [
+        {
+          charId: 'char-tragic',
+          stats: makeStats({ standing: 0, team: 17 }),
+        },
+      ],
+    });
+    expect(
+      isCompanionInAggregate(
+        sameTeamNoFireteamAgg,
+        'char-owner',
+        'char-tragic',
+      ),
+    ).toBe(false);
+
+    const ffaNoFireteamAgg = makeAggregate('ffa-solo', {
+      ownerStats: makeStats({ standing: 0 }),
+      companions: [
+        {
+          charId: 'char-tragic',
+          stats: makeStats({ standing: 1 }),
+        },
+      ],
+    });
+    expect(
+      isCompanionInAggregate(ffaNoFireteamAgg, 'char-owner', 'char-tragic'),
     ).toBe(false);
   });
 
@@ -721,7 +759,7 @@ describe('session-companions domain helpers', () => {
 
   it('does not count a phantom loss when owner standing is missing on an aggregate', () => {
     const partialAggregate = {
-      id: 'agg-missing-owner-perf',
+      id: 'agg-missing-owner-standing',
       activityDetails: { instanceId: 'inst-1', isPrivate: false },
       snapshotLinks: {
         'char-tragic': {
@@ -729,7 +767,20 @@ describe('session-companions domain helpers', () => {
           displayName: 'Tragic',
         },
       },
-      performance: {},
+      performance: {
+        'char-owner': {
+          playerStats: {
+            fireTeamId: { value: 555 },
+            team: { value: 17 },
+          },
+        },
+        'char-tragic': {
+          playerStats: {
+            fireTeamId: { value: 555 },
+            team: { value: 17 },
+          },
+        },
+      },
     } as unknown as Aggregate;
 
     const participants: Record<string, SessionParticipant> = {

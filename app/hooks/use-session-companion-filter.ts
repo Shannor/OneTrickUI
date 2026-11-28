@@ -1,11 +1,15 @@
 import { useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router';
-import type { Aggregate, Session, SessionParticipant } from '~/api';
+import { useOutletContext, useSearchParams } from 'react-router';
+import type {
+  Aggregate,
+  Session,
+  SessionCompanion,
+  SessionParticipant,
+} from '~/api';
 import {
   TEAMMATE_QUERY_PARAM,
   filterAggregatesByCompanions,
   parseSelectedTeammateIds,
-  resolveSelectedCompanions,
   resolveSessionCompanions,
 } from '~/lib/session-companions';
 
@@ -14,6 +18,17 @@ export interface UseSessionCompanionFilterOptions {
   aggregates?: Aggregate[];
   participants?: Record<string, SessionParticipant>;
   characterId: string;
+  enabled?: boolean;
+}
+
+export interface SessionCompanionFilterState {
+  companions: SessionCompanion[];
+  selectedUserIds: string[];
+  selectedCompanions: SessionCompanion[];
+  filteredAggregates: Aggregate[];
+  teammateSearch: string;
+  toggleCompanion: (userId: string) => void;
+  clearFilters: () => void;
 }
 
 export function useSessionCompanionFilter({
@@ -21,27 +36,40 @@ export function useSessionCompanionFilter({
   aggregates,
   participants,
   characterId,
-}: UseSessionCompanionFilterOptions) {
+  enabled = true,
+}: UseSessionCompanionFilterOptions): SessionCompanionFilterState {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const companions = useMemo(
     () =>
-      resolveSessionCompanions(session, aggregates, participants, characterId),
-    [session, aggregates, participants, characterId],
+      enabled
+        ? resolveSessionCompanions(
+            session,
+            aggregates,
+            participants,
+            characterId,
+          )
+        : [],
+    [enabled, session, aggregates, participants, characterId],
   );
 
   const selectedUserIds = useMemo(
-    () => parseSelectedTeammateIds(searchParams, companions),
-    [searchParams, companions],
+    () => (enabled ? parseSelectedTeammateIds(searchParams, companions) : []),
+    [enabled, searchParams, companions],
   );
 
-  const selectedCompanions = useMemo(
-    () => resolveSelectedCompanions(searchParams, companions),
-    [searchParams, companions],
-  );
+  const selectedCompanions = useMemo(() => {
+    if (!enabled || selectedUserIds.length === 0) {
+      return [];
+    }
+    const byUserId = new Map(companions.map((c) => [c.userId, c]));
+    return selectedUserIds
+      .map((userId) => byUserId.get(userId))
+      .filter((c): c is SessionCompanion => Boolean(c));
+  }, [enabled, selectedUserIds, companions]);
 
   const filteredAggregates = useMemo(() => {
-    if (!aggregates || aggregates.length === 0) {
+    if (!enabled || !aggregates || aggregates.length === 0) {
       return [];
     }
     return filterAggregatesByCompanions(
@@ -50,7 +78,7 @@ export function useSessionCompanionFilter({
       selectedCompanions,
       participants,
     );
-  }, [aggregates, characterId, selectedCompanions, participants]);
+  }, [enabled, aggregates, characterId, selectedCompanions, participants]);
 
   const toggleCompanion = useCallback(
     (userId: string) => {
@@ -82,7 +110,7 @@ export function useSessionCompanionFilter({
   }, [searchParams, setSearchParams]);
 
   const teammateSearch = useMemo(() => {
-    if (selectedUserIds.length === 0) {
+    if (!enabled || selectedUserIds.length === 0) {
       return '';
     }
     const params = new URLSearchParams();
@@ -90,15 +118,37 @@ export function useSessionCompanionFilter({
       params.append(TEAMMATE_QUERY_PARAM, id);
     }
     return `?${params.toString()}`;
-  }, [selectedUserIds]);
+  }, [enabled, selectedUserIds]);
 
-  return {
-    companions,
-    selectedUserIds,
-    selectedCompanions,
-    filteredAggregates,
-    teammateSearch,
-    toggleCompanion,
-    clearFilters,
-  };
+  return useMemo(
+    () => ({
+      companions,
+      selectedUserIds,
+      selectedCompanions,
+      filteredAggregates,
+      teammateSearch,
+      toggleCompanion,
+      clearFilters,
+    }),
+    [
+      companions,
+      selectedUserIds,
+      selectedCompanions,
+      filteredAggregates,
+      teammateSearch,
+      toggleCompanion,
+      clearFilters,
+    ],
+  );
+}
+
+export function useSessionOutletCompanionFilter(
+  options: Omit<UseSessionCompanionFilterOptions, 'enabled'>,
+): SessionCompanionFilterState {
+  const outletContext = useOutletContext<SessionCompanionFilterState | null>();
+  const fallback = useSessionCompanionFilter({
+    ...options,
+    enabled: !outletContext,
+  });
+  return outletContext ?? fallback;
 }

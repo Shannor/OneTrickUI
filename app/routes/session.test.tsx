@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom';
 import { act, render, screen } from '@testing-library/react';
 import { type ComponentProps, useState } from 'react';
-import { RouterProvider, createMemoryRouter } from 'react-router';
+import {
+  RouterProvider,
+  type ShouldRevalidateFunctionArgs,
+  createMemoryRouter,
+} from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import {
@@ -9,7 +13,10 @@ import {
   subscribeToDocument,
 } from '~/lib/firebaseConfig';
 
-import Session, { SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS } from './session';
+import Session, {
+  SESSION_SNAPSHOT_REVALIDATE_DEBOUNCE_MS,
+  shouldRevalidate,
+} from './session';
 
 const mockRevalidate = vi.fn().mockResolvedValue(undefined);
 let mockRevalidatorState: 'idle' | 'loading' = 'idle';
@@ -1133,5 +1140,83 @@ describe('Session Page Route Component', () => {
     expect(
       screen.queryByRole('region', { name: /fireteam companions/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('Session route shouldRevalidate', () => {
+  const baseArgs = (
+    overrides: Partial<ShouldRevalidateFunctionArgs>,
+  ): ShouldRevalidateFunctionArgs =>
+    ({
+      currentParams: { sessionId: 'sess-1', id: 'u1', characterId: 'c1' },
+      nextParams: { sessionId: 'sess-1', id: 'u1', characterId: 'c1' },
+      currentUrl: new URL(
+        'https://d2onetrick.com/profile/u1/c/c1/sessions/sess-1',
+      ),
+      nextUrl: new URL(
+        'https://d2onetrick.com/profile/u1/c/c1/sessions/sess-1',
+      ),
+      formMethod: undefined,
+      defaultShouldRevalidate: true,
+      ...overrides,
+    }) as ShouldRevalidateFunctionArgs;
+
+  it('skips server revalidation when toggling ?teammate= search params or switching sub-tabs', () => {
+    expect(
+      shouldRevalidate(
+        baseArgs({
+          nextUrl: new URL(
+            'https://d2onetrick.com/profile/u1/c/c1/sessions/sess-1?teammate=user-a',
+          ),
+        }),
+      ),
+    ).toBe(false);
+
+    expect(
+      shouldRevalidate(
+        baseArgs({
+          currentUrl: new URL(
+            'https://d2onetrick.com/profile/u1/c/c1/sessions/sess-1/metrics?teammate=user-a',
+          ),
+          nextUrl: new URL(
+            'https://d2onetrick.com/profile/u1/c/c1/sessions/sess-1/loadouts',
+          ),
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it('revalidates on cross-session navigation, non-GET mutations, and same-URL revalidator ticks', () => {
+    expect(
+      shouldRevalidate(
+        baseArgs({
+          nextParams: { sessionId: 'sess-2', id: 'u1', characterId: 'c1' },
+          nextUrl: new URL(
+            'https://d2onetrick.com/profile/u1/c/c1/sessions/sess-2',
+          ),
+          defaultShouldRevalidate: false,
+        }),
+      ),
+    ).toBe(true);
+
+    expect(
+      shouldRevalidate(
+        baseArgs({
+          formMethod: 'POST',
+          nextUrl: new URL(
+            'https://d2onetrick.com/profile/u1/c/c1/sessions/sess-1?teammate=user-a',
+          ),
+          defaultShouldRevalidate: true,
+        }),
+      ),
+    ).toBe(true);
+
+    expect(
+      shouldRevalidate(
+        baseArgs({
+          defaultShouldRevalidate: true,
+        }),
+      ),
+    ).toBe(true);
   });
 });

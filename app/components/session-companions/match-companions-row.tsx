@@ -88,7 +88,7 @@ function MatchCompanionItem({ companion }: { companion: MatchCompanion }) {
                 <span className="font-heading text-sm font-bold text-foreground">
                   {companion.kd.toFixed(2)}
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   K/D
                 </span>
               </button>
@@ -140,7 +140,7 @@ function MatchCompanionName({
       >
         <span className="truncate sm:max-w-[180px]">{displayName}</span>
         {characterClass && (
-          <span className="shrink-0 text-[11px] font-normal text-muted-foreground">
+          <span className="shrink-0 text-xs font-normal text-muted-foreground">
             {characterClass}
           </span>
         )}
@@ -153,7 +153,7 @@ function MatchCompanionName({
     <span className="inline-flex min-w-0 items-center gap-1.5 font-semibold text-foreground">
       <span className="truncate sm:max-w-[180px]">{displayName}</span>
       {characterClass && (
-        <span className="shrink-0 text-[11px] font-normal text-muted-foreground">
+        <span className="shrink-0 text-xs font-normal text-muted-foreground">
           {characterClass}
         </span>
       )}

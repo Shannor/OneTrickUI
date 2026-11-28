@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import type { Aggregate } from '~/api';
 
@@ -43,38 +44,51 @@ describe('hasMatchLoadoutConfidence', () => {
 });
 
 describe('SessionMatchCard', () => {
-  it('renders Victory card with stats, composed children slot, and triggers onSelect on click', () => {
+  it('renders Victory card with native game details link, composed slot, and card click handler', () => {
     const onSelect = vi.fn();
 
     render(
-      <SessionMatchCard
-        aggregate={makeAggregate(0)}
-        characterId="char-1"
-        onSelect={onSelect}
-      >
-        <div>Fireteam Companion Slot</div>
-      </SessionMatchCard>,
+      <MemoryRouter>
+        <SessionMatchCard
+          aggregate={makeAggregate(0)}
+          characterId="char-1"
+          activityPath="/profile/u-1/c/char-1/sessions/s-1/activities/inst-1"
+          onSelect={onSelect}
+        >
+          <div>Fireteam Companion Slot</div>
+        </SessionMatchCard>
+      </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole('heading', { name: 'Burnout' }),
-    ).toBeInTheDocument();
+    const heading = screen.getByRole('heading', { name: 'Burnout' });
+    expect(heading).toBeInTheDocument();
     expect(screen.getAllByText('VICTORY').length).toBeGreaterThan(0);
     expect(screen.getByText('2.00')).toBeInTheDocument();
     expect(screen.getByText('2.67')).toBeInTheDocument();
     expect(screen.getByText('Fireteam Companion Slot')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'View Game Details' }));
+    const detailsLink = screen.getByRole('link', { name: 'View Game Details' });
+    expect(detailsLink).toHaveAttribute(
+      'href',
+      '/profile/u-1/c/char-1/sessions/s-1/activities/inst-1',
+    );
+    fireEvent.click(detailsLink);
+    expect(onSelect).not.toHaveBeenCalled();
+
+    fireEvent.click(heading);
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
   it('renders Defeat banner when standing is non-zero', () => {
     render(
-      <SessionMatchCard
-        aggregate={makeAggregate(1)}
-        characterId="char-1"
-        onSelect={vi.fn()}
-      />,
+      <MemoryRouter>
+        <SessionMatchCard
+          aggregate={makeAggregate(1)}
+          characterId="char-1"
+          activityPath="/profile/u-1/c/char-1/activities/inst-1"
+          onSelect={vi.fn()}
+        />
+      </MemoryRouter>,
     );
 
     expect(screen.getAllByText('DEFEAT').length).toBeGreaterThan(0);

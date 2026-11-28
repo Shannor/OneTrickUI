@@ -1,7 +1,13 @@
 import { log } from 'evlog';
 import { Info } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
+import {
+  NavLink,
+  Outlet,
+  type ShouldRevalidateFunctionArgs,
+  useLocation,
+  useRevalidator,
+} from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
@@ -74,6 +80,26 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   };
 }
 
+export function shouldRevalidate({
+  currentParams,
+  nextParams,
+  currentUrl,
+  nextUrl,
+  formMethod,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+  if (formMethod && formMethod !== 'GET') {
+    return defaultShouldRevalidate;
+  }
+  if (currentParams.sessionId !== nextParams.sessionId) {
+    return true;
+  }
+  if (currentUrl.href === nextUrl.href) {
+    return defaultShouldRevalidate;
+  }
+  return false;
+}
+
 type ISession = Awaited<ReturnType<typeof getSession>>;
 
 type FirestoreSessionData = NonNullable<ISession['data']> & {
@@ -105,6 +131,12 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
 
   const showCompanionsBar = currentTab === 'games' || currentTab === 'metrics';
 
+  const companionFilter = useSessionCompanionFilter({
+    session,
+    aggregates,
+    participants,
+    characterId,
+  });
   const {
     companions,
     selectedUserIds,
@@ -112,12 +144,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
     teammateSearch,
     toggleCompanion: handleToggleCompanion,
     clearFilters: handleClearFilters,
-  } = useSessionCompanionFilter({
-    session,
-    aggregates,
-    participants,
-    characterId,
-  });
+  } = companionFilter;
 
   const sessionRef = useRef(session);
   useEffect(() => {
@@ -335,7 +362,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           />
         ) : (
           <div className="flex w-full flex-col gap-2">
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            <h2 className="font-heading text-2xl font-bold tracking-wide md:text-3xl">
               {session.name ?? ''}
             </h2>
             {session.description && (
@@ -405,7 +432,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           isSwitchingTab && 'opacity-60',
         )}
       >
-        <Outlet />
+        <Outlet context={companionFilter} />
       </div>
     </div>
   );

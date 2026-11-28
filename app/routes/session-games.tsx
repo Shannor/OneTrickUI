@@ -15,7 +15,7 @@ import {
   useOptionalProfileData,
   useSessionData,
 } from '~/hooks/use-route-loaders';
-import { useSessionCompanionFilter } from '~/hooks/use-session-companion-filter';
+import { useSessionOutletCompanionFilter } from '~/hooks/use-session-companion-filter';
 import { getMatchCompanions } from '~/lib/session-companions';
 
 import type { Route } from './+types/session-games';
@@ -29,7 +29,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
   const navigate = useNavigate();
 
   const { selectedCompanions, filteredAggregates, clearFilters } =
-    useSessionCompanionFilter({
+    useSessionOutletCompanionFilter({
       session,
       aggregates,
       participants,
@@ -176,6 +176,7 @@ export function SessionGames({ params }: Route.ComponentProps) {
                 <SessionMatchCard
                   aggregate={aggregate}
                   characterId={characterId}
+                  activityPath={activityPath}
                   onSelect={() => navigate(activityPath)}
                 >
                   <MatchCompanionsRow companions={matchCompanions} />

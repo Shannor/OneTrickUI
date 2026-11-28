@@ -1,10 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { MemoryRouter, Outlet, Route, Routes } from 'react-router';
+import { describe, expect, it, vi } from 'vitest';
 import type { Aggregate, Session, SessionParticipant } from '~/api';
 
-import { useSessionCompanionFilter } from './use-session-companion-filter';
+import {
+  type SessionCompanionFilterState,
+  useSessionCompanionFilter,
+  useSessionOutletCompanionFilter,
+} from './use-session-companion-filter';
 
 function createWrapper(initialEntries: string[]) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -157,5 +161,42 @@ describe('useSessionCompanionFilter', () => {
       'm2',
       'm3',
     ]);
+  });
+
+  it('prefers parent Outlet context when mounted inside Session layout', () => {
+    const sharedState: SessionCompanionFilterState = {
+      companions: mockSession.summary?.companions ?? [],
+      selectedUserIds: ['user-a'],
+      selectedCompanions: [mockSession.summary!.companions![0]],
+      filteredAggregates: [mockAggregates[0]],
+      teammateSearch: '?teammate=user-a',
+      toggleCompanion: vi.fn(),
+      clearFilters: vi.fn(),
+    };
+
+    function OutletWrapper({ children }: { children: ReactNode }) {
+      return (
+        <MemoryRouter initialEntries={['/sessions/sess-1']}>
+          <Routes>
+            <Route element={<Outlet context={sharedState} />}>
+              <Route path="/sessions/sess-1" element={children} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      );
+    }
+
+    const { result } = renderHook(
+      () =>
+        useSessionOutletCompanionFilter({
+          session: mockSession,
+          aggregates: mockAggregates,
+          participants: mockParticipants,
+          characterId: 'char-owner',
+        }),
+      { wrapper: OutletWrapper },
+    );
+
+    expect(result.current).toBe(sharedState);
   });
 });

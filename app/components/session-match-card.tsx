@@ -2,7 +2,7 @@ import { ArrowRight, ExternalLink } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { Aggregate, CharacterSnapshot } from '~/api';
-import { calculateRatio } from '~/calculations/precision';
+import { computePlayerCombatStats } from '~/calculations/precision';
 import { FormattedDate } from '~/components/formatted-date';
 import { HorizontalBanner } from '~/components/horizontal-banner';
 import { Button } from '~/components/ui/button';
@@ -10,6 +10,7 @@ import { Card, CardContent } from '~/components/ui/card';
 import VerticalBanner from '~/components/vertical-banner';
 import { WeaponHeader } from '~/components/weapon-header';
 import { getWeapons } from '~/hooks/use-loadout';
+import { formatActivityLabel } from '~/lib/activity-display';
 import { cn } from '~/lib/utils';
 import { Performance, type StatItem } from '~/organisims/performance';
 
@@ -63,6 +64,7 @@ export function SessionMatchLoadoutHeader({
 export interface SessionMatchCardProps {
   aggregate: Aggregate;
   characterId: string;
+  activityPath: string;
   onSelect: () => void;
   children?: ReactNode;
 }
@@ -70,21 +72,24 @@ export interface SessionMatchCardProps {
 export function SessionMatchCard({
   aggregate,
   characterId,
+  activityPath,
   onSelect,
   children,
 }: SessionMatchCardProps) {
   const { activityDetails, performance: performances } = aggregate;
   const performance = performances[characterId];
   const won = performance?.playerStats?.standing?.value === 0;
+  const { label: activityLabel, modeLabel } = formatActivityLabel(
+    activityDetails.activity,
+    activityDetails.mode,
+  );
 
   const stats: StatItem[] = [];
   const kdStats: StatItem[] = [];
   if (performance) {
-    const kills = performance.playerStats.kills?.value ?? 0;
-    const assists = performance.playerStats.assists?.value ?? 0;
-    const deaths = performance.playerStats.deaths?.value ?? 0;
-    const kd = calculateRatio(kills, deaths);
-    const kda = calculateRatio(kills + assists, deaths);
+    const { kills, assists, deaths, kd, efficiency } = computePlayerCombatStats(
+      performance.playerStats,
+    );
     stats.push(
       { label: 'Kills', value: kills.toString() },
       { label: 'Assists', value: assists.toString() },
@@ -92,7 +97,7 @@ export function SessionMatchCard({
     );
     kdStats.push(
       { label: 'K/D', value: kd.toFixed(2) },
-      { label: 'Efficiency', value: kda.toFixed(2) },
+      { label: 'Efficiency', value: efficiency.toFixed(2) },
     );
   }
 
@@ -147,10 +152,10 @@ export function SessionMatchCard({
                 alt="activity image"
               />
               <div className="flex min-w-0 flex-col gap-0.5">
-                <MatchActivityDescription
-                  activity={activityDetails.activity}
-                  mode={activityDetails.mode}
-                />
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {activityLabel}
+                  {modeLabel && <span>{' - ' + modeLabel}</span>}
+                </div>
                 <h3 className="truncate font-heading text-lg font-bold tracking-wide text-foreground transition-colors group-hover:text-primary sm:text-xl lg:text-2xl">
                   {activityDetails.location}
                 </h3>
@@ -174,59 +179,22 @@ export function SessionMatchCard({
 
         <div className="flex w-full items-center justify-end">
           <Button
-            type="button"
+            asChild
             variant="ghost"
             size="sm"
             className="min-h-11 w-full touch-manipulation justify-between gap-1.5 px-2 text-xs font-semibold text-primary hover:bg-primary/10 hover:text-primary md:min-h-9 md:w-auto md:justify-end lg:text-sm"
           >
-            <span>View Game Details</span>
-            <ArrowRight className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-1 lg:h-4 lg:w-4" />
+            <Link
+              to={activityPath}
+              prefetch="intent"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <span>View Game Details</span>
+              <ArrowRight className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-1 lg:h-4 lg:w-4" />
+            </Link>
           </Button>
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function MatchActivityDescription({
-  activity,
-  mode,
-}: {
-  activity: string;
-  mode?: string;
-}) {
-  const lower = activity.toLowerCase();
-  if (lower.includes('iron banner')) {
-    return (
-      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {activity}
-      </div>
-    );
-  }
-
-  let label = activity;
-  let modeLabel = mode;
-  if (lower.includes('control')) {
-    label = 'Quickplay';
-    if (mode) {
-      modeLabel = mode.replace('Quickplay', '');
-    }
-  } else if (lower.includes('competitive')) {
-    label = 'Competitive';
-    if (mode) {
-      modeLabel = mode.replace('Competitive', '').replace('Quickplay', '');
-    }
-  } else if (lower.includes('trials of osiris')) {
-    label = 'Trials of Osiris';
-    if (mode) {
-      modeLabel = mode.replace('Trials of Osiris', '');
-    }
-  }
-
-  return (
-    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-      {label}
-      {modeLabel && <span>{' - ' + modeLabel}</span>}
-    </div>
   );
 }
