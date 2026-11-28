@@ -210,4 +210,66 @@ describe('SessionCard', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/finalizing rank/i)).toBeInTheDocument();
   });
+
+  it('renders solo sessions unchanged without empty fireteam chrome', () => {
+    render(<SessionCard session={mockCompletedSession} onClick={vi.fn()} />);
+
+    expect(screen.queryByText('Fireteam')).not.toBeInTheDocument();
+  });
+
+  it('renders fireteam companion pills with names, shared match counts, and W-L record when summary.companions is present', () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const fireteamSession: Session = {
+      ...mockCompletedSession,
+      summary: {
+        ...mockCompletedSession.summary,
+        totalMatches: 6,
+        companions: [
+          {
+            userId: 'user-tragic',
+            displayName: 'Tragic',
+            sharedMatches: 3,
+            wins: 2,
+            losses: 1,
+            sessions: [
+              {
+                sessionId: 'sess-tragic',
+                characterId: 'char-tragic',
+                class: 'Titan',
+                emblemUrl: '/img/tragic.jpg',
+                sharedMatches: 3,
+              },
+            ],
+          },
+          {
+            userId: 'user-nova',
+            displayName: 'Nova',
+            sharedMatches: 6,
+            wins: 4,
+            losses: 2,
+            sessions: [
+              {
+                sessionId: 'sess-nova',
+                characterId: 'char-nova',
+                class: 'Warlock',
+                sharedMatches: 6,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    render(<SessionCard session={fireteamSession} onClick={vi.fn()} />);
+
+    expect(screen.getByText('Fireteam')).toBeInTheDocument();
+    expect(screen.getByText('Tragic')).toBeInTheDocument();
+    expect(screen.getByText('3/6 matches')).toBeInTheDocument();
+    expect(screen.getByText('2W-1L')).toBeInTheDocument();
+    expect(screen.getByText('Nova')).toBeInTheDocument();
+    expect(screen.getByText('6 matches')).toBeInTheDocument();
+    expect(screen.getByText('4W-2L')).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
 });

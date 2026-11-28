@@ -15,6 +15,7 @@ import {
   CompPointDeltaBadge,
   getCompPointDelta,
 } from '~/components/comp-tracking';
+import { SessionCardCompanions } from '~/components/session-companions';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { useHydrated } from '~/hooks/use-hydrated';
@@ -227,39 +228,45 @@ export function ActiveSessionCard({
                 </div>
               )}
 
+            <SessionCardCompanions
+              companions={session.summary?.companions}
+              totalMatches={session.summary?.totalMatches}
+              compact
+            />
+
             <div className="mt-auto space-y-2 pt-2">
               {isPending && startTime && (
-              <div className="text-muted-foreground">
-                Started{' '}
-                {isHydrated
-                  ? formatDistance(startTime, new Date(), {
-                      addSuffix: true,
-                    })
-                  : format(startTime, 'MMM d, yyyy')}
-              </div>
-            )}
+                <div className="text-muted-foreground">
+                  Started{' '}
+                  {isHydrated
+                    ? formatDistance(startTime, new Date(), {
+                        addSuffix: true,
+                      })
+                    : format(startTime, 'MMM d, yyyy')}
+                </div>
+              )}
 
-            {!isPending && completedTime && (
-              <div className="text-muted-foreground">
-                Completed{' '}
-                {isHydrated
-                  ? formatDistance(completedTime, new Date(), {
-                      addSuffix: true,
-                    })
-                  : format(completedTime, 'MMM d, yyyy')}
-              </div>
-            )}
+              {!isPending && completedTime && (
+                <div className="text-muted-foreground">
+                  Completed{' '}
+                  {isHydrated
+                    ? formatDistance(completedTime, new Date(), {
+                        addSuffix: true,
+                      })
+                    : format(completedTime, 'MMM d, yyyy')}
+                </div>
+              )}
 
-            {!isPending && !completedTime && startTime && (
-              <div className="text-muted-foreground">
-                Started{' '}
-                {isHydrated
-                  ? formatDistance(startTime, new Date(), {
-                      addSuffix: true,
-                    })
-                  : format(startTime, 'MMM d, yyyy')}
-              </div>
-            )}
+              {!isPending && !completedTime && startTime && (
+                <div className="text-muted-foreground">
+                  Started{' '}
+                  {isHydrated
+                    ? formatDistance(startTime, new Date(), {
+                        addSuffix: true,
+                      })
+                    : format(startTime, 'MMM d, yyyy')}
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-1 font-medium text-primary opacity-90 transition-opacity group-hover:underline group-hover:opacity-100">
                 <span>

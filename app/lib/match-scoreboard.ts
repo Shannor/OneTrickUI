@@ -4,7 +4,7 @@ import type {
   Team,
   WeaponInstanceMetrics,
 } from '~/api';
-import { calculateRatio } from '~/calculations/precision';
+import { computePlayerCombatStats } from '~/calculations/precision';
 
 const KINETIC_BUCKET_HASH = 1498876634;
 const ENERGY_BUCKET_HASH = 2465295065;
@@ -197,12 +197,9 @@ export function sortParticipantWeapons(
 export function computeParticipantStats(
   participant: ActivityParticipant,
 ): ParticipantStatsSummary {
-  const playerStats = participant.performance?.playerStats;
-  const kills = playerStats?.kills?.value ?? 0;
-  const deaths = playerStats?.deaths?.value ?? 0;
-  const assists = playerStats?.assists?.value ?? 0;
-  const kd = calculateRatio(kills, deaths);
-  const efficiency = calculateRatio(kills + assists, deaths);
+  const { kills, deaths, assists, kd, efficiency } = computePlayerCombatStats(
+    participant.performance?.playerStats,
+  );
 
   return {
     kills,

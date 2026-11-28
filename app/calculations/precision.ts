@@ -19,6 +19,30 @@ export function calculatePercentage(
   return ratio * 100;
 }
 
+export interface PlayerCombatStats {
+  kills: number;
+  deaths: number;
+  assists: number;
+  kd: number;
+  efficiency: number;
+}
+
+export function computePlayerCombatStats(
+  playerStats?: PlayerStats,
+): PlayerCombatStats {
+  const kills = playerStats?.kills?.value ?? 0;
+  const deaths = playerStats?.deaths?.value ?? 0;
+  const assists = playerStats?.assists?.value ?? 0;
+
+  return {
+    kills,
+    deaths,
+    assists,
+    kd: calculateRatio(kills, deaths),
+    efficiency: calculateRatio(kills + assists, deaths),
+  };
+}
+
 export interface CombinedStatsResult {
   matches: number;
   winRateRatio: number;
@@ -93,4 +117,3 @@ export function calculateCombinedStats(
     kd,
   };
 }
-

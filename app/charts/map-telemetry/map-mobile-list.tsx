@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { WinLossRecord } from '~/components/win-loss-record';
 import {
   EVEN_KD_TARGET,
   EVEN_WIN_RATE_PCT,
@@ -50,7 +51,8 @@ export function MapMobileRow({
 
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 truncate text-xs tabular-nums text-muted-foreground">
-          {map.wins}W–{map.loses}L (
+          <WinLossRecord wins={map.wins} losses={map.loses} format="en-dash" />{' '}
+          (
           <span
             className={
               map.winPct >= EVEN_WIN_RATE_PCT

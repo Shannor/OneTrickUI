@@ -34,6 +34,9 @@ import type {
   BackfillAggregateDataResponses,
   BackfillAllUsersCharacterIdsData,
   BackfillAllUsersCharacterIdsResponses,
+  BackfillSessionSummariesData,
+  BackfillSessionSummariesErrors,
+  BackfillSessionSummariesResponses,
   BackfillSnapshotInfoData,
   BackfillSnapshotInfoResponses,
   CompleteSessionData,
@@ -68,6 +71,7 @@ import type {
   GetPingData,
   GetPingResponses,
   GetSessionAggregatesData,
+  GetSessionAggregatesErrors,
   GetSessionAggregatesResponses,
   GetSessionData,
   GetSessionResponses,
@@ -169,6 +173,18 @@ export const backfillAggregateData = <ThrowOnError extends boolean = false>(
     unknown,
     ThrowOnError
   >({ url: '/admin/backfill-aggregate-data', ...options });
+
+/**
+ * Backfill SnapshotLink participant metadata on multi-character aggregates and recompute SessionSummary companions on affected sessions
+ */
+export const backfillSessionSummaries = <ThrowOnError extends boolean = false>(
+  options?: Options<BackfillSessionSummariesData, ThrowOnError>,
+) =>
+  (options?.client ?? client).post<
+    BackfillSessionSummariesResponses,
+    BackfillSessionSummariesErrors,
+    ThrowOnError
+  >({ url: '/admin/backfill-session-summaries', ...options });
 
 /**
  * Search for recorded 1 Trick users and Bungie Destiny 2 players
@@ -558,7 +574,7 @@ export const getSessionAggregates = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).get<
     GetSessionAggregatesResponses,
-    unknown,
+    GetSessionAggregatesErrors,
     ThrowOnError
   >({
     responseTransformer: getSessionAggregatesResponseTransformer,

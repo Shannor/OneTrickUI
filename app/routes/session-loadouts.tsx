@@ -7,6 +7,7 @@ import { MergeLoadoutDialog } from '~/components/merge-loadout-dialog';
 import { Button } from '~/components/ui/button';
 import { groupSnapshotsByCompatibility } from '~/hooks/use-loadout';
 import { useProfileData, useSessionData } from '~/hooks/use-route-loaders';
+import { filterOwnerSnapshots } from '~/lib/session-companions';
 
 import type { Route } from './+types/session-loadouts';
 
@@ -54,8 +55,8 @@ export function SessionLoadouts({ params }: Route.ComponentProps) {
   );
 
   const allSnapshots = useMemo(
-    () => (snapshots ? Object.values(snapshots) : []),
-    [snapshots],
+    () => filterOwnerSnapshots(snapshots, params.characterId),
+    [snapshots, params.characterId],
   );
 
   const compatibleById = useMemo(

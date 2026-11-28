@@ -9,6 +9,20 @@ export type Pong = {
   ping: string;
 };
 
+export type InternalError =
+  'DestinyServerDown' | 'InternalSystemDown' | 'UnknownError';
+
+/**
+ * Known errors for the one trick API
+ */
+export type OneTrickError = {
+  /**
+   * User friendly description of the error
+   */
+  message: string;
+  status: InternalError;
+};
+
 export type Color = {
   red: number;
   green: number;
@@ -74,20 +88,6 @@ export type SearchUserResult = {
   characters?: Array<Character>;
 };
 
-export type InternalError =
-  'DestinyServerDown' | 'InternalSystemDown' | 'UnknownError';
-
-/**
- * Known errors for the one trick API
- */
-export type OneTrickError = {
-  /**
-   * User friendly description of the error
-   */
-  message: string;
-  status: InternalError;
-};
-
 export type FireteamActiveSession = {
   sessionId: string;
   characterId: string;
@@ -126,6 +126,23 @@ export type SessionWeaponSummary = {
   kills?: number;
 };
 
+export type CompanionInstance = {
+  sessionId: string;
+  characterId: string;
+  class?: string;
+  emblemUrl?: string;
+  sharedMatches: number;
+};
+
+export type SessionCompanion = {
+  userId: string;
+  displayName: string;
+  sharedMatches: number;
+  wins: number;
+  losses: number;
+  sessions: Array<CompanionInstance>;
+};
+
 export type SessionSummary = {
   totalMatches?: number;
   wins?: number;
@@ -138,6 +155,7 @@ export type SessionSummary = {
   kdaRatio?: number;
   modesPlayed?: Array<string>;
   topWeapons?: Array<SessionWeaponSummary>;
+  companions?: Array<SessionCompanion>;
 };
 
 export type CompRankSnapshot = {
@@ -785,6 +803,14 @@ export type User = {
   characterIds: Array<string>;
 };
 
+export type SessionParticipant = {
+  userId: string;
+  displayName: string;
+  characterId: string;
+  class?: string;
+  emblemUrl?: string;
+};
+
 /**
  * Summary counters and runtime metrics from a session tick execution
  */
@@ -929,6 +955,57 @@ export type BackfillAggregateDataResponses = {
 
 export type BackfillAggregateDataResponse =
   BackfillAggregateDataResponses[keyof BackfillAggregateDataResponses];
+
+export type BackfillSessionSummariesData = {
+  body?: never;
+  headers?: {
+    'X-Internal-API-Key'?: string;
+  };
+  path?: never;
+  query?: {
+    /**
+     * Computes backfill counts without persisting Firestore writes
+     */
+    dryRun?: boolean;
+  };
+  url: '/admin/backfill-session-summaries';
+};
+
+export type BackfillSessionSummariesErrors = {
+  /**
+   * Bad Request
+   */
+  400: OneTrickError;
+  /**
+   * Missing or invalid internal API key
+   */
+  401: OneTrickError;
+  /**
+   * Internal Server Error
+   */
+  500: OneTrickError;
+};
+
+export type BackfillSessionSummariesError =
+  BackfillSessionSummariesErrors[keyof BackfillSessionSummariesErrors];
+
+export type BackfillSessionSummariesResponses = {
+  /**
+   * Summary of backfilled aggregates and session summaries
+   */
+  200: {
+    dryRun: boolean;
+    aggregatesScanned: number;
+    aggregatesUpdated: number;
+    aggregatesFailed: number;
+    sessionsScanned: number;
+    sessionsUpdated: number;
+    sessionsFailed: number;
+  };
+};
+
+export type BackfillSessionSummariesResponse =
+  BackfillSessionSummariesResponses[keyof BackfillSessionSummariesResponses];
 
 export type SearchData = {
   body: {
@@ -1921,6 +1998,20 @@ export type GetSessionAggregatesData = {
   url: '/sessions/{sessionId}/aggregates';
 };
 
+export type GetSessionAggregatesErrors = {
+  /**
+   * Session not found
+   */
+  404: OneTrickError;
+  /**
+   * Internal Server Error
+   */
+  500: OneTrickError;
+};
+
+export type GetSessionAggregatesError =
+  GetSessionAggregatesErrors[keyof GetSessionAggregatesErrors];
+
 export type GetSessionAggregatesResponses = {
   /**
    * Array of aggregates
@@ -1929,6 +2020,9 @@ export type GetSessionAggregatesResponses = {
     aggregates: Array<Aggregate>;
     snapshots: {
       [key: string]: CharacterSnapshot;
+    };
+    participants: {
+      [key: string]: SessionParticipant;
     };
   };
 };

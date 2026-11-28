@@ -1,10 +1,17 @@
 import { log } from 'evlog';
 import { Info } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
+import {
+  NavLink,
+  Outlet,
+  type ShouldRevalidateFunctionArgs,
+  useLocation,
+  useRevalidator,
+} from 'react-router';
 import { getRequestLogger } from '~/.server/logger';
 import { getSession, getSessionAggregates } from '~/api';
 import { Empty } from '~/components/empty';
+import { SessionCompanionsBar } from '~/components/session-companions';
 import { SessionDate } from '~/components/session-date';
 import { SessionHeaderActions } from '~/components/session-header-actions';
 import { SessionOverview } from '~/components/session-overview';
@@ -13,6 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { useNavigationState, useProfileData } from '~/hooks/use-route-loaders';
+import { useSessionCompanionFilter } from '~/hooks/use-session-companion-filter';
 import { subscribeToDocument } from '~/lib/firebaseConfig';
 import { cn } from '~/lib/utils';
 
@@ -57,6 +65,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       session: res.data,
       aggregates: [],
       snapshots: {},
+      participants: {},
       error: undefined,
       path,
     };
@@ -65,9 +74,30 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     session: res.data,
     aggregates: aggRes.data.aggregates,
     snapshots: aggRes.data.snapshots,
+    participants: aggRes.data.participants ?? {},
     error: undefined,
     path,
   };
+}
+
+export function shouldRevalidate({
+  currentParams,
+  nextParams,
+  currentUrl,
+  nextUrl,
+  formMethod,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+  if (formMethod && formMethod !== 'GET') {
+    return defaultShouldRevalidate;
+  }
+  if (currentParams.sessionId !== nextParams.sessionId) {
+    return true;
+  }
+  if (currentUrl.href === nextUrl.href) {
+    return defaultShouldRevalidate;
+  }
+  return false;
 }
 
 type ISession = Awaited<ReturnType<typeof getSession>>;
@@ -79,11 +109,10 @@ type FirestoreSessionData = NonNullable<ISession['data']> & {
 export function Session({ loaderData, params }: Route.ComponentProps) {
   const { profile, type } = useProfileData();
   const { isSubTab: isSwitchingTab } = useNavigationState();
-  const { session, aggregates, error, path } = loaderData;
+  const { session, aggregates, participants, error, path } = loaderData;
   const { characterId } = params;
   const isOwner = type === 'owner';
   const revalidator = useRevalidator();
-
   const location = useLocation();
 
   const currentTab = useMemo(() => {
@@ -99,6 +128,23 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
       )?.[0] ?? 'games'
     );
   }, [location.pathname]);
+
+  const showCompanionsBar = currentTab === 'games' || currentTab === 'metrics';
+
+  const companionFilter = useSessionCompanionFilter({
+    session,
+    aggregates,
+    participants,
+    characterId,
+  });
+  const {
+    companions,
+    selectedUserIds,
+    filteredAggregates,
+    teammateSearch,
+    toggleCompanion: handleToggleCompanion,
+    clearFilters: handleClearFilters,
+  } = companionFilter;
 
   const sessionRef = useRef(session);
   useEffect(() => {
@@ -179,8 +225,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           if (isInitial) {
             isInitial = false;
             const current = sessionRef.current as
-              | FirestoreSessionData
-              | undefined;
+              FirestoreSessionData | undefined;
             const currentCount = current?.aggregateIds?.length ?? 0;
             const newCount = newData.aggregateIds?.length ?? 0;
             const statusChanged = newData.status !== current?.status;
@@ -188,8 +233,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
               Boolean(newData.lastSeenActivityId) &&
               newData.lastSeenActivityId !== current?.lastSeenActivityId;
             const compFinalized =
-              Boolean(newData.compTracking?.end) &&
-              !current?.compTracking?.end;
+              Boolean(newData.compTracking?.end) && !current?.compTracking?.end;
 
             if (
               statusChanged ||
@@ -318,7 +362,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           />
         ) : (
           <div className="flex w-full flex-col gap-2">
-            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            <h2 className="font-heading text-2xl font-bold tracking-wide md:text-3xl">
               {session.name ?? ''}
             </h2>
             {session.description && (
@@ -338,12 +382,19 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
         <Tabs value={currentTab} className="mt-6 sm:mt-8">
           <TabsList>
             <TabsTrigger value="games" asChild>
-              <NavLink to="." end prefetch="intent">
+              <NavLink
+                to={teammateSearch ? `.${teammateSearch}` : '.'}
+                end
+                prefetch="intent"
+              >
                 Games
               </NavLink>
             </TabsTrigger>
             <TabsTrigger value="metrics" asChild>
-              <NavLink to="metrics" prefetch="intent">
+              <NavLink
+                to={teammateSearch ? `metrics${teammateSearch}` : 'metrics'}
+                prefetch="intent"
+              >
                 Metrics
               </NavLink>
             </TabsTrigger>
@@ -354,6 +405,25 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
             </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {showCompanionsBar && (
+          <SessionCompanionsBar
+            companions={companions}
+            totalMatches={
+              aggregates && aggregates.length > 0
+                ? aggregates.length
+                : (session.summary?.totalMatches ?? gamesRecorded)
+            }
+            filteredCount={
+              aggregates && aggregates.length > 0
+                ? filteredAggregates.length
+                : undefined
+            }
+            selectedUserIds={selectedUserIds}
+            onToggleCompanion={handleToggleCompanion}
+            onClearFilters={handleClearFilters}
+          />
+        )}
       </div>
       <div
         aria-busy={isSwitchingTab}
@@ -362,7 +432,7 @@ export function Session({ loaderData, params }: Route.ComponentProps) {
           isSwitchingTab && 'opacity-60',
         )}
       >
-        <Outlet />
+        <Outlet context={companionFilter} />
       </div>
     </div>
   );

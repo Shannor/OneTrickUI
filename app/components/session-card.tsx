@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { Session, SessionSummary, SessionWeaponSummary } from '~/api';
 import { SessionCompTrackingBanner } from '~/components/comp-tracking';
+import { SessionCardCompanions } from '~/components/session-companions';
 import { SessionDate } from '~/components/session-date';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
@@ -18,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
+import { WinLossRecord } from '~/components/win-loss-record';
 import { cn, setBungieUrl } from '~/lib/utils';
 
 export interface SessionCardProps {
@@ -142,9 +144,12 @@ export function SessionCardSummary({ summary }: { summary: SessionSummary }) {
             <span className="font-heading text-xl font-extrabold tracking-wide text-foreground sm:text-2xl lg:text-3xl">
               {totalMatches}
             </span>
-            <span className="text-xs font-medium text-muted-foreground lg:text-sm">
-              {`(${wins}W - ${losses}L)`}
-            </span>
+            <WinLossRecord
+              wins={wins}
+              losses={losses}
+              format="spaced-parens"
+              className="text-xs lg:text-sm"
+            />
           </div>
         </div>
 
@@ -196,7 +201,7 @@ export function SessionCardSummary({ summary }: { summary: SessionSummary }) {
             <SessionCardTopWeapons weapons={summary.topWeapons!} />
           ) : summary.kills == null ? null : (
             <div className="flex min-w-0 flex-col gap-1.5">
-              <span className="text-xs font-semibold text-muted-foreground lg:text-sm">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
                 K/D/A Breakdown
               </span>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground lg:text-sm">
@@ -210,6 +215,11 @@ export function SessionCardSummary({ summary }: { summary: SessionSummary }) {
           )}
         </div>
       )}
+
+      <SessionCardCompanions
+        companions={summary.companions}
+        totalMatches={summary.totalMatches}
+      />
     </div>
   );
 }
@@ -217,8 +227,8 @@ export function SessionCardSummary({ summary }: { summary: SessionSummary }) {
 export function SessionCardModes({ modes }: { modes: string[] }) {
   return (
     <div className="flex w-full min-w-0 flex-col gap-1.5 md:gap-2">
-      <span className="text-xs font-semibold text-muted-foreground md:text-sm lg:text-base">
-        Modes:
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
+        Modes
       </span>
       <div className="flex flex-wrap items-center gap-1.5 md:gap-2 lg:gap-2.5">
         {modes.map((mode) => (
@@ -243,8 +253,8 @@ export function SessionCardTopWeapons({
   return (
     <TooltipProvider>
       <div className="flex w-full min-w-0 flex-col gap-1.5 md:gap-2">
-        <span className="text-xs font-semibold text-muted-foreground md:text-sm lg:text-base">
-          Top Guns:
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
+          Top Guns
         </span>
         <div className="flex flex-wrap items-center gap-2 md:gap-3 lg:gap-4">
           {weapons.slice(0, 3).map((weapon, idx) => {

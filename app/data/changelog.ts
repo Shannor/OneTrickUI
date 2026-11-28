@@ -23,7 +23,7 @@ export const CHANGELOG: ReleaseNote[] = [
     changes: [
       {
         type: 'improvement',
-        text: 'Read negative performance at a glance—negative win rates, downward trend deltas, and Competitive relegations now display in clear red across Overview, Sessions, and Loadouts.',
+        text: 'Read negative performance at a glance—negative win rates, negative win-loss records, downward trend deltas, and Competitive relegations now display in clear red across Overview, Sessions, and Loadouts.',
       },
       {
         type: 'improvement',
@@ -32,6 +32,27 @@ export const CHANGELOG: ReleaseNote[] = [
       {
         type: 'fix',
         text: 'Enjoy better readability in dark mode on Loadout Details—class stat radar charts now stay vibrant 1 Trick orange instead of switching to low-contrast blue.',
+      },
+    ],
+  },
+  {
+    id: '2026-11-27',
+    date: 'November 27, 2026',
+    title: 'Fireteam Companions on Sessions & Teammate Filtering',
+    summary:
+      'See who ran with you across every Crucible session, filter both Games and Metrics by one or more teammates at once, and inspect your squad’s K/D and equipped weapons right inside your session game log.',
+    changes: [
+      {
+        type: 'feature',
+        text: 'Spot who you queued with directly on session cards with compact fireteam badges showing each teammate, shared match count, and your win-loss record together.',
+      },
+      {
+        type: 'feature',
+        text: 'Filter both the Games and Metrics tabs by one or more teammates at once—requiring every selected teammate to be in the match—and jump straight to any teammate’s linked session, even when they swapped Guardians mid-run.',
+      },
+      {
+        type: 'feature',
+        text: 'Review fireteam companions inline on shared match rows with their emblem, K/D, subclass, and equipped weapon icons at a glance, while solo sessions stay completely clean and clutter-free.',
       },
     ],
   },

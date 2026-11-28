@@ -40,45 +40,45 @@ export function MapFilterToolbar({
 }: MapFilterToolbarProps) {
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:border-b md:border-border md:px-5 md:py-4">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <h4 className="font-heading text-lg font-semibold tracking-wide text-foreground sm:text-xl">
-            {title}
-          </h4>
-          <p className="hidden text-xs text-muted-foreground sm:block">
-            {description}
-          </p>
-        </div>
-
-        <div className="w-36 md:hidden">
-          <Select
-            value={sortBy}
-            onValueChange={(val) => onSortChange(val as MapSortKey)}
-          >
-            <SelectTrigger aria-label="Sort maps" className="h-8 text-xs">
-              <SelectValue placeholder="Sort: Games" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="count">Sort: Games</SelectItem>
-              <SelectItem value="kd">Sort: K/D</SelectItem>
-              <SelectItem value="winPct">Sort: Win %</SelectItem>
-              <SelectItem value="kda">Sort: Efficiency</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="min-w-0">
+        <h4 className="font-heading text-lg font-semibold tracking-wide text-foreground sm:text-xl">
+          {title}
+        </h4>
+        <p className="hidden text-xs text-muted-foreground sm:block">
+          {description}
+        </p>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="relative w-full sm:w-44">
-          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search map..."
-            aria-label="Search maps"
-            className="h-8 pl-8 text-xs"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1 sm:w-44 sm:flex-initial">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search map..."
+              aria-label="Search maps"
+              className="h-9 pl-8 text-xs md:h-8"
+            />
+          </div>
+
+          <div className="w-36 shrink-0 md:hidden">
+            <Select
+              value={sortBy}
+              onValueChange={(val) => onSortChange(val as MapSortKey)}
+            >
+              <SelectTrigger aria-label="Sort maps" className="h-9 text-xs">
+                <SelectValue placeholder="Sort: Games" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="count">Sort: Games</SelectItem>
+                <SelectItem value="kd">Sort: K/D</SelectItem>
+                <SelectItem value="winPct">Sort: Win %</SelectItem>
+                <SelectItem value="kda">Sort: Efficiency</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div
